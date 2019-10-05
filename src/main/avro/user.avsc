@@ -1,0 +1,13 @@
+{
+  "namespace": "io.confluent.developer.avro",
+  "type": "record",
+  "name": "User",
+  "fields": [
+    {"name": "request_id", "type": "string"},
+    {"name": "event_type", "type": {"type": "enum", "name": "user_event_type", "symbols" : ["REQUESTED", "VALIDATED", "REJECTED"] } },
+    {"name": "first_name", "type": "string"},
+    {"name": "last_name", "type": "string"},
+    {"name": "user_id", "type": "string"},
+    {"name": "email", "type": "string"}
+  ]
+}

@@ -1,22 +1,23 @@
 package io.confluent.developer;
 
-import io.confluent.developer.avro.Movie;
-import io.confluent.developer.avro.RawMovie;
+import io.confluent.developer.avro.User;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
-import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.streams.*;
+import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.StreamsBuilder;
+import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
-public class TransformStream {
+public class UserDetailsService {
 
     public Properties buildStreamsProperties(Properties envProps) {
         Properties props = new Properties();
@@ -32,54 +33,26 @@ public class TransformStream {
 
     public Topology buildTopology(Properties envProps) {
         final StreamsBuilder builder = new StreamsBuilder();
-        final String inputTopic = envProps.getProperty("input.topic.name");
+        final String inputTopic = envProps.getProperty("user.topic.name");
+        final String outputTopic = envProps.getProperty("user_validation.topic.name");
 
-        KStream<String, RawMovie> rawMovies = builder.stream(inputTopic);
-        KStream<Long, Movie> movies = rawMovies.map((key, rawMovie) ->
-                new KeyValue<Long, Movie>(rawMovie.getId(), convertRawMovie(rawMovie)));
+        KStream<String, User> userKStream = builder.stream(inputTopic);
+        KStream<String, User> outputUserKStream = userKStream.filter(((key, value) -> key.isEmpty()));
 
-        movies.to("movies", Produced.with(Serdes.Long(), movieAvroSerde(envProps)));
+        outputUserKStream.to(outputTopic, Produced.with(Serdes.String(), userAvroSerde(envProps)));
 
         return builder.build();
     }
 
-    public static Movie convertRawMovie(RawMovie rawMovie) {
-        String titleParts[] = rawMovie.getTitle().split("::");
-        String title = titleParts[0];
-        int releaseYear = Integer.parseInt(titleParts[1]);
-        return new Movie(rawMovie.getId(), title, releaseYear, rawMovie.getGenre());
-    }
-
-    private SpecificAvroSerde<Movie> movieAvroSerde(Properties envProps) {
-        SpecificAvroSerde<Movie> movieAvroSerde = new SpecificAvroSerde<>();
+    private SpecificAvroSerde<User> userAvroSerde(Properties envProps) {
+        SpecificAvroSerde<User> userAvroSerde = new SpecificAvroSerde<>();
 
         final HashMap<String, String> serdeConfig = new HashMap<>();
         serdeConfig.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
                 envProps.getProperty("schema.registry.url"));
 
-        movieAvroSerde.configure(serdeConfig, false);
-        return movieAvroSerde;
-    }
-
-    public void createTopics(Properties envProps) {
-        Map<String, Object> config = new HashMap<>();
-        config.put("bootstrap.servers", envProps.getProperty("bootstrap.servers"));
-        AdminClient client = AdminClient.create(config);
-
-        List<NewTopic> topics = new ArrayList<>();
-
-        topics.add(new NewTopic(
-                envProps.getProperty("input.topic.name"),
-                Integer.parseInt(envProps.getProperty("input.topic.partitions")),
-                Short.parseShort(envProps.getProperty("input.topic.replication.factor"))));
-
-        topics.add(new NewTopic(
-                envProps.getProperty("output.topic.name"),
-                Integer.parseInt(envProps.getProperty("output.topic.partitions")),
-                Short.parseShort(envProps.getProperty("output.topic.replication.factor"))));
-
-        client.createTopics(topics);
-        client.close();
+        userAvroSerde.configure(serdeConfig, false);
+        return userAvroSerde;
     }
 
     public Properties loadEnvProperties(String fileName) throws IOException {
@@ -96,12 +69,10 @@ public class TransformStream {
             throw new IllegalArgumentException("This program takes one argument: the path to an environment configuration file.");
         }
 
-        TransformStream ts = new TransformStream();
-        Properties envProps = ts.loadEnvProperties(args[0]);
-        Properties streamProps = ts.buildStreamsProperties(envProps);
-        Topology topology = ts.buildTopology(envProps);
-
-        ts.createTopics(envProps);
+        UserDetailsService userDetailsService = new UserDetailsService();
+        Properties envProps = userDetailsService.loadEnvProperties(args[0]);
+        Properties streamProps = userDetailsService.buildStreamsProperties(envProps);
+        Topology topology = userDetailsService.buildTopology(envProps);
 
         final KafkaStreams streams = new KafkaStreams(topology, streamProps);
         final CountDownLatch latch = new CountDownLatch(1);
