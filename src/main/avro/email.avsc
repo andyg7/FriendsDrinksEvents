@@ -1,0 +1,10 @@
+{
+  "namespace": "andrewgrant.friendsdrinks.avro",
+  "type": "record",
+  "name": "Email",
+  "fields": [
+    {"name": "request_id", "type": "string"},
+    {"name": "event_type", "type": {"type": "enum", "name": "email_state", "symbols" : ["REQUESTED", "REJECTED", "RESERVED", "RECLAIMED"] } },
+    {"name": "email", "type": "string"}
+  ]
+}
