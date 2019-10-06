@@ -7,8 +7,13 @@ import andrewgrant.friendsdrinks.avro.user_event_type;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.streams.*;
-import org.apache.kafka.streams.kstream.*;
+import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.StreamsBuilder;
+import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.Topology;
+import org.apache.kafka.streams.kstream.Consumed;
+import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.Produced;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,8 +23,8 @@ import java.util.HashMap;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
-public class UserDetailsService {
-    private static final Logger log = LoggerFactory.getLogger(UserDetailsService.class);
+public class EmailService {
+    private static final Logger log = LoggerFactory.getLogger(EmailService.class);
 
     public Properties buildStreamsProperties(Properties envProps) {
         Properties props = new Properties();
@@ -33,39 +38,45 @@ public class UserDetailsService {
         return props;
     }
 
-    public static String USER_TOPIC;
     public static String USER_VALIDATION_TOPIC;
     public static String EMAIL_TOPIC;
 
     public Topology buildTopology(Properties envProps) {
         final StreamsBuilder builder = new StreamsBuilder();
-        USER_TOPIC = envProps.getProperty("user.topic.name");
         USER_VALIDATION_TOPIC = envProps.getProperty("user_validation.topic.name");
         EMAIL_TOPIC = envProps.getProperty("email.topic.name");
 
-        KStream<String, User> userIdKStream = builder.stream(USER_TOPIC);
+        KStream<String, User> userValidations = builder.stream(USER_VALIDATION_TOPIC,
+                Consumed.with(Serdes.String(), userAvroSerde(envProps)));
 
-        KTable<String, Email> emailKTable = builder.table(EMAIL_TOPIC,
-                Consumed.with(Serdes.String(), emailAvroSerde(envProps)));
-
-        // Filter by requests.
-        KStream<String, User> userRequestsKStream = userIdKStream.filter(((key, value) -> value.getEventType()
-                .equals(user_event_type.REQUESTED)));
-        // Key by email so we can join on email.
-        KStream<String, User> userKStream = userRequestsKStream.selectKey(((key, value) -> value.getEmail()));
-
-        KStream<String, User> validatedUser = userKStream.leftJoin(emailKTable, (leftValue, rightValue) -> {
-            if (rightValue == null ||
-                    rightValue.getEventType().equals(email_state.RECLAIMED)) {
-                leftValue.setEventType(user_event_type.VALIDATED);
-                return leftValue;
-            } else {
-                leftValue.setEventType(user_event_type.REJECTED);
-                return leftValue;
+        KStream<String, User> userKStream = userValidations.filter(((key, value) -> {
+            if (value.getEventType().equals(user_event_type.REJECTED) ||
+                    value.getEventType().equals(user_event_type.VALIDATED)) {
+                return true;
             }
-        });
+            return false;
+        }));
 
-        validatedUser.to(USER_VALIDATION_TOPIC, Produced.with(Serdes.String(), userAvroSerde(envProps)));
+        KStream<String, Email> emailKStream = userKStream.mapValues(((key, value) -> {
+            if (value.getEventType().equals(user_event_type.VALIDATED)) {
+                Email email = new Email();
+                email.setRequestId(value.getRequestId());
+                email.setEmail(value.getEmail());
+                email.setEventType(email_state.RESERVED);
+                return email;
+            } else if (value.getEventType().equals(user_event_type.REJECTED)) {
+                Email email = new Email();
+                email.setRequestId(value.getRequestId());
+                email.setEmail(value.getEmail());
+                email.setEventType(email_state.RECLAIMED);
+                return email;
+            } else {
+                throw new RuntimeException(String.format("Encountered unknown event type: %s",
+                        value.getEventType().toString()));
+            }
+        }));
+
+        emailKStream.to(EMAIL_TOPIC, Produced.with(Serdes.String(), emailAvroSerde(envProps)));
 
         return builder.build();
     }
@@ -106,10 +117,10 @@ public class UserDetailsService {
             throw new IllegalArgumentException("This program takes one argument: the path to an environment configuration file.");
         }
 
-        UserDetailsService userDetailsService = new UserDetailsService();
-        Properties envProps = userDetailsService.loadEnvProperties(args[0]);
-        Properties streamProps = userDetailsService.buildStreamsProperties(envProps);
-        Topology topology = userDetailsService.buildTopology(envProps);
+        EmailService emailService = new EmailService();
+        Properties envProps = emailService.loadEnvProperties(args[0]);
+        Properties streamProps = emailService.buildStreamsProperties(envProps);
+        Topology topology = emailService.buildTopology(envProps);
         log.debug("Built stream");
 
         final KafkaStreams streams = new KafkaStreams(topology, streamProps);
