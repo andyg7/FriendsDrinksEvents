@@ -9,11 +9,6 @@ import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.*;
-import org.apache.kafka.streams.processor.ProcessorContext;
-import org.apache.kafka.streams.processor.StateStore;
-import org.apache.kafka.streams.state.KeyValueStore;
-import org.apache.kafka.streams.state.StoreBuilder;
-import org.apache.kafka.streams.state.Stores;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +36,6 @@ public class UserDetailsService {
     public static String USER_TOPIC;
     public static String USER_VALIDATION_TOPIC;
     public static String EMAIL_TOPIC;
-    public static String EMAIL_STATE_STORE = "email-state-store";
 
     public Topology buildTopology(Properties envProps) {
         final StreamsBuilder builder = new StreamsBuilder();
@@ -80,17 +74,6 @@ public class UserDetailsService {
         validatedEmail.to(EMAIL_TOPIC, Produced.with(Serdes.String(), emailAvroSerde(envProps)));
 
         return builder.build();
-    }
-
-    private SpecificAvroSerde<User> userAvroSerde(Properties envProps) {
-        SpecificAvroSerde<User> userAvroSerde = new SpecificAvroSerde<>();
-
-        final HashMap<String, String> serdeConfig = new HashMap<>();
-        serdeConfig.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
-                envProps.getProperty("schema.registry.url"));
-
-        userAvroSerde.configure(serdeConfig, false);
-        return userAvroSerde;
     }
 
     private SpecificAvroSerde<Email> emailAvroSerde(Properties envProps) {
@@ -143,52 +126,5 @@ public class UserDetailsService {
             System.exit(1);
         }
         System.exit(0);
-    }
-
-    private static class TransformSupplier implements Transformer<String, User, KeyValue<String, User>> {
-        private ProcessorContext context;
-        private KeyValueStore<String, Email> state;
-
-        public void init(ProcessorContext context) {
-            this.context = context;
-            this.state = (KeyValueStore<String, Email>) context.getStateStore(EMAIL_STATE_STORE);
-            // punctuate each second; can access this.state
-        }
-
-        public KeyValue<String, User> transform(String emailAddress, User user) {
-            log.debug(String.format("In transform with %s", emailAddress));
-            Email email = this.state.get(emailAddress);
-            if (email != null) {
-                log.debug(String.format("Got email state %s", email.getEventType().toString()));
-            } else {
-                log.debug("no email yet!");
-            }
-
-            if (email == null) {
-                email = new Email();
-                email.setRequestId(user.getRequestId());
-                email.setEmail(emailAddress);
-                email.setEventType(email_state.REQUESTED);
-                this.state.put(emailAddress, email);
-                user.setEventType(user_event_type.VALIDATED);
-                return new KeyValue<>(emailAddress, user);
-            } else if (email.getEventType().equals(email_state.REQUESTED)) {
-                user.setEventType(user_event_type.REJECTED);
-                return new KeyValue<>(emailAddress, user);
-            } else if (email.getEventType().equals(email_state.RESERVED)) {
-                user.setEventType(user_event_type.REJECTED);
-                return new KeyValue<>(emailAddress, user);
-            } else if (email.getEventType().equals(email_state.RECLAIMED)){
-                email.setEventType(email_state.REQUESTED);
-                this.state.put(emailAddress, email);
-                user.setEventType(user_event_type.VALIDATED);
-                return new KeyValue<>(emailAddress, user);
-            }
-            throw new RuntimeException("Received email event with unknown state: " + email.getEventType().toString());
-        }
-
-        public void close() {
-            // can access this.state
-        }
     }
 }
