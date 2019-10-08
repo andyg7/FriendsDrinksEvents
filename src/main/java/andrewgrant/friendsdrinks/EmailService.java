@@ -1,9 +1,10 @@
 package andrewgrant.friendsdrinks;
 
 import andrewgrant.friendsdrinks.avro.Email;
+import andrewgrant.friendsdrinks.avro.EmailEvent;
 import andrewgrant.friendsdrinks.avro.User;
-import andrewgrant.friendsdrinks.avro.email_state;
-import andrewgrant.friendsdrinks.avro.user_event_type;
+import andrewgrant.friendsdrinks.avro.EmailEvent;
+import andrewgrant.friendsdrinks.avro.UserEvent;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 import org.apache.kafka.common.serialization.Serdes;
@@ -49,26 +50,23 @@ public class EmailService {
         KStream<String, User> userValidations = builder.stream(USER_VALIDATION_TOPIC,
                 Consumed.with(Serdes.String(), userAvroSerde(envProps)));
 
-        KStream<String, User> userKStream = userValidations.filter(((key, value) -> {
-            if (value.getEventType().equals(user_event_type.REJECTED) ||
-                    value.getEventType().equals(user_event_type.VALIDATED)) {
-                return true;
-            }
-            return false;
-        }));
+        KStream<String, User> userKStream = userValidations.filter(((key, value) ->
+                value.getEventType().equals(UserEvent.REJECTED) ||
+                        value.getEventType().equals(UserEvent.VALIDATED)
+        ));
 
         KStream<String, Email> emailKStream = userKStream.mapValues(((key, value) -> {
-            if (value.getEventType().equals(user_event_type.VALIDATED)) {
+            if (value.getEventType().equals(UserEvent.VALIDATED)) {
                 Email email = new Email();
                 email.setRequestId(value.getRequestId());
                 email.setEmail(value.getEmail());
-                email.setEventType(email_state.RESERVED);
+                email.setEventType(EmailEvent.RESERVED);
                 return email;
-            } else if (value.getEventType().equals(user_event_type.REJECTED)) {
+            } else if (value.getEventType().equals(UserEvent.REJECTED)) {
                 Email email = new Email();
                 email.setRequestId(value.getRequestId());
                 email.setEmail(value.getEmail());
-                email.setEventType(email_state.RECLAIMED);
+                email.setEventType(EmailEvent.RECLAIMED);
                 return email;
             } else {
                 throw new RuntimeException(String.format("Encountered unknown event type: %s",

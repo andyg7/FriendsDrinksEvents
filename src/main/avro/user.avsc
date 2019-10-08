@@ -3,9 +3,9 @@
   "type": "record",
   "name": "User",
   "fields": [
-    {"name": "request_id", "type": "string"},
-    {"name": "event_type", "type": {"type": "enum", "name": "user_event_type", "symbols" : ["REQUESTED", "VALIDATED", "REJECTED"] } },
-    {"name": "user_id", "type": "string"},
+    {"name": "requestId", "type": "string"},
+    {"name": "eventType", "type": {"type": "enum", "name": "UserEvent", "symbols" : ["REQUESTED", "VALIDATED", "REJECTED"] } },
+    {"name": "userId", "type": "string"},
     {"name": "email", "type": "string"}
   ]
 }

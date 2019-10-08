@@ -2,8 +2,8 @@ package andrewgrant.friendsdrinks;
 
 import andrewgrant.friendsdrinks.avro.Email;
 import andrewgrant.friendsdrinks.avro.User;
-import andrewgrant.friendsdrinks.avro.email_state;
-import andrewgrant.friendsdrinks.avro.user_event_type;
+import andrewgrant.friendsdrinks.avro.EmailEvent;
+import andrewgrant.friendsdrinks.avro.UserEvent;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 import org.apache.kafka.common.serialization.Serdes;
@@ -50,17 +50,17 @@ public class UserDetailsService {
 
         // Filter by requests.
         KStream<String, User> userRequestsKStream = userIdKStream.filter(((key, value) -> value.getEventType()
-                .equals(user_event_type.REQUESTED)));
+                .equals(UserEvent.REQUESTED)));
         // Key by email so we can join on email.
         KStream<String, User> userKStream = userRequestsKStream.selectKey(((key, value) -> value.getEmail()));
 
         KStream<String, User> validatedUser = userKStream.leftJoin(emailKTable, (leftValue, rightValue) -> {
             if (rightValue == null ||
-                    rightValue.getEventType().equals(email_state.RECLAIMED)) {
-                leftValue.setEventType(user_event_type.VALIDATED);
+                    rightValue.getEventType().equals(EmailEvent.RECLAIMED)) {
+                leftValue.setEventType(UserEvent.VALIDATED);
                 return leftValue;
             } else {
-                leftValue.setEventType(user_event_type.REJECTED);
+                leftValue.setEventType(UserEvent.REJECTED);
                 return leftValue;
             }
         });
