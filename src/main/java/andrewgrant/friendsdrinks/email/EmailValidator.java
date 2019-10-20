@@ -33,7 +33,7 @@ public class EmailValidator implements
             return new KeyValue<>(str, user);
         }
         Email email = emailRequest.getEmail();
-        if (email == null || email.getEventType().equals(EmailEvent.RECLAIMED)) {
+        if (email == null) {
             User user = emailRequest.getUser();
             // Add email address to pending state store
             pendingEmailsStore.put(requestedEmail, user.getUserId());

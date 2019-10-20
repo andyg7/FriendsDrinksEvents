@@ -20,7 +20,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
@@ -50,29 +49,15 @@ public class EmailService {
         KStream<String, User> userValidations = builder.stream(USER_VALIDATION_TOPIC,
                 Consumed.with(Serdes.String(), UserAvroSerdeFactory.build(envProps)));
 
-        KStream<String, User> userKStream = userValidations.filter(((key, value) ->
-                value.getEventType().equals(UserEvent.REJECTED) ||
-                        value.getEventType().equals(UserEvent.VALIDATED)
-        ));
-
-        KStream<String, Email> emailKStream = userKStream.mapValues(((key, value) -> {
-            if (value.getEventType().equals(UserEvent.VALIDATED)) {
-                Email email = new Email();
-                email.setRequestId(value.getRequestId());
-                email.setEmail(value.getEmail());
-                email.setEventType(EmailEvent.RESERVED);
-                return email;
-            } else if (value.getEventType().equals(UserEvent.REJECTED)) {
-                Email email = new Email();
-                email.setRequestId(value.getRequestId());
-                email.setEmail(value.getEmail());
-                email.setEventType(EmailEvent.RECLAIMED);
-                return email;
-            } else {
-                throw new RuntimeException(String.format("Encountered unknown event type: %s",
-                        value.getEventType().toString()));
-            }
-        }));
+        KStream<String, Email> emailKStream = userValidations.filter(((key, value) ->
+                value.getEventType().equals(UserEvent.VALIDATED)
+        )).mapValues((key, value) -> {
+            Email email = new Email();
+            email.setRequestId(value.getRequestId());
+            email.setEmail(value.getEmail());
+            email.setEventType(EmailEvent.RESERVED);
+            return email;
+        });
 
         emailKStream.to(EMAIL_TOPIC, Produced.with(Serdes.String(), EmailAvroSerdeFactory.build(envProps)));
 
