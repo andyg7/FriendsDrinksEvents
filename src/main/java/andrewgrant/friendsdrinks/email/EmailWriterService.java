@@ -4,7 +4,7 @@ import andrewgrant.friendsdrinks.avro.Email;
 import andrewgrant.friendsdrinks.avro.EmailEvent;
 import andrewgrant.friendsdrinks.avro.User;
 import andrewgrant.friendsdrinks.avro.UserEvent;
-import andrewgrant.friendsdrinks.userdetails.UserAvroSerdeFactory;
+import andrewgrant.friendsdrinks.user.UserAvroSerdeFactory;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 import org.apache.kafka.common.serialization.Serdes;
@@ -23,10 +23,10 @@ import java.io.IOException;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
-public class EmailService {
-    private static final Logger log = LoggerFactory.getLogger(EmailService.class);
+public class EmailWriterService {
+    private static final Logger log = LoggerFactory.getLogger(EmailWriterService.class);
 
-    private String USER_VALIDATION_TOPIC;
+    private String USER_TOPIC;
     private String EMAIL_TOPIC;
 
     public Properties buildStreamsProperties(Properties envProps) {
@@ -43,10 +43,10 @@ public class EmailService {
 
     public Topology buildTopology(Properties envProps) {
         final StreamsBuilder builder = new StreamsBuilder();
-        USER_VALIDATION_TOPIC = envProps.getProperty("user_validation.topic.name");
+        USER_TOPIC = envProps.getProperty("user.topic.name");
         EMAIL_TOPIC = envProps.getProperty("email.topic.name");
 
-        KStream<String, User> userValidations = builder.stream(USER_VALIDATION_TOPIC,
+        KStream<String, User> userValidations = builder.stream(USER_TOPIC,
                 Consumed.with(Serdes.String(), UserAvroSerdeFactory.build(envProps)));
 
         KStream<String, Email> emailKStream = userValidations.filter(((key, value) ->
@@ -78,10 +78,10 @@ public class EmailService {
             throw new IllegalArgumentException("This program takes one argument: the path to an environment configuration file.");
         }
 
-        EmailService emailService = new EmailService();
-        Properties envProps = emailService.loadEnvProperties(args[0]);
-        Properties streamProps = emailService.buildStreamsProperties(envProps);
-        Topology topology = emailService.buildTopology(envProps);
+        EmailWriterService emailWriterService = new EmailWriterService();
+        Properties envProps = emailWriterService.loadEnvProperties(args[0]);
+        Properties streamProps = emailWriterService.buildStreamsProperties(envProps);
+        Topology topology = emailWriterService.buildTopology(envProps);
         log.debug("Built stream");
 
         final KafkaStreams streams = new KafkaStreams(topology, streamProps);

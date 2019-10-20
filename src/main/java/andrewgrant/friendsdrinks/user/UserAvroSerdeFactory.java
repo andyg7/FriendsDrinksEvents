@@ -1,4 +1,4 @@
-package andrewgrant.friendsdrinks.userdetails;
+package andrewgrant.friendsdrinks.user;
 
 import andrewgrant.friendsdrinks.avro.User;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;

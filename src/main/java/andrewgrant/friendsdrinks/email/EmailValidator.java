@@ -9,7 +9,7 @@ import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
 
-import static andrewgrant.friendsdrinks.userdetails.UserDetailsService.PENDING_EMAILS_STORE_NAME;
+import static andrewgrant.friendsdrinks.email.UserEmailValidatorService.PENDING_EMAILS_STORE_NAME;
 
 public class EmailValidator implements
         Transformer<String, EmailRequest, KeyValue<String, User>> {

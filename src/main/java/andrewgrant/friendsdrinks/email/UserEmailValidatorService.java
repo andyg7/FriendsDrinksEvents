@@ -1,11 +1,9 @@
-package andrewgrant.friendsdrinks.userdetails;
+package andrewgrant.friendsdrinks.email;
 
 import andrewgrant.friendsdrinks.avro.Email;
 import andrewgrant.friendsdrinks.avro.User;
 import andrewgrant.friendsdrinks.avro.UserEvent;
-import andrewgrant.friendsdrinks.email.EmailAvroSerdeFactory;
-import andrewgrant.friendsdrinks.email.EmailRequest;
-import andrewgrant.friendsdrinks.email.EmailValidator;
+import andrewgrant.friendsdrinks.user.UserAvroSerdeFactory;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 import org.apache.kafka.common.serialization.Serdes;
@@ -22,8 +20,8 @@ import java.util.HashMap;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
-public class UserDetailsService {
-    private static final Logger log = LoggerFactory.getLogger(UserDetailsService.class);
+public class UserEmailValidatorService {
+    private static final Logger log = LoggerFactory.getLogger(UserEmailValidatorService.class);
 
     private String USER_TOPIC;
     private String USER_VALIDATION_TOPIC;
@@ -48,7 +46,6 @@ public class UserDetailsService {
         USER_TOPIC = envProps.getProperty("user.topic.name");
         USER_VALIDATION_TOPIC = envProps.getProperty("user_validation.topic.name");
         EMAIL_TOPIC = envProps.getProperty("email.topic.name");
-
 
         final StoreBuilder pendingEmails = Stores
                 .keyValueStoreBuilder(Stores.persistentKeyValueStore(PENDING_EMAILS_STORE_NAME),
@@ -89,10 +86,10 @@ public class UserDetailsService {
             throw new IllegalArgumentException("This program takes one argument: the path to an environment configuration file.");
         }
 
-        UserDetailsService userDetailsService = new UserDetailsService();
-        Properties envProps = userDetailsService.loadEnvProperties(args[0]);
-        Properties streamProps = userDetailsService.buildStreamsProperties(envProps);
-        Topology topology = userDetailsService.buildTopology(envProps);
+        UserEmailValidatorService userEmailValidatorService = new UserEmailValidatorService();
+        Properties envProps = userEmailValidatorService.loadEnvProperties(args[0]);
+        Properties streamProps = userEmailValidatorService.buildStreamsProperties(envProps);
+        Topology topology = userEmailValidatorService.buildTopology(envProps);
         log.debug("Built stream");
 
         final KafkaStreams streams = new KafkaStreams(topology, streamProps);
