@@ -26,6 +26,9 @@ import java.util.concurrent.CountDownLatch;
 public class EmailService {
     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
 
+    private String USER_VALIDATION_TOPIC;
+    private String EMAIL_TOPIC;
+
     public Properties buildStreamsProperties(Properties envProps) {
         Properties props = new Properties();
 
@@ -37,9 +40,6 @@ public class EmailService {
 
         return props;
     }
-
-    public static String USER_VALIDATION_TOPIC;
-    public static String EMAIL_TOPIC;
 
     public Topology buildTopology(Properties envProps) {
         final StreamsBuilder builder = new StreamsBuilder();

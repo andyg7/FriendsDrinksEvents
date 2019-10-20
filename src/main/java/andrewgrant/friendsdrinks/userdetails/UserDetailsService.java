@@ -25,6 +25,10 @@ import java.util.concurrent.CountDownLatch;
 public class UserDetailsService {
     private static final Logger log = LoggerFactory.getLogger(UserDetailsService.class);
 
+    private String USER_TOPIC;
+    private String USER_VALIDATION_TOPIC;
+    private String EMAIL_TOPIC;
+
     public Properties buildStreamsProperties(Properties envProps) {
         Properties props = new Properties();
 
@@ -36,10 +40,6 @@ public class UserDetailsService {
 
         return props;
     }
-
-    public static String USER_TOPIC;
-    public static String USER_VALIDATION_TOPIC;
-    public static String EMAIL_TOPIC;
 
     public static final String PENDING_EMAILS_STORE_NAME = "pending_emails_store_name";
 
