@@ -9,7 +9,7 @@ import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
 
-import static andrewgrant.friendsdrinks.UserDetailsService.PENDING_EMAILS_STORE_NAME;
+import static andrewgrant.friendsdrinks.userdetails.UserDetailsService.PENDING_EMAILS_STORE_NAME;
 
 public class EmailValidator implements
         Transformer<String, EmailRequest, KeyValue<String, User>> {
@@ -25,22 +25,26 @@ public class EmailValidator implements
 
     @Override
     public KeyValue<String, User> transform(final String str, final EmailRequest emailRequest) {
-        Email email = emailRequest.getEmail();
-        if (pendingEmailsStore.get(email.getEmail()) != null) {
+        String requestedEmail = emailRequest.getUser().getEmail();
+        if (pendingEmailsStore.get(requestedEmail) != null) {
             User user = emailRequest.getUser();
             user.setEventType(UserEvent.REJECTED);
+            user.setErrorCode(ErrorCode.PENDING.name());
             return new KeyValue<>(str, user);
-        } else if (email == null || email.getEventType().equals(EmailEvent.RECLAIMED)) {
+        }
+        Email email = emailRequest.getEmail();
+        if (email == null || email.getEventType().equals(EmailEvent.RECLAIMED)) {
             User user = emailRequest.getUser();
             // Add email address to pending state store
-            pendingEmailsStore.put(email.getEmail(), user.getUserId());
+            pendingEmailsStore.put(requestedEmail, user.getUserId());
             user.setEventType(UserEvent.VALIDATED);
             return new KeyValue<>(str, user);
         } if (email.getEventType().equals(EmailEvent.RESERVED)) {
             // Remove email address from pending state store as its been reserved in the emails topic
-            pendingEmailsStore.put(email.getEmail(), null);
+            pendingEmailsStore.put(requestedEmail, null);
             User user = emailRequest.getUser();
             user.setEventType(UserEvent.REJECTED);
+            user.setErrorCode(ErrorCode.EXISTS.name());
             return new KeyValue<>(str, user);
         }
 

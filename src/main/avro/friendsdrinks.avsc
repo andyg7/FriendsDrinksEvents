@@ -4,7 +4,8 @@
   "name": "FriendsDrinks",
   "fields": [
     {"name": "requestId", "type": "string"},
-    {"name": "eventType", "type": {"type": "enum", "name": "FriendsDrinksEvent", "symbols" : ["NEW_SCHEDULE", "REJECTED", "RESERVED", "RECLAIMED"] } },
-    {"name": "userIds", "type": { "type": "array", "items": "string" } }
+    {"name": "requesterUserId", "type": "string"},
+    {"name": "userIds", "type": { "type": "array", "items": "string" } },
+    {"name": "schedule", "type": "string"}
   ]
 }

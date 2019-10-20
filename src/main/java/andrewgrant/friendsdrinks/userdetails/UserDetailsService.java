@@ -1,4 +1,4 @@
-package andrewgrant.friendsdrinks;
+package andrewgrant.friendsdrinks.userdetails;
 
 import andrewgrant.friendsdrinks.avro.Email;
 import andrewgrant.friendsdrinks.avro.User;

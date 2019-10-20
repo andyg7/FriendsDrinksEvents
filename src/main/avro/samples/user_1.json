@@ -1,1 +1,1 @@
-{"request_id": "abc", "user_id": "123", "event_type": "REQUESTED", "email": "dummyemail@gmail.com"}
+{"requestId": "abc", "userId": "123", "eventType": "REQUESTED", "email": "dummyemail@gmail.com"}
