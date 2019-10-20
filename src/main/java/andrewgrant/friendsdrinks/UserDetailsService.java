@@ -3,6 +3,8 @@ package andrewgrant.friendsdrinks;
 import andrewgrant.friendsdrinks.avro.Email;
 import andrewgrant.friendsdrinks.avro.User;
 import andrewgrant.friendsdrinks.avro.UserEvent;
+import andrewgrant.friendsdrinks.email.EmailRequest;
+import andrewgrant.friendsdrinks.email.EmailValidator;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 import org.apache.kafka.common.serialization.Serdes;

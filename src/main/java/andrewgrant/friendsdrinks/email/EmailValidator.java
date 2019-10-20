@@ -1,4 +1,4 @@
-package andrewgrant.friendsdrinks;
+package andrewgrant.friendsdrinks.email;
 
 import andrewgrant.friendsdrinks.avro.Email;
 import andrewgrant.friendsdrinks.avro.EmailEvent;
