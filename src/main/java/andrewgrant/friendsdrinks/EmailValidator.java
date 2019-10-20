@@ -30,10 +30,17 @@ public class EmailValidator implements
         if (email == null) {
             User user = emailRequest.getUser();
             user.setEventType(UserEvent.VALIDATED);
+            pendingEmailsStore.put(email.getEmail(), user.getUserId());
             return new KeyValue<>(str, user);
-        } else if (email.equals(EmailEvent.RECLAIMED)) {
+        } else if (email.getEventType().equals(EmailEvent.RECLAIMED)) {
             User user = emailRequest.getUser();
             user.setEventType(UserEvent.VALIDATED);
+            pendingEmailsStore.put(email.getEmail(), user.getUserId());
+            return new KeyValue<>(str, user);
+        } if (email.getEventType().equals(EmailEvent.RESERVED)) {
+            pendingEmailsStore.put(email.getEmail(), null);
+            User user = emailRequest.getUser();
+            user.setEventType(UserEvent.REJECTED);
             return new KeyValue<>(str, user);
         } else if (pendingEmailsStore.get(email.getEmail()) != null) {
             User user = emailRequest.getUser();
