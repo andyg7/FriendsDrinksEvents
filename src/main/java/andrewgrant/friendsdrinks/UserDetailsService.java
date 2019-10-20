@@ -9,6 +9,10 @@ import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.*;
+import org.apache.kafka.streams.processor.ProcessorContext;
+import org.apache.kafka.streams.state.KeyValueStore;
+import org.apache.kafka.streams.state.StoreBuilder;
+import org.apache.kafka.streams.state.Stores;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,11 +41,20 @@ public class UserDetailsService {
     public static String USER_VALIDATION_TOPIC;
     public static String EMAIL_TOPIC;
 
+    private static final String PENDING_EMAILS_STORE_NAME = "pending_emails_store_name";
+
     public Topology buildTopology(Properties envProps) {
         final StreamsBuilder builder = new StreamsBuilder();
         USER_TOPIC = envProps.getProperty("user.topic.name");
         USER_VALIDATION_TOPIC = envProps.getProperty("user_validation.topic.name");
         EMAIL_TOPIC = envProps.getProperty("email.topic.name");
+
+
+        final StoreBuilder pendingEmails = Stores
+                .keyValueStoreBuilder(Stores.persistentKeyValueStore(PENDING_EMAILS_STORE_NAME),
+                        Serdes.String(), Serdes.String())
+                .withLoggingEnabled(new HashMap<>());
+        builder.addStateStore(pendingEmails);
 
         KStream<String, User> userIdKStream = builder.stream(USER_TOPIC);
 
@@ -54,17 +67,10 @@ public class UserDetailsService {
         // Key by email so we can join on email.
         KStream<String, User> userKStream = userRequestsKStream.selectKey(((key, value) -> value.getEmail()));
 
-        KStream<String, User> validatedUser = userKStream.leftJoin(emailKTable, (leftValue, rightValue) -> {
-            if (rightValue == null ||
-                    rightValue.getEventType().equals(EmailEvent.RECLAIMED)) {
-                leftValue.setEventType(UserEvent.VALIDATED);
-                return leftValue;
-            } else {
-                leftValue.setEventType(UserEvent.REJECTED);
-                return leftValue;
-            }
-        });
+        KStream<String, EmailRequest> userAndEmail = userKStream.leftJoin(emailKTable, EmailRequest::new,
+                Joined.with(Serdes.String(), userAvroSerde(envProps), emailAvroSerde(envProps)));
 
+        KStream<String, User> validatedUser = userAndEmail.transform(EmailValidator::new, PENDING_EMAILS_STORE_NAME);
         validatedUser.to(USER_VALIDATION_TOPIC, Produced.with(Serdes.String(), userAvroSerde(envProps)));
 
         return builder.build();
@@ -132,4 +138,42 @@ public class UserDetailsService {
         }
         System.exit(0);
     }
+
+    private static class EmailValidator implements
+            Transformer<String, EmailRequest, KeyValue<String, User>> {
+
+        private KeyValueStore<String, String> pendingEmailsStore;
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public void init(final ProcessorContext context) {
+            pendingEmailsStore = (KeyValueStore<String, String>) context
+                    .getStateStore(PENDING_EMAILS_STORE_NAME);
+        }
+
+        @Override
+        public KeyValue<String, User> transform(final String str,
+                                                final EmailRequest emailRequest) {
+            Email email = emailRequest.getEmail();
+            if (email == null) {
+                User user = emailRequest.getUser();
+                user.setEventType(UserEvent.VALIDATED);
+                return new KeyValue<>(str, user);
+            } else if (email.equals(EmailEvent.RECLAIMED)) {
+                User user = emailRequest.getUser();
+                user.setEventType(UserEvent.VALIDATED);
+                return new KeyValue<>(str, user);
+            } else if (pendingEmailsStore.get(email.getEmail()) != null) {
+                User user = emailRequest.getUser();
+                user.setEventType(UserEvent.REJECTED);
+                return new KeyValue<>(str, user);
+            }
+            throw new RuntimeException();
+        }
+
+        @Override
+        public void close() {
+        }
+    }
+
 }
