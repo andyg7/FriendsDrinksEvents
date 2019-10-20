@@ -24,24 +24,20 @@ public class EmailValidator implements
     }
 
     @Override
-    public KeyValue<String, User> transform(final String str,
-                                            final EmailRequest emailRequest) {
+    public KeyValue<String, User> transform(final String str, final EmailRequest emailRequest) {
         Email email = emailRequest.getEmail();
         if (pendingEmailsStore.get(email.getEmail()) != null) {
             User user = emailRequest.getUser();
             user.setEventType(UserEvent.REJECTED);
             return new KeyValue<>(str, user);
-        } else if (email == null) {
+        } else if (email == null || email.getEventType().equals(EmailEvent.RECLAIMED)) {
             User user = emailRequest.getUser();
-            user.setEventType(UserEvent.VALIDATED);
+            // Add email address to pending state store
             pendingEmailsStore.put(email.getEmail(), user.getUserId());
-            return new KeyValue<>(str, user);
-        } else if (email.getEventType().equals(EmailEvent.RECLAIMED)) {
-            User user = emailRequest.getUser();
             user.setEventType(UserEvent.VALIDATED);
-            pendingEmailsStore.put(email.getEmail(), user.getUserId());
             return new KeyValue<>(str, user);
         } if (email.getEventType().equals(EmailEvent.RESERVED)) {
+            // Remove email address from pending state store as its been reserved in the emails topic
             pendingEmailsStore.put(email.getEmail(), null);
             User user = emailRequest.getUser();
             user.setEventType(UserEvent.REJECTED);
