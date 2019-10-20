@@ -40,8 +40,6 @@ public class EmailValidator implements
             user.setEventType(UserEvent.VALIDATED);
             return new KeyValue<>(str, user);
         } if (email.getEventType().equals(EmailEvent.RESERVED)) {
-            // Remove email address from pending state store as its been reserved in the emails topic
-            pendingEmailsStore.put(requestedEmail, null);
             User user = emailRequest.getUser();
             user.setEventType(UserEvent.REJECTED);
             user.setErrorCode(ErrorCode.EXISTS.name());

@@ -59,9 +59,14 @@ public class UserEmailValidatorService {
 
         // Filter by requests.
         KStream<String, User> userRequestsKStream = userIdKStream.filter(((key, value) -> value.getEventType()
-                .equals(UserEvent.REQUESTED)));
+                .equals(UserEvent.REQUESTED) || value.getEventType().equals(UserEvent.REJECTED)));
         // Key by email so we can join on email.
-        KStream<String, User> userKStream = userRequestsKStream.selectKey(((key, value) -> value.getEmail()));
+        KStream<String, User> userKStreamByEmail = userRequestsKStream.selectKey(((key, value) -> value.getEmail()));
+
+        // Update state store then filter on requests
+        KStream<String, User> userKStream = userKStreamByEmail.transform(PendingEmailsStateStoreCleaner::new,
+                PENDING_EMAILS_STORE_NAME)
+                .filter((key, value) -> value.getEventType().equals(UserEvent.REQUESTED));
 
         KStream<String, EmailRequest> userAndEmail = userKStream.leftJoin(emailKTable, EmailRequest::new,
                 Joined.with(Serdes.String(), UserAvroSerdeFactory.build(envProps), EmailAvroSerdeFactory.build(envProps)));
