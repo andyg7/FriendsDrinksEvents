@@ -27,7 +27,11 @@ public class EmailValidator implements
     public KeyValue<String, User> transform(final String str,
                                             final EmailRequest emailRequest) {
         Email email = emailRequest.getEmail();
-        if (email == null) {
+        if (pendingEmailsStore.get(email.getEmail()) != null) {
+            User user = emailRequest.getUser();
+            user.setEventType(UserEvent.REJECTED);
+            return new KeyValue<>(str, user);
+        } else if (email == null) {
             User user = emailRequest.getUser();
             user.setEventType(UserEvent.VALIDATED);
             pendingEmailsStore.put(email.getEmail(), user.getUserId());
@@ -42,11 +46,8 @@ public class EmailValidator implements
             User user = emailRequest.getUser();
             user.setEventType(UserEvent.REJECTED);
             return new KeyValue<>(str, user);
-        } else if (pendingEmailsStore.get(email.getEmail()) != null) {
-            User user = emailRequest.getUser();
-            user.setEventType(UserEvent.REJECTED);
-            return new KeyValue<>(str, user);
         }
+
         throw new RuntimeException();
     }
 
