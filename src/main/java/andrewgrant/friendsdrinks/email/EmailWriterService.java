@@ -43,9 +43,8 @@ public class EmailWriterService {
 
     public Topology buildTopology(Properties envProps) {
         final StreamsBuilder builder = new StreamsBuilder();
-        USER_TOPIC = envProps.getProperty("user.topic.name");
-        EMAIL_TOPIC = envProps.getProperty("email.topic.name");
 
+        USER_TOPIC = envProps.getProperty("user.topic.name");
         KStream<String, User> userValidations = builder.stream(USER_TOPIC,
                 Consumed.with(Serdes.String(), UserAvroSerdeFactory.build(envProps)));
 
@@ -59,6 +58,7 @@ public class EmailWriterService {
             return email;
         });
 
+        EMAIL_TOPIC = envProps.getProperty("email.topic.name");
         emailKStream.to(EMAIL_TOPIC, Produced.with(Serdes.String(), EmailAvroSerdeFactory.build(envProps)));
 
         return builder.build();

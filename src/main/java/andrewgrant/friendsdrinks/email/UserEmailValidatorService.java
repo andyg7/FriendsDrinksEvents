@@ -43,9 +43,6 @@ public class UserEmailValidatorService {
 
     public Topology buildTopology(Properties envProps) {
         final StreamsBuilder builder = new StreamsBuilder();
-        USER_TOPIC = envProps.getProperty("user.topic.name");
-        USER_VALIDATION_TOPIC = envProps.getProperty("user_validation.topic.name");
-        EMAIL_TOPIC = envProps.getProperty("email.topic.name");
 
         final StoreBuilder pendingEmails = Stores
                 .keyValueStoreBuilder(Stores.persistentKeyValueStore(PENDING_EMAILS_STORE_NAME),
@@ -53,8 +50,10 @@ public class UserEmailValidatorService {
                 .withLoggingEnabled(new HashMap<>());
         builder.addStateStore(pendingEmails);
 
+        USER_TOPIC = envProps.getProperty("user.topic.name");
         KStream<String, User> userIdKStream = builder.stream(USER_TOPIC);
 
+        EMAIL_TOPIC = envProps.getProperty("email.topic.name");
         KTable<String, Email> emailKTable = builder.table(EMAIL_TOPIC,
                 Consumed.with(Serdes.String(), EmailAvroSerdeFactory.build(envProps)));
 
@@ -68,6 +67,7 @@ public class UserEmailValidatorService {
                 Joined.with(Serdes.String(), UserAvroSerdeFactory.build(envProps), EmailAvroSerdeFactory.build(envProps)));
 
         KStream<String, User> validatedUser = userAndEmail.transform(EmailValidator::new, PENDING_EMAILS_STORE_NAME);
+        USER_VALIDATION_TOPIC = envProps.getProperty("user_validation.topic.name");
         validatedUser.to(USER_VALIDATION_TOPIC, Produced.with(Serdes.String(), UserAvroSerdeFactory.build(envProps)));
 
         return builder.build();
