@@ -2,15 +2,12 @@ package andrewgrant.friendsdrinks;
 
 import andrewgrant.friendsdrinks.avro.Email;
 import andrewgrant.friendsdrinks.avro.User;
-import andrewgrant.friendsdrinks.avro.EmailEvent;
 import andrewgrant.friendsdrinks.avro.UserEvent;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.*;
-import org.apache.kafka.streams.processor.ProcessorContext;
-import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
 import org.slf4j.Logger;
@@ -41,7 +38,7 @@ public class UserDetailsService {
     public static String USER_VALIDATION_TOPIC;
     public static String EMAIL_TOPIC;
 
-    private static final String PENDING_EMAILS_STORE_NAME = "pending_emails_store_name";
+    public static final String PENDING_EMAILS_STORE_NAME = "pending_emails_store_name";
 
     public Topology buildTopology(Properties envProps) {
         final StreamsBuilder builder = new StreamsBuilder();
@@ -139,41 +136,5 @@ public class UserDetailsService {
         System.exit(0);
     }
 
-    private static class EmailValidator implements
-            Transformer<String, EmailRequest, KeyValue<String, User>> {
-
-        private KeyValueStore<String, String> pendingEmailsStore;
-
-        @Override
-        @SuppressWarnings("unchecked")
-        public void init(final ProcessorContext context) {
-            pendingEmailsStore = (KeyValueStore<String, String>) context
-                    .getStateStore(PENDING_EMAILS_STORE_NAME);
-        }
-
-        @Override
-        public KeyValue<String, User> transform(final String str,
-                                                final EmailRequest emailRequest) {
-            Email email = emailRequest.getEmail();
-            if (email == null) {
-                User user = emailRequest.getUser();
-                user.setEventType(UserEvent.VALIDATED);
-                return new KeyValue<>(str, user);
-            } else if (email.equals(EmailEvent.RECLAIMED)) {
-                User user = emailRequest.getUser();
-                user.setEventType(UserEvent.VALIDATED);
-                return new KeyValue<>(str, user);
-            } else if (pendingEmailsStore.get(email.getEmail()) != null) {
-                User user = emailRequest.getUser();
-                user.setEventType(UserEvent.REJECTED);
-                return new KeyValue<>(str, user);
-            }
-            throw new RuntimeException();
-        }
-
-        @Override
-        public void close() {
-        }
-    }
 
 }
