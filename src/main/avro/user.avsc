@@ -7,6 +7,6 @@
     {"name": "eventType", "type": {"type": "enum", "name": "UserEvent", "symbols" : ["REQUESTED", "VALIDATED", "REJECTED"] } },
     {"name": "userId", "type": "string"},
     {"name": "email", "type": "string"},
-    {"name": "errorCode", "type": ["null", "string"] }
+    {"name": "errorCode", "type": ["null", "string"], "default": "null" }
   ]
 }

@@ -4,6 +4,7 @@ import andrewgrant.friendsdrinks.avro.Email;
 import andrewgrant.friendsdrinks.avro.EmailEvent;
 import andrewgrant.friendsdrinks.avro.User;
 import andrewgrant.friendsdrinks.avro.UserEvent;
+import andrewgrant.friendsdrinks.userdetails.UserAvroSerdeFactory;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 import org.apache.kafka.common.serialization.Serdes;
@@ -47,7 +48,7 @@ public class EmailService {
         EMAIL_TOPIC = envProps.getProperty("email.topic.name");
 
         KStream<String, User> userValidations = builder.stream(USER_VALIDATION_TOPIC,
-                Consumed.with(Serdes.String(), userAvroSerde(envProps)));
+                Consumed.with(Serdes.String(), UserAvroSerdeFactory.build(envProps)));
 
         KStream<String, User> userKStream = userValidations.filter(((key, value) ->
                 value.getEventType().equals(UserEvent.REJECTED) ||
@@ -73,31 +74,9 @@ public class EmailService {
             }
         }));
 
-        emailKStream.to(EMAIL_TOPIC, Produced.with(Serdes.String(), emailAvroSerde(envProps)));
+        emailKStream.to(EMAIL_TOPIC, Produced.with(Serdes.String(), EmailAvroSerdeFactory.build(envProps)));
 
         return builder.build();
-    }
-
-    private SpecificAvroSerde<Email> emailAvroSerde(Properties envProps) {
-        SpecificAvroSerde<Email> emailAvroSerde = new SpecificAvroSerde<>();
-
-        final HashMap<String, String> serdeConfig = new HashMap<>();
-        serdeConfig.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
-                envProps.getProperty("schema.registry.url"));
-
-        emailAvroSerde.configure(serdeConfig, false);
-        return emailAvroSerde;
-    }
-
-    private SpecificAvroSerde<User> userAvroSerde(Properties envProps) {
-        SpecificAvroSerde<User> userAvroSerde = new SpecificAvroSerde<>();
-
-        final HashMap<String, String> serdeConfig = new HashMap<>();
-        serdeConfig.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
-                envProps.getProperty("schema.registry.url"));
-
-        userAvroSerde.configure(serdeConfig, false);
-        return userAvroSerde;
     }
 
     public Properties loadEnvProperties(String fileName) throws IOException {

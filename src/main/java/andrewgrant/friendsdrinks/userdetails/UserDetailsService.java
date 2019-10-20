@@ -3,6 +3,7 @@ package andrewgrant.friendsdrinks.userdetails;
 import andrewgrant.friendsdrinks.avro.Email;
 import andrewgrant.friendsdrinks.avro.User;
 import andrewgrant.friendsdrinks.avro.UserEvent;
+import andrewgrant.friendsdrinks.email.EmailAvroSerdeFactory;
 import andrewgrant.friendsdrinks.email.EmailRequest;
 import andrewgrant.friendsdrinks.email.EmailValidator;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
@@ -58,7 +59,7 @@ public class UserDetailsService {
         KStream<String, User> userIdKStream = builder.stream(USER_TOPIC);
 
         KTable<String, Email> emailKTable = builder.table(EMAIL_TOPIC,
-                Consumed.with(Serdes.String(), emailAvroSerde(envProps)));
+                Consumed.with(Serdes.String(), EmailAvroSerdeFactory.build(envProps)));
 
         // Filter by requests.
         KStream<String, User> userRequestsKStream = userIdKStream.filter(((key, value) -> value.getEventType()
@@ -67,34 +68,12 @@ public class UserDetailsService {
         KStream<String, User> userKStream = userRequestsKStream.selectKey(((key, value) -> value.getEmail()));
 
         KStream<String, EmailRequest> userAndEmail = userKStream.leftJoin(emailKTable, EmailRequest::new,
-                Joined.with(Serdes.String(), userAvroSerde(envProps), emailAvroSerde(envProps)));
+                Joined.with(Serdes.String(), UserAvroSerdeFactory.build(envProps), EmailAvroSerdeFactory.build(envProps)));
 
         KStream<String, User> validatedUser = userAndEmail.transform(EmailValidator::new, PENDING_EMAILS_STORE_NAME);
-        validatedUser.to(USER_VALIDATION_TOPIC, Produced.with(Serdes.String(), userAvroSerde(envProps)));
+        validatedUser.to(USER_VALIDATION_TOPIC, Produced.with(Serdes.String(), UserAvroSerdeFactory.build(envProps)));
 
         return builder.build();
-    }
-
-    private SpecificAvroSerde<Email> emailAvroSerde(Properties envProps) {
-        SpecificAvroSerde<Email> emailAvroSerde = new SpecificAvroSerde<>();
-
-        final HashMap<String, String> serdeConfig = new HashMap<>();
-        serdeConfig.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
-                envProps.getProperty("schema.registry.url"));
-
-        emailAvroSerde.configure(serdeConfig, false);
-        return emailAvroSerde;
-    }
-
-    private SpecificAvroSerde<User> userAvroSerde(Properties envProps) {
-        SpecificAvroSerde<User> userAvroSerde = new SpecificAvroSerde<>();
-
-        final HashMap<String, String> serdeConfig = new HashMap<>();
-        serdeConfig.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
-                envProps.getProperty("schema.registry.url"));
-
-        userAvroSerde.configure(serdeConfig, false);
-        return userAvroSerde;
     }
 
     public Properties loadEnvProperties(String fileName) throws IOException {
@@ -102,7 +81,6 @@ public class UserDetailsService {
         FileInputStream input = new FileInputStream(fileName);
         envProps.load(input);
         input.close();
-
         return envProps;
     }
 

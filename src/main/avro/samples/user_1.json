@@ -1,1 +1,5 @@
-{"requestId": "abc", "userId": "123", "eventType": "REQUESTED", "email": "dummyemail@gmail.com"}
+{"requestId": "abc", "userId": "123", "eventType": "REQUESTED", "errorCode": null, "email": "dummyemail@gmail.com"}
+{"requestId": "abc", "userId": "123", "eventType": "REQUESTED", "errorCode": null, "email": "dummyemail@gmail.com1"}
+{"requestId": "abc", "userId": "123", "eventType": "REQUESTED", "errorCode": null, "email": "dummyemail@gmail.com2"}
+{"requestId": "abc", "userId": "123", "eventType": "REQUESTED", "errorCode": null, "email": "dummyemail@gmail.com3"}
+{"requestId": "abc", "userId": "123", "eventType": "REQUESTED", "errorCode": null, "email": "dummyemail@gmail.com4"}
