@@ -27,6 +27,7 @@ public class UserEmailValidatorService {
     private String USER_TOPIC;
     private String USER_VALIDATION_TOPIC;
     private String EMAIL_TOPIC;
+    private String EMAIL_TMP_TOPIC;
 
     public Properties buildStreamsProperties(Properties envProps) {
         Properties props = new Properties();
@@ -61,9 +62,10 @@ public class UserEmailValidatorService {
                 .transform(PendingEmailsStateStoreCleaner::new, PENDING_EMAILS_STORE_NAME);
 
         // Write events to a tmp topic so we can rebuild a table
+        EMAIL_TMP_TOPIC = envProps.getProperty("email_tmp.topic.name");
         emailKStream.filter(((key, value) -> value.getEventType().equals(EmailEvent.RESERVED)))
-                .to("email_tmp", Produced.with(Serdes.String(), EmailAvroSerdeFactory.build(envProps)));
-        KTable<String, Email> emailKTable = builder.table("email_tmp");
+                .to(EMAIL_TMP_TOPIC, Produced.with(Serdes.String(), EmailAvroSerdeFactory.build(envProps)));
+        KTable<String, Email> emailKTable = builder.table(EMAIL_TMP_TOPIC);
 
         // Filter by requests.
         KStream<String, User> userRequestsKStream = userIdKStream.filter(((key, value) -> value.getEventType()
