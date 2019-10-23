@@ -22,7 +22,8 @@ public class PendingEmailsStateStoreCleaner implements
 
     @Override
     public KeyValue<String, Email> transform(String key, Email value) {
-        if (value.getEventType().equals(EmailEvent.REJECTED)) {
+        if (value.getEventType().equals(EmailEvent.REJECTED) &&
+                pendingEmailsStore.get(value.getEmail()).equals(value.getUserId())) {
             pendingEmailsStore.put(value.getEmail(), null);
         }
         return new KeyValue<>(key, value);
