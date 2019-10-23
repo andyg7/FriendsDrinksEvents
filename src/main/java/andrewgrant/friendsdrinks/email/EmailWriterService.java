@@ -49,12 +49,19 @@ public class EmailWriterService {
                 Consumed.with(Serdes.String(), UserAvroSerdeFactory.build(envProps)));
 
         KStream<String, Email> emailKStream = userValidations.filter(((key, value) ->
-                value.getEventType().equals(UserEvent.VALIDATED)
+                value.getEventType().equals(UserEvent.VALIDATED) || value.getEventType().equals(UserEvent.REJECTED)
         )).mapValues((key, value) -> {
+            EmailEvent emailEvent;
+            if (value.getEventType().equals(UserEvent.VALIDATED)) {
+                emailEvent = EmailEvent.RESERVED;
+            } else {
+                emailEvent = EmailEvent.REJECTED;
+            }
             Email email = new Email();
             email.setRequestId(value.getRequestId());
             email.setEmail(value.getEmail());
-            email.setEventType(EmailEvent.RESERVED);
+            email.setEventType(emailEvent);
+            email.setUserId(value.getUserId());
             return email;
         });
 
