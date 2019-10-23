@@ -55,9 +55,15 @@ public class UserEmailValidatorService {
         KStream<String, User> userIdKStream = builder.stream(USER_TOPIC);
 
         EMAIL_TOPIC = envProps.getProperty("email.topic.name");
+        // Get stream of email events and clean up state store as they come in
         KStream<String, Email> emailKStream = builder.stream(EMAIL_TOPIC,
                 Consumed.with(Serdes.String(), EmailAvroSerdeFactory.build(envProps)))
                 .transform(PendingEmailsStateStoreCleaner::new, PENDING_EMAILS_STORE_NAME);
+
+        // Write events to a tmp topic so we can rebuild a table
+        emailKStream.filter(((key, value) -> value.getEventType().equals(EmailEvent.RESERVED)))
+                .to("email_tmp", Produced.with(Serdes.String(), EmailAvroSerdeFactory.build(envProps)));
+        KTable<String, Email> emailKTable = builder.table("email_tmp");
 
         // Filter by requests.
         KStream<String, User> userRequestsKStream = userIdKStream.filter(((key, value) -> value.getEventType()
@@ -65,16 +71,6 @@ public class UserEmailValidatorService {
         // Key by email so we can join on email.
         KStream<String, User> userKStream = userRequestsKStream.selectKey(((key, value) -> value.getEmail()));
 
-        // Update state store then filter on requests
-        /*
-        KStream<String, User> userKStream = userKStreamByEmail.transform(PendingEmailsStateStoreCleaner::new,
-                PENDING_EMAILS_STORE_NAME)
-                .filter((key, value) -> value.getEventType().equals(UserEvent.REQUESTED));
-         */
-
-        emailKStream.filter(((key, value) -> value.getEventType().equals(EmailEvent.RESERVED)))
-                .to("email_tmp", Produced.with(Serdes.String(), EmailAvroSerdeFactory.build(envProps)));
-        KTable<String, Email> emailKTable = builder.table("email_tmp");
 
         KStream<String, EmailRequest> userAndEmail = userKStream.leftJoin(emailKTable, EmailRequest::new,
                 Joined.with(Serdes.String(), UserAvroSerdeFactory.build(envProps), EmailAvroSerdeFactory.build(envProps)));
