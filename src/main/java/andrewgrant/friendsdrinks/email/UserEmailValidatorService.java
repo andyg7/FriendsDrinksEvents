@@ -52,9 +52,6 @@ public class UserEmailValidatorService {
                 .withLoggingEnabled(new HashMap<>());
         builder.addStateStore(pendingEmails);
 
-        USER_TOPIC = envProps.getProperty("user.topic.name");
-        KStream<String, User> userIdKStream = builder.stream(USER_TOPIC);
-
         EMAIL_TOPIC = envProps.getProperty("email.topic.name");
         // Get stream of email events and clean up state store as they come in
         KStream<String, Email> emailKStream = builder.stream(EMAIL_TOPIC,
@@ -67,12 +64,13 @@ public class UserEmailValidatorService {
                 .to(EMAIL_TMP_TOPIC, Produced.with(Serdes.String(), EmailAvroSerdeFactory.build(envProps)));
         KTable<String, Email> emailKTable = builder.table(EMAIL_TMP_TOPIC);
 
+        USER_TOPIC = envProps.getProperty("user.topic.name");
+        KStream<String, User> userIdKStream = builder.stream(USER_TOPIC);
         // Filter by requests.
         KStream<String, User> userRequestsKStream = userIdKStream.filter(((key, value) -> value.getEventType()
                 .equals(UserEvent.REQUESTED)));
         // Key by email so we can join on email.
         KStream<String, User> userKStream = userRequestsKStream.selectKey(((key, value) -> value.getEmail()));
-
 
         KStream<String, EmailRequest> userAndEmail = userKStream.leftJoin(emailKTable, EmailRequest::new,
                 Joined.with(Serdes.String(), UserAvroSerdeFactory.build(envProps), EmailAvroSerdeFactory.build(envProps)));
