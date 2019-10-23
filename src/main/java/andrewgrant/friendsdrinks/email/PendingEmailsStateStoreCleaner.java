@@ -1,7 +1,7 @@
 package andrewgrant.friendsdrinks.email;
 
-import andrewgrant.friendsdrinks.avro.User;
-import andrewgrant.friendsdrinks.avro.UserEvent;
+import andrewgrant.friendsdrinks.avro.Email;
+import andrewgrant.friendsdrinks.avro.EmailEvent;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
@@ -10,7 +10,7 @@ import org.apache.kafka.streams.state.KeyValueStore;
 import static andrewgrant.friendsdrinks.email.UserEmailValidatorService.PENDING_EMAILS_STORE_NAME;
 
 public class PendingEmailsStateStoreCleaner implements
-        Transformer<String, User, KeyValue<String, User>> {
+        Transformer<String, Email, KeyValue<String, Email>> {
 
     private KeyValueStore<String, String> pendingEmailsStore;
 
@@ -21,8 +21,8 @@ public class PendingEmailsStateStoreCleaner implements
     }
 
     @Override
-    public KeyValue<String, User> transform(String key, User value) {
-        if (value.getEventType().equals(UserEvent.REJECTED)) {
+    public KeyValue<String, Email> transform(String key, Email value) {
+        if (value.getEventType().equals(EmailEvent.REJECTED)) {
             pendingEmailsStore.put(value.getEmail(), null);
         }
         return new KeyValue<>(key, value);

@@ -13,8 +13,8 @@ import org.apache.avro.message.SchemaStore;
 @SuppressWarnings("all")
 @org.apache.avro.specific.AvroGenerated
 public class Email extends org.apache.avro.specific.SpecificRecordBase implements org.apache.avro.specific.SpecificRecord {
-  private static final long serialVersionUID = -3297864768550933477L;
-  public static final org.apache.avro.Schema SCHEMA$ = new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"Email\",\"namespace\":\"andrewgrant.friendsdrinks.avro\",\"fields\":[{\"name\":\"requestId\",\"type\":{\"type\":\"string\",\"avro.java.string\":\"String\"}},{\"name\":\"eventType\",\"type\":{\"type\":\"enum\",\"name\":\"EmailEvent\",\"symbols\":[\"RESERVED\"]}},{\"name\":\"email\",\"type\":{\"type\":\"string\",\"avro.java.string\":\"String\"}}]}");
+  private static final long serialVersionUID = -6172048940621211005L;
+  public static final org.apache.avro.Schema SCHEMA$ = new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"Email\",\"namespace\":\"andrewgrant.friendsdrinks.avro\",\"fields\":[{\"name\":\"requestId\",\"type\":{\"type\":\"string\",\"avro.java.string\":\"String\"}},{\"name\":\"eventType\",\"type\":{\"type\":\"enum\",\"name\":\"EmailEvent\",\"symbols\":[\"RESERVED\",\"REJECTED\"]}},{\"name\":\"email\",\"type\":{\"type\":\"string\",\"avro.java.string\":\"String\"}},{\"name\":\"userId\",\"type\":{\"type\":\"string\",\"avro.java.string\":\"String\"}}]}");
   public static org.apache.avro.Schema getClassSchema() { return SCHEMA$; }
 
   private static SpecificData MODEL$ = new SpecificData();
@@ -54,6 +54,7 @@ public class Email extends org.apache.avro.specific.SpecificRecordBase implement
   @Deprecated public java.lang.String requestId;
   @Deprecated public andrewgrant.friendsdrinks.avro.EmailEvent eventType;
   @Deprecated public java.lang.String email;
+  @Deprecated public java.lang.String userId;
 
   /**
    * Default constructor.  Note that this does not initialize fields
@@ -67,11 +68,13 @@ public class Email extends org.apache.avro.specific.SpecificRecordBase implement
    * @param requestId The new value for requestId
    * @param eventType The new value for eventType
    * @param email The new value for email
+   * @param userId The new value for userId
    */
-  public Email(java.lang.String requestId, andrewgrant.friendsdrinks.avro.EmailEvent eventType, java.lang.String email) {
+  public Email(java.lang.String requestId, andrewgrant.friendsdrinks.avro.EmailEvent eventType, java.lang.String email, java.lang.String userId) {
     this.requestId = requestId;
     this.eventType = eventType;
     this.email = email;
+    this.userId = userId;
   }
 
   public org.apache.avro.Schema getSchema() { return SCHEMA$; }
@@ -81,6 +84,7 @@ public class Email extends org.apache.avro.specific.SpecificRecordBase implement
     case 0: return requestId;
     case 1: return eventType;
     case 2: return email;
+    case 3: return userId;
     default: throw new org.apache.avro.AvroRuntimeException("Bad index");
     }
   }
@@ -92,6 +96,7 @@ public class Email extends org.apache.avro.specific.SpecificRecordBase implement
     case 0: requestId = (java.lang.String)value$; break;
     case 1: eventType = (andrewgrant.friendsdrinks.avro.EmailEvent)value$; break;
     case 2: email = (java.lang.String)value$; break;
+    case 3: userId = (java.lang.String)value$; break;
     default: throw new org.apache.avro.AvroRuntimeException("Bad index");
     }
   }
@@ -145,6 +150,22 @@ public class Email extends org.apache.avro.specific.SpecificRecordBase implement
   }
 
   /**
+   * Gets the value of the 'userId' field.
+   * @return The value of the 'userId' field.
+   */
+  public java.lang.String getUserId() {
+    return userId;
+  }
+
+  /**
+   * Sets the value of the 'userId' field.
+   * @param value the value to set.
+   */
+  public void setUserId(java.lang.String value) {
+    this.userId = value;
+  }
+
+  /**
    * Creates a new Email RecordBuilder.
    * @return A new Email RecordBuilder
    */
@@ -179,6 +200,7 @@ public class Email extends org.apache.avro.specific.SpecificRecordBase implement
     private java.lang.String requestId;
     private andrewgrant.friendsdrinks.avro.EmailEvent eventType;
     private java.lang.String email;
+    private java.lang.String userId;
 
     /** Creates a new Builder */
     private Builder() {
@@ -203,6 +225,10 @@ public class Email extends org.apache.avro.specific.SpecificRecordBase implement
         this.email = data().deepCopy(fields()[2].schema(), other.email);
         fieldSetFlags()[2] = true;
       }
+      if (isValidValue(fields()[3], other.userId)) {
+        this.userId = data().deepCopy(fields()[3].schema(), other.userId);
+        fieldSetFlags()[3] = true;
+      }
     }
 
     /**
@@ -222,6 +248,10 @@ public class Email extends org.apache.avro.specific.SpecificRecordBase implement
       if (isValidValue(fields()[2], other.email)) {
         this.email = data().deepCopy(fields()[2].schema(), other.email);
         fieldSetFlags()[2] = true;
+      }
+      if (isValidValue(fields()[3], other.userId)) {
+        this.userId = data().deepCopy(fields()[3].schema(), other.userId);
+        fieldSetFlags()[3] = true;
       }
     }
 
@@ -342,6 +372,45 @@ public class Email extends org.apache.avro.specific.SpecificRecordBase implement
       return this;
     }
 
+    /**
+      * Gets the value of the 'userId' field.
+      * @return The value.
+      */
+    public java.lang.String getUserId() {
+      return userId;
+    }
+
+    /**
+      * Sets the value of the 'userId' field.
+      * @param value The value of 'userId'.
+      * @return This builder.
+      */
+    public andrewgrant.friendsdrinks.avro.Email.Builder setUserId(java.lang.String value) {
+      validate(fields()[3], value);
+      this.userId = value;
+      fieldSetFlags()[3] = true;
+      return this;
+    }
+
+    /**
+      * Checks whether the 'userId' field has been set.
+      * @return True if the 'userId' field has been set, false otherwise.
+      */
+    public boolean hasUserId() {
+      return fieldSetFlags()[3];
+    }
+
+
+    /**
+      * Clears the value of the 'userId' field.
+      * @return This builder.
+      */
+    public andrewgrant.friendsdrinks.avro.Email.Builder clearUserId() {
+      userId = null;
+      fieldSetFlags()[3] = false;
+      return this;
+    }
+
     @Override
     @SuppressWarnings("unchecked")
     public Email build() {
@@ -350,6 +419,7 @@ public class Email extends org.apache.avro.specific.SpecificRecordBase implement
         record.requestId = fieldSetFlags()[0] ? this.requestId : (java.lang.String) defaultValue(fields()[0]);
         record.eventType = fieldSetFlags()[1] ? this.eventType : (andrewgrant.friendsdrinks.avro.EmailEvent) defaultValue(fields()[1]);
         record.email = fieldSetFlags()[2] ? this.email : (java.lang.String) defaultValue(fields()[2]);
+        record.userId = fieldSetFlags()[3] ? this.userId : (java.lang.String) defaultValue(fields()[3]);
         return record;
       } catch (java.lang.Exception e) {
         throw new org.apache.avro.AvroRuntimeException(e);

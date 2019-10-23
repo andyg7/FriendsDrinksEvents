@@ -1,6 +1,7 @@
 package andrewgrant.friendsdrinks.email;
 
 import andrewgrant.friendsdrinks.avro.Email;
+import andrewgrant.friendsdrinks.avro.EmailEvent;
 import andrewgrant.friendsdrinks.avro.User;
 import andrewgrant.friendsdrinks.avro.UserEvent;
 import andrewgrant.friendsdrinks.user.UserAvroSerdeFactory;
@@ -54,19 +55,26 @@ public class UserEmailValidatorService {
         KStream<String, User> userIdKStream = builder.stream(USER_TOPIC);
 
         EMAIL_TOPIC = envProps.getProperty("email.topic.name");
-        KTable<String, Email> emailKTable = builder.table(EMAIL_TOPIC,
-                Consumed.with(Serdes.String(), EmailAvroSerdeFactory.build(envProps)));
+        KStream<String, Email> emailKStream = builder.stream(EMAIL_TOPIC,
+                Consumed.with(Serdes.String(), EmailAvroSerdeFactory.build(envProps)))
+                .transform(PendingEmailsStateStoreCleaner::new, PENDING_EMAILS_STORE_NAME);
 
         // Filter by requests.
         KStream<String, User> userRequestsKStream = userIdKStream.filter(((key, value) -> value.getEventType()
-                .equals(UserEvent.REQUESTED) || value.getEventType().equals(UserEvent.REJECTED)));
+                .equals(UserEvent.REQUESTED)));
         // Key by email so we can join on email.
-        KStream<String, User> userKStreamByEmail = userRequestsKStream.selectKey(((key, value) -> value.getEmail()));
+        KStream<String, User> userKStream = userRequestsKStream.selectKey(((key, value) -> value.getEmail()));
 
         // Update state store then filter on requests
+        /*
         KStream<String, User> userKStream = userKStreamByEmail.transform(PendingEmailsStateStoreCleaner::new,
                 PENDING_EMAILS_STORE_NAME)
                 .filter((key, value) -> value.getEventType().equals(UserEvent.REQUESTED));
+         */
+
+        emailKStream.filter(((key, value) -> value.getEventType().equals(EmailEvent.RESERVED)))
+                .to("email_tmp", Produced.with(Serdes.String(), EmailAvroSerdeFactory.build(envProps)));
+        KTable<String, Email> emailKTable = builder.table("email_tmp");
 
         KStream<String, EmailRequest> userAndEmail = userKStream.leftJoin(emailKTable, EmailRequest::new,
                 Joined.with(Serdes.String(), UserAvroSerdeFactory.build(envProps), EmailAvroSerdeFactory.build(envProps)));
