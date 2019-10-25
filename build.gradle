@@ -64,15 +64,3 @@ task run(type: JavaExec) {
    args = ['configuration/dev.properties']
 }
 
-jar {
-  manifest {
-    attributes(
-      'Class-Path': configurations.compile.collect { it.getName() }.join(' '),
-      'Main-Class': 'andrewgrant.friendsdrinks.userdetails.UserDetailsService'
-    )
-  }
-}
-
-shadowJar {
-    archiveName = "kstreams-transform-standalone-${version}.${extension}"
-}
