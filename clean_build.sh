@@ -4,5 +4,4 @@ set -ex
 
 ./gradlew clean
 ./gradlew build
-./gradlew shadowJar
 
