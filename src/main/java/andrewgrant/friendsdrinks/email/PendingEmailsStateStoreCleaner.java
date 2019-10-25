@@ -1,14 +1,18 @@
 package andrewgrant.friendsdrinks.email;
 
-import andrewgrant.friendsdrinks.avro.Email;
-import andrewgrant.friendsdrinks.avro.EmailEvent;
+import static andrewgrant.friendsdrinks.email.UserEmailValidatorService.PENDING_EMAILS_STORE_NAME;
+
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
 
-import static andrewgrant.friendsdrinks.email.UserEmailValidatorService.PENDING_EMAILS_STORE_NAME;
+import andrewgrant.friendsdrinks.avro.Email;
+import andrewgrant.friendsdrinks.avro.EmailEvent;
 
+/**
+ * Cleans state store holding pending emails.
+ */
 public class PendingEmailsStateStoreCleaner implements
         Transformer<String, Email, KeyValue<String, Email>> {
 
@@ -16,8 +20,8 @@ public class PendingEmailsStateStoreCleaner implements
 
     @Override
     public void init(ProcessorContext context) {
-        pendingEmailsStore = (KeyValueStore<String, String>) context
-                .getStateStore(PENDING_EMAILS_STORE_NAME);
+        pendingEmailsStore = (KeyValueStore<String, String>)
+                context.getStateStore(PENDING_EMAILS_STORE_NAME);
     }
 
     @Override

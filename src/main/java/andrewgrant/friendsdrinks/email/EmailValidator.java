@@ -1,18 +1,21 @@
 package andrewgrant.friendsdrinks.email;
 
-import andrewgrant.friendsdrinks.avro.Email;
-import andrewgrant.friendsdrinks.avro.EmailEvent;
-import andrewgrant.friendsdrinks.avro.User;
-import andrewgrant.friendsdrinks.avro.UserEvent;
+import static andrewgrant.friendsdrinks.email.UserEmailValidatorService.PENDING_EMAILS_STORE_NAME;
+
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
 
-import static andrewgrant.friendsdrinks.email.UserEmailValidatorService.PENDING_EMAILS_STORE_NAME;
+import andrewgrant.friendsdrinks.avro.Email;
+import andrewgrant.friendsdrinks.avro.EmailEvent;
+import andrewgrant.friendsdrinks.avro.User;
+import andrewgrant.friendsdrinks.avro.UserEvent;
 
-public class EmailValidator implements
-        Transformer<String, EmailRequest, KeyValue<String, User>> {
+/**
+ * Validates email request.
+ */
+public class EmailValidator implements Transformer<String, EmailRequest, KeyValue<String, User>> {
 
     private KeyValueStore<String, String> pendingEmailsStore;
 
@@ -39,7 +42,7 @@ public class EmailValidator implements
             pendingEmailsStore.put(requestedEmail, user.getUserId());
             user.setEventType(UserEvent.VALIDATED);
             return new KeyValue<>(str, user);
-        } if (email.getEventType().equals(EmailEvent.RESERVED)) {
+        } else if (email.getEventType().equals(EmailEvent.RESERVED)) {
             User user = emailRequest.getUser();
             user.setEventType(UserEvent.REJECTED);
             user.setErrorCode(ErrorCode.EXISTS.name());

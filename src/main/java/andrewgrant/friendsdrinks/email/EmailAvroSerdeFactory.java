@@ -1,12 +1,17 @@
 package andrewgrant.friendsdrinks.email;
 
-import andrewgrant.friendsdrinks.avro.Email;
-import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
-import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
-
 import java.util.HashMap;
 import java.util.Properties;
 
+import andrewgrant.friendsdrinks.avro.Email;
+
+import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
+import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
+
+
+/**
+ * Factory class for building an avro encoder for Email.
+ */
 public class EmailAvroSerdeFactory {
 
     public static SpecificAvroSerde<Email> build(Properties properties) {

@@ -1,12 +1,15 @@
 package andrewgrant.friendsdrinks.user;
 
+import java.util.HashMap;
+import java.util.Properties;
+
 import andrewgrant.friendsdrinks.avro.User;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 
-import java.util.HashMap;
-import java.util.Properties;
-
+/**
+ * Factory for building a avro encoder/decoder of User.
+ */
 public class UserAvroSerdeFactory {
 
     public static SpecificAvroSerde<User> build(Properties properties) {

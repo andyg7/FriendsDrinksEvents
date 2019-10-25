@@ -1,14 +1,10 @@
 package andrewgrant.friendsdrinks.email;
 
-import andrewgrant.friendsdrinks.avro.Email;
-import andrewgrant.friendsdrinks.avro.EmailEvent;
-import andrewgrant.friendsdrinks.avro.User;
-import andrewgrant.friendsdrinks.avro.UserEvent;
-import andrewgrant.friendsdrinks.user.UserAvroSerdeFactory;
-import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
-import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.streams.*;
+import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.StreamsBuilder;
+import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.*;
 import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
@@ -21,22 +17,35 @@ import java.util.HashMap;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
+import andrewgrant.friendsdrinks.avro.Email;
+import andrewgrant.friendsdrinks.avro.EmailEvent;
+import andrewgrant.friendsdrinks.avro.User;
+import andrewgrant.friendsdrinks.avro.UserEvent;
+import andrewgrant.friendsdrinks.user.UserAvroSerdeFactory;
+import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
+import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
+
+/**
+ * Service for validating requests based on email.
+ */
 public class UserEmailValidatorService {
     private static final Logger log = LoggerFactory.getLogger(UserEmailValidatorService.class);
 
-    private String USER_TOPIC;
-    private String USER_VALIDATION_TOPIC;
-    private String EMAIL_TOPIC;
-    private String EMAIL_TMP_TOPIC;
+    private String userTopic;
+    private String userValidationTopic;
+    private String emailTopic;
+    private String emailTmpTopic;
 
     public Properties buildStreamsProperties(Properties envProps) {
         Properties props = new Properties();
 
         props.put(StreamsConfig.APPLICATION_ID_CONFIG, envProps.getProperty("application.id"));
-        props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, envProps.getProperty("bootstrap.servers"));
+        props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG,
+                envProps.getProperty("bootstrap.servers"));
         props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
         props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, SpecificAvroSerde.class);
-        props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, envProps.getProperty("schema.registry.url"));
+        props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
+                envProps.getProperty("schema.registry.url"));
 
         return props;
     }
@@ -52,33 +61,42 @@ public class UserEmailValidatorService {
                 .withLoggingEnabled(new HashMap<>());
         builder.addStateStore(pendingEmails);
 
-        EMAIL_TOPIC = envProps.getProperty("email.topic.name");
+        emailTopic = envProps.getProperty("email.topic.name");
         // Get stream of email events and clean up state store as they come in
-        KStream<String, Email> emailKStream = builder.stream(EMAIL_TOPIC,
+        KStream<String, Email> emailKStream = builder.stream(emailTopic,
                 Consumed.with(Serdes.String(), EmailAvroSerdeFactory.build(envProps)))
                 .transform(PendingEmailsStateStoreCleaner::new, PENDING_EMAILS_STORE_NAME);
 
         // Write events to a tmp topic so we can rebuild a table
-        EMAIL_TMP_TOPIC = envProps.getProperty("email_tmp.topic.name");
+        emailTmpTopic = envProps.getProperty("email_tmp.topic.name");
         emailKStream.filter(((key, value) -> value.getEventType().equals(EmailEvent.RESERVED)))
-                .to(EMAIL_TMP_TOPIC, Produced.with(Serdes.String(), EmailAvroSerdeFactory.build(envProps)));
-        KTable<String, Email> emailKTable = builder.table(EMAIL_TMP_TOPIC);
+                .to(emailTmpTopic,
+                        Produced.with(Serdes.String(),
+                                EmailAvroSerdeFactory.build(envProps)));
+        KTable<String, Email> emailKTable = builder.table(emailTmpTopic);
 
-        USER_TOPIC = envProps.getProperty("user.topic.name");
-        KStream<String, User> userIdKStream = builder.stream(USER_TOPIC);
+        userTopic = envProps.getProperty("user.topic.name");
+        KStream<String, User> userIdKStream = builder.stream(userTopic);
         // Filter by requests.
-        KStream<String, User> userRequestsKStream = userIdKStream.filter(((key, value) -> value.getEventType()
-                .equals(UserEvent.REQUESTED)));
+        KStream<String, User> userRequestsKStream = userIdKStream.
+                filter(((key, value) -> value.getEventType().equals(UserEvent.REQUESTED)));
         // Key by email so we can join on email.
-        KStream<String, User> userKStream = userRequestsKStream.selectKey(((key, value) -> value.getEmail()));
+        KStream<String, User> userKStream = userRequestsKStream
+                .selectKey(((key, value) -> value.getEmail()));
 
-        KStream<String, EmailRequest> userAndEmail = userKStream.leftJoin(emailKTable, EmailRequest::new,
-                Joined.with(Serdes.String(), UserAvroSerdeFactory.build(envProps), EmailAvroSerdeFactory.build(envProps)));
+        KStream<String, EmailRequest> userAndEmail = userKStream.leftJoin(emailKTable,
+                EmailRequest::new,
+                Joined.with(Serdes.String(),
+                        UserAvroSerdeFactory.build(envProps),
+                        EmailAvroSerdeFactory.build(envProps)));
 
-        KStream<String, User> validatedUser = userAndEmail.transform(EmailValidator::new, PENDING_EMAILS_STORE_NAME);
+        KStream<String, User> validatedUser =
+                userAndEmail.transform(EmailValidator::new, PENDING_EMAILS_STORE_NAME);
 
-        USER_VALIDATION_TOPIC = envProps.getProperty("user_validation.topic.name");
-        validatedUser.to(USER_VALIDATION_TOPIC, Produced.with(Serdes.String(), UserAvroSerdeFactory.build(envProps)));
+        userValidationTopic = envProps.getProperty("user_validation.topic.name");
+        validatedUser.to(userValidationTopic,
+                Produced.with(Serdes.String(),
+                        UserAvroSerdeFactory.build(envProps)));
 
         return builder.build();
     }
@@ -93,7 +111,8 @@ public class UserEmailValidatorService {
 
     public static void main(String[] args) throws Exception {
         if (args.length < 1) {
-            throw new IllegalArgumentException("This program takes one argument: the path to an environment configuration file.");
+            throw new IllegalArgumentException("This program takes one argument: " +
+                    "the path to an environment configuration file.");
         }
 
         UserEmailValidatorService userEmailValidatorService = new UserEmailValidatorService();
