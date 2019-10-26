@@ -31,11 +31,6 @@ import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 public class UserEmailValidatorService {
     private static final Logger log = LoggerFactory.getLogger(UserEmailValidatorService.class);
 
-    private String userTopic;
-    private String userValidationTopic;
-    private String emailTopic;
-    private String emailTmpTopic;
-
     public Properties buildStreamsProperties(Properties envProps) {
         Properties props = new Properties();
 
@@ -61,21 +56,21 @@ public class UserEmailValidatorService {
                 .withLoggingEnabled(new HashMap<>());
         builder.addStateStore(pendingEmails);
 
-        emailTopic = envProps.getProperty("email.topic.name");
+        final String emailTopic = envProps.getProperty("email.topic.name");
         // Get stream of email events and clean up state store as they come in
         KStream<String, Email> emailKStream = builder.stream(emailTopic,
                 Consumed.with(Serdes.String(), EmailAvroSerdeFactory.build(envProps)))
                 .transform(PendingEmailsStateStoreCleaner::new, PENDING_EMAILS_STORE_NAME);
 
         // Write events to a tmp topic so we can rebuild a table
-        emailTmpTopic = envProps.getProperty("email_tmp.topic.name");
+        final String emailTmpTopic = envProps.getProperty("email_tmp.topic.name");
         emailKStream.filter(((key, value) -> value.getEventType().equals(EmailEvent.RESERVED)))
                 .to(emailTmpTopic,
                         Produced.with(Serdes.String(),
                                 EmailAvroSerdeFactory.build(envProps)));
         KTable<String, Email> emailKTable = builder.table(emailTmpTopic);
 
-        userTopic = envProps.getProperty("user.topic.name");
+        final String userTopic = envProps.getProperty("user.topic.name");
         KStream<String, User> userIdKStream = builder.stream(userTopic);
         // Filter by requests.
         KStream<String, User> userRequestsKStream = userIdKStream.
@@ -93,7 +88,7 @@ public class UserEmailValidatorService {
         KStream<String, User> validatedUser =
                 userAndEmail.transform(EmailValidator::new, PENDING_EMAILS_STORE_NAME);
 
-        userValidationTopic = envProps.getProperty("user_validation.topic.name");
+        final String userValidationTopic = envProps.getProperty("user_validation.topic.name");
         validatedUser.to(userValidationTopic,
                 Produced.with(Serdes.String(),
                         UserAvroSerdeFactory.build(envProps)));

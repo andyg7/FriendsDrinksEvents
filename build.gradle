@@ -61,12 +61,12 @@ test {
 task runUserDetailsService(type: JavaExec) {
    main = 'andrewgrant.friendsdrinks.email.UserEmailValidatorService'
    classpath = sourceSets.main.runtimeClasspath
-   args = ['configuration/dev.properties']
+   args = ['config/app/dev.properties']
 }
 
 task runEmailWriterService(type: JavaExec) {
     main = 'andrewgrant.friendsdrinks.email.EmailWriterService'
     classpath = sourceSets.main.runtimeClasspath
-    args = ['configuration/dev.properties']
+    args = ['config/app/dev.properties']
 }
 
