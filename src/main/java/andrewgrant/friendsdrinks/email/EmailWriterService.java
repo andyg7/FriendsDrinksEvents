@@ -35,9 +35,6 @@ import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 public class EmailWriterService {
     private static final Logger log = LoggerFactory.getLogger(EmailWriterService.class);
 
-    private String userTopic;
-    private String emailTopic;
-
     public Properties buildStreamsProperties(Properties envProps) {
         Properties props = new Properties();
 
@@ -55,7 +52,7 @@ public class EmailWriterService {
     public Topology buildTopology(Properties envProps) {
         final StreamsBuilder builder = new StreamsBuilder();
 
-        userTopic = envProps.getProperty("user.topic.name");
+        final String userTopic = envProps.getProperty("user.topic.name");
         KStream<String, User> userValidations = builder.stream(userTopic,
                 Consumed.with(Serdes.String(), UserAvroSerdeFactory.build(envProps)));
 
@@ -77,7 +74,7 @@ public class EmailWriterService {
             return email;
         });
 
-        emailTopic = envProps.getProperty("email.topic.name");
+        final String emailTopic = envProps.getProperty("email.topic.name");
         emailKStream.to(emailTopic,
                 Produced.with(Serdes.String(),
                         EmailAvroSerdeFactory.build(envProps)));
@@ -102,10 +99,10 @@ public class EmailWriterService {
 
         EmailWriterService emailWriterService = new EmailWriterService();
         Properties envProps = emailWriterService.loadEnvProperties(args[0]);
-        Properties streamProps = emailWriterService.buildStreamsProperties(envProps);
         Topology topology = emailWriterService.buildTopology(envProps);
         log.debug("Built stream");
 
+        Properties streamProps = emailWriterService.buildStreamsProperties(envProps);
         final KafkaStreams streams = new KafkaStreams(topology, streamProps);
         final CountDownLatch latch = new CountDownLatch(1);
 
