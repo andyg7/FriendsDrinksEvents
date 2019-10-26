@@ -86,7 +86,8 @@ public class UserEmailValidatorService {
                         EmailAvroSerdeFactory.build(envProps)));
 
         KStream<String, User> validatedUser =
-                userAndEmail.transform(EmailValidator::new, PENDING_EMAILS_STORE_NAME);
+                userAndEmail.transform(EmailValidator::new, PENDING_EMAILS_STORE_NAME)
+                        .selectKey(((key, value) -> value.getUserId()));
 
         final String userValidationTopic = envProps.getProperty("user_validation.topic.name");
         validatedUser.to(userValidationTopic,
