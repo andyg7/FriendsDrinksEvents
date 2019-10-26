@@ -7,19 +7,19 @@ import andrewgrant.friendsdrinks.avro.User;
  * Class to represent a request from a user for an email address.
  */
 public class EmailRequest {
-    private User user;
-    private Email email;
+    private User userRequest;
+    private Email currEmailState;
 
-    public EmailRequest(User user, Email email) {
-        this.user = user;
-        this.email = email;
+    public EmailRequest(User userRequest, Email currEmailState) {
+        this.userRequest = userRequest;
+        this.currEmailState = currEmailState;
     }
 
-    public User getUser() {
-        return user;
+    public User getUserRequest() {
+        return userRequest;
     }
 
-    public Email getEmail() {
-        return email;
+    public Email getCurrEmailState() {
+        return currEmailState;
     }
 }

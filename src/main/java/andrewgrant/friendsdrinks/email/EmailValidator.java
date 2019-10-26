@@ -28,22 +28,22 @@ public class EmailValidator implements Transformer<String, EmailRequest, KeyValu
 
     @Override
     public KeyValue<String, User> transform(final String str, final EmailRequest emailRequest) {
-        String requestedEmail = emailRequest.getUser().getEmail();
+        String requestedEmail = emailRequest.getUserRequest().getEmail();
         if (pendingEmailsStore.get(requestedEmail) != null) {
-            User user = emailRequest.getUser();
+            User user = emailRequest.getUserRequest();
             user.setEventType(UserEvent.REJECTED);
             user.setErrorCode(ErrorCode.PENDING.name());
             return new KeyValue<>(str, user);
         }
-        Email email = emailRequest.getEmail();
+        Email email = emailRequest.getCurrEmailState();
         if (email == null) {
-            User user = emailRequest.getUser();
+            User user = emailRequest.getUserRequest();
             // Add email address to pending state store
             pendingEmailsStore.put(requestedEmail, user.getUserId());
             user.setEventType(UserEvent.VALIDATED);
             return new KeyValue<>(str, user);
         } else if (email.getEventType().equals(EmailEvent.RESERVED)) {
-            User user = emailRequest.getUser();
+            User user = emailRequest.getUserRequest();
             user.setEventType(UserEvent.REJECTED);
             user.setErrorCode(ErrorCode.EXISTS.name());
             return new KeyValue<>(str, user);
