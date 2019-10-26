@@ -39,6 +39,7 @@ public class UserEmailValidatorServiceTest {
      * by default.
      * @throws IOException
      */
+    @Ignore
     @Test
     public void testValidation() throws IOException {
         UserEmailValidatorService validatorService = new UserEmailValidatorService();
@@ -54,14 +55,10 @@ public class UserEmailValidatorServiceTest {
         SpecificAvroSerializer<Email> emailSerializer = EmailAvro.serializer(envProps);
 
         List<Email> emailInput = new ArrayList<>();
+        String takenEmail = "email1@test.com";
         emailInput.add(Email.newBuilder()
-                .setEmail("email1@test.com")
+                .setEmail(takenEmail)
                 .setUserId("userid1")
-                .setEventType(EmailEvent.RESERVED)
-                .build());
-        emailInput.add(Email.newBuilder()
-                .setEmail("email2@test.com")
-                .setUserId("userid2")
                 .setEventType(EmailEvent.RESERVED)
                 .build());
 
@@ -78,11 +75,22 @@ public class UserEmailValidatorServiceTest {
         String newRequestId = UUID.randomUUID().toString();
         String newUserId = UUID.randomUUID().toString();
         String newEmail = UUID.randomUUID().toString();
+        // Valid request.
         userInput.add(User.newBuilder()
                 .setRequestId(newRequestId)
                 .setEmail(newEmail)
                 .setEventType(UserEvent.REQUESTED)
                 .setUserId(newUserId)
+                .build());
+
+        String newRequestId2 = UUID.randomUUID().toString();
+        String newUserId2 = UUID.randomUUID().toString();
+        // Invalid request for taken email.
+        userInput.add(User.newBuilder()
+                .setRequestId(newRequestId2)
+                .setEmail(takenEmail)
+                .setEventType(UserEvent.REQUESTED)
+                .setUserId(newUserId2)
                 .build());
 
         ConsumerRecordFactory<String, User> userInputFactory =
@@ -108,11 +116,17 @@ public class UserEmailValidatorServiceTest {
             }
         }
 
-        assertEquals(1, userValidationOutput.size());
+        assertEquals(2, userValidationOutput.size());
+
         User validatedUser = userValidationOutput.get(0);
         assertEquals(newUserId, validatedUser.getUserId());
         assertEquals(UserEvent.VALIDATED, validatedUser.getEventType());
         assertEquals(null, validatedUser.getErrorCode());
+
+        User rejectedUser = userValidationOutput.get(1);
+        assertEquals(newUserId2, rejectedUser.getUserId());
+        assertEquals(UserEvent.REJECTED, rejectedUser.getEventType());
+        assertEquals(ErrorCode.EXISTS.toString(), rejectedUser.getErrorCode());
     }
 
 }
