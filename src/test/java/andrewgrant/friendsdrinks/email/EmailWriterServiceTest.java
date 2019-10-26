@@ -24,7 +24,7 @@ import andrewgrant.friendsdrinks.avro.UserEvent;
 
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroDeserializer;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerializer;
-import andrewgrant.friendsdrinks.user.UserAvroSerializer;
+import andrewgrant.friendsdrinks.user.UserAvro;
 
 /**
  * Tests for EmailWriterService.
@@ -48,7 +48,7 @@ public class EmailWriterServiceTest {
         TopologyTestDriver testDriver = new TopologyTestDriver(topology, streamProps);
 
         Serializer<String> keySerializer = Serdes.String().serializer();
-        SpecificAvroSerializer<User> userSerializer = UserAvroSerializer.buildSerializer(envProps);
+        SpecificAvroSerializer<User> userSerializer = UserAvro.serializer(envProps);
 
         ConsumerRecordFactory<String, User> inputFactory =
                 new ConsumerRecordFactory<>(keySerializer, userSerializer);
@@ -74,8 +74,8 @@ public class EmailWriterServiceTest {
 
         final String emailTopic = envProps.getProperty("email.topic.name");
         Deserializer<String> keyDeserializer = Serdes.String().deserializer();
-        SpecificAvroDeserializer<Email> emailDeserializer = EmailAvroSerializer
-                .buildDeserializer(envProps);
+        SpecificAvroDeserializer<Email> emailDeserializer = EmailAvro
+                .deserializer(envProps);
 
         List<Email> output = new ArrayList<>();
         while (true) {

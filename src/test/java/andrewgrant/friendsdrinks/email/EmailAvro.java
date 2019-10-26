@@ -1,31 +1,33 @@
-package andrewgrant.friendsdrinks.user;
+package andrewgrant.friendsdrinks.email;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import andrewgrant.friendsdrinks.avro.User;
+import andrewgrant.friendsdrinks.avro.Email;
+
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroDeserializer;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerializer;
 
 /**
- * Class for building User serializer and deserializer.
+ * Factory class for building an Email Avro serializer and deserializer.
  */
-public class UserAvroSerializer {
+public class EmailAvro {
 
-    public static SpecificAvroSerializer<User> buildSerializer(Properties envProps) {
-        SpecificAvroSerializer<User> serializer = new SpecificAvroSerializer<>();
+    public static SpecificAvroSerializer<Email> serializer(Properties envProps) {
+        SpecificAvroSerializer<Email> serializer = new SpecificAvroSerializer<>();
         Map<String, String> config = new HashMap<>();
         config.put("schema.registry.url", envProps.getProperty("schema.registry.url"));
         serializer.configure(config, false);
         return serializer;
     }
 
-    public static SpecificAvroDeserializer<User> buildDeserializer(Properties envProps) {
-        SpecificAvroDeserializer<User> deserializer = new SpecificAvroDeserializer<>();
+    public static SpecificAvroDeserializer<Email> deserializer(Properties envProps) {
+        SpecificAvroDeserializer<Email> deserializer = new SpecificAvroDeserializer<>();
         Map<String, String> config = new HashMap<>();
         config.put("schema.registry.url", envProps.getProperty("schema.registry.url"));
         deserializer.configure(config, false);
         return deserializer;
     }
+
 }
