@@ -2,7 +2,8 @@ package andrewgrant.friendsdrinks.email;
 
 import static org.junit.Assert.*;
 
-import andrewgrant.friendsdrinks.avro.EmailEvent;
+import static andrewgrant.friendsdrinks.email.Config.TEST_CONFIG_FILE;
+
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serdes;
@@ -17,18 +18,19 @@ import java.io.IOException;
 import java.util.*;
 
 import andrewgrant.friendsdrinks.avro.Email;
+import andrewgrant.friendsdrinks.avro.EmailEvent;
 import andrewgrant.friendsdrinks.avro.User;
 import andrewgrant.friendsdrinks.avro.UserEvent;
 
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroDeserializer;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerializer;
+import user.UserAvroSerializer;
 
 /**
  * Tests for EmailWriterService.
  */
 public class EmailWriterServiceTest {
 
-    private static final String TEST_CONFIG_FILE = "config/app/test.properties";
 
     /**
      * Integration test that requires kafka and schema registry to be running and so is ignored
@@ -46,7 +48,7 @@ public class EmailWriterServiceTest {
         TopologyTestDriver testDriver = new TopologyTestDriver(topology, streamProps);
 
         Serializer<String> keySerializer = Serdes.String().serializer();
-        SpecificAvroSerializer<User> userSerializer = buildUserSerializer(envProps);
+        SpecificAvroSerializer<User> userSerializer = UserAvroSerializer.buildSerializer(envProps);
 
         ConsumerRecordFactory<String, User> inputFactory =
                 new ConsumerRecordFactory<>(keySerializer, userSerializer);
@@ -72,7 +74,8 @@ public class EmailWriterServiceTest {
 
         final String emailTopic = envProps.getProperty("email.topic.name");
         Deserializer<String> keyDeserializer = Serdes.String().deserializer();
-        SpecificAvroDeserializer<Email> emailDeserializer = buildEmailDeserializer(envProps);
+        SpecificAvroDeserializer<Email> emailDeserializer = EmailAvroSerializer
+                .buildDeserializer(envProps);
 
         List<Email> output = new ArrayList<>();
         while (true) {
@@ -90,22 +93,6 @@ public class EmailWriterServiceTest {
         assertEquals(EmailEvent.RESERVED, email1.getEventType());
         Email email2 = output.get(1);
         assertEquals(EmailEvent.REJECTED, email2.getEventType());
-    }
-
-    private SpecificAvroSerializer<User> buildUserSerializer(Properties envProps) {
-        SpecificAvroSerializer<User> serializer = new SpecificAvroSerializer<>();
-        Map<String, String> config = new HashMap<>();
-        config.put("schema.registry.url", envProps.getProperty("schema.registry.url"));
-        serializer.configure(config, false);
-        return serializer;
-    }
-
-    private SpecificAvroDeserializer<Email> buildEmailDeserializer(Properties envProps) {
-        SpecificAvroDeserializer<Email> deserializer = new SpecificAvroDeserializer<>();
-        Map<String, String> config = new HashMap<>();
-        config.put("schema.registry.url", envProps.getProperty("schema.registry.url"));
-        deserializer.configure(config, false);
-        return deserializer;
     }
 
 }

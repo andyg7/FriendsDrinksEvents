@@ -112,10 +112,10 @@ public class UserEmailValidatorService {
 
         UserEmailValidatorService userEmailValidatorService = new UserEmailValidatorService();
         Properties envProps = userEmailValidatorService.loadEnvProperties(args[0]);
-        Properties streamProps = userEmailValidatorService.buildStreamsProperties(envProps);
         Topology topology = userEmailValidatorService.buildTopology(envProps);
         log.debug("Built stream");
 
+        Properties streamProps = userEmailValidatorService.buildStreamsProperties(envProps);
         final KafkaStreams streams = new KafkaStreams(topology, streamProps);
         final CountDownLatch latch = new CountDownLatch(1);
 
