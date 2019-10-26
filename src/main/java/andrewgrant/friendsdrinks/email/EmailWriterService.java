@@ -67,12 +67,12 @@ public class EmailWriterService {
                 emailEvent = EmailEvent.REJECTED;
             }
             Email email = new Email();
-            email.setRequestId(value.getRequestId());
             email.setEmail(value.getEmail());
             email.setEventType(emailEvent);
             email.setUserId(value.getUserId());
             return email;
-        });
+        })
+                .selectKey(((key, value) -> value.getEmail()));
 
         final String emailTopic = envProps.getProperty("email.topic.name");
         emailKStream.to(emailTopic,
