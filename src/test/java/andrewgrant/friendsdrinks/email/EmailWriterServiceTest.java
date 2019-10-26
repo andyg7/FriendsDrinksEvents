@@ -24,7 +24,7 @@ import andrewgrant.friendsdrinks.avro.UserEvent;
 
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroDeserializer;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerializer;
-import user.UserAvroSerializer;
+import andrewgrant.friendsdrinks.user.UserAvroSerializer;
 
 /**
  * Tests for EmailWriterService.

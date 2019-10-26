@@ -1,4 +1,4 @@
 /**
  * Package for user related testing.
  */
-package user;
+package andrewgrant.friendsdrinks.user;
