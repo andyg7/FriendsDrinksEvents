@@ -35,7 +35,6 @@ public class EmailRequestWriterServiceTest {
     /**
      * Integration test for EmailRequestWriterService.
      */
-    @Ignore
     @Test
     public void testWrite() throws IOException {
         EmailRequestWriterService emailRequestWriterService =

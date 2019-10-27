@@ -54,7 +54,7 @@ public class UserEmailValidatorServiceTest {
         SpecificAvroSerializer<Email> emailSerializer = EmailAvro.serializer(envProps);
 
         List<Email> emailInput = new ArrayList<>();
-        String takenEmail = UUID.randomUUID().toString();
+        String takenEmail = "takenemail@test.com";
         String userId = UUID.randomUUID().toString();
         emailInput.add(Email.newBuilder()
                 .setEmail(takenEmail)
@@ -83,14 +83,21 @@ public class UserEmailValidatorServiceTest {
                 .setUserId(newUserId)
                 .build());
 
-        String newRequestId2 = UUID.randomUUID().toString();
         String newUserId2 = UUID.randomUUID().toString();
         // Invalid request for taken email.
         userInput.add(User.newBuilder()
-                .setRequestId(newRequestId2)
+                .setRequestId(UUID.randomUUID().toString())
                 .setEmail(takenEmail)
                 .setEventType(UserEvent.REQUESTED)
                 .setUserId(newUserId2)
+                .build());
+
+        String newUserId3 = UUID.randomUUID().toString();
+        userInput.add(User.newBuilder()
+                .setRequestId(UUID.randomUUID().toString())
+                .setEmail(newEmail)
+                .setEventType(UserEvent.REQUESTED)
+                .setUserId(newUserId3)
                 .build());
 
         ConsumerRecordFactory<String, User> userInputFactory =
@@ -116,7 +123,7 @@ public class UserEmailValidatorServiceTest {
             }
         }
 
-        assertEquals(2, userValidationOutput.size());
+        assertEquals(3, userValidationOutput.size());
 
         User validatedUser = userValidationOutput.get(0);
         assertEquals(newUserId, validatedUser.getUserId());
@@ -127,6 +134,11 @@ public class UserEmailValidatorServiceTest {
         assertEquals(newUserId2, rejectedUser.getUserId());
         assertEquals(UserEvent.REJECTED, rejectedUser.getEventType());
         assertEquals(ErrorCode.EXISTS.toString(), rejectedUser.getErrorCode());
+
+        User rejectedUser2 = userValidationOutput.get(2);
+        assertEquals(newUserId3, rejectedUser2.getUserId());
+        assertEquals(UserEvent.REJECTED, rejectedUser.getEventType());
+        assertEquals(ErrorCode.PENDING.toString(), rejectedUser2.getErrorCode());
     }
 
 }
