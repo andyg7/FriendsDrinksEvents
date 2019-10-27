@@ -37,7 +37,7 @@ public class EmailValidator implements Transformer<EmailId, EmailRequest, KeyVal
         if (email == null) {
             User user = emailRequest.getUserRequest();
             // Add email address to pending state store
-            pendingEmailsStore.put(requestedEmail, user.getUserId());
+            pendingEmailsStore.put(requestedEmail, user.getUserId().getId());
             user.setEventType(UserEvent.VALIDATED);
             return new KeyValue<>(emailId, user);
         } else if (email.getEventType().equals(EmailEvent.RESERVED)) {

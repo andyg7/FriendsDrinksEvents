@@ -5,8 +5,6 @@ import static org.junit.Assert.*;
 import static andrewgrant.friendsdrinks.email.Config.TEST_CONFIG_FILE;
 
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.serialization.Deserializer;
-import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.test.ConsumerRecordFactory;
@@ -30,8 +28,7 @@ import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerializer;
 public class UserEmailValidatorServiceTest {
 
     /**
-     * Integration test that requires kafka and schema registry to be running and so is ignored
-     * by default.
+     * Integration test that requires kafka and schema registry to be running.
      * @throws IOException
      */
     @Test
@@ -43,7 +40,7 @@ public class UserEmailValidatorServiceTest {
         Properties streamProps = validatorService.buildStreamsProperties(envProps);
         TopologyTestDriver testDriver = new TopologyTestDriver(topology, streamProps);
 
-        SpecificAvroSerializer<User> userSerializer = UserAvro.serializer(envProps);
+        SpecificAvroSerializer<User> userSerializer = UserAvro.userSerializer(envProps);
         SpecificAvroSerializer<Email> emailSerializer = EmailAvro.emailSerializer(envProps);
         SpecificAvroSerializer<EmailId> emailIdSerializer = EmailAvro.emailIdSerializer(envProps);
 
@@ -74,7 +71,7 @@ public class UserEmailValidatorServiceTest {
                 .setRequestId(newRequestId)
                 .setEmail(newEmail)
                 .setEventType(UserEvent.REQUESTED)
-                .setUserId(newUserId)
+                .setUserId(new UserId(newUserId))
                 .build());
 
         String newUserId2 = UUID.randomUUID().toString();
@@ -83,7 +80,7 @@ public class UserEmailValidatorServiceTest {
                 .setRequestId(UUID.randomUUID().toString())
                 .setEmail(takenEmail)
                 .setEventType(UserEvent.REQUESTED)
-                .setUserId(newUserId2)
+                .setUserId(new UserId(newUserId2))
                 .build());
 
         String newUserId3 = UUID.randomUUID().toString();
@@ -91,7 +88,7 @@ public class UserEmailValidatorServiceTest {
                 .setRequestId(UUID.randomUUID().toString())
                 .setEmail(newEmail)
                 .setEventType(UserEvent.REQUESTED)
-                .setUserId(newUserId3)
+                .setUserId(new UserId(newUserId3))
                 .build());
 
         ConsumerRecordFactory<EmailId, User> userInputFactory =
@@ -103,13 +100,13 @@ public class UserEmailValidatorServiceTest {
         }
 
         final String userValidationTopic = envProps.getProperty("user_validation.topic.name");
-        Deserializer<String> stringDeserializer = Serdes.String().deserializer();
-        SpecificAvroDeserializer<User> userDeserializer = UserAvro.deserializer(envProps);
+        SpecificAvroDeserializer<UserId> userIdDeserializer = UserAvro.userIdDeserializer(envProps);
+        SpecificAvroDeserializer<User> userDeserializer = UserAvro.userDeserializer(envProps);
 
         List<User> userValidationOutput = new ArrayList<>();
         while (true) {
-            ProducerRecord<String, User> userRecord = testDriver.readOutput(
-                    userValidationTopic, stringDeserializer, userDeserializer);
+            ProducerRecord<UserId, User> userRecord = testDriver.readOutput(
+                    userValidationTopic, userIdDeserializer, userDeserializer);
             if (userRecord != null) {
                 userValidationOutput.add(userRecord.value());
             } else {
@@ -120,17 +117,17 @@ public class UserEmailValidatorServiceTest {
         assertEquals(3, userValidationOutput.size());
 
         User validatedUser = userValidationOutput.get(0);
-        assertEquals(newUserId, validatedUser.getUserId());
+        assertEquals(newUserId, validatedUser.getUserId().getId());
         assertEquals(UserEvent.VALIDATED, validatedUser.getEventType());
         assertEquals(null, validatedUser.getErrorCode());
 
         User rejectedUser = userValidationOutput.get(1);
-        assertEquals(newUserId2, rejectedUser.getUserId());
+        assertEquals(newUserId2, rejectedUser.getUserId().getId());
         assertEquals(UserEvent.REJECTED, rejectedUser.getEventType());
         assertEquals(ErrorCode.EXISTS.toString(), rejectedUser.getErrorCode());
 
         User rejectedUser2 = userValidationOutput.get(2);
-        assertEquals(newUserId3, rejectedUser2.getUserId());
+        assertEquals(newUserId3, rejectedUser2.getUserId().getId());
         assertEquals(UserEvent.REJECTED, rejectedUser.getEventType());
         assertEquals(ErrorCode.PENDING.toString(), rejectedUser2.getErrorCode());
     }

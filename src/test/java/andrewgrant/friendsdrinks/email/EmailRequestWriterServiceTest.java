@@ -4,8 +4,6 @@ import static org.junit.Assert.*;
 
 import static andrewgrant.friendsdrinks.email.Config.TEST_CONFIG_FILE;
 
-import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.common.serialization.Serializer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.TopologyTestDriver;
@@ -21,6 +19,7 @@ import java.util.UUID;
 import andrewgrant.friendsdrinks.avro.EmailId;
 import andrewgrant.friendsdrinks.avro.User;
 import andrewgrant.friendsdrinks.avro.UserEvent;
+import andrewgrant.friendsdrinks.avro.UserId;
 import andrewgrant.friendsdrinks.user.UserAvro;
 
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroDeserializer;
@@ -45,11 +44,11 @@ public class EmailRequestWriterServiceTest {
                 .buildStreamsProperties(envProps);
         TopologyTestDriver testDriver = new TopologyTestDriver(topology, streamProps);
 
-        Serializer<String> stringSerializer = Serdes.String().serializer();
-        SpecificAvroSerializer<User> userSerializer = UserAvro.serializer(envProps);
+        SpecificAvroSerializer<UserId> userIdSerializer = UserAvro.userIdSerializer(envProps);
+        SpecificAvroSerializer<User> userSerializer = UserAvro.userSerializer(envProps);
 
-        ConsumerRecordFactory<String, User> inputFactory =
-                new ConsumerRecordFactory<>(stringSerializer, userSerializer);
+        ConsumerRecordFactory<UserId, User> inputFactory =
+                new ConsumerRecordFactory<>(userIdSerializer, userSerializer);
 
         List<User> input = new ArrayList<>();
         String requestId = UUID.randomUUID().toString();
@@ -58,7 +57,7 @@ public class EmailRequestWriterServiceTest {
         input.add(
                 User.newBuilder()
                         .setRequestId(requestId)
-                        .setUserId(userId)
+                        .setUserId(new UserId(userId))
                         .setEmail(email)
                         .setEventType(UserEvent.REQUESTED).build());
 
@@ -71,7 +70,7 @@ public class EmailRequestWriterServiceTest {
         final String emailRequestTopic = envProps.getProperty("email_request.topic.name");
         SpecificAvroDeserializer<EmailId> emailIdDeserializer =
                 EmailAvro.emailIdDeserializer(envProps);
-        SpecificAvroDeserializer<User> userDeserializer = UserAvro.deserializer(envProps);
+        SpecificAvroDeserializer<User> userDeserializer = UserAvro.userDeserializer(envProps);
 
         List<User> output = new ArrayList<>();
         while (true) {
@@ -85,6 +84,7 @@ public class EmailRequestWriterServiceTest {
         }
 
         assertEquals(1, output.size());
+        assertEquals(input.get(0).getEmail(), output.get(0).getEmail());
     }
 
 }

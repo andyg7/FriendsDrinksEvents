@@ -1,7 +1,5 @@
 package andrewgrant.friendsdrinks.email;
 
-import andrewgrant.friendsdrinks.avro.EmailId;
-import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
@@ -18,7 +16,9 @@ import java.io.IOException;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
+import andrewgrant.friendsdrinks.avro.EmailId;
 import andrewgrant.friendsdrinks.avro.User;
+import andrewgrant.friendsdrinks.avro.UserId;
 import andrewgrant.friendsdrinks.user.UserAvroSerdeFactory;
 
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
@@ -46,8 +46,9 @@ public class EmailRequestWriterService {
         final StreamsBuilder builder = new StreamsBuilder();
 
         final String userTopic = envProps.getProperty("user.topic.name");
-        KStream<String, User> userKStream = builder.stream(userTopic,
-                Consumed.with(Serdes.String(), UserAvroSerdeFactory.build(envProps)));
+        KStream<UserId, User> userKStream = builder.stream(userTopic,
+                Consumed.with(UserAvroSerdeFactory.buildUserId(envProps),
+                        UserAvroSerdeFactory.buildUser(envProps)));
 
         // Re-key on email
         KStream<EmailId, User> userKStreamRekeyed =
@@ -56,7 +57,7 @@ public class EmailRequestWriterService {
         final String emailRequestTopic = envProps.getProperty("email_request.topic.name");
         userKStreamRekeyed.to(emailRequestTopic,
                 Produced.with(EmailAvroSerdeFactory.buildEmailId(envProps),
-                        UserAvroSerdeFactory.build(envProps)));
+                        UserAvroSerdeFactory.buildUser(envProps)));
 
         return builder.build();
     }

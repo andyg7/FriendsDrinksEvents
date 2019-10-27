@@ -72,7 +72,7 @@ public class UserEmailValidatorService {
         final String emailRequestTopic = envProps.getProperty("email_request.topic.name");
         KStream<EmailId, User> userIdKStream = builder.stream(emailRequestTopic,
                 Consumed.with(EmailAvroSerdeFactory.buildEmailId(envProps),
-                        UserAvroSerdeFactory.build(envProps)));
+                        UserAvroSerdeFactory.buildUser(envProps)));
 
         // Filter by requests.
         KStream<EmailId, User> userRequestsKStream = userIdKStream.
@@ -81,17 +81,17 @@ public class UserEmailValidatorService {
         KStream<EmailId, EmailRequest> userAndEmail = userRequestsKStream.leftJoin(emailKTable,
                 EmailRequest::new,
                 Joined.with(EmailAvroSerdeFactory.buildEmailId(envProps),
-                        UserAvroSerdeFactory.build(envProps),
+                        UserAvroSerdeFactory.buildUser(envProps),
                         EmailAvroSerdeFactory.buildEmail(envProps)));
 
-        KStream<String, User> validatedUser =
+        KStream<UserId, User> validatedUser =
                 userAndEmail.transform(EmailValidator::new, PENDING_EMAILS_STORE_NAME)
                         .selectKey(((key, value) -> value.getUserId()));
 
         final String userValidationTopic = envProps.getProperty("user_validation.topic.name");
         validatedUser.to(userValidationTopic,
-                Produced.with(Serdes.String(),
-                        UserAvroSerdeFactory.build(envProps)));
+                Produced.with(UserAvroSerdeFactory.buildUserId(envProps),
+                        UserAvroSerdeFactory.buildUser(envProps)));
 
         return builder.build();
     }

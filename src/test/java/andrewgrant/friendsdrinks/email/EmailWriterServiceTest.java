@@ -28,8 +28,7 @@ public class EmailWriterServiceTest {
 
 
     /**
-     * Integration test that requires kafka and schema registry to be running and so is ignored
-     * by default.
+     * Integration test that requires kafka and schema registry to be running.
      * @throws IOException
      */
     @Test
@@ -41,23 +40,23 @@ public class EmailWriterServiceTest {
         Properties streamProps = emailWriterService.buildStreamsProperties(envProps);
         TopologyTestDriver testDriver = new TopologyTestDriver(topology, streamProps);
 
-        Serializer<String> stringSerializer = Serdes.String().serializer();
-        SpecificAvroSerializer<User> userSerializer = UserAvro.serializer(envProps);
+        SpecificAvroSerializer<UserId> userIdSerializer = UserAvro.userIdSerializer(envProps);
+        SpecificAvroSerializer<User> userSerializer = UserAvro.userSerializer(envProps);
 
-        ConsumerRecordFactory<String, User> inputFactory =
-                new ConsumerRecordFactory<>(stringSerializer, userSerializer);
+        ConsumerRecordFactory<UserId, User> inputFactory =
+                new ConsumerRecordFactory<>(userIdSerializer, userSerializer);
 
         List<User> input = new ArrayList<>();
         input.add(
                 User.newBuilder()
                         .setRequestId("1")
-                        .setUserId(UUID.randomUUID().toString())
+                        .setUserId(new UserId(UUID.randomUUID().toString()))
                         .setEmail(UUID.randomUUID().toString())
                         .setEventType(UserEvent.VALIDATED).build());
         input.add(
                 User.newBuilder()
                         .setRequestId("2")
-                        .setUserId(UUID.randomUUID().toString())
+                        .setUserId(new UserId(UUID.randomUUID().toString()))
                         .setEmail(UUID.randomUUID().toString())
                         .setEventType(UserEvent.REJECTED).build());
 

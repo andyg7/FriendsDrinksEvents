@@ -1,6 +1,5 @@
 package andrewgrant.friendsdrinks.email;
 
-import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
@@ -46,10 +45,11 @@ public class EmailWriterService {
         final StreamsBuilder builder = new StreamsBuilder();
 
         final String userTopic = envProps.getProperty("user.topic.name");
-        KStream<String, User> userValidations = builder.stream(userTopic,
-                Consumed.with(Serdes.String(), UserAvroSerdeFactory.build(envProps)));
+        KStream<UserId, User> userValidations = builder.stream(userTopic,
+                Consumed.with(UserAvroSerdeFactory.buildUserId(envProps),
+                        UserAvroSerdeFactory.buildUser(envProps)));
 
-        KStream<String, Email> emailKStream = userValidations.filter(((key, value) ->
+        KStream<UserId, Email> emailKStream = userValidations.filter(((key, value) ->
                 value.getEventType().equals(UserEvent.VALIDATED) ||
                         value.getEventType().equals(UserEvent.REJECTED)
         )).mapValues((key, value) -> {
@@ -62,7 +62,7 @@ public class EmailWriterService {
             Email email = new Email();
             email.setEmailId(new EmailId(value.getEmail()));
             email.setEventType(emailEvent);
-            email.setUserId(value.getUserId());
+            email.setUserId(value.getUserId().getId());
             return email;
         });
 
