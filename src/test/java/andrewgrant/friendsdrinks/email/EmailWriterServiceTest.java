@@ -5,22 +5,17 @@ import static org.junit.Assert.*;
 import static andrewgrant.friendsdrinks.email.Config.TEST_CONFIG_FILE;
 
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.Serializer;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.test.ConsumerRecordFactory;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.util.*;
 
-import andrewgrant.friendsdrinks.avro.Email;
-import andrewgrant.friendsdrinks.avro.EmailEvent;
-import andrewgrant.friendsdrinks.avro.User;
-import andrewgrant.friendsdrinks.avro.UserEvent;
+import andrewgrant.friendsdrinks.avro.*;
 import andrewgrant.friendsdrinks.user.UserAvro;
 
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroDeserializer;
@@ -71,15 +66,16 @@ public class EmailWriterServiceTest {
             testDriver.pipeInput(inputFactory.create(userTopic, user.getUserId(), user));
         }
 
-        final String emailTopic = envProps.getProperty("email.topic.name");
-        Deserializer<String> stringDeserializer = Serdes.String().deserializer();
+        SpecificAvroDeserializer<EmailId> emailIdDeserializer = EmailAvro
+                .emailIdDeserializer(envProps);
         SpecificAvroDeserializer<Email> emailDeserializer = EmailAvro
-                .deserializer(envProps);
+                .emailDeserializer(envProps);
 
+        final String emailTopic = envProps.getProperty("email.topic.name");
         List<Email> output = new ArrayList<>();
         while (true) {
-            ProducerRecord<String, Email> emailRecord =
-                    testDriver.readOutput(emailTopic, stringDeserializer, emailDeserializer);
+            ProducerRecord<EmailId, Email> emailRecord =
+                    testDriver.readOutput(emailTopic, emailIdDeserializer, emailDeserializer);
             if (emailRecord != null) {
                 output.add(emailRecord.value());
             } else {

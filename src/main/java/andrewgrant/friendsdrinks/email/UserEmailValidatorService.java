@@ -17,13 +17,10 @@ import java.util.HashMap;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
-import andrewgrant.friendsdrinks.avro.Email;
-import andrewgrant.friendsdrinks.avro.EmailEvent;
-import andrewgrant.friendsdrinks.avro.User;
-import andrewgrant.friendsdrinks.avro.UserEvent;
+import andrewgrant.friendsdrinks.avro.*;
 import andrewgrant.friendsdrinks.user.UserAvroSerdeFactory;
+
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
-import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 
 /**
  * Service for validating requests based on email.
@@ -37,8 +34,6 @@ public class UserEmailValidatorService {
         props.put(StreamsConfig.APPLICATION_ID_CONFIG, envProps.getProperty("application.id"));
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG,
                 envProps.getProperty("bootstrap.servers"));
-        props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
-        props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, SpecificAvroSerde.class);
         props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
                 envProps.getProperty("schema.registry.url"));
 
@@ -58,29 +53,36 @@ public class UserEmailValidatorService {
 
         final String emailTopic = envProps.getProperty("email.topic.name");
         // Get stream of email events and clean up state store as they come in
-        KStream<String, Email> emailKStream = builder.stream(emailTopic,
-                Consumed.with(Serdes.String(), EmailAvroSerdeFactory.build(envProps)))
+        KStream<EmailId, Email> emailKStream = builder.stream(emailTopic,
+                Consumed.with(EmailAvroSerdeFactory.buildEmailId(envProps),
+                        EmailAvroSerdeFactory.buildEmail(envProps)))
                 .transform(PendingEmailsStateStoreCleaner::new, PENDING_EMAILS_STORE_NAME);
 
         // Write events to a tmp topic so we can rebuild a table
         final String emailTmpTopic = envProps.getProperty("email_tmp.topic.name");
         emailKStream.filter(((key, value) -> value.getEventType().equals(EmailEvent.RESERVED)))
                 .to(emailTmpTopic,
-                        Produced.with(Serdes.String(),
-                                EmailAvroSerdeFactory.build(envProps)));
-        KTable<String, Email> emailKTable = builder.table(emailTmpTopic);
+                        Produced.with(EmailAvroSerdeFactory.buildEmailId(envProps),
+                                EmailAvroSerdeFactory.buildEmail(envProps)));
+
+        KTable<EmailId, Email> emailKTable = builder.table(emailTmpTopic,
+                Consumed.with(EmailAvroSerdeFactory.buildEmailId(envProps),
+                        EmailAvroSerdeFactory.buildEmail(envProps)));
 
         final String emailRequestTopic = envProps.getProperty("email_request.topic.name");
-        KStream<String, User> userIdKStream = builder.stream(emailRequestTopic);
+        KStream<EmailId, User> userIdKStream = builder.stream(emailRequestTopic,
+                Consumed.with(EmailAvroSerdeFactory.buildEmailId(envProps),
+                        UserAvroSerdeFactory.build(envProps)));
+
         // Filter by requests.
-        KStream<String, User> userRequestsKStream = userIdKStream.
+        KStream<EmailId, User> userRequestsKStream = userIdKStream.
                 filter(((key, value) -> value.getEventType().equals(UserEvent.REQUESTED)));
 
-        KStream<String, EmailRequest> userAndEmail = userRequestsKStream.leftJoin(emailKTable,
+        KStream<EmailId, EmailRequest> userAndEmail = userRequestsKStream.leftJoin(emailKTable,
                 EmailRequest::new,
-                Joined.with(Serdes.String(),
+                Joined.with(EmailAvroSerdeFactory.buildEmailId(envProps),
                         UserAvroSerdeFactory.build(envProps),
-                        EmailAvroSerdeFactory.build(envProps)));
+                        EmailAvroSerdeFactory.buildEmail(envProps)));
 
         KStream<String, User> validatedUser =
                 userAndEmail.transform(EmailValidator::new, PENDING_EMAILS_STORE_NAME)

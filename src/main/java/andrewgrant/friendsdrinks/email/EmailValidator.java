@@ -7,15 +7,12 @@ import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
 
-import andrewgrant.friendsdrinks.avro.Email;
-import andrewgrant.friendsdrinks.avro.EmailEvent;
-import andrewgrant.friendsdrinks.avro.User;
-import andrewgrant.friendsdrinks.avro.UserEvent;
+import andrewgrant.friendsdrinks.avro.*;
 
 /**
  * Validates email request.
  */
-public class EmailValidator implements Transformer<String, EmailRequest, KeyValue<String, User>> {
+public class EmailValidator implements Transformer<EmailId, EmailRequest, KeyValue<EmailId, User>> {
 
     private KeyValueStore<String, String> pendingEmailsStore;
 
@@ -27,13 +24,14 @@ public class EmailValidator implements Transformer<String, EmailRequest, KeyValu
     }
 
     @Override
-    public KeyValue<String, User> transform(final String str, final EmailRequest emailRequest) {
+    public KeyValue<EmailId, User> transform(final EmailId emailId,
+                                             final EmailRequest emailRequest) {
         String requestedEmail = emailRequest.getUserRequest().getEmail();
         if (pendingEmailsStore.get(requestedEmail) != null) {
             User user = emailRequest.getUserRequest();
             user.setEventType(UserEvent.REJECTED);
             user.setErrorCode(ErrorCode.PENDING.name());
-            return new KeyValue<>(str, user);
+            return new KeyValue<>(emailId, user);
         }
         Email email = emailRequest.getCurrEmailState();
         if (email == null) {
@@ -41,12 +39,12 @@ public class EmailValidator implements Transformer<String, EmailRequest, KeyValu
             // Add email address to pending state store
             pendingEmailsStore.put(requestedEmail, user.getUserId());
             user.setEventType(UserEvent.VALIDATED);
-            return new KeyValue<>(str, user);
+            return new KeyValue<>(emailId, user);
         } else if (email.getEventType().equals(EmailEvent.RESERVED)) {
             User user = emailRequest.getUserRequest();
             user.setEventType(UserEvent.REJECTED);
             user.setErrorCode(ErrorCode.EXISTS.name());
-            return new KeyValue<>(str, user);
+            return new KeyValue<>(emailId, user);
         }
 
         throw new RuntimeException();

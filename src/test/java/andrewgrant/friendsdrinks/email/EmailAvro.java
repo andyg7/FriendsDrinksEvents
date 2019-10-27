@@ -6,6 +6,7 @@ import java.util.Properties;
 
 import andrewgrant.friendsdrinks.avro.Email;
 
+import andrewgrant.friendsdrinks.avro.EmailId;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroDeserializer;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerializer;
 
@@ -14,7 +15,7 @@ import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerializer;
  */
 public class EmailAvro {
 
-    public static SpecificAvroSerializer<Email> serializer(Properties envProps) {
+    public static SpecificAvroSerializer<Email> emailSerializer(Properties envProps) {
         SpecificAvroSerializer<Email> serializer = new SpecificAvroSerializer<>();
         Map<String, String> config = new HashMap<>();
         config.put("schema.registry.url", envProps.getProperty("schema.registry.url"));
@@ -22,11 +23,27 @@ public class EmailAvro {
         return serializer;
     }
 
-    public static SpecificAvroDeserializer<Email> deserializer(Properties envProps) {
+    public static SpecificAvroSerializer<EmailId> emailIdSerializer(Properties envProps) {
+        SpecificAvroSerializer<EmailId> serializer = new SpecificAvroSerializer<>();
+        Map<String, String> config = new HashMap<>();
+        config.put("schema.registry.url", envProps.getProperty("schema.registry.url"));
+        serializer.configure(config, true);
+        return serializer;
+    }
+
+    public static SpecificAvroDeserializer<Email> emailDeserializer(Properties envProps) {
         SpecificAvroDeserializer<Email> deserializer = new SpecificAvroDeserializer<>();
         Map<String, String> config = new HashMap<>();
         config.put("schema.registry.url", envProps.getProperty("schema.registry.url"));
         deserializer.configure(config, false);
+        return deserializer;
+    }
+
+    public static SpecificAvroDeserializer<EmailId> emailIdDeserializer(Properties envProps) {
+        SpecificAvroDeserializer<EmailId> deserializer = new SpecificAvroDeserializer<>();
+        Map<String, String> config = new HashMap<>();
+        config.put("schema.registry.url", envProps.getProperty("schema.registry.url"));
+        deserializer.configure(config, true);
         return deserializer;
     }
 

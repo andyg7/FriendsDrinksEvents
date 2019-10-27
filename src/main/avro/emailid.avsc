@@ -1,0 +1,8 @@
+{
+  "namespace": "andrewgrant.friendsdrinks.avro",
+  "type": "record",
+  "name": "EmailId",
+  "fields": [
+    {"name": "emailAddress", "type": "string"}
+  ]
+}

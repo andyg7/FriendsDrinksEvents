@@ -4,14 +4,12 @@ import static org.junit.Assert.*;
 
 import static andrewgrant.friendsdrinks.email.Config.TEST_CONFIG_FILE;
 
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.Serializer;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.test.ConsumerRecordFactory;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -20,6 +18,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
 
+import andrewgrant.friendsdrinks.avro.EmailId;
 import andrewgrant.friendsdrinks.avro.User;
 import andrewgrant.friendsdrinks.avro.UserEvent;
 import andrewgrant.friendsdrinks.user.UserAvro;
@@ -70,13 +69,14 @@ public class EmailRequestWriterServiceTest {
         }
 
         final String emailRequestTopic = envProps.getProperty("email_request.topic.name");
-        Deserializer<String> stringDeserializer = Serdes.String().deserializer();
+        SpecificAvroDeserializer<EmailId> emailIdDeserializer =
+                EmailAvro.emailIdDeserializer(envProps);
         SpecificAvroDeserializer<User> userDeserializer = UserAvro.deserializer(envProps);
 
         List<User> output = new ArrayList<>();
         while (true) {
-            ProducerRecord<String, User> userRecord =
-                    testDriver.readOutput(emailRequestTopic, stringDeserializer, userDeserializer);
+            ProducerRecord<EmailId, User> userRecord =
+                    testDriver.readOutput(emailRequestTopic, emailIdDeserializer, userDeserializer);
             if (userRecord != null) {
                 output.add(userRecord.value());
             } else {

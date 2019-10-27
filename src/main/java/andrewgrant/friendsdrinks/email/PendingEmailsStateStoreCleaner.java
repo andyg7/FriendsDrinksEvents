@@ -9,12 +9,13 @@ import org.apache.kafka.streams.state.KeyValueStore;
 
 import andrewgrant.friendsdrinks.avro.Email;
 import andrewgrant.friendsdrinks.avro.EmailEvent;
+import andrewgrant.friendsdrinks.avro.EmailId;
 
 /**
  * Cleans state store holding pending emails.
  */
 public class PendingEmailsStateStoreCleaner implements
-        Transformer<String, Email, KeyValue<String, Email>> {
+        Transformer<EmailId, Email, KeyValue<EmailId, Email>> {
 
     private KeyValueStore<String, String> pendingEmailsStore;
 
@@ -25,12 +26,13 @@ public class PendingEmailsStateStoreCleaner implements
     }
 
     @Override
-    public KeyValue<String, Email> transform(String key, Email value) {
+    public KeyValue<EmailId, Email> transform(EmailId emailId, Email value) {
         if (value.getEventType().equals(EmailEvent.REJECTED) &&
-                pendingEmailsStore.get(value.getEmail()).equals(value.getUserId())) {
-            pendingEmailsStore.put(value.getEmail(), null);
+                pendingEmailsStore.get(value.getEmailId().getEmailAddress())
+                        .equals(value.getUserId())) {
+            pendingEmailsStore.put(value.getEmailId().getEmailAddress(), null);
         }
-        return new KeyValue<>(key, value);
+        return new KeyValue<>(emailId, value);
     }
 
     @Override

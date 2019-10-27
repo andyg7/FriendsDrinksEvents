@@ -4,7 +4,7 @@
   "name": "Email",
   "fields": [
     {"name": "eventType", "type": {"type": "enum", "name": "EmailEvent", "symbols" : ["RESERVED", "REJECTED"] } },
-    {"name": "email", "type": "string"},
+    {"name": "emailId", "type": "EmailId"},
     {"name": "userId", "type": "string"}
   ]
 }

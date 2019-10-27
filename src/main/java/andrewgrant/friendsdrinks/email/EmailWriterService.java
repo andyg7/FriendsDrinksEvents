@@ -11,21 +11,15 @@ import org.apache.kafka.streams.kstream.Produced;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
-import andrewgrant.friendsdrinks.avro.Email;
-import andrewgrant.friendsdrinks.avro.EmailEvent;
-import andrewgrant.friendsdrinks.avro.User;
-import andrewgrant.friendsdrinks.avro.UserEvent;
+import andrewgrant.friendsdrinks.avro.*;
 import andrewgrant.friendsdrinks.user.UserAvroSerdeFactory;
 
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
-import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
-
 
 
 /**
@@ -41,14 +35,13 @@ public class EmailWriterService {
         props.put(StreamsConfig.APPLICATION_ID_CONFIG, envProps.getProperty("application.id"));
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG,
                 envProps.getProperty("bootstrap.servers"));
-        props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
-        props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, SpecificAvroSerde.class);
         props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
                 envProps.getProperty("schema.registry.url"));
 
         return props;
     }
 
+    private static boolean test = true;
     public Topology buildTopology(Properties envProps) {
         final StreamsBuilder builder = new StreamsBuilder();
 
@@ -67,19 +60,21 @@ public class EmailWriterService {
                 emailEvent = EmailEvent.REJECTED;
             }
             Email email = new Email();
-            email.setEmail(value.getEmail());
+            email.setEmailId(new EmailId(value.getEmail()));
             email.setEventType(emailEvent);
             email.setUserId(value.getUserId());
             return email;
         });
 
+
         // Re-key on email before publishing to email topic.
-        emailKStream = emailKStream.selectKey(((key, value) -> value.getEmail()));
+        KStream<EmailId, Email> emailKStreamRekeyed =
+                emailKStream.selectKey(((key, value) -> value.getEmailId()));
 
         final String emailTopic = envProps.getProperty("email.topic.name");
-        emailKStream.to(emailTopic,
-                Produced.with(Serdes.String(),
-                        EmailAvroSerdeFactory.build(envProps)));
+        emailKStreamRekeyed.to(emailTopic,
+                Produced.with(EmailAvroSerdeFactory.buildEmailId(envProps),
+                        EmailAvroSerdeFactory.buildEmail(envProps)));
 
         return builder.build();
     }

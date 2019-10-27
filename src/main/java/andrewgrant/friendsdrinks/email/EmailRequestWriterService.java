@@ -1,5 +1,6 @@
 package andrewgrant.friendsdrinks.email;
 
+import andrewgrant.friendsdrinks.avro.EmailId;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -18,11 +19,9 @@ import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
 import andrewgrant.friendsdrinks.avro.User;
-import andrewgrant.friendsdrinks.avro.UserEvent;
 import andrewgrant.friendsdrinks.user.UserAvroSerdeFactory;
 
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
-import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 
 /**
  * Service responsible for re-keying incoming User requests by email
@@ -37,8 +36,6 @@ public class EmailRequestWriterService {
         props.put(StreamsConfig.APPLICATION_ID_CONFIG, envProps.getProperty("application.id"));
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG,
                 envProps.getProperty("bootstrap.servers"));
-        props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
-        props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, SpecificAvroSerde.class);
         props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
                 envProps.getProperty("schema.registry.url"));
 
@@ -53,12 +50,12 @@ public class EmailRequestWriterService {
                 Consumed.with(Serdes.String(), UserAvroSerdeFactory.build(envProps)));
 
         // Re-key on email
-        KStream<String, User> userKStreamRekeyed =
-                userKStream.selectKey(((key, value) -> value.getEmail()));
+        KStream<EmailId, User> userKStreamRekeyed =
+                userKStream.selectKey(((key, value) -> new EmailId(value.getEmail())));
 
         final String emailRequestTopic = envProps.getProperty("email_request.topic.name");
         userKStreamRekeyed.to(emailRequestTopic,
-                Produced.with(Serdes.String(),
+                Produced.with(EmailAvroSerdeFactory.buildEmailId(envProps),
                         UserAvroSerdeFactory.build(envProps)));
 
         return builder.build();
