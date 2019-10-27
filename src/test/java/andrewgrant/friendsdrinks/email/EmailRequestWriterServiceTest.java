@@ -72,16 +72,21 @@ public class EmailRequestWriterServiceTest {
                 EmailAvro.emailIdDeserializer(envProps);
         SpecificAvroDeserializer<User> userDeserializer = UserAvro.userDeserializer(envProps);
 
+        List<EmailId> outputKeys = new ArrayList<>();
         List<User> output = new ArrayList<>();
         while (true) {
             ProducerRecord<EmailId, User> userRecord =
                     testDriver.readOutput(emailRequestTopic, emailIdDeserializer, userDeserializer);
             if (userRecord != null) {
+                outputKeys.add(userRecord.key());
                 output.add(userRecord.value());
             } else {
                 break;
             }
         }
+
+        assertEquals(1, outputKeys.size());
+        assertEquals(input.get(0).getEmail(), outputKeys.get(0).getEmailAddress());
 
         assertEquals(1, output.size());
         assertEquals(input.get(0).getEmail(), output.get(0).getEmail());
