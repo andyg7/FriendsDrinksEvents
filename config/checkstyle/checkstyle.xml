@@ -50,6 +50,8 @@ page at http://checkstyle.sourceforge.net/config.html -->
             <property name="severity" value="error"/>
         </module>
 
+        <module name="UnusedImports"/>
+
         <module name="ImportOrder">
             <!-- Checks for out of order import statements. -->
 

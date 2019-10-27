@@ -5,8 +5,6 @@ import static org.junit.Assert.*;
 import static andrewgrant.friendsdrinks.email.Config.TEST_CONFIG_FILE;
 
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.common.serialization.Serializer;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.test.ConsumerRecordFactory;
