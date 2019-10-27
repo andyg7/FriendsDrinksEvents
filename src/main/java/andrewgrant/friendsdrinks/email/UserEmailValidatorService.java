@@ -70,16 +70,13 @@ public class UserEmailValidatorService {
                                 EmailAvroSerdeFactory.build(envProps)));
         KTable<String, Email> emailKTable = builder.table(emailTmpTopic);
 
-        final String userTopic = envProps.getProperty("user.topic.name");
-        KStream<String, User> userIdKStream = builder.stream(userTopic);
+        final String emailRequestTopic = envProps.getProperty("email_request.topic.name");
+        KStream<String, User> userIdKStream = builder.stream(emailRequestTopic);
         // Filter by requests.
         KStream<String, User> userRequestsKStream = userIdKStream.
                 filter(((key, value) -> value.getEventType().equals(UserEvent.REQUESTED)));
-        // Key by email so we can join on email.
-        KStream<String, User> userKStream = userRequestsKStream
-                .selectKey(((key, value) -> value.getEmail()));
 
-        KStream<String, EmailRequest> userAndEmail = userKStream.leftJoin(emailKTable,
+        KStream<String, EmailRequest> userAndEmail = userRequestsKStream.leftJoin(emailKTable,
                 EmailRequest::new,
                 Joined.with(Serdes.String(),
                         UserAvroSerdeFactory.build(envProps),

@@ -17,8 +17,6 @@ import java.io.IOException;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
-import andrewgrant.friendsdrinks.avro.Email;
-import andrewgrant.friendsdrinks.avro.EmailEvent;
 import andrewgrant.friendsdrinks.avro.User;
 import andrewgrant.friendsdrinks.avro.UserEvent;
 import andrewgrant.friendsdrinks.user.UserAvroSerdeFactory;
@@ -26,14 +24,12 @@ import andrewgrant.friendsdrinks.user.UserAvroSerdeFactory;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 
-
-
 /**
- * Service responsible for writing to the email topic.
- * See Single Writer Principle https://www.confluent.io/blog/build-services-backbone-events/
+ * Service responsible for re-keying incoming User requests by email
+ * and pushing request to email_request topic.
  */
-public class EmailWriterService {
-    private static final Logger log = LoggerFactory.getLogger(EmailWriterService.class);
+public class EmailRequestWriterService {
+    private static final Logger log = LoggerFactory.getLogger(EmailRequestWriterService.class);
 
     public Properties buildStreamsProperties(Properties envProps) {
         Properties props = new Properties();
@@ -53,33 +49,17 @@ public class EmailWriterService {
         final StreamsBuilder builder = new StreamsBuilder();
 
         final String userTopic = envProps.getProperty("user.topic.name");
-        KStream<String, User> userValidations = builder.stream(userTopic,
+        KStream<String, User> userKStream = builder.stream(userTopic,
                 Consumed.with(Serdes.String(), UserAvroSerdeFactory.build(envProps)));
 
-        KStream<String, Email> emailKStream = userValidations.filter(((key, value) ->
-                value.getEventType().equals(UserEvent.VALIDATED) ||
-                        value.getEventType().equals(UserEvent.REJECTED)
-        )).mapValues((key, value) -> {
-            EmailEvent emailEvent;
-            if (value.getEventType().equals(UserEvent.VALIDATED)) {
-                emailEvent = EmailEvent.RESERVED;
-            } else {
-                emailEvent = EmailEvent.REJECTED;
-            }
-            Email email = new Email();
-            email.setEmail(value.getEmail());
-            email.setEventType(emailEvent);
-            email.setUserId(value.getUserId());
-            return email;
-        });
+        // Re-key on email
+        KStream<String, User> userKStreamRekeyed =
+                userKStream.selectKey(((key, value) -> value.getEmail()));
 
-        // Re-key on email before publishing to email topic.
-        emailKStream = emailKStream.selectKey(((key, value) -> value.getEmail()));
-
-        final String emailTopic = envProps.getProperty("email.topic.name");
-        emailKStream.to(emailTopic,
+        final String emailRequestTopic = envProps.getProperty("email_request.topic.name");
+        userKStreamRekeyed.to(emailRequestTopic,
                 Produced.with(Serdes.String(),
-                        EmailAvroSerdeFactory.build(envProps)));
+                        UserAvroSerdeFactory.build(envProps)));
 
         return builder.build();
     }
@@ -99,12 +79,13 @@ public class EmailWriterService {
                     "the path to an environment configuration file.");
         }
 
-        EmailWriterService emailWriterService = new EmailWriterService();
-        Properties envProps = emailWriterService.loadEnvProperties(args[0]);
-        Topology topology = emailWriterService.buildTopology(envProps);
+        EmailRequestWriterService emailRequestWriterService =
+                new EmailRequestWriterService();
+        Properties envProps = emailRequestWriterService.loadEnvProperties(args[0]);
+        Topology topology = emailRequestWriterService.buildTopology(envProps);
         log.debug("Built stream");
 
-        Properties streamProps = emailWriterService.buildStreamsProperties(envProps);
+        Properties streamProps = emailRequestWriterService.buildStreamsProperties(envProps);
         final KafkaStreams streams = new KafkaStreams(topology, streamProps);
         final CountDownLatch latch = new CountDownLatch(1);
 

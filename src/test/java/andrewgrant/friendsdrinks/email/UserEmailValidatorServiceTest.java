@@ -39,7 +39,6 @@ public class UserEmailValidatorServiceTest {
      * by default.
      * @throws IOException
      */
-    @Ignore
     @Test
     public void testValidation() throws IOException {
         UserEmailValidatorService validatorService = new UserEmailValidatorService();
@@ -55,10 +54,11 @@ public class UserEmailValidatorServiceTest {
         SpecificAvroSerializer<Email> emailSerializer = EmailAvro.serializer(envProps);
 
         List<Email> emailInput = new ArrayList<>();
-        String takenEmail = "email1@test.com";
+        String takenEmail = UUID.randomUUID().toString();
+        String userId = UUID.randomUUID().toString();
         emailInput.add(Email.newBuilder()
                 .setEmail(takenEmail)
-                .setUserId("userid1")
+                .setUserId(userId)
                 .setEventType(EmailEvent.RESERVED)
                 .build());
 
@@ -95,10 +95,10 @@ public class UserEmailValidatorServiceTest {
 
         ConsumerRecordFactory<String, User> userInputFactory =
                 new ConsumerRecordFactory<>(stringSerializer, userSerializer);
-        final String userTopic = envProps.getProperty("user.topic.name");
+        final String emailRequestTopic = envProps.getProperty("email_request.topic.name");
         for (User user : userInput) {
             testDriver.pipeInput(
-                    userInputFactory.create(userTopic, user.getUserId(), user));
+                    userInputFactory.create(emailRequestTopic, user.getEmail(), user));
         }
 
         final String userValidationTopic = envProps.getProperty("user_validation.topic.name");

@@ -37,7 +37,6 @@ public class EmailWriterServiceTest {
      * by default.
      * @throws IOException
      */
-    @Ignore
     @Test
     public void testValidate() throws IOException {
         EmailWriterService emailWriterService = new EmailWriterService();
@@ -57,14 +56,14 @@ public class EmailWriterServiceTest {
         input.add(
                 User.newBuilder()
                         .setRequestId("1")
-                        .setUserId("userid1")
-                        .setEmail("userid1@test.com")
+                        .setUserId(UUID.randomUUID().toString())
+                        .setEmail(UUID.randomUUID().toString())
                         .setEventType(UserEvent.VALIDATED).build());
         input.add(
                 User.newBuilder()
                         .setRequestId("2")
-                        .setUserId("userid2")
-                        .setEmail("userid2@test.com")
+                        .setUserId(UUID.randomUUID().toString())
+                        .setEmail(UUID.randomUUID().toString())
                         .setEventType(UserEvent.REJECTED).build());
 
         final String userTopic = envProps.getProperty("user.topic.name");
