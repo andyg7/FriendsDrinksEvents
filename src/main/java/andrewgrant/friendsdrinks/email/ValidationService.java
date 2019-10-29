@@ -69,16 +69,21 @@ public class ValidationService {
                 Consumed.with(EmailAvroSerdeFactory.buildEmailId(envProps),
                         EmailAvroSerdeFactory.buildEmail(envProps)));
 
-        final String emailRequestTopic = envProps.getProperty("email_request.topic.name");
-        KStream<EmailId, User> userIdKStream = builder.stream(emailRequestTopic,
-                Consumed.with(EmailAvroSerdeFactory.buildEmailId(envProps),
+        final String userTopic = envProps.getProperty("user.topic.name");
+        KStream<UserId, User> userIdKStream = builder.stream(userTopic,
+                Consumed.with(UserAvroSerdeFactory.buildUserId(envProps),
                         UserAvroSerdeFactory.buildUser(envProps)));
 
         // Filter by requests.
-        KStream<EmailId, User> userRequestsKStream = userIdKStream.
+        KStream<UserId, User> userRequestsKStream = userIdKStream.
                 filter(((key, value) -> value.getEventType().equals(UserEvent.REQUESTED)));
 
-        KStream<EmailId, EmailRequest> userAndEmail = userRequestsKStream.leftJoin(emailKTable,
+        // Rekey by email for join.
+        KStream<EmailId, User> userKStreamKeyedByEmail =
+                userRequestsKStream.selectKey(((key, value) -> new EmailId(value.getEmail())));
+
+
+        KStream<EmailId, EmailRequest> userAndEmail = userKStreamKeyedByEmail.leftJoin(emailKTable,
                 EmailRequest::new,
                 Joined.with(EmailAvroSerdeFactory.buildEmailId(envProps),
                         UserAvroSerdeFactory.buildUser(envProps),

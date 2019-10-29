@@ -41,6 +41,8 @@ public class ValidationServiceTest {
         TopologyTestDriver testDriver = new TopologyTestDriver(topology, streamProps);
 
         SpecificAvroSerializer<User> userSerializer = UserAvro.userSerializer(envProps);
+        SpecificAvroSerializer<UserId> userIdSerializer = UserAvro.userIdSerializer(envProps);
+
         SpecificAvroSerializer<Email> emailSerializer = EmailAvro.emailSerializer(envProps);
         SpecificAvroSerializer<EmailId> emailIdSerializer = EmailAvro.emailIdSerializer(envProps);
 
@@ -91,12 +93,12 @@ public class ValidationServiceTest {
                 .setUserId(new UserId(newUserId3))
                 .build());
 
-        ConsumerRecordFactory<EmailId, User> userInputFactory =
-                new ConsumerRecordFactory<>(emailIdSerializer, userSerializer);
-        final String emailRequestTopic = envProps.getProperty("email_request.topic.name");
+        ConsumerRecordFactory<UserId, User> userInputFactory =
+                new ConsumerRecordFactory<>(userIdSerializer, userSerializer);
+        final String userTopic = envProps.getProperty("user.topic.name");
         for (User user : userInput) {
             testDriver.pipeInput(
-                    userInputFactory.create(emailRequestTopic, new EmailId(user.getEmail()), user));
+                    userInputFactory.create(userTopic, user.getUserId(), user));
         }
 
         final String userValidationTopic = envProps.getProperty("user_validation.topic.name");
