@@ -25,8 +25,8 @@ import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
  * Service responsible for writing to the email topic.
  * See Single Writer Principle https://www.confluent.io/blog/build-services-backbone-events/
  */
-public class EmailWriterService {
-    private static final Logger log = LoggerFactory.getLogger(EmailWriterService.class);
+public class WriterService {
+    private static final Logger log = LoggerFactory.getLogger(WriterService.class);
 
     public Properties buildStreamsProperties(Properties envProps) {
         Properties props = new Properties();
@@ -71,8 +71,8 @@ public class EmailWriterService {
 
         final String emailTopic = envProps.getProperty("email.topic.name");
         emailKStreamRekeyed.to(emailTopic,
-                Produced.with(EmailAvroSerdeFactory.buildEmailId(envProps),
-                        EmailAvroSerdeFactory.buildEmail(envProps)));
+                Produced.with(AvroSerdeFactory.buildEmailId(envProps),
+                        AvroSerdeFactory.buildEmail(envProps)));
 
         return builder.build();
     }
@@ -92,12 +92,12 @@ public class EmailWriterService {
                     "the path to an environment configuration file.");
         }
 
-        EmailWriterService emailWriterService = new EmailWriterService();
-        Properties envProps = emailWriterService.loadEnvProperties(args[0]);
-        Topology topology = emailWriterService.buildTopology(envProps);
+        WriterService writerService = new WriterService();
+        Properties envProps = writerService.loadEnvProperties(args[0]);
+        Topology topology = writerService.buildTopology(envProps);
         log.debug("Built stream");
 
-        Properties streamProps = emailWriterService.buildStreamsProperties(envProps);
+        Properties streamProps = writerService.buildStreamsProperties(envProps);
         final KafkaStreams streams = new KafkaStreams(topology, streamProps);
         final CountDownLatch latch = new CountDownLatch(1);
 

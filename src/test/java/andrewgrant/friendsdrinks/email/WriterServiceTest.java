@@ -22,7 +22,7 @@ import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerializer;
 /**
  * Tests for EmailWriterService.
  */
-public class EmailWriterServiceTest {
+public class WriterServiceTest {
 
 
     /**
@@ -31,11 +31,11 @@ public class EmailWriterServiceTest {
      */
     @Test
     public void testValidate() throws IOException {
-        EmailWriterService emailWriterService = new EmailWriterService();
-        Properties envProps = emailWriterService.loadEnvProperties(TEST_CONFIG_FILE);
-        Topology topology = emailWriterService.buildTopology(envProps);
+        WriterService writerService = new WriterService();
+        Properties envProps = writerService.loadEnvProperties(TEST_CONFIG_FILE);
+        Topology topology = writerService.buildTopology(envProps);
 
-        Properties streamProps = emailWriterService.buildStreamsProperties(envProps);
+        Properties streamProps = writerService.buildStreamsProperties(envProps);
         TopologyTestDriver testDriver = new TopologyTestDriver(topology, streamProps);
 
         SpecificAvroSerializer<UserId> userIdSerializer = UserAvro.userIdSerializer(envProps);

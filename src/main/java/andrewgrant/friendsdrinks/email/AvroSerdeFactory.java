@@ -13,7 +13,7 @@ import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 /**
  * Factory class for building an avro encoder for Email.
  */
-public class EmailAvroSerdeFactory {
+public class AvroSerdeFactory {
 
     public static SpecificAvroSerde<Email> buildEmail(Properties properties) {
         SpecificAvroSerde<Email> serde = new SpecificAvroSerde<>();

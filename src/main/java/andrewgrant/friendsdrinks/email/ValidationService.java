@@ -54,20 +54,20 @@ public class ValidationService {
         final String emailTopic = envProps.getProperty("email.topic.name");
         // Get stream of email events and clean up state store as they come in
         KStream<EmailId, Email> emailKStream = builder.stream(emailTopic,
-                Consumed.with(EmailAvroSerdeFactory.buildEmailId(envProps),
-                        EmailAvroSerdeFactory.buildEmail(envProps)))
+                Consumed.with(AvroSerdeFactory.buildEmailId(envProps),
+                        AvroSerdeFactory.buildEmail(envProps)))
                 .transform(PendingEmailsStateStoreCleaner::new, PENDING_EMAILS_STORE_NAME);
 
         // Write events to a tmp topic so we can rebuild a table
         final String emailTmpTopic = envProps.getProperty("email_tmp.topic.name");
         emailKStream.filter(((key, value) -> value.getEventType().equals(EmailEvent.RESERVED)))
                 .to(emailTmpTopic,
-                        Produced.with(EmailAvroSerdeFactory.buildEmailId(envProps),
-                                EmailAvroSerdeFactory.buildEmail(envProps)));
+                        Produced.with(AvroSerdeFactory.buildEmailId(envProps),
+                                AvroSerdeFactory.buildEmail(envProps)));
 
         KTable<EmailId, Email> emailKTable = builder.table(emailTmpTopic,
-                Consumed.with(EmailAvroSerdeFactory.buildEmailId(envProps),
-                        EmailAvroSerdeFactory.buildEmail(envProps)));
+                Consumed.with(AvroSerdeFactory.buildEmailId(envProps),
+                        AvroSerdeFactory.buildEmail(envProps)));
 
         final String userTopic = envProps.getProperty("user.topic.name");
         KStream<UserId, User> userIdKStream = builder.stream(userTopic,
@@ -83,14 +83,14 @@ public class ValidationService {
                 userRequestsKStream.selectKey(((key, value) -> new EmailId(value.getEmail())));
 
 
-        KStream<EmailId, EmailRequest> userAndEmail = userKStreamKeyedByEmail.leftJoin(emailKTable,
-                EmailRequest::new,
-                Joined.with(EmailAvroSerdeFactory.buildEmailId(envProps),
+        KStream<EmailId, Request> userAndEmail = userKStreamKeyedByEmail.leftJoin(emailKTable,
+                Request::new,
+                Joined.with(AvroSerdeFactory.buildEmailId(envProps),
                         UserAvroSerdeFactory.buildUser(envProps),
-                        EmailAvroSerdeFactory.buildEmail(envProps)));
+                        AvroSerdeFactory.buildEmail(envProps)));
 
         KStream<UserId, User> validatedUser =
-                userAndEmail.transform(EmailValidator::new, PENDING_EMAILS_STORE_NAME)
+                userAndEmail.transform(Validator::new, PENDING_EMAILS_STORE_NAME)
                         .selectKey(((key, value) -> value.getUserId()));
 
         final String userValidationTopic = envProps.getProperty("user_validation.topic.name");
