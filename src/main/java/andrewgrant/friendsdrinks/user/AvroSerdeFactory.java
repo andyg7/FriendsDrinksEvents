@@ -11,7 +11,7 @@ import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 /**
  * Factory for building a avro encoder/decoder of User.
  */
-public class UserAvroSerdeFactory {
+public class AvroSerdeFactory {
 
     public static SpecificAvroSerde<User> buildUser(Properties properties) {
         SpecificAvroSerde<User> serde = new SpecificAvroSerde<>();

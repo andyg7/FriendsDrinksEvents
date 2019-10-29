@@ -16,7 +16,7 @@ import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
 import andrewgrant.friendsdrinks.avro.*;
-import andrewgrant.friendsdrinks.user.UserAvroSerdeFactory;
+import andrewgrant.friendsdrinks.user.AvroSerdeFactory;
 
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 
@@ -45,8 +45,8 @@ public class WriterService {
 
         final String userTopic = envProps.getProperty("user.topic.name");
         KStream<UserId, User> userValidations = builder.stream(userTopic,
-                Consumed.with(UserAvroSerdeFactory.buildUserId(envProps),
-                        UserAvroSerdeFactory.buildUser(envProps)));
+                Consumed.with(AvroSerdeFactory.buildUserId(envProps),
+                        AvroSerdeFactory.buildUser(envProps)));
 
         KStream<UserId, Email> emailKStream = userValidations.filter(((key, value) ->
                 value.getEventType().equals(UserEvent.VALIDATED) ||
@@ -71,8 +71,8 @@ public class WriterService {
 
         final String emailTopic = envProps.getProperty("email.topic.name");
         emailKStreamRekeyed.to(emailTopic,
-                Produced.with(AvroSerdeFactory.buildEmailId(envProps),
-                        AvroSerdeFactory.buildEmail(envProps)));
+                Produced.with(andrewgrant.friendsdrinks.email.AvroSerdeFactory.buildEmailId(envProps),
+                        andrewgrant.friendsdrinks.email.AvroSerdeFactory.buildEmail(envProps)));
 
         return builder.build();
     }

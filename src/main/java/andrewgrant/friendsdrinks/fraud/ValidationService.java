@@ -18,7 +18,7 @@ import java.util.concurrent.CountDownLatch;
 import andrewgrant.friendsdrinks.avro.User;
 import andrewgrant.friendsdrinks.avro.UserEvent;
 import andrewgrant.friendsdrinks.avro.UserId;
-import andrewgrant.friendsdrinks.user.UserAvroSerdeFactory;
+import andrewgrant.friendsdrinks.user.AvroSerdeFactory;
 
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 
@@ -34,8 +34,8 @@ public class ValidationService {
 
         final String userTopic = envProps.getProperty("user.topic.name");
         KStream<UserId, User> userKStream = builder.stream(userTopic,
-                Consumed.with(UserAvroSerdeFactory.buildUserId(envProps),
-                        UserAvroSerdeFactory.buildUser(envProps)))
+                Consumed.with(AvroSerdeFactory.buildUserId(envProps),
+                        AvroSerdeFactory.buildUser(envProps)))
                 .filter(((key, value) -> value.getEventType().equals(UserEvent.REQUESTED)));
 
         KGroupedStream<UserId, User> groupedStream = userKStream.groupByKey();
