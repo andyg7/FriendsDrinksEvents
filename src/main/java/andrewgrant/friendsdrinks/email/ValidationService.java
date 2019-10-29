@@ -25,8 +25,8 @@ import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 /**
  * Service for validating requests based on email.
  */
-public class UserEmailValidatorService {
-    private static final Logger log = LoggerFactory.getLogger(UserEmailValidatorService.class);
+public class ValidationService {
+    private static final Logger log = LoggerFactory.getLogger(ValidationService.class);
 
     public Properties buildStreamsProperties(Properties envProps) {
         Properties props = new Properties();
@@ -110,12 +110,12 @@ public class UserEmailValidatorService {
                     "the path to an environment configuration file.");
         }
 
-        UserEmailValidatorService userEmailValidatorService = new UserEmailValidatorService();
-        Properties envProps = userEmailValidatorService.loadEnvProperties(args[0]);
-        Topology topology = userEmailValidatorService.buildTopology(envProps);
+        ValidationService validationService = new ValidationService();
+        Properties envProps = validationService.loadEnvProperties(args[0]);
+        Topology topology = validationService.buildTopology(envProps);
         log.debug("Built stream");
 
-        Properties streamProps = userEmailValidatorService.buildStreamsProperties(envProps);
+        Properties streamProps = validationService.buildStreamsProperties(envProps);
         final KafkaStreams streams = new KafkaStreams(topology, streamProps);
         final CountDownLatch latch = new CountDownLatch(1);
 

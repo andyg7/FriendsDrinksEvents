@@ -40,7 +40,6 @@ public class EmailWriterService {
         return props;
     }
 
-    private static boolean test = true;
     public Topology buildTopology(Properties envProps) {
         final StreamsBuilder builder = new StreamsBuilder();
 
@@ -65,7 +64,6 @@ public class EmailWriterService {
             email.setUserId(value.getUserId().getId());
             return email;
         });
-
 
         // Re-key on email before publishing to email topic.
         KStream<EmailId, Email> emailKStreamRekeyed =

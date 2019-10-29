@@ -25,7 +25,7 @@ import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerializer;
 /**
  * Tests for validation.
  */
-public class UserEmailValidatorServiceTest {
+public class ValidationServiceTest {
 
     /**
      * Integration test that requires kafka and schema registry to be running.
@@ -33,7 +33,7 @@ public class UserEmailValidatorServiceTest {
      */
     @Test
     public void testValidation() throws IOException {
-        UserEmailValidatorService validatorService = new UserEmailValidatorService();
+        ValidationService validatorService = new ValidationService();
         Properties envProps = validatorService.loadEnvProperties(TEST_CONFIG_FILE);
         Topology topology = validatorService.buildTopology(envProps);
 
