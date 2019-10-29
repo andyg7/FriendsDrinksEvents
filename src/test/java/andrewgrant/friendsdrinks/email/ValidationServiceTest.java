@@ -3,6 +3,7 @@ package andrewgrant.friendsdrinks.email;
 import static org.junit.Assert.*;
 
 import static andrewgrant.friendsdrinks.email.Config.TEST_CONFIG_FILE;
+import static andrewgrant.friendsdrinks.env.Properties.loadEnvProperties;
 
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.streams.Topology;
@@ -34,7 +35,7 @@ public class ValidationServiceTest {
     @Test
     public void testValidation() throws IOException {
         ValidationService validatorService = new ValidationService();
-        Properties envProps = validatorService.loadEnvProperties(TEST_CONFIG_FILE);
+        Properties envProps = loadEnvProperties(TEST_CONFIG_FILE);
         Topology topology = validatorService.buildTopology(envProps);
 
         Properties streamProps = validatorService.buildStreamsProperties(envProps);

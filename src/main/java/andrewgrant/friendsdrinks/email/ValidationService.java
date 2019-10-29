@@ -1,5 +1,7 @@
 package andrewgrant.friendsdrinks.email;
 
+import static andrewgrant.friendsdrinks.env.Properties.loadEnvProperties;
+
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -11,8 +13,6 @@ import org.apache.kafka.streams.state.Stores;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
@@ -21,6 +21,7 @@ import andrewgrant.friendsdrinks.avro.*;
 import andrewgrant.friendsdrinks.user.AvroSerdeFactory;
 
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
+
 
 /**
  * Service for validating requests based on email.
@@ -54,7 +55,8 @@ public class ValidationService {
         final String emailTopic = envProps.getProperty("email.topic.name");
         // Get stream of email events and clean up state store as they come in
         KStream<EmailId, Email> emailKStream = builder.stream(emailTopic,
-                Consumed.with(andrewgrant.friendsdrinks.email.AvroSerdeFactory.buildEmailId(envProps),
+                Consumed.with(
+                        andrewgrant.friendsdrinks.email.AvroSerdeFactory.buildEmailId(envProps),
                         andrewgrant.friendsdrinks.email.AvroSerdeFactory.buildEmail(envProps)))
                 .transform(PendingEmailsStateStoreCleaner::new, PENDING_EMAILS_STORE_NAME);
 
@@ -62,12 +64,17 @@ public class ValidationService {
         final String emailTmpTopic = envProps.getProperty("email_tmp.topic.name");
         emailKStream.filter(((key, value) -> value.getEventType().equals(EmailEvent.RESERVED)))
                 .to(emailTmpTopic,
-                        Produced.with(andrewgrant.friendsdrinks.email.AvroSerdeFactory.buildEmailId(envProps),
-                                andrewgrant.friendsdrinks.email.AvroSerdeFactory.buildEmail(envProps)));
+                        Produced.with(
+                                andrewgrant.friendsdrinks.email.AvroSerdeFactory
+                                        .buildEmailId(envProps),
+                                andrewgrant.friendsdrinks.email.AvroSerdeFactory
+                                        .buildEmail(envProps)));
 
         KTable<EmailId, Email> emailKTable = builder.table(emailTmpTopic,
-                Consumed.with(andrewgrant.friendsdrinks.email.AvroSerdeFactory.buildEmailId(envProps),
-                        andrewgrant.friendsdrinks.email.AvroSerdeFactory.buildEmail(envProps)));
+                Consumed.with(andrewgrant.friendsdrinks.email.AvroSerdeFactory
+                                .buildEmailId(envProps),
+                        andrewgrant.friendsdrinks.email.AvroSerdeFactory
+                                .buildEmail(envProps)));
 
         final String userTopic = envProps.getProperty("user.topic.name");
         KStream<UserId, User> userIdKStream = builder.stream(userTopic,
@@ -101,14 +108,6 @@ public class ValidationService {
         return builder.build();
     }
 
-    public Properties loadEnvProperties(String fileName) throws IOException {
-        Properties envProps = new Properties();
-        FileInputStream input = new FileInputStream(fileName);
-        envProps.load(input);
-        input.close();
-        return envProps;
-    }
-
     public static void main(String[] args) throws Exception {
         if (args.length < 1) {
             throw new IllegalArgumentException("This program takes one argument: " +
@@ -116,7 +115,7 @@ public class ValidationService {
         }
 
         ValidationService validationService = new ValidationService();
-        Properties envProps = validationService.loadEnvProperties(args[0]);
+        Properties envProps = loadEnvProperties(args[0]);
         Topology topology = validationService.buildTopology(envProps);
         log.debug("Built stream");
 

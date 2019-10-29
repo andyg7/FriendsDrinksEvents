@@ -1,5 +1,7 @@
 package andrewgrant.friendsdrinks.email;
 
+import static andrewgrant.friendsdrinks.env.Properties.loadEnvProperties;
+
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
@@ -10,8 +12,6 @@ import org.apache.kafka.streams.kstream.Produced;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
@@ -19,7 +19,6 @@ import andrewgrant.friendsdrinks.avro.*;
 import andrewgrant.friendsdrinks.user.AvroSerdeFactory;
 
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
-
 
 /**
  * Service responsible for writing to the email topic.
@@ -71,19 +70,12 @@ public class WriterService {
 
         final String emailTopic = envProps.getProperty("email.topic.name");
         emailKStreamRekeyed.to(emailTopic,
-                Produced.with(andrewgrant.friendsdrinks.email.AvroSerdeFactory.buildEmailId(envProps),
-                        andrewgrant.friendsdrinks.email.AvroSerdeFactory.buildEmail(envProps)));
+                Produced.with(andrewgrant.friendsdrinks.email.AvroSerdeFactory
+                                .buildEmailId(envProps),
+                        andrewgrant.friendsdrinks.email.AvroSerdeFactory
+                                .buildEmail(envProps)));
 
         return builder.build();
-    }
-
-    public Properties loadEnvProperties(String fileName) throws IOException {
-        Properties envProps = new Properties();
-        FileInputStream input = new FileInputStream(fileName);
-        envProps.load(input);
-        input.close();
-
-        return envProps;
     }
 
     public static void main(String[] args) throws Exception {
@@ -93,7 +85,7 @@ public class WriterService {
         }
 
         WriterService writerService = new WriterService();
-        Properties envProps = writerService.loadEnvProperties(args[0]);
+        Properties envProps = loadEnvProperties(args[0]);
         Topology topology = writerService.buildTopology(envProps);
         log.debug("Built stream");
 

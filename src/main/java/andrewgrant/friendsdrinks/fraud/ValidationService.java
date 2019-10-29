@@ -1,5 +1,7 @@
 package andrewgrant.friendsdrinks.fraud;
 
+import static andrewgrant.friendsdrinks.env.Properties.loadEnvProperties;
+
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -9,8 +11,6 @@ import org.apache.kafka.streams.kstream.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.time.Duration;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
@@ -21,6 +21,7 @@ import andrewgrant.friendsdrinks.avro.UserId;
 import andrewgrant.friendsdrinks.user.AvroSerdeFactory;
 
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
+
 
 /**
  * Validates user request.
@@ -50,9 +51,6 @@ public class ValidationService {
                 Materialized.with(null, Serdes.Long())
         )
                 .toStream(((key, value) -> key.key()));
-
-        final String userValidationTopic = envProps.getProperty("user_validation.topic.name");
-
         return builder.build();
     }
 
@@ -68,15 +66,6 @@ public class ValidationService {
         return props;
     }
 
-    public Properties loadEnvProperties(String fileName) throws IOException {
-        Properties envProps = new Properties();
-        FileInputStream input = new FileInputStream(fileName);
-        envProps.load(input);
-        input.close();
-
-        return envProps;
-    }
-
     public static void main(String[] args) throws Exception {
         if (args.length < 1) {
             throw new IllegalArgumentException("This program takes one argument: " +
@@ -85,7 +74,7 @@ public class ValidationService {
 
         ValidationService validationService =
                 new ValidationService();
-        Properties envProps = validationService.loadEnvProperties(args[0]);
+        Properties envProps = loadEnvProperties(args[0]);
         Topology topology = validationService.buildTopology(envProps);
         log.debug("Built stream");
 
