@@ -72,7 +72,8 @@ public class ValidationService {
         ).toStream(((key, value) -> key.key()));
 
         KStream<UserId, User> userValidatedStream = requestCounts
-                .transform(ProcesssingUsersCleaner::new, PROCESSING_USERS_STORE_NAME);
+                .transform(ProcesssingUsersCleaner::new, PROCESSING_USERS_STORE_NAME)
+                .filter(((key, value) -> value != null));
 
         final String userValidationsTopic = envProps.getProperty("user_validation.topic.name");
         userValidatedStream.to(userValidationsTopic, Produced.with(

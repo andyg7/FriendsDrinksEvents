@@ -27,10 +27,13 @@ public class ProcesssingUsersCleaner implements
 
     @Override
     public KeyValue<UserId, User> transform(UserId key, Long value) {
+        if (value == null) {
+            return new KeyValue<>(key, null);
+        }
         User user = processingUsers.get(key);
-        // todo: handle null long?
         if (value > 10) {
             user.setEventType(UserEvent.REJECTED);
+            user.setErrorCode(ErrorCode.DOS.toString());
         } else {
             user.setEventType(UserEvent.VALIDATED);
         }

@@ -47,35 +47,50 @@ public class ValidationServiceTest {
         SpecificAvroSerializer<UserId> userIdSerializer = UserAvro.userIdSerializer(envProps);
 
         List<User> userInput = new ArrayList<>();
+        String userId1 = UUID.randomUUID().toString();
         // Valid request.
         userInput.add(User.newBuilder()
                 .setRequestId(UUID.randomUUID().toString())
                 .setEmail(UUID.randomUUID().toString())
                 .setEventType(UserEvent.REQUESTED)
-                .setUserId(new UserId(UUID.randomUUID().toString()))
+                .setUserId(new UserId(userId1))
                 .build());
 
-        String newUserId2 = UUID.randomUUID().toString();
+        String userId2 = UUID.randomUUID().toString();
         // Invalid request for taken email.
         userInput.add(User.newBuilder()
                 .setRequestId(UUID.randomUUID().toString())
                 .setEmail(UUID.randomUUID().toString())
                 .setEventType(UserEvent.REQUESTED)
-                .setUserId(new UserId(newUserId2))
+                .setUserId(new UserId(userId2))
                 .build());
 
-        String newUserId3 = UUID.randomUUID().toString();
+        String userId3 = UUID.randomUUID().toString();
         userInput.add(User.newBuilder()
                 .setRequestId(UUID.randomUUID().toString())
                 .setEmail(UUID.randomUUID().toString())
                 .setEventType(UserEvent.REQUESTED)
-                .setUserId(new UserId(newUserId3))
+                .setUserId(new UserId(userId3))
                 .build());
+
 
         ConsumerRecordFactory<UserId, User> userInputFactory =
                 new ConsumerRecordFactory<>(userIdSerializer, userSerializer);
         final String userTopic = envProps.getProperty("user.topic.name");
         for (User user : userInput) {
+            testDriver.pipeInput(
+                    userInputFactory.create(userTopic, user.getUserId(), user));
+        }
+
+        // DoS from user id 4.
+        String userId4 = UUID.randomUUID().toString();
+        for (int i = 0; i < 15; i++) {
+            User user = User.newBuilder()
+                    .setRequestId(UUID.randomUUID().toString())
+                    .setEmail(UUID.randomUUID().toString())
+                    .setEventType(UserEvent.REQUESTED)
+                    .setUserId(new UserId(userId4))
+                    .build();
             testDriver.pipeInput(
                     userInputFactory.create(userTopic, user.getUserId(), user));
         }
@@ -95,7 +110,17 @@ public class ValidationServiceTest {
             }
         }
 
-        assertEquals(3, userValidationOutput.size());
+        assertEquals(18, userValidationOutput.size());
+
+        User validatedUser = userValidationOutput.get(0);
+        assertEquals(userId1, validatedUser.getUserId().getId());
+        assertEquals(UserEvent.VALIDATED, validatedUser.getEventType());
+        assertEquals(null, validatedUser.getErrorCode());
+
+        User rejectedUser = userValidationOutput.get(17);
+        assertEquals(userId4, rejectedUser.getUserId().getId());
+        assertEquals(UserEvent.REJECTED, rejectedUser.getEventType());
+        assertEquals("DOS", rejectedUser.getErrorCode());
     }
 
 }
