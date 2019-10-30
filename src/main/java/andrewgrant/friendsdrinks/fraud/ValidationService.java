@@ -8,10 +8,13 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.*;
+import org.apache.kafka.streams.state.StoreBuilder;
+import org.apache.kafka.streams.state.Stores;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
@@ -30,8 +33,19 @@ public class ValidationService {
 
     private static final Logger log = LoggerFactory.getLogger(ValidationService.class);
 
+    public static final String PROCESSING_USERS_STORE_NAME =
+            "processing_users";
+
     public Topology buildTopology(Properties envProps) {
         final StreamsBuilder builder = new StreamsBuilder();
+
+        final StoreBuilder processingUsers = Stores
+                .keyValueStoreBuilder(Stores.persistentKeyValueStore(PROCESSING_USERS_STORE_NAME),
+                        AvroSerdeFactory.buildUserId(envProps),
+                        AvroSerdeFactory.buildUser(envProps))
+                .withLoggingEnabled(new HashMap<>());
+
+        builder.addStateStore(processingUsers);
 
         final String userTopic = envProps.getProperty("user.topic.name");
         KStream<UserId, User> userKStream = builder.stream(userTopic,
@@ -39,18 +53,34 @@ public class ValidationService {
                         AvroSerdeFactory.buildUser(envProps)))
                 .filter(((key, value) -> value.getEventType().equals(UserEvent.REQUESTED)));
 
+        userKStream = userKStream.transform(
+                ProcessingUsersPopulator::new,
+                PROCESSING_USERS_STORE_NAME);
+
         KGroupedStream<UserId, User> groupedStream = userKStream.groupByKey();
 
         SessionWindowedKStream<UserId, User> sessionWindowedKStream =
-                groupedStream.windowedBy(SessionWindows.with(Duration.ofMinutes(5)));
+                groupedStream.windowedBy(SessionWindows.with(Duration.ofMinutes(1)));
 
-        sessionWindowedKStream.aggregate(
+        KStream<UserId, Long> requestCounts = sessionWindowedKStream.aggregate(
                 () -> 0L,
                 ((key, value, aggregate) -> 1 + aggregate),
                 ((aggKey, aggOne, aggTwo) -> aggOne + aggTwo),
-                Materialized.with(null, Serdes.Long())
-        )
-                .toStream(((key, value) -> key.key()));
+                Materialized.with(AvroSerdeFactory.buildUserId(envProps), Serdes.Long())
+        ).toStream(((key, value) -> key.key()));
+
+        KStream<UserId, Long> invalidRequests =
+                requestCounts.filter(((key, value) -> value != null))
+                        .filter(((key, value) -> value > 10));
+
+        KStream<UserId, User> invalidUserRequests = invalidRequests
+                .transform(ProcesssingUsersCleaner::new, PROCESSING_USERS_STORE_NAME);
+
+        final String userValidationsTopic = envProps.getProperty("user_validation.topic.name");
+        invalidUserRequests.to(userValidationsTopic, Produced.with(
+                AvroSerdeFactory.buildUserId(envProps),
+                AvroSerdeFactory.buildUser(envProps)));
+
         return builder.build();
     }
 
