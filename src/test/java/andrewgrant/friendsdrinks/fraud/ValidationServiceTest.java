@@ -47,15 +47,12 @@ public class ValidationServiceTest {
         SpecificAvroSerializer<UserId> userIdSerializer = UserAvro.userIdSerializer(envProps);
 
         List<User> userInput = new ArrayList<>();
-        String newRequestId = UUID.randomUUID().toString();
-        String newUserId = UUID.randomUUID().toString();
-        String newEmail = UUID.randomUUID().toString();
         // Valid request.
         userInput.add(User.newBuilder()
-                .setRequestId(newRequestId)
-                .setEmail(newEmail)
+                .setRequestId(UUID.randomUUID().toString())
+                .setEmail(UUID.randomUUID().toString())
                 .setEventType(UserEvent.REQUESTED)
-                .setUserId(new UserId(newUserId))
+                .setUserId(new UserId(UUID.randomUUID().toString()))
                 .build());
 
         String newUserId2 = UUID.randomUUID().toString();
@@ -70,20 +67,20 @@ public class ValidationServiceTest {
         String newUserId3 = UUID.randomUUID().toString();
         userInput.add(User.newBuilder()
                 .setRequestId(UUID.randomUUID().toString())
-                .setEmail(newEmail)
+                .setEmail(UUID.randomUUID().toString())
                 .setEventType(UserEvent.REQUESTED)
                 .setUserId(new UserId(newUserId3))
                 .build());
 
         ConsumerRecordFactory<UserId, User> userInputFactory =
                 new ConsumerRecordFactory<>(userIdSerializer, userSerializer);
-        final String userTopic = "test_user_topic";
+        final String userTopic = envProps.getProperty("user.topic.name");
         for (User user : userInput) {
             testDriver.pipeInput(
                     userInputFactory.create(userTopic, user.getUserId(), user));
         }
 
-        final String userValidationTopic = "test_user_validation_topic";
+        final String userValidationTopic = envProps.getProperty("user_validation.topic.name");
         SpecificAvroDeserializer<UserId> userIdDeserializer = UserAvro.userIdDeserializer(envProps);
         SpecificAvroDeserializer<User> userDeserializer = UserAvro.userDeserializer(envProps);
 
@@ -98,7 +95,7 @@ public class ValidationServiceTest {
             }
         }
 
-        assertEquals(0, userValidationOutput.size());
+        assertEquals(3, userValidationOutput.size());
     }
 
 }

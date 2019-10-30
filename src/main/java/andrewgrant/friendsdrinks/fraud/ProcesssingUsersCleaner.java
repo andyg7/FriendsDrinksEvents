@@ -1,4 +1,5 @@
 package andrewgrant.friendsdrinks.fraud;
+
 import static andrewgrant.friendsdrinks.fraud.ValidationService.PROCESSING_USERS_STORE_NAME;
 
 import org.apache.kafka.streams.KeyValue;
@@ -7,6 +8,7 @@ import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
 
 import andrewgrant.friendsdrinks.avro.User;
+import andrewgrant.friendsdrinks.avro.UserEvent;
 import andrewgrant.friendsdrinks.avro.UserId;
 
 /**
@@ -26,6 +28,12 @@ public class ProcesssingUsersCleaner implements
     @Override
     public KeyValue<UserId, User> transform(UserId key, Long value) {
         User user = processingUsers.get(key);
+        // todo: handle null long?
+        if (value > 10) {
+            user.setEventType(UserEvent.REJECTED);
+        } else {
+            user.setEventType(UserEvent.VALIDATED);
+        }
         processingUsers.put(key, null);
         return new KeyValue<>(key, user);
     }

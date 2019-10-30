@@ -32,7 +32,8 @@ public class ValidationService {
     public Properties buildStreamsProperties(Properties envProps) {
         Properties props = new Properties();
 
-        props.put(StreamsConfig.APPLICATION_ID_CONFIG, envProps.getProperty("application.id"));
+        props.put(StreamsConfig.APPLICATION_ID_CONFIG,
+                envProps.getProperty("email_validation_application.id"));
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG,
                 envProps.getProperty("bootstrap.servers"));
         props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
