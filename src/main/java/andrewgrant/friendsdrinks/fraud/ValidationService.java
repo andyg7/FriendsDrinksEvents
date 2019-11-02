@@ -90,6 +90,7 @@ public class ValidationService {
 
         final String userValidationsTopic = envProps.getProperty("user_validation.topic.name");
 
+        // Validated requests.
         trackedUserResults[0].mapValues(value -> value.getUser())
                 .mapValues(value ->
                         User.newBuilder(value).setEventType(UserEvent.VALIDATED).build())
@@ -97,6 +98,7 @@ public class ValidationService {
                         AvroSerdeFactory.buildUserId(envProps),
                         AvroSerdeFactory.buildUser(envProps)));
 
+        // Rejected requests.
         trackedUserResults[1].mapValues(value -> value.getUser())
                 .mapValues(value ->
                         User.newBuilder(value).setEventType(UserEvent.REJECTED)
@@ -104,12 +106,6 @@ public class ValidationService {
                 .to(userValidationsTopic, Produced.with(
                         AvroSerdeFactory.buildUserId(envProps),
                         AvroSerdeFactory.buildUser(envProps)));
-
-        /*
-        userValidatedStream.to(userValidationsTopic, Produced.with(
-                AvroSerdeFactory.buildUserId(envProps),
-                AvroSerdeFactory.buildUser(envProps)));
-         */
 
         return builder.build();
     }
