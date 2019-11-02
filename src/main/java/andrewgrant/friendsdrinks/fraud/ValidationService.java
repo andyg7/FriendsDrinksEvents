@@ -8,13 +8,10 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.*;
-import org.apache.kafka.streams.state.StoreBuilder;
-import org.apache.kafka.streams.state.Stores;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
-import java.util.HashMap;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
@@ -33,19 +30,8 @@ public class ValidationService {
 
     private static final Logger log = LoggerFactory.getLogger(ValidationService.class);
 
-    public static final String PROCESSING_USERS_STORE_NAME =
-            "processing_users";
-
     public Topology buildTopology(Properties envProps) {
         final StreamsBuilder builder = new StreamsBuilder();
-
-        final StoreBuilder processingUsers = Stores
-                .keyValueStoreBuilder(Stores.persistentKeyValueStore(PROCESSING_USERS_STORE_NAME),
-                        AvroSerdeFactory.buildUserId(envProps),
-                        AvroSerdeFactory.buildUser(envProps))
-                .withLoggingEnabled(new HashMap<>());
-
-        builder.addStateStore(processingUsers);
 
         final String userTopic = envProps.getProperty("user.topic.name");
         final String fraudTmpTopic = envProps.getProperty("fraud_tmp.topic.name");
