@@ -48,37 +48,68 @@ public class ValidationService {
         builder.addStateStore(processingUsers);
 
         final String userTopic = envProps.getProperty("user.topic.name");
-        KStream<UserId, User> userKStream = builder.stream(userTopic,
+        final String fraudTmpTopic = envProps.getProperty("fraud_tmp.topic.name");
+        KStream<UserId, User> requests = builder
+                .stream(userTopic,
+                        Consumed.with(AvroSerdeFactory.buildUserId(envProps),
+                                AvroSerdeFactory.buildUser(envProps)));
+
+        requests.filter(((key, value) -> value.getEventType().equals(UserEvent.REQUESTED)))
+                .groupByKey(
+                        Grouped.with(AvroSerdeFactory.buildUserId(envProps),
+                                AvroSerdeFactory.buildUser(envProps)))
+                .windowedBy(SessionWindows.with(Duration.ofMinutes(1)))
+                .aggregate(
+                        () -> 0L,
+                        ((key, value, aggregate) -> 1 + aggregate),
+                        ((aggKey, aggOne, aggTwo) -> aggOne + aggTwo),
+                        Materialized.with(AvroSerdeFactory.buildUserId(envProps), Serdes.Long())
+                )
+                // Get rid of windowed key.
+                .toStream(((key, value) -> key.key()))
+                .filter(((userId, count) -> count != null))
+                .to(fraudTmpTopic,
+                        Produced.with(AvroSerdeFactory.buildUserId(envProps),
+                                Serdes.Long()));
+
+        KTable<UserId, Long> userRequestCount = builder.table(fraudTmpTopic,
                 Consumed.with(AvroSerdeFactory.buildUserId(envProps),
-                        AvroSerdeFactory.buildUser(envProps)))
-                .filter(((key, value) -> value.getEventType().equals(UserEvent.REQUESTED)));
+                        Serdes.Long()));
 
-        userKStream = userKStream.transform(
-                ProcessingUsersPopulator::new,
-                PROCESSING_USERS_STORE_NAME);
+        KStream<UserId, FraudTracker> trackedUsers = requests.leftJoin(userRequestCount,
+                FraudTracker::new,
+                Joined.with(AvroSerdeFactory.buildUserId(envProps),
+                        AvroSerdeFactory.buildUser(envProps),
+                        Serdes.Long()));
 
-        KGroupedStream<UserId, User> groupedStream = userKStream.groupByKey(
-                Grouped.with(AvroSerdeFactory.buildUserId(envProps),
-                        AvroSerdeFactory.buildUser(envProps)));
-
-        SessionWindowedKStream<UserId, User> sessionWindowedKStream =
-                groupedStream.windowedBy(SessionWindows.with(Duration.ofMinutes(1)));
-
-        KStream<UserId, Long> requestCounts = sessionWindowedKStream.aggregate(
-                () -> 0L,
-                ((key, value, aggregate) -> 1 + aggregate),
-                ((aggKey, aggOne, aggTwo) -> aggOne + aggTwo),
-                Materialized.with(AvroSerdeFactory.buildUserId(envProps), Serdes.Long())
-        ).toStream(((key, value) -> key.key()));
-
-        KStream<UserId, User> userValidatedStream = requestCounts
-                .transform(ProcesssingUsersCleaner::new, PROCESSING_USERS_STORE_NAME)
-                .filter(((key, value) -> value != null));
+        KStream<UserId, FraudTracker>[] trackedUserResults = trackedUsers.branch(
+                (key, tracker) -> tracker.getCount() == null ||
+                        tracker.getCount() < 10,
+                (key, value) -> true
+        );
 
         final String userValidationsTopic = envProps.getProperty("user_validation.topic.name");
+
+        trackedUserResults[0].mapValues(value -> value.getUser())
+                .mapValues(value ->
+                        User.newBuilder(value).setEventType(UserEvent.VALIDATED).build())
+                .to(userValidationsTopic, Produced.with(
+                        AvroSerdeFactory.buildUserId(envProps),
+                        AvroSerdeFactory.buildUser(envProps)));
+
+        trackedUserResults[1].mapValues(value -> value.getUser())
+                .mapValues(value ->
+                        User.newBuilder(value).setEventType(UserEvent.REJECTED)
+                                .setErrorCode(ErrorCode.DOS.toString()).build())
+                .to(userValidationsTopic, Produced.with(
+                        AvroSerdeFactory.buildUserId(envProps),
+                        AvroSerdeFactory.buildUser(envProps)));
+
+        /*
         userValidatedStream.to(userValidationsTopic, Produced.with(
                 AvroSerdeFactory.buildUserId(envProps),
                 AvroSerdeFactory.buildUser(envProps)));
+         */
 
         return builder.build();
     }
