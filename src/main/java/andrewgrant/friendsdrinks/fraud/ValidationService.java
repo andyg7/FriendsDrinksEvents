@@ -67,7 +67,6 @@ public class ValidationService {
                 )
                 // Get rid of windowed key.
                 .toStream(((key, value) -> key.key()))
-                .filter(((userId, count) -> count != null))
                 .to(fraudTmpTopic,
                         Produced.with(AvroSerdeFactory.buildUserId(envProps),
                                 Serdes.Long()));
