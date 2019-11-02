@@ -35,12 +35,12 @@ public class ValidationService {
 
         final String userTopic = envProps.getProperty("user.topic.name");
         final String fraudTmpTopic = envProps.getProperty("fraud_tmp.topic.name");
-        KStream<UserId, User> requests = builder
+        KStream<UserId, User> users = builder
                 .stream(userTopic,
                         Consumed.with(AvroSerdeFactory.buildUserId(envProps),
                                 AvroSerdeFactory.buildUser(envProps)));
 
-        requests.filter(((key, value) -> value.getEventType().equals(UserEvent.REQUESTED)))
+        users.filter(((key, value) -> value.getEventType().equals(UserEvent.REQUESTED)))
                 .groupByKey(
                         Grouped.with(AvroSerdeFactory.buildUserId(envProps),
                                 AvroSerdeFactory.buildUser(envProps)))
@@ -61,9 +61,11 @@ public class ValidationService {
                 Consumed.with(AvroSerdeFactory.buildUserId(envProps),
                         Serdes.Long()));
 
-        KStream<UserId, FraudTracker> trackedUsers = requests.leftJoin(userRequestCount,
-                FraudTracker::new,
-                Joined.with(AvroSerdeFactory.buildUserId(envProps),
+        KStream<UserId, FraudTracker> trackedUsers = users.filter(((key, value) ->
+                value.getEventType().equals(UserEvent.REQUESTED)))
+                .leftJoin(userRequestCount,
+                        FraudTracker::new,
+                        Joined.with(AvroSerdeFactory.buildUserId(envProps),
                         AvroSerdeFactory.buildUser(envProps),
                         Serdes.Long()));
 
