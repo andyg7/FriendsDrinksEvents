@@ -11,6 +11,7 @@ import org.apache.kafka.streams.kstream.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
@@ -99,18 +100,16 @@ public class ValidationService {
 
     public Properties buildStreamsProperties(Properties envProps) {
         Properties props = new Properties();
-
         props.put(StreamsConfig.APPLICATION_ID_CONFIG,
                 envProps.getProperty("fraud_validation_application.id"));
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG,
                 envProps.getProperty("bootstrap.servers"));
         props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
                 envProps.getProperty("schema.registry.url"));
-
         return props;
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws IOException {
         if (args.length < 1) {
             throw new IllegalArgumentException("This program takes one argument: " +
                     "the path to an environment configuration file.");
