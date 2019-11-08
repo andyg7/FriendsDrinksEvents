@@ -2,22 +2,23 @@ package andrewgrant.friendsdrinks.user;
 
 import static andrewgrant.friendsdrinks.env.Properties.loadEnvProperties;
 
+import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
-import org.apache.kafka.streams.kstream.Consumed;
-import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.Produced;
+import org.apache.kafka.streams.kstream.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
 import andrewgrant.friendsdrinks.avro.User;
+import andrewgrant.friendsdrinks.avro.UserEvent;
 import andrewgrant.friendsdrinks.avro.UserId;
 
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
@@ -40,9 +41,43 @@ public class ValidationAggregatorService {
         KStream<UserId, User> userValidations = builder
                 .stream(userValidationsTopic, Consumed.with(
                         userIdSerde, userSerde));
+        KStream<String, User> requests = userValidations
+                .selectKey((key, value) -> value.getRequestId());
+        KStream<String, Long> validationCount = requests.groupByKey()
+                .windowedBy(SessionWindows.with(Duration.ofMinutes(5)))
+                .aggregate(
+                        () -> 0L,
+                        (requestId, user, total) ->
+                                user.getEventType().equals(UserEvent.VALIDATED) ?
+                                        Long.valueOf(total + 1L) : total,
+                        (k, a, b) -> b == null ? a : b,
+                        Materialized.with(null, Serdes.Long())
+                )
+                .toStream((key, value) -> key.key())
+                .filter(((key, value) -> value != null));
+
+        KStream<String, UserValidation> usersWithValidationCount =
+                requests.leftJoin(validationCount,
+                        (leftValue, rightValue) -> new UserValidation(leftValue, rightValue, 2L),
+                        JoinWindows.of(Duration.ofMinutes(5)),
+                        Joined.with(Serdes.String(), userSerde, Serdes.Long()));
+
+
         final String usersTopic = envProps.getProperty("user.topic.name");
-        userValidations.to(usersTopic,
-                Produced.with(userIdSerde, userSerde));
+        KStream<String, UserValidation>[] results = usersWithValidationCount.branch(
+                ((key, value) -> value.isValidated()),
+                ((key, value) -> true)
+        );
+
+        results[0].selectKey(((key, value) -> value.getUser().getUserId()))
+                .mapValues(user ->
+                        User.newBuilder(user.getUser()).setEventType(UserEvent.VALIDATED).build())
+                .to(usersTopic, Produced.with(userIdSerde, userSerde));
+
+        results[1].selectKey(((key, value) -> value.getUser().getUserId()))
+                .mapValues(user ->
+                        User.newBuilder(user.getUser()).setEventType(UserEvent.REJECTED).build())
+                .to(usersTopic, Produced.with(userIdSerde, userSerde));
 
         return builder.build();
     }
