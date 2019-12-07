@@ -35,7 +35,7 @@ public class ValidationAggregatorService {
         final String userValidationsTopic = envProps.getProperty("user_validation.topic.name");
 
         SpecificAvroSerde<UserId> userIdSerde = AvroSerdeFactory.buildUserId(envProps);
-        SpecificAvroSerde<UserEvent> userSerde = AvroSerdeFactory.buildUser(envProps);
+        SpecificAvroSerde<UserEvent> userSerde = AvroSerdeFactory.buildUserEvent(envProps);
         KStream<UserId, UserEvent> userValidations = builder
                 .stream(userValidationsTopic, Consumed.with(
                         userIdSerde, userSerde));

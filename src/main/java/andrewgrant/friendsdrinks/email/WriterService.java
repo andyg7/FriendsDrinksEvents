@@ -46,7 +46,7 @@ public class WriterService {
         final String userTopic = envProps.getProperty("user.topic.name");
         KStream<UserId, UserEvent> userValidations = builder.stream(userTopic,
                 Consumed.with(AvroSerdeFactory.buildUserId(envProps),
-                        AvroSerdeFactory.buildUser(envProps)));
+                        AvroSerdeFactory.buildUserEvent(envProps)));
 
         KStream<UserId, Email> emailKStream = userValidations.filter(((key, value) ->
                 value.getEventType().equals(EventType.VALIDATED) ||

@@ -80,22 +80,23 @@ public class ValidationService {
         final String userTopic = envProps.getProperty("user.topic.name");
         KStream<UserId, UserEvent> userIdKStream = builder.stream(userTopic,
                 Consumed.with(AvroSerdeFactory.buildUserId(envProps),
-                        AvroSerdeFactory.buildUser(envProps)));
+                        AvroSerdeFactory.buildUserEvent(envProps)));
 
         // Filter by requests.
-        KStream<UserId, UserEvent> userRequestsKStream = userIdKStream.
-                filter(((key, value) -> value.getEventType().equals(EventType.REQUESTED)));
+        KStream<UserId, UserRequest> userRequestsKStream = userIdKStream.
+                filter(((key, value) -> value.getEventType().equals(EventType.REQUESTED)))
+                .mapValues(value -> value.getUserRequest());
 
         // Re-key by email for join.
-        KStream<EmailId, UserEvent> userKStreamKeyedByEmail =
+        KStream<EmailId, UserRequest> userKStreamKeyedByEmail =
                 userRequestsKStream.selectKey(((key, value) ->
-                        new EmailId(value.getUserRequest().getEmail())));
+                        new EmailId(value.getEmail())));
 
 
         KStream<EmailId, Request> userAndEmail = userKStreamKeyedByEmail.leftJoin(emailKTable,
                 Request::new,
                 Joined.with(andrewgrant.friendsdrinks.email.AvroSerdeFactory.buildEmailId(envProps),
-                        AvroSerdeFactory.buildUser(envProps),
+                        AvroSerdeFactory.buildUserRequest(envProps),
                         andrewgrant.friendsdrinks.email.AvroSerdeFactory.buildEmail(envProps)));
 
         KStream<UserId, UserEvent> validatedUser =
@@ -111,7 +112,7 @@ public class ValidationService {
         final String userValidationTopic = envProps.getProperty("user_validation.topic.name");
         validatedUser.to(userValidationTopic,
                 Produced.with(AvroSerdeFactory.buildUserId(envProps),
-                        AvroSerdeFactory.buildUser(envProps)));
+                        AvroSerdeFactory.buildUserEvent(envProps)));
 
         return builder.build();
     }

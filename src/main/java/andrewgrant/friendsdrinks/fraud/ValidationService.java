@@ -37,12 +37,12 @@ public class ValidationService {
         KStream<UserId, UserEvent> users = builder
                 .stream(userTopic,
                         Consumed.with(AvroSerdeFactory.buildUserId(envProps),
-                                AvroSerdeFactory.buildUser(envProps)));
+                                AvroSerdeFactory.buildUserEvent(envProps)));
 
         users.filter(((key, value) -> value.getEventType().equals(EventType.REQUESTED)))
                 .groupByKey(
                         Grouped.with(AvroSerdeFactory.buildUserId(envProps),
-                                AvroSerdeFactory.buildUser(envProps)))
+                                AvroSerdeFactory.buildUserEvent(envProps)))
                 .windowedBy(SessionWindows.with(Duration.ofMinutes(1)))
                 .aggregate(
                         () -> 0L,
@@ -65,7 +65,7 @@ public class ValidationService {
                 .leftJoin(userRequestCount,
                         FraudTracker::new,
                         Joined.with(AvroSerdeFactory.buildUserId(envProps),
-                        AvroSerdeFactory.buildUser(envProps),
+                        AvroSerdeFactory.buildUserEvent(envProps),
                         Serdes.Long()));
 
         KStream<UserId, FraudTracker>[] trackedUserResults = trackedUsers.branch(
@@ -91,7 +91,7 @@ public class ValidationService {
                 })
                 .to(userValidationsTopic, Produced.with(
                         AvroSerdeFactory.buildUserId(envProps),
-                        AvroSerdeFactory.buildUser(envProps)));
+                        AvroSerdeFactory.buildUserEvent(envProps)));
 
         // Rejected requests.
         trackedUserResults[1].mapValues(value -> value.getUserEvent())
@@ -109,7 +109,7 @@ public class ValidationService {
                 })
                 .to(userValidationsTopic, Produced.with(
                         AvroSerdeFactory.buildUserId(envProps),
-                        AvroSerdeFactory.buildUser(envProps)));
+                        AvroSerdeFactory.buildUserEvent(envProps)));
 
         return builder.build();
     }
