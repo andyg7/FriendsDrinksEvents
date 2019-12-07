@@ -40,28 +40,43 @@ public class WriterServiceTest {
         TopologyTestDriver testDriver = new TopologyTestDriver(topology, streamProps);
 
         SpecificAvroSerializer<UserId> userIdSerializer = UserAvro.userIdSerializer(envProps);
-        SpecificAvroSerializer<User> userSerializer = UserAvro.userSerializer(envProps);
+        SpecificAvroSerializer<UserEvent> userSerializer = UserAvro.userSerializer(envProps);
 
-        ConsumerRecordFactory<UserId, User> inputFactory =
+        ConsumerRecordFactory<UserId, UserEvent> inputFactory =
                 new ConsumerRecordFactory<>(userIdSerializer, userSerializer);
 
-        List<User> input = new ArrayList<>();
+        List<UserEvent> input = new ArrayList<>();
+        UserValidated userValidated = UserValidated.newBuilder()
+                .setRequestId("1")
+                .setUserId(new UserId(UUID.randomUUID().toString()))
+                .setEmail(UUID.randomUUID().toString())
+                .build();
+
+        UserRejected userRejected = UserRejected.newBuilder()
+                .setRequestId("2")
+                .setUserId(new UserId(UUID.randomUUID().toString()))
+                .setEmail(UUID.randomUUID().toString())
+                .setErrorCode(ErrorCode.EXISTS.toString())
+                .build();
+
         input.add(
-                User.newBuilder()
-                        .setRequestId("1")
-                        .setUserId(new UserId(UUID.randomUUID().toString()))
-                        .setEmail(UUID.randomUUID().toString())
-                        .setEventType(UserEvent.VALIDATED).build());
+                UserEvent.newBuilder()
+                        .setUserValidated(userValidated)
+                        .setEventType(EventType.VALIDATED).build());
         input.add(
-                User.newBuilder()
-                        .setRequestId("2")
-                        .setUserId(new UserId(UUID.randomUUID().toString()))
-                        .setEmail(UUID.randomUUID().toString())
-                        .setEventType(UserEvent.REJECTED).build());
+                UserEvent.newBuilder()
+                        .setUserRejected(userRejected)
+                        .setEventType(EventType.REJECTED).build());
 
         final String userTopic = envProps.getProperty("user.topic.name");
-        for (User user : input) {
-            testDriver.pipeInput(inputFactory.create(userTopic, user.getUserId(), user));
+        for (UserEvent user : input) {
+            if (user.getEventType().equals(EventType.VALIDATED)) {
+                testDriver.pipeInput(inputFactory.create(userTopic,
+                        user.getUserValidated().getUserId(), user));
+            } else {
+                testDriver.pipeInput(inputFactory.create(userTopic,
+                        user.getUserRejected().getUserId(), user));
+            }
         }
 
         SpecificAvroDeserializer<EmailId> emailIdDeserializer = EmailAvro

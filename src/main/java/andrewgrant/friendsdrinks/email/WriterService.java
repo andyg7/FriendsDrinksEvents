@@ -44,25 +44,32 @@ public class WriterService {
         final StreamsBuilder builder = new StreamsBuilder();
 
         final String userTopic = envProps.getProperty("user.topic.name");
-        KStream<UserId, User> userValidations = builder.stream(userTopic,
+        KStream<UserId, UserEvent> userValidations = builder.stream(userTopic,
                 Consumed.with(AvroSerdeFactory.buildUserId(envProps),
                         AvroSerdeFactory.buildUser(envProps)));
 
         KStream<UserId, Email> emailKStream = userValidations.filter(((key, value) ->
-                value.getEventType().equals(UserEvent.VALIDATED) ||
-                        value.getEventType().equals(UserEvent.REJECTED)
+                value.getEventType().equals(EventType.VALIDATED) ||
+                        value.getEventType().equals(EventType.REJECTED)
         )).mapValues((key, value) -> {
             EmailEvent emailEvent;
-            if (value.getEventType().equals(UserEvent.VALIDATED)) {
+            if (value.getEventType().equals(EventType.VALIDATED)) {
+                Email email = new Email();
+                UserValidated userValidated = value.getUserValidated();
+                email.setEmailId(new EmailId(userValidated.getEmail()));
                 emailEvent = EmailEvent.RESERVED;
+                email.setEventType(emailEvent);
+                email.setUserId(userValidated.getUserId().getId());
+                return email;
             } else {
+                Email email = new Email();
+                UserRejected userRejected = value.getUserRejected();
+                email.setEmailId(new EmailId(userRejected.getEmail()));
                 emailEvent = EmailEvent.REJECTED;
+                email.setEventType(emailEvent);
+                email.setUserId(userRejected.getUserId().getId());
+                return email;
             }
-            Email email = new Email();
-            email.setEmailId(new EmailId(value.getEmail()));
-            email.setEventType(emailEvent);
-            email.setUserId(value.getUserId().getId());
-            return email;
         });
 
         // Re-key on email before publishing to email topic.

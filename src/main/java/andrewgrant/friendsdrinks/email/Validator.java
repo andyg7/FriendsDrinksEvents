@@ -12,7 +12,7 @@ import andrewgrant.friendsdrinks.avro.*;
 /**
  * Validates email request.
  */
-public class Validator implements Transformer<EmailId, Request, KeyValue<EmailId, User>> {
+public class Validator implements Transformer<EmailId, Request, KeyValue<EmailId, UserEvent>> {
 
     private KeyValueStore<String, String> pendingEmailsStore;
 
@@ -24,26 +24,48 @@ public class Validator implements Transformer<EmailId, Request, KeyValue<EmailId
     }
 
     @Override
-    public KeyValue<EmailId, User> transform(final EmailId emailId,
+    public KeyValue<EmailId, UserEvent> transform(final EmailId emailId,
                                              final Request request) {
-        String requestedEmail = request.getUserRequest().getEmail();
+        UserRequest userRequest = request.getUserEvent().getUserRequest();
+        String requestedEmail = userRequest.getEmail();
         if (pendingEmailsStore.get(requestedEmail) != null) {
-            User user = request.getUserRequest();
-            user.setEventType(UserEvent.REJECTED);
-            user.setErrorCode(ErrorCode.PENDING.name());
+            UserRejected userRejected = UserRejected.newBuilder()
+                    .setErrorCode(ErrorCode.PENDING.name())
+                    .setUserId(userRequest.getUserId())
+                    .setEmail(userRequest.getEmail())
+                    .setRequestId(userRequest.getRequestId())
+                    .build();
+            UserEvent user = UserEvent.newBuilder()
+                    .setEventType(EventType.REJECTED)
+                    .setUserRejected(userRejected)
+                    .build();
             return new KeyValue<>(emailId, user);
         }
         Email email = request.getCurrEmailState();
         if (email == null) {
-            User user = request.getUserRequest();
             // Add email address to pending state store
-            pendingEmailsStore.put(requestedEmail, user.getUserId().getId());
-            user.setEventType(UserEvent.VALIDATED);
+            pendingEmailsStore.put(requestedEmail, userRequest.getUserId().getId());
+            UserValidated userValidated = UserValidated.newBuilder()
+                    .setUserId(userRequest.getUserId())
+                    .setEmail(userRequest.getEmail())
+                    .setRequestId(userRequest.getRequestId())
+                    .build();
+            UserEvent user = UserEvent.newBuilder()
+                    .setEventType(EventType.VALIDATED)
+                    .setUserValidated(userValidated)
+                    .build();
             return new KeyValue<>(emailId, user);
         } else if (email.getEventType().equals(EmailEvent.RESERVED)) {
-            User user = request.getUserRequest();
-            user.setEventType(UserEvent.REJECTED);
-            user.setErrorCode(ErrorCode.EXISTS.name());
+            UserRejected userRejected = UserRejected.newBuilder()
+                    .setRequestId(userRequest.getRequestId())
+                    .setUserId(userRequest.getUserId())
+                    .setEmail(userRequest.getEmail())
+                    .setErrorCode(ErrorCode.EXISTS.name())
+                    .build();
+            UserEvent user = UserEvent.newBuilder()
+                    .setEventType(EventType.REJECTED)
+                    .setUserRejected(userRejected)
+                    .build();
             return new KeyValue<>(emailId, user);
         }
 

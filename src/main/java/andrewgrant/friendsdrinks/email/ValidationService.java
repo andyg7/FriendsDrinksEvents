@@ -78,17 +78,18 @@ public class ValidationService {
                                 .buildEmail(envProps)));
 
         final String userTopic = envProps.getProperty("user.topic.name");
-        KStream<UserId, User> userIdKStream = builder.stream(userTopic,
+        KStream<UserId, UserEvent> userIdKStream = builder.stream(userTopic,
                 Consumed.with(AvroSerdeFactory.buildUserId(envProps),
                         AvroSerdeFactory.buildUser(envProps)));
 
         // Filter by requests.
-        KStream<UserId, User> userRequestsKStream = userIdKStream.
-                filter(((key, value) -> value.getEventType().equals(UserEvent.REQUESTED)));
+        KStream<UserId, UserEvent> userRequestsKStream = userIdKStream.
+                filter(((key, value) -> value.getEventType().equals(EventType.REQUESTED)));
 
-        // Rekey by email for join.
-        KStream<EmailId, User> userKStreamKeyedByEmail =
-                userRequestsKStream.selectKey(((key, value) -> new EmailId(value.getEmail())));
+        // Re-key by email for join.
+        KStream<EmailId, UserEvent> userKStreamKeyedByEmail =
+                userRequestsKStream.selectKey(((key, value) ->
+                        new EmailId(value.getUserRequest().getEmail())));
 
 
         KStream<EmailId, Request> userAndEmail = userKStreamKeyedByEmail.leftJoin(emailKTable,
@@ -97,9 +98,15 @@ public class ValidationService {
                         AvroSerdeFactory.buildUser(envProps),
                         andrewgrant.friendsdrinks.email.AvroSerdeFactory.buildEmail(envProps)));
 
-        KStream<UserId, User> validatedUser =
+        KStream<UserId, UserEvent> validatedUser =
                 userAndEmail.transform(Validator::new, PENDING_EMAILS_STORE_NAME)
-                        .selectKey(((key, value) -> value.getUserId()));
+                        .selectKey(((key, value) -> {
+                           if (value.getEventType().equals(EventType.VALIDATED)) {
+                              return value.getUserValidated().getUserId();
+                           } else {
+                               return value.getUserRejected().getUserId();
+                           }
+                        }));
 
         final String userValidationTopic = envProps.getProperty("user_validation.topic.name");
         validatedUser.to(userValidationTopic,

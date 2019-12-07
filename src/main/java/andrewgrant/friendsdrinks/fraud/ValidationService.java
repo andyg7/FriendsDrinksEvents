@@ -16,9 +16,7 @@ import java.time.Duration;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
-import andrewgrant.friendsdrinks.avro.User;
-import andrewgrant.friendsdrinks.avro.UserEvent;
-import andrewgrant.friendsdrinks.avro.UserId;
+import andrewgrant.friendsdrinks.avro.*;
 import andrewgrant.friendsdrinks.user.AvroSerdeFactory;
 
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
@@ -36,12 +34,12 @@ public class ValidationService {
 
         final String userTopic = envProps.getProperty("user.topic.name");
         final String fraudTmpTopic = envProps.getProperty("fraud_tmp.topic.name");
-        KStream<UserId, User> users = builder
+        KStream<UserId, UserEvent> users = builder
                 .stream(userTopic,
                         Consumed.with(AvroSerdeFactory.buildUserId(envProps),
                                 AvroSerdeFactory.buildUser(envProps)));
 
-        users.filter(((key, value) -> value.getEventType().equals(UserEvent.REQUESTED)))
+        users.filter(((key, value) -> value.getEventType().equals(EventType.REQUESTED)))
                 .groupByKey(
                         Grouped.with(AvroSerdeFactory.buildUserId(envProps),
                                 AvroSerdeFactory.buildUser(envProps)))
@@ -63,7 +61,7 @@ public class ValidationService {
                         Serdes.Long()));
 
         KStream<UserId, FraudTracker> trackedUsers = users.filter(((key, value) ->
-                value.getEventType().equals(UserEvent.REQUESTED)))
+                value.getEventType().equals(EventType.REQUESTED)))
                 .leftJoin(userRequestCount,
                         FraudTracker::new,
                         Joined.with(AvroSerdeFactory.buildUserId(envProps),
@@ -79,18 +77,36 @@ public class ValidationService {
         final String userValidationsTopic = envProps.getProperty("user_validation.topic.name");
 
         // Validated requests.
-        trackedUserResults[0].mapValues(value -> value.getUser())
-                .mapValues(value ->
-                        User.newBuilder(value).setEventType(UserEvent.VALIDATED).build())
+        trackedUserResults[0].mapValues(value -> value.getUserEvent())
+                .mapValues(value -> {
+                    UserValidated userValidated = UserValidated.newBuilder()
+                            .setEmail(value.getUserRequest().getEmail())
+                            .setUserId(value.getUserRequest().getUserId())
+                            .setRequestId(value.getUserRequest().getRequestId())
+                            .build();
+                    return UserEvent.newBuilder()
+                            .setEventType(EventType.VALIDATED)
+                            .setUserValidated(userValidated)
+                            .build();
+                })
                 .to(userValidationsTopic, Produced.with(
                         AvroSerdeFactory.buildUserId(envProps),
                         AvroSerdeFactory.buildUser(envProps)));
 
         // Rejected requests.
-        trackedUserResults[1].mapValues(value -> value.getUser())
-                .mapValues(value ->
-                        User.newBuilder(value).setEventType(UserEvent.REJECTED)
-                                .setErrorCode(ErrorCode.DOS.toString()).build())
+        trackedUserResults[1].mapValues(value -> value.getUserEvent())
+                .mapValues(value -> {
+                    UserRejected userRejected = UserRejected.newBuilder()
+                            .setEmail(value.getUserRequest().getEmail())
+                            .setUserId(value.getUserRequest().getUserId())
+                            .setRequestId(value.getUserRequest().getRequestId())
+                            .setErrorCode(ErrorCode.DOS.toString())
+                            .build();
+                    return UserEvent.newBuilder()
+                            .setEventType(EventType.REJECTED)
+                            .setUserRejected(userRejected)
+                            .build();
+                })
                 .to(userValidationsTopic, Produced.with(
                         AvroSerdeFactory.buildUserId(envProps),
                         AvroSerdeFactory.buildUser(envProps)));

@@ -1,22 +1,22 @@
 package andrewgrant.friendsdrinks.email;
 
 import andrewgrant.friendsdrinks.avro.Email;
-import andrewgrant.friendsdrinks.avro.User;
+import andrewgrant.friendsdrinks.avro.UserEvent;
 
 /**
  * Class to represent a request from a user for an email address.
  */
 public class Request {
-    private User userRequest;
+    private UserEvent userEvent;
     private Email currEmailState;
 
-    public Request(User userRequest, Email currEmailState) {
-        this.userRequest = userRequest;
+    public Request(UserEvent userEvent, Email currEmailState) {
+        this.userEvent = userEvent;
         this.currEmailState = currEmailState;
     }
 
-    public User getUserRequest() {
-        return userRequest;
+    public UserEvent getUserEvent() {
+        return userEvent;
     }
 
     public Email getCurrEmailState() {

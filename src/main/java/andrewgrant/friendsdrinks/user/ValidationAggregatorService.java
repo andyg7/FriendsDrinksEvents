@@ -17,9 +17,7 @@ import java.time.Duration;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
-import andrewgrant.friendsdrinks.avro.User;
-import andrewgrant.friendsdrinks.avro.UserEvent;
-import andrewgrant.friendsdrinks.avro.UserId;
+import andrewgrant.friendsdrinks.avro.*;
 
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
@@ -37,18 +35,24 @@ public class ValidationAggregatorService {
         final String userValidationsTopic = envProps.getProperty("user_validation.topic.name");
 
         SpecificAvroSerde<UserId> userIdSerde = AvroSerdeFactory.buildUserId(envProps);
-        SpecificAvroSerde<User> userSerde = AvroSerdeFactory.buildUser(envProps);
-        KStream<UserId, User> userValidations = builder
+        SpecificAvroSerde<UserEvent> userSerde = AvroSerdeFactory.buildUser(envProps);
+        KStream<UserId, UserEvent> userValidations = builder
                 .stream(userValidationsTopic, Consumed.with(
                         userIdSerde, userSerde));
-        KStream<String, User> requests = userValidations
-                .selectKey((key, value) -> value.getRequestId());
+        KStream<String, UserEvent> requests = userValidations
+                .selectKey((key, value) -> {
+                    if (value.getEventType().equals(EventType.VALIDATED)) {
+                        return value.getUserValidated().getRequestId();
+                    } else {
+                        return value.getUserRejected().getRequestId();
+                    }
+                });
         KStream<String, Long> validationCount = requests.groupByKey()
                 .windowedBy(SessionWindows.with(Duration.ofMinutes(5)))
                 .aggregate(
                         () -> 0L,
                         (requestId, user, total) ->
-                                user.getEventType().equals(UserEvent.VALIDATED) ?
+                                user.getEventType().equals(EventType.VALIDATED) ?
                                         Long.valueOf(total + 1L) : total,
                         (k, a, b) -> b == null ? a : b,
                         Materialized.with(null, Serdes.Long())
@@ -69,14 +73,28 @@ public class ValidationAggregatorService {
                 ((key, value) -> true)
         );
 
-        results[0].selectKey(((key, value) -> value.getUser().getUserId()))
-                .mapValues(user ->
-                        User.newBuilder(user.getUser()).setEventType(UserEvent.VALIDATED).build())
+        results[0].selectKey(((key, value) -> value.getUserId()))
+                .mapValues(user -> {
+                    UserValidated userValidated = UserValidated
+                            .newBuilder(user.getUserEvent().getUserValidated())
+                            .build();
+                    return UserEvent.newBuilder()
+                            .setEventType(EventType.VALIDATED)
+                            .setUserValidated(userValidated)
+                            .build();
+                })
                 .to(usersTopic, Produced.with(userIdSerde, userSerde));
 
-        results[1].selectKey(((key, value) -> value.getUser().getUserId()))
-                .mapValues(user ->
-                        User.newBuilder(user.getUser()).setEventType(UserEvent.REJECTED).build())
+        results[1].selectKey(((key, value) -> value.getUserId()))
+                .mapValues(user -> {
+                    UserRejected userRejected = UserRejected
+                            .newBuilder(user.getUserEvent().getUserRejected())
+                            .build();
+                    return UserEvent.newBuilder()
+                            .setEventType(EventType.REJECTED)
+                            .setUserRejected(userRejected)
+                            .build();
+                })
                 .to(usersTopic, Produced.with(userIdSerde, userSerde));
 
         return builder.build();

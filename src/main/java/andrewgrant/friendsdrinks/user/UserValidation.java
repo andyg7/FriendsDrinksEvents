@@ -1,24 +1,34 @@
 package andrewgrant.friendsdrinks.user;
 
-import andrewgrant.friendsdrinks.avro.User;
+import andrewgrant.friendsdrinks.avro.EventType;
+import andrewgrant.friendsdrinks.avro.UserEvent;
+import andrewgrant.friendsdrinks.avro.UserId;
 
 /**
  *
  */
 public class UserValidation {
 
-    private User user;
+    private UserEvent userEvent;
     private Long count;
     private Long limit;
 
-    public UserValidation(User user, Long count, Long limit) {
-        this.user = user;
+    public UserValidation(UserEvent userEvent, Long count, Long limit) {
+        this.userEvent = userEvent;
         this.count = count;
         this.limit = limit;
     }
 
-    public User getUser() {
-        return user;
+    public UserId getUserId() {
+       if (userEvent.getEventType().equals(EventType.VALIDATED)) {
+           return userEvent.getUserValidated().getUserId();
+       } else {
+          return userEvent.getUserRejected().getUserId();
+       }
+    }
+
+    public UserEvent getUserEvent() {
+        return userEvent;
     }
 
     public Long getCount() {

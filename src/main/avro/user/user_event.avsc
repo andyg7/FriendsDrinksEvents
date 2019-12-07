@@ -1,0 +1,11 @@
+{
+  "namespace": "andrewgrant.friendsdrinks.avro",
+  "type": "record",
+  "name": "UserEvent",
+  "fields": [
+    {"name": "eventType", "type": {"type": "enum", "name": "EventType", "symbols" : ["REQUESTED", "VALIDATED", "REJECTED"] } },
+    {"name": "userRequest", "type": ["null", "UserRequest"], "default": null},
+    {"name": "userValidated", "type": ["null", "UserValidated"], "default": null},
+    {"name": "userRejected", "type": ["null", "UserRejected"], "default": null}
+  ]
+}

@@ -3,7 +3,7 @@ package andrewgrant.friendsdrinks.user;
 import java.util.HashMap;
 import java.util.Properties;
 
-import andrewgrant.friendsdrinks.avro.User;
+import andrewgrant.friendsdrinks.avro.UserEvent;
 import andrewgrant.friendsdrinks.avro.UserId;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
@@ -13,8 +13,8 @@ import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
  */
 public class AvroSerdeFactory {
 
-    public static SpecificAvroSerde<User> buildUser(Properties properties) {
-        SpecificAvroSerde<User> serde = new SpecificAvroSerde<>();
+    public static SpecificAvroSerde<UserEvent> buildUser(Properties properties) {
+        SpecificAvroSerde<UserEvent> serde = new SpecificAvroSerde<>();
 
         final HashMap<String, String> serdeConfig = new HashMap<>();
         serdeConfig.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
