@@ -40,7 +40,7 @@ public class WriterServiceTest {
         TopologyTestDriver testDriver = new TopologyTestDriver(topology, streamProps);
 
         SpecificAvroSerializer<UserId> userIdSerializer = UserAvro.userIdSerializer(envProps);
-        SpecificAvroSerializer<UserEvent> userSerializer = UserAvro.userSerializer(envProps);
+        SpecificAvroSerializer<UserEvent> userSerializer = UserAvro.userEventSerializer(envProps);
 
         ConsumerRecordFactory<UserId, UserEvent> inputFactory =
                 new ConsumerRecordFactory<>(userIdSerializer, userSerializer);

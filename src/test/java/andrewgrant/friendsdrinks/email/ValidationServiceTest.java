@@ -41,7 +41,7 @@ public class ValidationServiceTest {
         Properties streamProps = validatorService.buildStreamsProperties(envProps);
         TopologyTestDriver testDriver = new TopologyTestDriver(topology, streamProps);
 
-        SpecificAvroSerializer<UserEvent> userSerializer = UserAvro.userSerializer(envProps);
+        SpecificAvroSerializer<UserEvent> userSerializer = UserAvro.userEventSerializer(envProps);
         SpecificAvroSerializer<UserId> userIdSerializer = UserAvro.userIdSerializer(envProps);
 
         SpecificAvroSerializer<Email> emailSerializer = EmailAvro.emailSerializer(envProps);

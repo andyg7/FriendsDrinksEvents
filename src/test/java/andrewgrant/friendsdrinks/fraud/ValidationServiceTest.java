@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
 
-
 import andrewgrant.friendsdrinks.avro.*;
 import andrewgrant.friendsdrinks.user.UserAvro;
 
@@ -35,17 +34,19 @@ public class ValidationServiceTest {
      */
     @Test
     public void testValidate() throws IOException {
-        ValidationService validationService = new ValidationService();
+        ValidationService service = new ValidationService();
         Properties envProps = loadEnvProperties(TEST_CONFIG_FILE);
-        Topology topology = validationService.buildTopology(envProps);
+        Topology topology = service.buildTopology(envProps);
 
-        Properties streamProps = validationService.buildStreamsProperties(envProps);
+        Properties streamProps = service.buildStreamsProperties(envProps);
         TopologyTestDriver testDriver = new TopologyTestDriver(topology, streamProps);
 
-        SpecificAvroSerializer<UserEvent> userSerializer = UserAvro.userSerializer(envProps);
-        SpecificAvroSerializer<UserId> userIdSerializer = UserAvro.userIdSerializer(envProps);
+        SpecificAvroSerializer<UserEvent> userEventSerializer =
+                UserAvro.userEventSerializer(envProps);
+        SpecificAvroSerializer<UserId> userIdSerializer =
+                UserAvro.userIdSerializer(envProps);
 
-        List<UserEvent> userInput = new ArrayList<>();
+        List<UserEvent> userEvents = new ArrayList<>();
         String userId1 = UUID.randomUUID().toString();
         // Valid request.
         UserRequest userRequest1 = UserRequest.newBuilder()
@@ -54,7 +55,7 @@ public class ValidationServiceTest {
                 .setUserId(new UserId(userId1))
                 .build();
 
-        userInput.add(UserEvent.newBuilder()
+        userEvents.add(UserEvent.newBuilder()
                 .setEventType(EventType.REQUESTED)
                 .setUserRequest(userRequest1)
                 .build());
@@ -66,7 +67,7 @@ public class ValidationServiceTest {
                 .setEmail(UUID.randomUUID().toString())
                 .setUserId(new UserId(userId2))
                 .build();
-        userInput.add(UserEvent.newBuilder()
+        userEvents.add(UserEvent.newBuilder()
                 .setEventType(EventType.REQUESTED)
                 .setUserRequest(userRequest2)
                 .build());
@@ -77,19 +78,19 @@ public class ValidationServiceTest {
                 .setEmail(UUID.randomUUID().toString())
                 .setUserId(new UserId(userId3))
                 .build();
-        userInput.add(UserEvent.newBuilder()
+        userEvents.add(UserEvent.newBuilder()
                 .setEventType(EventType.REQUESTED)
                 .setUserRequest(userRequest3)
                 .build());
 
 
-        ConsumerRecordFactory<UserId, UserEvent> userInputFactory =
-                new ConsumerRecordFactory<>(userIdSerializer, userSerializer);
+        ConsumerRecordFactory<UserId, UserEvent> inputFactory =
+                new ConsumerRecordFactory<>(userIdSerializer, userEventSerializer);
         final String userTopic = envProps.getProperty("user.topic.name");
-        for (UserEvent user : userInput) {
+        for (UserEvent userEvent : userEvents) {
             testDriver.pipeInput(
-                    userInputFactory.create(userTopic,
-                            user.getUserRequest().getUserId(), user));
+                    inputFactory.create(userTopic,
+                            userEvent.getUserRequest().getUserId(), userEvent));
         }
 
         // DoS from user id 4.
@@ -105,7 +106,7 @@ public class ValidationServiceTest {
                     .setUserRequest(userRequest)
                     .build();
             testDriver.pipeInput(
-                    userInputFactory.create(userTopic,
+                    inputFactory.create(userTopic,
                             user.getUserRequest().getUserId(), user));
         }
 
@@ -115,10 +116,10 @@ public class ValidationServiceTest {
 
         List<UserEvent> userValidationOutput = new ArrayList<>();
         while (true) {
-            ProducerRecord<UserId, UserEvent> userRecord = testDriver.readOutput(
+            ProducerRecord<UserId, UserEvent> userEventRecord = testDriver.readOutput(
                     userValidationTopic, userIdDeserializer, userDeserializer);
-            if (userRecord != null) {
-                userValidationOutput.add(userRecord.value());
+            if (userEventRecord != null) {
+                userValidationOutput.add(userEventRecord.value());
             } else {
                 break;
             }

@@ -14,7 +14,7 @@ import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerializer;
  */
 public class UserAvro {
 
-    public static SpecificAvroSerializer<UserEvent> userSerializer(Properties envProps) {
+    public static SpecificAvroSerializer<UserEvent> userEventSerializer(Properties envProps) {
         SpecificAvroSerializer<UserEvent> serializer = new SpecificAvroSerializer<>();
         Map<String, String> config = new HashMap<>();
         config.put("schema.registry.url", envProps.getProperty("schema.registry.url"));
