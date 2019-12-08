@@ -17,10 +17,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
 
-import andrewgrant.friendsdrinks.avro.EventType;
-import andrewgrant.friendsdrinks.avro.UserEvent;
-import andrewgrant.friendsdrinks.avro.UserId;
-import andrewgrant.friendsdrinks.avro.UserValidated;
+import andrewgrant.friendsdrinks.avro.*;
 
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroDeserializer;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerializer;
@@ -44,6 +41,27 @@ public class ValidationAggregatorServiceTest {
         UserId userId = UserId.newBuilder()
                 .setId(UUID.randomUUID().toString())
                 .build();
+        UserRequest userRequest = UserRequest.newBuilder()
+                .setRequestId(requestId)
+                .setEmail(email)
+                .setUserId(userId)
+                .build();
+        UserEvent userEventRequest = UserEvent.newBuilder()
+                .setEventType(EventType.REQUESTED)
+                .setUserRequest(userRequest)
+                .build();
+        SpecificAvroSerializer<UserId> userIdSerializer = UserAvro.userIdSerializer(envProps);
+        SpecificAvroSerializer<UserEvent> userEventSerializer =
+                UserAvro.userEventSerializer(envProps);
+
+        ConsumerRecordFactory<UserId, UserEvent> inputFactory =
+                new ConsumerRecordFactory<>(userIdSerializer, userEventSerializer);
+        final String userTopic = envProps.getProperty("user.topic.name");
+        // Pipe initial request to user topic.
+        testDriver.pipeInput(inputFactory.create(userTopic,
+                userEventRequest.getUserRequest().getUserId(),
+                userEventRequest));
+
         UserValidated userValidated1 = UserValidated.newBuilder()
                 .setRequestId(requestId)
                 .setEmail(email)
@@ -70,12 +88,6 @@ public class ValidationAggregatorServiceTest {
         userEvents.add(userEvent1);
         userEvents.add(userEvent2);
 
-        SpecificAvroSerializer<UserId> userIdSerializer = UserAvro.userIdSerializer(envProps);
-        SpecificAvroSerializer<UserEvent> userEventSerializer =
-                UserAvro.userEventSerializer(envProps);
-
-        ConsumerRecordFactory<UserId, UserEvent> inputFactory =
-                new ConsumerRecordFactory<>(userIdSerializer, userEventSerializer);
         final String userValidationsTopic = envProps.getProperty("user_validation.topic.name");
         for (UserEvent userEvent : userEvents) {
             testDriver.pipeInput(inputFactory.create(userValidationsTopic,
@@ -83,21 +95,21 @@ public class ValidationAggregatorServiceTest {
                     userEvent));
         }
 
-        final String userTopic = envProps.getProperty("user.topic.name");
         SpecificAvroDeserializer<UserId> userIdDeserializer = UserAvro.userIdDeserializer(envProps);
         SpecificAvroDeserializer<UserEvent> userDeserializer = UserAvro.userDeserializer(envProps);
         List<UserEvent> output = new ArrayList<>();
         while (true) {
             ProducerRecord<UserId, UserEvent> userEventRecord = testDriver.readOutput(
                     userTopic, userIdDeserializer, userDeserializer);
-            if (userEventRecord != null) {
+            if (userEventRecord != null &&
+                    !userEventRecord.value().getEventType().equals(EventType.REQUESTED)) {
                 output.add(userEventRecord.value());
             } else {
                 break;
             }
         }
 
-        assertEquals(2, output.size());
+        assertEquals(1, output.size());
     }
 
 }

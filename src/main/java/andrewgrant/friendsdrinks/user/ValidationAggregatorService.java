@@ -55,9 +55,8 @@ public class ValidationAggregatorService {
                 });
 
         // Request id -> number of validations
-        Grouped<String, UserEvent> groupedSerdes = Grouped.with(Serdes.String(), userEventSerde);
         KStream<String, Long> validationCount = validationResultsKeyedByRequestId
-                .groupByKey(groupedSerdes)
+                .groupByKey(Grouped.with(Serdes.String(), userEventSerde))
                 .windowedBy(SessionWindows.with(Duration.ofMinutes(5)))
                 .aggregate(
                         () -> 0L,
@@ -71,67 +70,33 @@ public class ValidationAggregatorService {
                 .filter(((key, value) -> value != null))
                 .filter(((key, value) -> value >= 2L));
 
-        KStream<String, UserValidation> usersWithValidationCount =
-                validationResultsKeyedByRequestId.join(validationCount,
-                        (leftValue, rightValue) -> {
-                            if (leftValue.getEventType().equals(EventType.VALIDATED)) {
-                                UserValidated userValidated = leftValue.getUserValidated();
-                                User user = new User(userValidated.getUserId(),
-                                        userValidated.getEmail(),
-                                        userValidated.getRequestId());
-                                return new UserValidation(user, rightValue, 2L);
-                            } else if (leftValue.getEventType().equals(EventType.REJECTED)) {
-                                UserRejected userRejected = leftValue.getUserRejected();
-                                User user = new User(userRejected.getUserId(),
-                                        userRejected.getEmail(),
-                                        userRejected.getRequestId());
-                                return new UserValidation(user, rightValue, 2L);
-                            } else {
-                                throw new RuntimeException(
-                                        String.format("Received unknown event type %s",
-                                                leftValue.getEventType().toString()));
-                            }
-                        },
-                        JoinWindows.of(Duration.ofMinutes(5)),
-                        Joined.with(Serdes.String(), userEventSerde, Serdes.Long()));
+        final String userTopic = envProps.getProperty("user.topic.name");
+        KStream<String, UserRequest> userRequestsKeyedByRequestId = builder.stream(
+                userTopic, Consumed.with(userIdSerde, userEventSerde))
+                .filter(((key, value) -> value.getEventType().equals(EventType.REQUESTED)))
+                .mapValues(value -> value.getUserRequest())
+                .selectKey((key, value) -> value.getRequestId());
 
-
-        KStream<String, UserValidation>[] results = usersWithValidationCount.branch(
-                ((key, value) -> value.isValidated()),
-                ((key, value) -> true)
-        );
-
-        final String usersTopic = envProps.getProperty("user.topic.name");
-        results[0].selectKey(((key, value) -> value.getUser().getUserId()))
-                .mapValues(user -> {
-                    UserValidated userValidated = UserValidated
-                            .newBuilder()
-                            .setUserId(user.getUser().getUserId())
-                            .setRequestId(user.getUser().getRequestId())
-                            .setEmail(user.getUser().getEmail())
+        SpecificAvroSerde<UserRequest> userRequestSerde =
+                AvroSerdeFactory.buildUserRequest(envProps);
+        validationCount.join(userRequestsKeyedByRequestId,
+                (leftValue, rightValue) -> {
+                    UserValidated userValidated = UserValidated.newBuilder()
+                            .setRequestId(rightValue.getRequestId())
+                            .setEmail(rightValue.getEmail())
+                            .setUserId(rightValue.getUserId())
                             .build();
                     return UserEvent.newBuilder()
                             .setEventType(EventType.VALIDATED)
                             .setUserValidated(userValidated)
                             .build();
-                })
-                .to(usersTopic, Produced.with(userIdSerde, userEventSerde));
+                },
+                JoinWindows.of(Duration.ofMinutes(5)),
+                Joined.with(Serdes.String(), Serdes.Long(), userRequestSerde))
+                .selectKey((key, value) -> value.getUserValidated().getUserId())
+                .to(userTopic, Produced.with(userIdSerde, userEventSerde));
 
-        results[1].selectKey(((key, value) -> value.getUser().getUserId()))
-                .mapValues(user -> {
-                    UserRejected userRejected = UserRejected
-                            .newBuilder()
-                            .setUserId(user.getUser().getUserId())
-                            .setRequestId(user.getUser().getRequestId())
-                            .setEmail(user.getUser().getEmail())
-                            .setErrorCode(ErrorCode.InvalidRequest.toString())
-                            .build();
-                    return UserEvent.newBuilder()
-                            .setEventType(EventType.REJECTED)
-                            .setUserRejected(userRejected)
-                            .build();
-                })
-                .to(usersTopic, Produced.with(userIdSerde, userEventSerde));
+        // Todo: emit REJECTED events
 
         return builder.build();
     }
