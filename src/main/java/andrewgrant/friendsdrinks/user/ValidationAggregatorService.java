@@ -100,7 +100,8 @@ public class ValidationAggregatorService {
                 },
                 JoinWindows.of(Duration.ofMinutes(5)),
                 Joined.with(Serdes.String(), Serdes.Long(), userRequestSerde))
-                .to("user_request", Produced.with(Serdes.String(), userEventSerde));
+                .selectKey(((key, value) -> value.getUserValidated().getUserId()))
+                .to(userTopic, Produced.with(userIdSerde, userEventSerde));
 
         validationResultsKeyedByRequestId.filter(((key, value) ->
                 value.getEventType().equals(EventType.REJECTED))).join(
@@ -122,16 +123,8 @@ public class ValidationAggregatorService {
                 .groupByKey(Grouped.with(Serdes.String(), userEventSerde))
                 .reduce((key, value) -> value)
                 .toStream()
-                .to("user_request", Produced.with(Serdes.String(), userEventSerde));
-
-        builder.stream("user_request", Consumed.with(Serdes.String(), userEventSerde))
-                .selectKey(((key, value) -> {
-                    if (value.getEventType().equals(EventType.VALIDATED)) {
-                        return value.getUserValidated().getUserId();
-                    } else {
-                        return value.getUserRejected().getUserId();
-                    }
-                })).to(userTopic, Produced.with(userIdSerde, userEventSerde));
+                .selectKey(((key, value) -> value.getUserRejected().getUserId()))
+                .to(userTopic, Produced.with(userIdSerde, userEventSerde));
 
         return builder.build();
     }
