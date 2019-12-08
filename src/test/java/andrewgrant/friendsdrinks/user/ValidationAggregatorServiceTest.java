@@ -110,6 +110,7 @@ public class ValidationAggregatorServiceTest {
         }
 
         assertEquals(1, output.size());
+        assertEquals(EventType.VALIDATED, output.get(0).getEventType());
     }
 
 }
