@@ -71,8 +71,15 @@ public class ValidationAggregatorService {
                 .filter(((key, value) -> value >= 2L));
 
         final String userTopic = envProps.getProperty("user.topic.name");
-        KStream<String, UserRequest> userRequestsKeyedByRequestId = builder.stream(
-                userTopic, Consumed.with(userIdSerde, userEventSerde))
+        KStream<UserId, UserEvent> userEvents = builder.stream(
+                userTopic, Consumed.with(userIdSerde, userEventSerde));
+
+        KStream<String, UserRequest> userRequestsKeyedByRequestId = userEvents
+                .filter(((key, value) -> value.getEventType().equals(EventType.REQUESTED)))
+                .mapValues(value -> value.getUserRequest())
+                .selectKey((key, value) -> value.getRequestId());
+
+        KStream<String, UserRequest> userRequestsKeyedByRequestId2 = userEvents
                 .filter(((key, value) -> value.getEventType().equals(EventType.REQUESTED)))
                 .mapValues(value -> value.getUserRequest())
                 .selectKey((key, value) -> value.getRequestId());
@@ -93,10 +100,38 @@ public class ValidationAggregatorService {
                 },
                 JoinWindows.of(Duration.ofMinutes(5)),
                 Joined.with(Serdes.String(), Serdes.Long(), userRequestSerde))
-                .selectKey((key, value) -> value.getUserValidated().getUserId())
-                .to(userTopic, Produced.with(userIdSerde, userEventSerde));
+                .to("user_request", Produced.with(Serdes.String(), userEventSerde));
 
-        // Todo: emit REJECTED events
+        validationResultsKeyedByRequestId.filter(((key, value) ->
+                value.getEventType().equals(EventType.REJECTED))).join(
+                userRequestsKeyedByRequestId2,
+                (leftValue, rightValue) -> {
+                    UserRejected userRejected = UserRejected.newBuilder()
+                            .setErrorCode(ErrorCode.InvalidRequest.toString())
+                            .setEmail(rightValue.getEmail())
+                            .setUserId(rightValue.getUserId())
+                            .setRequestId(rightValue.getRequestId())
+                            .build();
+                    return UserEvent.newBuilder()
+                            .setEventType(EventType.REJECTED)
+                            .setUserRejected(userRejected)
+                            .build();
+                },
+                JoinWindows.of(Duration.ofMinutes(5)),
+                Joined.with(Serdes.String(), userEventSerde, userRequestSerde))
+                .groupByKey(Grouped.with(Serdes.String(), userEventSerde))
+                .reduce((key, value) -> value)
+                .toStream()
+                .to("user_request", Produced.with(Serdes.String(), userEventSerde));
+
+        builder.stream("user_request", Consumed.with(Serdes.String(), userEventSerde))
+                .selectKey(((key, value) -> {
+                    if (value.getEventType().equals(EventType.VALIDATED)) {
+                        return value.getUserValidated().getUserId();
+                    } else {
+                        return value.getUserRejected().getUserId();
+                    }
+                })).to(userTopic, Produced.with(userIdSerde, userEventSerde));
 
         return builder.build();
     }
