@@ -51,14 +51,14 @@ public class ValidationAggregatorServiceTest {
         UserId userId = UserId.newBuilder()
                 .setId(UUID.randomUUID().toString())
                 .build();
-        UserRequest userRequest = UserRequest.newBuilder()
+        CreateUserRequest userRequest = CreateUserRequest.newBuilder()
                 .setRequestId(requestId)
                 .setEmail(email)
                 .setUserId(userId)
                 .build();
         UserEvent userEventRequest = UserEvent.newBuilder()
-                .setEventType(EventType.REQUESTED)
-                .setUserRequest(userRequest)
+                .setEventType(EventType.CREATE_USER_REQUEST)
+                .setCreateUserRequest(userRequest)
                 .build();
         SpecificAvroSerializer<UserId> userIdSerializer = UserAvro.userIdSerializer(envProps);
         SpecificAvroSerializer<UserEvent> userEventSerializer =
@@ -69,7 +69,7 @@ public class ValidationAggregatorServiceTest {
         final String userTopic = envProps.getProperty("user.topic.name");
         // Pipe initial request to user topic.
         testDriver.pipeInput(inputFactory.create(userTopic,
-                userEventRequest.getUserRequest().getUserId(),
+                userEventRequest.getCreateUserRequest().getUserId(),
                 userEventRequest));
 
         UserValidated userValidated1 = UserValidated.newBuilder()
@@ -112,7 +112,7 @@ public class ValidationAggregatorServiceTest {
             ProducerRecord<UserId, UserEvent> userEventRecord = testDriver.readOutput(
                     userTopic, userIdDeserializer, userDeserializer);
             if (userEventRecord != null &&
-                    !userEventRecord.value().getEventType().equals(EventType.REQUESTED)) {
+                    !userEventRecord.value().getEventType().equals(EventType.CREATE_USER_REQUEST)) {
                 output.add(userEventRecord.value());
             } else {
                 break;
@@ -120,7 +120,7 @@ public class ValidationAggregatorServiceTest {
         }
 
         assertEquals(1, output.size());
-        assertEquals(EventType.VALIDATED, output.get(0).getEventType());
+        assertEquals(EventType.CREATE_USER_RESPONSE, output.get(0).getEventType());
     }
 
     @Test
@@ -130,14 +130,14 @@ public class ValidationAggregatorServiceTest {
         UserId userId = UserId.newBuilder()
                 .setId(UUID.randomUUID().toString())
                 .build();
-        UserRequest userRequest = UserRequest.newBuilder()
+        CreateUserRequest userRequest = CreateUserRequest.newBuilder()
                 .setRequestId(requestId)
                 .setEmail(email)
                 .setUserId(userId)
                 .build();
         UserEvent userEventRequest = UserEvent.newBuilder()
-                .setEventType(EventType.REQUESTED)
-                .setUserRequest(userRequest)
+                .setEventType(EventType.CREATE_USER_REQUEST)
+                .setCreateUserRequest(userRequest)
                 .build();
         SpecificAvroSerializer<UserId> userIdSerializer = UserAvro.userIdSerializer(envProps);
         SpecificAvroSerializer<UserEvent> userEventSerializer =
@@ -148,7 +148,7 @@ public class ValidationAggregatorServiceTest {
         final String userTopic = envProps.getProperty("user.topic.name");
         // Pipe initial request to user topic.
         testDriver.pipeInput(inputFactory.create(userTopic,
-                userEventRequest.getUserRequest().getUserId(),
+                userEventRequest.getCreateUserRequest().getUserId(),
                 userEventRequest));
 
         UserValidated userValidated1 = UserValidated.newBuilder()
@@ -198,7 +198,7 @@ public class ValidationAggregatorServiceTest {
             ProducerRecord<UserId, UserEvent> userEventRecord = testDriver.readOutput(
                     userTopic, userIdDeserializer, userDeserializer);
             if (userEventRecord != null &&
-                    !userEventRecord.value().getEventType().equals(EventType.REQUESTED)) {
+                    !userEventRecord.value().getEventType().equals(EventType.CREATE_USER_REQUEST)) {
                 output.add(userEventRecord.value());
             } else {
                 break;
@@ -206,7 +206,7 @@ public class ValidationAggregatorServiceTest {
         }
 
         assertEquals(1, output.size());
-        assertEquals(EventType.REJECTED, output.get(0).getEventType());
+        assertEquals(EventType.CREATE_USER_RESPONSE, output.get(0).getEventType());
     }
 
 }

@@ -51,7 +51,7 @@ public class WriterService {
         KStream<UserId, Email> emailKStream = userValidations.filter(((key, value) ->
                 value.getEventType().equals(EventType.VALIDATED) ||
                         value.getEventType().equals(EventType.REJECTED) ||
-                        value.getEventType().equals(EventType.DELETED)
+                        value.getEventType().equals(EventType.DELETE_USER_REQUEST)
         )).mapValues((key, value) -> {
             EmailEvent emailEvent;
             if (value.getEventType().equals(EventType.VALIDATED)) {
@@ -70,9 +70,9 @@ public class WriterService {
                 email.setEventType(emailEvent);
                 email.setUserId(userRejected.getUserId().getId());
                 return email;
-            } else if (value.getEventType().equals(EventType.DELETED)) {
+            } else if (value.getEventType().equals(EventType.DELETE_USER_REQUEST)) {
                 Email email = new Email();
-                UserDeleted userDeleted = value.getUserDeleted();
+                DeleteUserRequest userDeleted = value.getDeleteUserRequest();
                 email.setEmailId(new EmailId(userDeleted.getEmail()));
                 emailEvent = EmailEvent.RETURNED;
                 email.setEventType(emailEvent);

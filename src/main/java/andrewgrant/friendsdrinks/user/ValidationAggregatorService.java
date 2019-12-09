@@ -74,48 +74,49 @@ public class ValidationAggregatorService {
         KStream<UserId, UserEvent> userEvents = builder.stream(
                 userTopic, Consumed.with(userIdSerde, userEventSerde));
 
-        KStream<String, UserRequest> userRequestsKeyedByRequestId = userEvents
-                .filter(((key, value) -> value.getEventType().equals(EventType.REQUESTED)))
-                .mapValues(value -> value.getUserRequest())
+        KStream<String, CreateUserRequest> userRequestsKeyedByRequestId = userEvents
+                .filter(((key, value) ->
+                        value.getEventType().equals(EventType.CREATE_USER_REQUEST)))
+                .mapValues(value -> value.getCreateUserRequest())
                 .selectKey((key, value) -> value.getRequestId());
 
-        KStream<String, UserRequest> userRequestsKeyedByRequestId2 = userEvents
-                .filter(((key, value) -> value.getEventType().equals(EventType.REQUESTED)))
-                .mapValues(value -> value.getUserRequest())
+        KStream<String, CreateUserRequest> userRequestsKeyedByRequestId2 = userEvents
+                .filter(((key, value) ->
+                        value.getEventType().equals(EventType.CREATE_USER_REQUEST)))
+                .mapValues(value -> value.getCreateUserRequest())
                 .selectKey((key, value) -> value.getRequestId());
 
-        SpecificAvroSerde<UserRequest> userRequestSerde =
-                AvroSerdeFactory.buildUserRequest(envProps);
+        SpecificAvroSerde<CreateUserRequest> userRequestSerde =
+                AvroSerdeFactory.buildCreateUserRequest(envProps);
         validationCount.join(userRequestsKeyedByRequestId,
                 (leftValue, rightValue) -> {
-                    UserValidated userValidated = UserValidated.newBuilder()
+                    CreateUserResponse response = CreateUserResponse.newBuilder()
                             .setRequestId(rightValue.getRequestId())
-                            .setEmail(rightValue.getEmail())
                             .setUserId(rightValue.getUserId())
+                            .setResult(Result.SUCCESS)
                             .build();
                     return UserEvent.newBuilder()
-                            .setEventType(EventType.VALIDATED)
-                            .setUserValidated(userValidated)
+                            .setEventType(EventType.CREATE_USER_RESPONSE)
+                            .setCreateUserResponse(response)
                             .build();
                 },
                 JoinWindows.of(Duration.ofMinutes(5)),
                 Joined.with(Serdes.String(), Serdes.Long(), userRequestSerde))
-                .selectKey(((key, value) -> value.getUserValidated().getUserId()))
+                .selectKey(((key, value) -> value.getCreateUserResponse().getUserId()))
                 .to(userTopic, Produced.with(userIdSerde, userEventSerde));
 
         validationResultsKeyedByRequestId.filter(((key, value) ->
                 value.getEventType().equals(EventType.REJECTED))).join(
                 userRequestsKeyedByRequestId2,
                 (leftValue, rightValue) -> {
-                    UserRejected userRejected = UserRejected.newBuilder()
-                            .setErrorCode(ErrorCode.InvalidRequest.toString())
-                            .setEmail(rightValue.getEmail())
-                            .setUserId(rightValue.getUserId())
+                    CreateUserResponse response = CreateUserResponse.newBuilder()
                             .setRequestId(rightValue.getRequestId())
+                            .setUserId(rightValue.getUserId())
+                            .setResult(Result.FAIL)
                             .build();
                     return UserEvent.newBuilder()
-                            .setEventType(EventType.REJECTED)
-                            .setUserRejected(userRejected)
+                            .setEventType(EventType.CREATE_USER_RESPONSE)
+                            .setCreateUserResponse(response)
                             .build();
                 },
                 JoinWindows.of(Duration.ofMinutes(5)),
@@ -123,7 +124,7 @@ public class ValidationAggregatorService {
                 .groupByKey(Grouped.with(Serdes.String(), userEventSerde))
                 .reduce((key, value) -> value)
                 .toStream()
-                .selectKey(((key, value) -> value.getUserRejected().getUserId()))
+                .selectKey(((key, value) -> value.getCreateUserResponse().getUserId()))
                 .to(userTopic, Produced.with(userIdSerde, userEventSerde));
 
         return builder.build();

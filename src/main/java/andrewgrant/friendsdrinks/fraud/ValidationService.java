@@ -39,7 +39,7 @@ public class ValidationService {
                         Consumed.with(AvroSerdeFactory.buildUserId(envProps),
                                 AvroSerdeFactory.buildUserEvent(envProps)));
 
-        users.filter(((key, value) -> value.getEventType().equals(EventType.REQUESTED)))
+        users.filter(((key, value) -> value.getEventType().equals(EventType.CREATE_USER_REQUEST)))
                 .groupByKey(
                         Grouped.with(AvroSerdeFactory.buildUserId(envProps),
                                 AvroSerdeFactory.buildUserEvent(envProps)))
@@ -61,7 +61,7 @@ public class ValidationService {
                         Serdes.Long()));
 
         KStream<UserId, FraudTracker> trackedUsers = users.filter(((key, value) ->
-                value.getEventType().equals(EventType.REQUESTED)))
+                value.getEventType().equals(EventType.CREATE_USER_REQUEST)))
                 .leftJoin(userRequestCount,
                         FraudTracker::new,
                         Joined.with(AvroSerdeFactory.buildUserId(envProps),
@@ -80,9 +80,9 @@ public class ValidationService {
         trackedUserResults[0].mapValues(value -> value.getUserEvent())
                 .mapValues(value -> {
                     UserValidated userValidated = UserValidated.newBuilder()
-                            .setEmail(value.getUserRequest().getEmail())
-                            .setUserId(value.getUserRequest().getUserId())
-                            .setRequestId(value.getUserRequest().getRequestId())
+                            .setEmail(value.getCreateUserRequest().getEmail())
+                            .setUserId(value.getCreateUserRequest().getUserId())
+                            .setRequestId(value.getCreateUserRequest().getRequestId())
                             .build();
                     return UserEvent.newBuilder()
                             .setEventType(EventType.VALIDATED)
@@ -97,9 +97,9 @@ public class ValidationService {
         trackedUserResults[1].mapValues(value -> value.getUserEvent())
                 .mapValues(value -> {
                     UserRejected userRejected = UserRejected.newBuilder()
-                            .setEmail(value.getUserRequest().getEmail())
-                            .setUserId(value.getUserRequest().getUserId())
-                            .setRequestId(value.getUserRequest().getRequestId())
+                            .setEmail(value.getCreateUserRequest().getEmail())
+                            .setUserId(value.getCreateUserRequest().getUserId())
+                            .setRequestId(value.getCreateUserRequest().getRequestId())
                             .setErrorCode(ErrorCode.DOS.toString())
                             .build();
                     return UserEvent.newBuilder()

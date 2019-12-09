@@ -49,38 +49,38 @@ public class ValidationServiceTest {
         List<UserEvent> userEvents = new ArrayList<>();
         String userId1 = UUID.randomUUID().toString();
         // Valid request.
-        UserRequest userRequest1 = UserRequest.newBuilder()
+        CreateUserRequest userRequest1 = CreateUserRequest.newBuilder()
                 .setRequestId(UUID.randomUUID().toString())
                 .setEmail(UUID.randomUUID().toString())
                 .setUserId(new UserId(userId1))
                 .build();
 
         userEvents.add(UserEvent.newBuilder()
-                .setEventType(EventType.REQUESTED)
-                .setUserRequest(userRequest1)
+                .setEventType(EventType.CREATE_USER_REQUEST)
+                .setCreateUserRequest(userRequest1)
                 .build());
 
         String userId2 = UUID.randomUUID().toString();
         // Invalid request for taken email.
-        UserRequest userRequest2 = UserRequest.newBuilder()
+        CreateUserRequest userRequest2 = CreateUserRequest.newBuilder()
                 .setRequestId(UUID.randomUUID().toString())
                 .setEmail(UUID.randomUUID().toString())
                 .setUserId(new UserId(userId2))
                 .build();
         userEvents.add(UserEvent.newBuilder()
-                .setEventType(EventType.REQUESTED)
-                .setUserRequest(userRequest2)
+                .setEventType(EventType.CREATE_USER_REQUEST)
+                .setCreateUserRequest(userRequest2)
                 .build());
 
         String userId3 = UUID.randomUUID().toString();
-        UserRequest userRequest3 = UserRequest.newBuilder()
+        CreateUserRequest userRequest3 = CreateUserRequest.newBuilder()
                 .setRequestId(UUID.randomUUID().toString())
                 .setEmail(UUID.randomUUID().toString())
                 .setUserId(new UserId(userId3))
                 .build();
         userEvents.add(UserEvent.newBuilder()
-                .setEventType(EventType.REQUESTED)
-                .setUserRequest(userRequest3)
+                .setEventType(EventType.CREATE_USER_REQUEST)
+                .setCreateUserRequest(userRequest3)
                 .build());
 
 
@@ -90,24 +90,24 @@ public class ValidationServiceTest {
         for (UserEvent userEvent : userEvents) {
             testDriver.pipeInput(
                     inputFactory.create(userTopic,
-                            userEvent.getUserRequest().getUserId(), userEvent));
+                            userEvent.getCreateUserRequest().getUserId(), userEvent));
         }
 
         // DoS from user id 4.
         String userId4 = UUID.randomUUID().toString();
         for (int i = 0; i < 15; i++) {
-            UserRequest userRequest = UserRequest.newBuilder()
+            CreateUserRequest userRequest = CreateUserRequest.newBuilder()
                     .setRequestId(UUID.randomUUID().toString())
                     .setEmail(UUID.randomUUID().toString())
                     .setUserId(new UserId(userId4))
                     .build();
             UserEvent user = UserEvent.newBuilder()
-                    .setEventType(EventType.REQUESTED)
-                    .setUserRequest(userRequest)
+                    .setEventType(EventType.CREATE_USER_REQUEST)
+                    .setCreateUserRequest(userRequest)
                     .build();
             testDriver.pipeInput(
                     inputFactory.create(userTopic,
-                            user.getUserRequest().getUserId(), user));
+                            user.getCreateUserRequest().getUserId(), user));
         }
 
         final String userValidationTopic = envProps.getProperty("user_validation.topic.name");

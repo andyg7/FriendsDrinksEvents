@@ -125,7 +125,7 @@ public class WriterServiceTest {
                 new ConsumerRecordFactory<>(userIdSerializer, userSerializer);
 
         List<UserEvent> input = new ArrayList<>();
-        UserDeleted userDeleted = UserDeleted.newBuilder()
+        DeleteUserRequest userDeleted = DeleteUserRequest.newBuilder()
                 .setEmail("email@email.com")
                 .setRequestId("1")
                 .setUserId(UserId.newBuilder().setId("1").build())
@@ -133,13 +133,13 @@ public class WriterServiceTest {
 
         input.add(
                 UserEvent.newBuilder()
-                        .setUserDeleted(userDeleted)
-                        .setEventType(EventType.DELETED).build());
+                        .setDeleteUserRequest(userDeleted)
+                        .setEventType(EventType.DELETE_USER_REQUEST).build());
 
         final String userTopic = envProps.getProperty("user.topic.name");
         for (UserEvent user : input) {
             testDriver.pipeInput(inputFactory.create(userTopic,
-                    user.getUserDeleted().getUserId(), user));
+                    user.getDeleteUserRequest().getUserId(), user));
         }
 
         SpecificAvroDeserializer<EmailId> emailIdDeserializer = EmailAvro

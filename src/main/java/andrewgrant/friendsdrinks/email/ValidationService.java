@@ -84,12 +84,12 @@ public class ValidationService {
                         AvroSerdeFactory.buildUserEvent(envProps)));
 
         // Filter by requests so we have a stream of user requests.
-        KStream<UserId, UserRequest> userRequestsKStream = userIdKStream.
-                filter(((key, value) -> value.getEventType().equals(EventType.REQUESTED)))
-                .mapValues(value -> value.getUserRequest());
+        KStream<UserId, CreateUserRequest> userRequestsKStream = userIdKStream.
+                filter(((key, value) -> value.getEventType().equals(EventType.CREATE_USER_REQUEST)))
+                .mapValues(value -> value.getCreateUserRequest());
 
         // Re-key by email for join.
-        KStream<EmailId, UserRequest> userKStreamKeyedByEmail =
+        KStream<EmailId, CreateUserRequest> userKStreamKeyedByEmail =
                 userRequestsKStream.selectKey(((key, value) ->
                         new EmailId(value.getEmail())));
 
@@ -97,7 +97,7 @@ public class ValidationService {
         KStream<EmailId, Request> userAndEmail = userKStreamKeyedByEmail.leftJoin(emailKTable,
                 Request::new,
                 Joined.with(andrewgrant.friendsdrinks.email.AvroSerdeFactory.buildEmailId(envProps),
-                        AvroSerdeFactory.buildUserRequest(envProps),
+                        AvroSerdeFactory.buildCreateUserRequest(envProps),
                         andrewgrant.friendsdrinks.email.AvroSerdeFactory.buildEmail(envProps)));
 
         KStream<UserId, UserEvent> validatedUser =

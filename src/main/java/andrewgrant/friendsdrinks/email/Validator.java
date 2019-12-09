@@ -26,7 +26,7 @@ public class Validator implements Transformer<EmailId, Request, KeyValue<EmailId
     @Override
     public KeyValue<EmailId, UserEvent> transform(final EmailId emailId,
                                                   final Request request) {
-        UserRequest userRequest = request.getUserRequest();
+        CreateUserRequest userRequest = request.getCreateUserRequest();
         String requestedEmail = userRequest.getEmail();
         if (pendingEmailsStore.get(requestedEmail) != null) {
             UserRejected userRejected = UserRejected.newBuilder()
