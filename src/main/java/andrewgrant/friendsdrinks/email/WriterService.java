@@ -50,7 +50,8 @@ public class WriterService {
 
         KStream<UserId, Email> emailKStream = userValidations.filter(((key, value) ->
                 value.getEventType().equals(EventType.VALIDATED) ||
-                        value.getEventType().equals(EventType.REJECTED)
+                        value.getEventType().equals(EventType.REJECTED) ||
+                        value.getEventType().equals(EventType.DELETED)
         )).mapValues((key, value) -> {
             EmailEvent emailEvent;
             if (value.getEventType().equals(EventType.VALIDATED)) {
@@ -61,7 +62,7 @@ public class WriterService {
                 email.setEventType(emailEvent);
                 email.setUserId(userValidated.getUserId().getId());
                 return email;
-            } else {
+            } else if (value.getEventType().equals(EventType.REJECTED)) {
                 Email email = new Email();
                 UserRejected userRejected = value.getUserRejected();
                 email.setEmailId(new EmailId(userRejected.getEmail()));
@@ -69,6 +70,17 @@ public class WriterService {
                 email.setEventType(emailEvent);
                 email.setUserId(userRejected.getUserId().getId());
                 return email;
+            } else if (value.getEventType().equals(EventType.DELETED)) {
+                Email email = new Email();
+                UserDeleted userDeleted = value.getUserDeleted();
+                email.setEmailId(new EmailId(userDeleted.getEmail()));
+                emailEvent = EmailEvent.RETURNED;
+                email.setEventType(emailEvent);
+                email.setUserId(userDeleted.getUserId().getId());
+                return email;
+            } else {
+                throw new RuntimeException(String.format("Received unknown event type %s",
+                        value.getEventType().toString()));
             }
         });
 

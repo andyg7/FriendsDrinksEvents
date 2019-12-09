@@ -3,7 +3,7 @@
   "type": "record",
   "name": "Email",
   "fields": [
-    {"name": "eventType", "type": {"type": "enum", "name": "EmailEvent", "symbols" : ["RESERVED", "REJECTED"] } },
+    {"name": "eventType", "type": {"type": "enum", "name": "EmailEvent", "symbols" : ["RESERVED", "REJECTED", "RETURNED"] } },
     {"name": "emailId", "type": "EmailId"},
     {"name": "userId", "type": "string"}
   ]

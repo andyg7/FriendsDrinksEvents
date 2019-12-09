@@ -71,6 +71,7 @@ public class ValidationService {
                                 andrewgrant.friendsdrinks.email.AvroSerdeFactory
                                         .buildEmail(envProps)));
 
+        // Rebuild table. id -> reserved emails.
         KTable<EmailId, Email> emailKTable = builder.table(emailTmpTopic,
                 Consumed.with(andrewgrant.friendsdrinks.email.AvroSerdeFactory
                                 .buildEmailId(envProps),
@@ -82,7 +83,7 @@ public class ValidationService {
                 Consumed.with(AvroSerdeFactory.buildUserId(envProps),
                         AvroSerdeFactory.buildUserEvent(envProps)));
 
-        // Filter by requests.
+        // Filter by requests so we have a stream of user requests.
         KStream<UserId, UserRequest> userRequestsKStream = userIdKStream.
                 filter(((key, value) -> value.getEventType().equals(EventType.REQUESTED)))
                 .mapValues(value -> value.getUserRequest());
