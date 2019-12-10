@@ -79,14 +79,14 @@ public class ValidationService {
         // Validated requests.
         trackedUserResults[0].mapValues(value -> value.getUserEvent())
                 .mapValues(value -> {
-                    UserValidated userValidated = UserValidated.newBuilder()
+                    CreateUserValidated userValidated = CreateUserValidated.newBuilder()
                             .setEmail(value.getCreateUserRequest().getEmail())
                             .setUserId(value.getCreateUserRequest().getUserId())
                             .setRequestId(value.getCreateUserRequest().getRequestId())
                             .build();
                     return UserEvent.newBuilder()
-                            .setEventType(EventType.VALIDATED)
-                            .setUserValidated(userValidated)
+                            .setEventType(EventType.CREATE_USER_VALIDATED)
+                            .setCreateUserValidated(userValidated)
                             .build();
                 })
                 .to(userValidationsTopic, Produced.with(
@@ -96,15 +96,15 @@ public class ValidationService {
         // Rejected requests.
         trackedUserResults[1].mapValues(value -> value.getUserEvent())
                 .mapValues(value -> {
-                    UserRejected userRejected = UserRejected.newBuilder()
+                    CreateUserRejected userRejected = CreateUserRejected.newBuilder()
                             .setEmail(value.getCreateUserRequest().getEmail())
                             .setUserId(value.getCreateUserRequest().getUserId())
                             .setRequestId(value.getCreateUserRequest().getRequestId())
                             .setErrorCode(ErrorCode.DOS.toString())
                             .build();
                     return UserEvent.newBuilder()
-                            .setEventType(EventType.REJECTED)
-                            .setUserRejected(userRejected)
+                            .setEventType(EventType.CREATE_USER_REJECTED)
+                            .setCreateUserRejected(userRejected)
                             .build();
                 })
                 .to(userValidationsTopic, Produced.with(

@@ -55,13 +55,13 @@ public class WriterServiceTest {
                 new ConsumerRecordFactory<>(userIdSerializer, userSerializer);
 
         List<UserEvent> input = new ArrayList<>();
-        UserValidated userValidated = UserValidated.newBuilder()
+        CreateUserValidated userValidated = CreateUserValidated.newBuilder()
                 .setRequestId("1")
                 .setUserId(new UserId(UUID.randomUUID().toString()))
                 .setEmail(UUID.randomUUID().toString())
                 .build();
 
-        UserRejected userRejected = UserRejected.newBuilder()
+        CreateUserRejected userRejected = CreateUserRejected.newBuilder()
                 .setRequestId("2")
                 .setUserId(new UserId(UUID.randomUUID().toString()))
                 .setEmail(UUID.randomUUID().toString())
@@ -70,21 +70,21 @@ public class WriterServiceTest {
 
         input.add(
                 UserEvent.newBuilder()
-                        .setUserValidated(userValidated)
-                        .setEventType(EventType.VALIDATED).build());
+                        .setCreateUserValidated(userValidated)
+                        .setEventType(EventType.CREATE_USER_VALIDATED).build());
         input.add(
                 UserEvent.newBuilder()
-                        .setUserRejected(userRejected)
-                        .setEventType(EventType.REJECTED).build());
+                        .setCreateUserRejected(userRejected)
+                        .setEventType(EventType.CREATE_USER_REJECTED).build());
 
         final String userTopic = envProps.getProperty("user.topic.name");
         for (UserEvent user : input) {
-            if (user.getEventType().equals(EventType.VALIDATED)) {
+            if (user.getEventType().equals(EventType.CREATE_USER_VALIDATED)) {
                 testDriver.pipeInput(inputFactory.create(userTopic,
-                        user.getUserValidated().getUserId(), user));
+                        user.getCreateUserValidated().getUserId(), user));
             } else {
                 testDriver.pipeInput(inputFactory.create(userTopic,
-                        user.getUserRejected().getUserId(), user));
+                        user.getCreateUserRejected().getUserId(), user));
             }
         }
 

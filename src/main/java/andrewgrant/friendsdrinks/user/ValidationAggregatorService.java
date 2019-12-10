@@ -43,10 +43,10 @@ public class ValidationAggregatorService {
         // Re-key by request id.
         KStream<String, UserEvent> validationResultsKeyedByRequestId = userValidations
                 .selectKey((key, value) -> {
-                    if (value.getEventType().equals(EventType.VALIDATED)) {
-                        return value.getUserValidated().getRequestId();
-                    } else if (value.getEventType().equals(EventType.REJECTED)) {
-                        return value.getUserRejected().getRequestId();
+                    if (value.getEventType().equals(EventType.CREATE_USER_VALIDATED)) {
+                        return value.getCreateUserValidated().getRequestId();
+                    } else if (value.getEventType().equals(EventType.CREATE_USER_REJECTED)) {
+                        return value.getCreateUserRejected().getRequestId();
                     } else {
                         throw new RuntimeException(
                                 String.format("Topic should only contain validated or rejected " +
@@ -61,7 +61,7 @@ public class ValidationAggregatorService {
                 .aggregate(
                         () -> 0L,
                         (requestId, user, total) ->
-                                user.getEventType().equals(EventType.VALIDATED) ?
+                                user.getEventType().equals(EventType.CREATE_USER_VALIDATED) ?
                                         Long.valueOf(total + 1L) : total,
                         (k, a, b) -> b == null ? a : b,
                         Materialized.with(null, Serdes.Long())
@@ -106,7 +106,7 @@ public class ValidationAggregatorService {
                 .to(userTopic, Produced.with(userIdSerde, userEventSerde));
 
         validationResultsKeyedByRequestId.filter(((key, value) ->
-                value.getEventType().equals(EventType.REJECTED))).join(
+                value.getEventType().equals(EventType.CREATE_USER_REJECTED))).join(
                 userRequestsKeyedByRequestId2,
                 (leftValue, rightValue) -> {
                     CreateUserResponse response = CreateUserResponse.newBuilder()

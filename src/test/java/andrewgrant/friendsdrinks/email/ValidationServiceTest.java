@@ -131,18 +131,20 @@ public class ValidationServiceTest {
         assertEquals(3, userValidationOutput.size());
 
         UserEvent validatedUser = userValidationOutput.get(0);
-        assertEquals(newUserId, validatedUser.getUserValidated().getUserId().getId());
-        assertEquals(EventType.VALIDATED, validatedUser.getEventType());
+        assertEquals(newUserId, validatedUser.getCreateUserValidated().getUserId().getId());
+        assertEquals(EventType.CREATE_USER_VALIDATED, validatedUser.getEventType());
 
         UserEvent rejectedUser = userValidationOutput.get(1);
-        assertEquals(newUserId2, rejectedUser.getUserRejected().getUserId().getId());
-        assertEquals(EventType.REJECTED, rejectedUser.getEventType());
-        assertEquals(ErrorCode.EXISTS.toString(), rejectedUser.getUserRejected().getErrorCode());
+        assertEquals(newUserId2, rejectedUser.getCreateUserRejected().getUserId().getId());
+        assertEquals(EventType.CREATE_USER_REJECTED, rejectedUser.getEventType());
+        assertEquals(ErrorCode.EXISTS.toString(),
+                rejectedUser.getCreateUserRejected().getErrorCode());
 
         UserEvent rejectedUser2 = userValidationOutput.get(2);
-        assertEquals(newUserId3, rejectedUser2.getUserRejected().getUserId().getId());
-        assertEquals(EventType.REJECTED, rejectedUser.getEventType());
-        assertEquals(ErrorCode.PENDING.toString(), rejectedUser2.getUserRejected().getErrorCode());
+        assertEquals(newUserId3, rejectedUser2.getCreateUserRejected().getUserId().getId());
+        assertEquals(EventType.CREATE_USER_REJECTED, rejectedUser.getEventType());
+        assertEquals(ErrorCode.PENDING.toString(),
+                rejectedUser2.getCreateUserRejected().getErrorCode());
     }
 
 }

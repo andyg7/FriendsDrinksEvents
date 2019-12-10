@@ -72,26 +72,26 @@ public class ValidationAggregatorServiceTest {
                 userEventRequest.getCreateUserRequest().getUserId(),
                 userEventRequest));
 
-        UserValidated userValidated1 = UserValidated.newBuilder()
+        CreateUserValidated userValidated1 = CreateUserValidated.newBuilder()
                 .setRequestId(requestId)
                 .setEmail(email)
                 .setUserId(userId)
                 .build();
 
         UserEvent userEvent1 = UserEvent.newBuilder()
-                .setEventType(EventType.VALIDATED)
-                .setUserValidated(userValidated1)
+                .setEventType(EventType.CREATE_USER_VALIDATED)
+                .setCreateUserValidated(userValidated1)
                 .build();
 
-        UserValidated userValidated2 = UserValidated.newBuilder()
+        CreateUserValidated userValidated2 = CreateUserValidated.newBuilder()
                 .setRequestId(requestId)
                 .setEmail(email)
                 .setUserId(userId)
                 .build();
 
         UserEvent userEvent2 = UserEvent.newBuilder()
-                .setEventType(EventType.VALIDATED)
-                .setUserValidated(userValidated2)
+                .setEventType(EventType.CREATE_USER_VALIDATED)
+                .setCreateUserValidated(userValidated2)
                 .build();
 
         List<UserEvent> userEvents = new ArrayList<>();
@@ -101,7 +101,7 @@ public class ValidationAggregatorServiceTest {
         final String userValidationsTopic = envProps.getProperty("user_validation.topic.name");
         for (UserEvent userEvent : userEvents) {
             testDriver.pipeInput(inputFactory.create(userValidationsTopic,
-                    userEvent.getUserValidated().getUserId(),
+                    userEvent.getCreateUserValidated().getUserId(),
                     userEvent));
         }
 
@@ -151,18 +151,18 @@ public class ValidationAggregatorServiceTest {
                 userEventRequest.getCreateUserRequest().getUserId(),
                 userEventRequest));
 
-        UserValidated userValidated1 = UserValidated.newBuilder()
+        CreateUserValidated userValidated1 = CreateUserValidated.newBuilder()
                 .setRequestId(requestId)
                 .setEmail(email)
                 .setUserId(userId)
                 .build();
 
         UserEvent userEvent1 = UserEvent.newBuilder()
-                .setEventType(EventType.VALIDATED)
-                .setUserValidated(userValidated1)
+                .setEventType(EventType.CREATE_USER_VALIDATED)
+                .setCreateUserValidated(userValidated1)
                 .build();
 
-        UserRejected userRejected = UserRejected.newBuilder()
+        CreateUserRejected userRejected = CreateUserRejected.newBuilder()
                 .setRequestId(requestId)
                 .setEmail(email)
                 .setUserId(userId)
@@ -170,8 +170,8 @@ public class ValidationAggregatorServiceTest {
                 .build();
 
         UserEvent userEvent2 = UserEvent.newBuilder()
-                .setEventType(EventType.REJECTED)
-                .setUserRejected(userRejected)
+                .setEventType(EventType.CREATE_USER_REJECTED)
+                .setCreateUserRejected(userRejected)
                 .build();
 
         List<UserEvent> userEvents = new ArrayList<>();
@@ -180,13 +180,13 @@ public class ValidationAggregatorServiceTest {
 
         final String userValidationsTopic = envProps.getProperty("user_validation.topic.name");
         for (UserEvent userEvent : userEvents) {
-            if (userEvent.getEventType().equals(EventType.VALIDATED)) {
+            if (userEvent.getEventType().equals(EventType.CREATE_USER_VALIDATED)) {
                 testDriver.pipeInput(inputFactory.create(userValidationsTopic,
-                        userEvent.getUserValidated().getUserId(),
+                        userEvent.getCreateUserValidated().getUserId(),
                         userEvent));
             } else {
                 testDriver.pipeInput(inputFactory.create(userValidationsTopic,
-                        userEvent.getUserRejected().getUserId(),
+                        userEvent.getCreateUserRejected().getUserId(),
                         userEvent));
             }
         }

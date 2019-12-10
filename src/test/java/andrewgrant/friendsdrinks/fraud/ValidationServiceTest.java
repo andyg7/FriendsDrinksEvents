@@ -128,13 +128,13 @@ public class ValidationServiceTest {
         assertEquals(18, userValidationOutput.size());
 
         UserEvent validatedUser = userValidationOutput.get(0);
-        assertEquals(userId1, validatedUser.getUserValidated().getUserId().getId());
-        assertEquals(EventType.VALIDATED, validatedUser.getEventType());
+        assertEquals(userId1, validatedUser.getCreateUserValidated().getUserId().getId());
+        assertEquals(EventType.CREATE_USER_VALIDATED, validatedUser.getEventType());
 
         UserEvent rejectedUser = userValidationOutput.get(17);
-        assertEquals(userId4, rejectedUser.getUserRejected().getUserId().getId());
-        assertEquals(EventType.REJECTED, rejectedUser.getEventType());
-        assertEquals("DOS", rejectedUser.getUserRejected().getErrorCode());
+        assertEquals(userId4, rejectedUser.getCreateUserRejected().getUserId().getId());
+        assertEquals(EventType.CREATE_USER_REJECTED, rejectedUser.getEventType());
+        assertEquals("DOS", rejectedUser.getCreateUserRejected().getErrorCode());
     }
 
 }

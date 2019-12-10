@@ -49,22 +49,22 @@ public class WriterService {
                         AvroSerdeFactory.buildUserEvent(envProps)));
 
         KStream<UserId, Email> emailKStream = userValidations.filter(((key, value) ->
-                value.getEventType().equals(EventType.VALIDATED) ||
-                        value.getEventType().equals(EventType.REJECTED) ||
+                value.getEventType().equals(EventType.CREATE_USER_VALIDATED) ||
+                        value.getEventType().equals(EventType.CREATE_USER_REJECTED) ||
                         value.getEventType().equals(EventType.DELETE_USER_REQUEST)
         )).mapValues((key, value) -> {
             EmailEvent emailEvent;
-            if (value.getEventType().equals(EventType.VALIDATED)) {
+            if (value.getEventType().equals(EventType.CREATE_USER_VALIDATED)) {
                 Email email = new Email();
-                UserValidated userValidated = value.getUserValidated();
+                CreateUserValidated userValidated = value.getCreateUserValidated();
                 email.setEmailId(new EmailId(userValidated.getEmail()));
                 emailEvent = EmailEvent.RESERVED;
                 email.setEventType(emailEvent);
                 email.setUserId(userValidated.getUserId().getId());
                 return email;
-            } else if (value.getEventType().equals(EventType.REJECTED)) {
+            } else if (value.getEventType().equals(EventType.CREATE_USER_REJECTED)) {
                 Email email = new Email();
-                UserRejected userRejected = value.getUserRejected();
+                CreateUserRejected userRejected = value.getCreateUserRejected();
                 email.setEmailId(new EmailId(userRejected.getEmail()));
                 emailEvent = EmailEvent.REJECTED;
                 email.setEventType(emailEvent);

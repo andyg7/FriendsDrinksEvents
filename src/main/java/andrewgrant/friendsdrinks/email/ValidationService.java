@@ -103,10 +103,10 @@ public class ValidationService {
         KStream<UserId, UserEvent> validatedUser =
                 userAndEmail.transform(Validator::new, PENDING_EMAILS_STORE_NAME)
                         .selectKey(((key, value) -> {
-                           if (value.getEventType().equals(EventType.VALIDATED)) {
-                              return value.getUserValidated().getUserId();
+                           if (value.getEventType().equals(EventType.CREATE_USER_VALIDATED)) {
+                              return value.getCreateUserValidated().getUserId();
                            } else {
-                               return value.getUserRejected().getUserId();
+                               return value.getCreateUserRejected().getUserId();
                            }
                         }));
 

@@ -29,15 +29,15 @@ public class Validator implements Transformer<EmailId, Request, KeyValue<EmailId
         CreateUserRequest userRequest = request.getCreateUserRequest();
         String requestedEmail = userRequest.getEmail();
         if (pendingEmailsStore.get(requestedEmail) != null) {
-            UserRejected userRejected = UserRejected.newBuilder()
+            CreateUserRejected userRejected = CreateUserRejected.newBuilder()
                     .setErrorCode(ErrorCode.PENDING.name())
                     .setUserId(userRequest.getUserId())
                     .setEmail(userRequest.getEmail())
                     .setRequestId(userRequest.getRequestId())
                     .build();
             UserEvent user = UserEvent.newBuilder()
-                    .setEventType(EventType.REJECTED)
-                    .setUserRejected(userRejected)
+                    .setEventType(EventType.CREATE_USER_REJECTED)
+                    .setCreateUserRejected(userRejected)
                     .build();
             return new KeyValue<>(emailId, user);
         }
@@ -45,26 +45,26 @@ public class Validator implements Transformer<EmailId, Request, KeyValue<EmailId
         if (email == null) {
             // Add email address to pending state store
             pendingEmailsStore.put(requestedEmail, userRequest.getUserId().getId());
-            UserValidated userValidated = UserValidated.newBuilder()
+            CreateUserValidated userValidated = CreateUserValidated.newBuilder()
                     .setUserId(userRequest.getUserId())
                     .setEmail(userRequest.getEmail())
                     .setRequestId(userRequest.getRequestId())
                     .build();
             UserEvent user = UserEvent.newBuilder()
-                    .setEventType(EventType.VALIDATED)
-                    .setUserValidated(userValidated)
+                    .setEventType(EventType.CREATE_USER_VALIDATED)
+                    .setCreateUserValidated(userValidated)
                     .build();
             return new KeyValue<>(emailId, user);
         } else if (email.getEventType().equals(EmailEvent.RESERVED)) {
-            UserRejected userRejected = UserRejected.newBuilder()
+            CreateUserRejected userRejected = CreateUserRejected.newBuilder()
                     .setRequestId(userRequest.getRequestId())
                     .setUserId(userRequest.getUserId())
                     .setEmail(userRequest.getEmail())
                     .setErrorCode(ErrorCode.EXISTS.name())
                     .build();
             UserEvent user = UserEvent.newBuilder()
-                    .setEventType(EventType.REJECTED)
-                    .setUserRejected(userRejected)
+                    .setEventType(EventType.CREATE_USER_REJECTED)
+                    .setCreateUserRejected(userRejected)
                     .build();
             return new KeyValue<>(emailId, user);
         }

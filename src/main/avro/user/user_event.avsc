@@ -3,11 +3,11 @@
   "type": "record",
   "name": "UserEvent",
   "fields": [
-    {"name": "eventType", "type": {"type": "enum", "name": "EventType", "symbols" : ["CREATE_USER_REQUEST", "CREATE_USER_RESPONSE", "VALIDATED", "REJECTED", "DELETE_USER_REQUEST"] } },
+    {"name": "eventType", "type": {"type": "enum", "name": "EventType", "symbols" : ["CREATE_USER_REQUEST", "CREATE_USER_RESPONSE", "CREATE_USER_VALIDATED", "CREATE_USER_REJECTED", "DELETE_USER_REQUEST"] } },
     {"name": "createUserRequest", "type": ["null", "CreateUserRequest"], "default": null},
     {"name": "createUserResponse", "type": ["null", "CreateUserResponse"], "default": null},
-    {"name": "userValidated", "type": ["null", "UserValidated"], "default": null},
+    {"name": "createUserValidated", "type": ["null", "CreateUserValidated"], "default": null},
     {"name": "deleteUserRequest", "type": ["null", "DeleteUserRequest"], "default": null},
-    {"name": "userRejected", "type": ["null", "UserRejected"], "default": null}
+    {"name": "createUserRejected", "type": ["null", "CreateUserRejected"], "default": null}
   ]
 }
