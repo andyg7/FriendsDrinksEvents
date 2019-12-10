@@ -49,38 +49,21 @@ public class WriterService {
                         AvroSerdeFactory.buildUserEvent(envProps)));
 
         KStream<UserId, Email> emailKStream = userValidations.filter(((key, value) ->
-                value.getEventType().equals(EventType.CREATE_USER_VALIDATED) ||
-                        value.getEventType().equals(EventType.CREATE_USER_REJECTED) ||
-                        value.getEventType().equals(EventType.DELETE_USER_REQUEST)
+                value.getEventType().equals(EventType.CREATE_USER_RESPONSE)
         )).mapValues((key, value) -> {
-            EmailEvent emailEvent;
-            if (value.getEventType().equals(EventType.CREATE_USER_VALIDATED)) {
-                Email email = new Email();
-                CreateUserValidated userValidated = value.getCreateUserValidated();
-                email.setEmailId(new EmailId(userValidated.getEmail()));
-                emailEvent = EmailEvent.RESERVED;
-                email.setEventType(emailEvent);
-                email.setUserId(userValidated.getUserId().getId());
+            Email email = new Email();
+            CreateUserResponse response = value.getCreateUserResponse();
+            email.setEmailId(new EmailId(response.getEmail()));
+            email.setUserId(response.getUserId().getId());
+            if (value.getCreateUserResponse().getResult().equals(Result.SUCCESS)) {
+                email.setEventType(EmailEvent.RESERVED);
                 return email;
-            } else if (value.getEventType().equals(EventType.CREATE_USER_REJECTED)) {
-                Email email = new Email();
-                CreateUserRejected userRejected = value.getCreateUserRejected();
-                email.setEmailId(new EmailId(userRejected.getEmail()));
-                emailEvent = EmailEvent.REJECTED;
-                email.setEventType(emailEvent);
-                email.setUserId(userRejected.getUserId().getId());
-                return email;
-            } else if (value.getEventType().equals(EventType.DELETE_USER_REQUEST)) {
-                Email email = new Email();
-                DeleteUserRequest userDeleted = value.getDeleteUserRequest();
-                email.setEmailId(new EmailId(userDeleted.getEmail()));
-                emailEvent = EmailEvent.RETURNED;
-                email.setEventType(emailEvent);
-                email.setUserId(userDeleted.getUserId().getId());
+            } else if (value.getCreateUserResponse().getResult().equals(Result.FAIL)) {
+                email.setEventType(EmailEvent.REJECTED);
                 return email;
             } else {
-                throw new RuntimeException(String.format("Received unknown event type %s",
-                        value.getEventType().toString()));
+                throw new RuntimeException(String.format("Received unknown Result %s",
+                        value.getCreateUserResponse().getResult().toString()));
             }
         });
 
