@@ -120,19 +120,6 @@ public class ValidationService {
                 (key, value) -> {
                     if (value.getCurrEmailState() == null) {
                         DeleteUserRejected rejected = DeleteUserRejected.newBuilder()
-                                .setEmail(null)
-                                .setUserId(value.getDeleteUserRequest().getUserId())
-                                .setRequestId(value.getDeleteUserRequest().getRequestId())
-                                .setErrorCode(ErrorCode.DOES_NOT_EXIST.toString())
-                                .build();
-                        return UserEvent.newBuilder()
-                                .setEventType(EventType.DELETE_USER_REJECTED)
-                                .setDeleteUserRejected(rejected)
-                                .build();
-                    } else if (!value.getDeleteUserRequest().getUserId().getId().equals(
-                            value.getCurrEmailState().getUserId())) {
-                        DeleteUserRejected rejected = DeleteUserRejected.newBuilder()
-                                .setEmail(null)
                                 .setUserId(value.getDeleteUserRequest().getUserId())
                                 .setRequestId(value.getDeleteUserRequest().getRequestId())
                                 .setErrorCode(ErrorCode.DOES_NOT_EXIST.toString())
