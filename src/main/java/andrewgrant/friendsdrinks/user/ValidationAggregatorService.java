@@ -43,10 +43,15 @@ public class ValidationAggregatorService {
         // Re-key by request id.
         KStream<String, UserEvent> validationResultsKeyedByRequestId = userValidations
                 .selectKey((key, value) -> {
-                    if (value.getEventType().equals(EventType.CREATE_USER_VALIDATED)) {
+                    EventType eventType = value.getEventType();
+                    if (eventType.equals(EventType.CREATE_USER_VALIDATED)) {
                         return value.getCreateUserValidated().getRequestId();
-                    } else if (value.getEventType().equals(EventType.CREATE_USER_REJECTED)) {
+                    } else if (eventType.equals(EventType.CREATE_USER_REJECTED)) {
                         return value.getCreateUserRejected().getRequestId();
+                    } else if (eventType.equals(EventType.DELETE_USER_VALIDATED)) {
+                       return value.getDeleteUserValidated().getRequestId();
+                    } else if (eventType.equals(EventType.DELETE_USER_REJECTED)) {
+                        return value.getDeleteUserRejected().getRequestId();
                     } else {
                         throw new RuntimeException(
                                 String.format("Topic should only contain validated or rejected " +
@@ -54,8 +59,8 @@ public class ValidationAggregatorService {
                     }
                 });
 
-        // Request id -> number of validations
-        KStream<String, Long> validationCount = validationResultsKeyedByRequestId
+        // Request id -> number of validations for create user requests
+        KStream<String, Long> createValidationCount = validationResultsKeyedByRequestId
                 .groupByKey(Grouped.with(Serdes.String(), userEventSerde))
                 .windowedBy(SessionWindows.with(Duration.ofMinutes(5)))
                 .aggregate(
@@ -70,25 +75,42 @@ public class ValidationAggregatorService {
                 .filter(((key, value) -> value != null))
                 .filter(((key, value) -> value >= 2L));
 
+        // Request id -> number of validations for delete user requests
+        KStream<String, Long> deleteValidationCount = validationResultsKeyedByRequestId
+                .groupByKey(Grouped.with(Serdes.String(), userEventSerde))
+                .windowedBy(SessionWindows.with(Duration.ofMinutes(5)))
+                .aggregate(
+                        () -> 0L,
+                        (requestId, user, total) ->
+                                user.getEventType().equals(EventType.DELETE_USER_VALIDATED) ?
+                                        Long.valueOf(total + 1L) : total,
+                        (k, a, b) -> b == null ? a : b,
+                        Materialized.with(null, Serdes.Long())
+                )
+                .toStream((key, value) -> key.key())
+                .filter(((key, value) -> value != null))
+                .filter(((key, value) -> value >= 1L));
+
         final String userTopic = envProps.getProperty("user.topic.name");
         KStream<UserId, UserEvent> userEvents = builder.stream(
                 userTopic, Consumed.with(userIdSerde, userEventSerde));
 
-        KStream<String, CreateUserRequest> userRequestsKeyedByRequestId = userEvents
+        KStream<String, CreateUserRequest> createUserRequestsKeyedByRequestId = userEvents
                 .filter(((key, value) ->
                         value.getEventType().equals(EventType.CREATE_USER_REQUEST)))
                 .mapValues(value -> value.getCreateUserRequest())
                 .selectKey((key, value) -> value.getRequestId());
 
-        KStream<String, CreateUserRequest> userRequestsKeyedByRequestId2 = userEvents
+        KStream<String, DeleteUserRequest> deleteUserRequestsKeyedByRequestId = userEvents
                 .filter(((key, value) ->
-                        value.getEventType().equals(EventType.CREATE_USER_REQUEST)))
-                .mapValues(value -> value.getCreateUserRequest())
+                        value.getEventType().equals(EventType.DELETE_USER_REQUEST)))
+                .mapValues(value -> value.getDeleteUserRequest())
                 .selectKey((key, value) -> value.getRequestId());
 
-        SpecificAvroSerde<CreateUserRequest> userRequestSerde =
+
+        SpecificAvroSerde<CreateUserRequest> createUserRequestSerde =
                 AvroSerdeFactory.buildCreateUserRequest(envProps);
-        validationCount.join(userRequestsKeyedByRequestId,
+        createValidationCount.join(createUserRequestsKeyedByRequestId,
                 (leftValue, rightValue) -> {
                     CreateUserResponse response = CreateUserResponse.newBuilder()
                             .setRequestId(rightValue.getRequestId())
@@ -102,13 +124,45 @@ public class ValidationAggregatorService {
                             .build();
                 },
                 JoinWindows.of(Duration.ofMinutes(5)),
-                Joined.with(Serdes.String(), Serdes.Long(), userRequestSerde))
+                Joined.with(Serdes.String(), Serdes.Long(), createUserRequestSerde))
                 .selectKey(((key, value) -> value.getCreateUserResponse().getUserId()))
                 .to(userTopic, Produced.with(userIdSerde, userEventSerde));
 
+        SpecificAvroSerde<DeleteUserRequest> deleteUserRequestSerde =
+                AvroSerdeFactory.buildDeleteUserRequest(envProps);
+        deleteValidationCount.join(deleteUserRequestsKeyedByRequestId,
+                (leftValue, rightValue) -> {
+                    DeleteUserResponse response = DeleteUserResponse.newBuilder()
+                            .setRequestId(rightValue.getRequestId())
+                            .setUserId(rightValue.getUserId())
+                            .setResult(Result.SUCCESS)
+                            .build();
+                    return UserEvent.newBuilder()
+                            .setEventType(EventType.DELETE_USER_RESPONSE)
+                            .setDeleteUserResponse(response)
+                            .build();
+                },
+                JoinWindows.of(Duration.ofMinutes(5)),
+                Joined.with(Serdes.String(), Serdes.Long(), deleteUserRequestSerde))
+                .selectKey(((key, value) -> value.getDeleteUserResponse().getUserId()))
+                .to(userTopic, Produced.with(userIdSerde, userEventSerde));
+
+        KStream<String, CreateUserRequest> createUserRequestsKeyedByRequestId2 = userEvents
+                .filter(((key, value) ->
+                        value.getEventType().equals(EventType.CREATE_USER_REQUEST)))
+                .mapValues(value -> value.getCreateUserRequest())
+                .selectKey((key, value) -> value.getRequestId());
+
+        KStream<String, DeleteUserRequest> deleteUserRequestsKeyedByRequestId2 = userEvents
+                .filter(((key, value) ->
+                        value.getEventType().equals(EventType.DELETE_USER_REQUEST)))
+                .mapValues(value -> value.getDeleteUserRequest())
+                .selectKey((key, value) -> value.getRequestId());
+
+        // Rejected create user requests
         validationResultsKeyedByRequestId.filter(((key, value) ->
                 value.getEventType().equals(EventType.CREATE_USER_REJECTED))).join(
-                userRequestsKeyedByRequestId2,
+                createUserRequestsKeyedByRequestId2,
                 (leftValue, rightValue) -> {
                     CreateUserResponse response = CreateUserResponse.newBuilder()
                             .setRequestId(rightValue.getRequestId())
@@ -122,11 +176,34 @@ public class ValidationAggregatorService {
                             .build();
                 },
                 JoinWindows.of(Duration.ofMinutes(5)),
-                Joined.with(Serdes.String(), userEventSerde, userRequestSerde))
+                Joined.with(Serdes.String(), userEventSerde, createUserRequestSerde))
                 .groupByKey(Grouped.with(Serdes.String(), userEventSerde))
                 .reduce((key, value) -> value)
                 .toStream()
                 .selectKey(((key, value) -> value.getCreateUserResponse().getUserId()))
+                .to(userTopic, Produced.with(userIdSerde, userEventSerde));
+
+        // Rejected delete user requests
+        validationResultsKeyedByRequestId.filter(((key, value) ->
+                value.getEventType().equals(EventType.DELETE_USER_REJECTED))).join(
+                deleteUserRequestsKeyedByRequestId2,
+                (leftValue, rightValue) -> {
+                    DeleteUserResponse response = DeleteUserResponse.newBuilder()
+                            .setRequestId(rightValue.getRequestId())
+                            .setUserId(rightValue.getUserId())
+                            .setResult(Result.FAIL)
+                            .build();
+                    return UserEvent.newBuilder()
+                            .setEventType(EventType.DELETE_USER_RESPONSE)
+                            .setDeleteUserResponse(response)
+                            .build();
+                },
+                JoinWindows.of(Duration.ofMinutes(5)),
+                Joined.with(Serdes.String(), userEventSerde, deleteUserRequestSerde))
+                .groupByKey(Grouped.with(Serdes.String(), userEventSerde))
+                .reduce((key, value) -> value)
+                .toStream()
+                .selectKey(((key, value) -> value.getDeleteUserResponse().getUserId()))
                 .to(userTopic, Produced.with(userIdSerde, userEventSerde));
 
         return builder.build();
