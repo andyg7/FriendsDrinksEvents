@@ -4,6 +4,7 @@
   "name": "DeleteUserValidated",
   "fields": [
     {"name": "requestId", "type": "string"},
+    {"name": "email", "type": "string"},
     {"name": "userId", "type": "UserId"}
   ]
 }
