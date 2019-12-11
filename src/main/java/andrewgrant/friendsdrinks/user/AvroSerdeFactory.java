@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Properties;
 
 import andrewgrant.friendsdrinks.avro.CreateUserRequest;
+import andrewgrant.friendsdrinks.avro.DeleteUserRequest;
 import andrewgrant.friendsdrinks.avro.UserEvent;
 import andrewgrant.friendsdrinks.avro.UserId;
 
@@ -37,6 +38,19 @@ public class AvroSerdeFactory {
         serde.configure(serdeConfig, false);
         return serde;
     }
+
+    public static SpecificAvroSerde<DeleteUserRequest> buildDeleteUserRequest(
+            Properties properties) {
+        SpecificAvroSerde<DeleteUserRequest> serde = new SpecificAvroSerde<>();
+
+        final HashMap<String, String> serdeConfig = new HashMap<>();
+        serdeConfig.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
+                properties.getProperty("schema.registry.url"));
+
+        serde.configure(serdeConfig, false);
+        return serde;
+    }
+
     public static SpecificAvroSerde<UserId> buildUserId(Properties properties) {
         SpecificAvroSerde<UserId> userAvroSerde = new SpecificAvroSerde<>();
 

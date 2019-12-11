@@ -6,11 +6,11 @@ import andrewgrant.friendsdrinks.avro.Email;
 /**
  * Class to represent a request from a user for an email address.
  */
-public class Request {
+public class CreateRequest {
     private CreateUserRequest createUserRequest;
     private Email currEmailState;
 
-    public Request(CreateUserRequest createUserRequest, Email currEmailState) {
+    public CreateRequest(CreateUserRequest createUserRequest, Email currEmailState) {
         this.createUserRequest = createUserRequest;
         this.currEmailState = currEmailState;
     }

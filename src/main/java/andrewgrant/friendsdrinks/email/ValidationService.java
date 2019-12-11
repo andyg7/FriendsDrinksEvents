@@ -55,16 +55,17 @@ public class ValidationService {
 
         final String emailTopic = envProps.getProperty("email.topic.name");
         // Get stream of email events and clean up state store as they come in
-        KStream<EmailId, Email> emailKStream = builder.stream(emailTopic,
+        KStream<EmailId, Email> emailKStreamRaw = builder.stream(emailTopic,
                 Consumed.with(
                         andrewgrant.friendsdrinks.email.AvroSerdeFactory.buildEmailId(envProps),
-                        andrewgrant.friendsdrinks.email.AvroSerdeFactory.buildEmail(envProps)))
+                        andrewgrant.friendsdrinks.email.AvroSerdeFactory.buildEmail(envProps)));
+        KStream<EmailId, Email> emailKStream = emailKStreamRaw
                 .transform(PendingEmailsStateStoreCleaner::new, PENDING_EMAILS_STORE_NAME);
 
         // Write events to a tmp topic so we can rebuild a table
-        final String emailTmpTopic = envProps.getProperty("email_tmp.topic.name");
+        final String emailTmp1Topic = envProps.getProperty("email_tmp_1.topic.name");
         emailKStream.filter(((key, value) -> value.getEventType().equals(EmailEvent.RESERVED)))
-                .to(emailTmpTopic,
+                .to(emailTmp1Topic,
                         Produced.with(
                                 andrewgrant.friendsdrinks.email.AvroSerdeFactory
                                         .buildEmailId(envProps),
@@ -72,7 +73,7 @@ public class ValidationService {
                                         .buildEmail(envProps)));
 
         // Rebuild table. id -> reserved emails.
-        KTable<EmailId, Email> emailKTable = builder.table(emailTmpTopic,
+        KTable<EmailId, Email> emailKTable = builder.table(emailTmp1Topic,
                 Consumed.with(andrewgrant.friendsdrinks.email.AvroSerdeFactory
                                 .buildEmailId(envProps),
                         andrewgrant.friendsdrinks.email.AvroSerdeFactory
@@ -83,25 +84,100 @@ public class ValidationService {
                 Consumed.with(AvroSerdeFactory.buildUserId(envProps),
                         AvroSerdeFactory.buildUserEvent(envProps)));
 
+
+        KStream<UserId, Email> emailStreamKeyedByUserId = emailKStreamRaw
+                .selectKey(((key, value) -> new UserId(value.getUserId())));
+
+        final String emailTmp2Topic = envProps.getProperty("email_tmp_2.topic.name");
+        emailStreamKeyedByUserId.to(emailTmp2Topic,
+                Produced.with(
+                        andrewgrant.friendsdrinks.user.AvroSerdeFactory
+                                .buildUserId(envProps),
+                        andrewgrant.friendsdrinks.email.AvroSerdeFactory
+                                .buildEmail(envProps)));
+
+        KTable<UserId, Email> emailTableKeyedByUserId = builder.table(emailTmp2Topic,
+                Consumed.with(andrewgrant.friendsdrinks.user.AvroSerdeFactory
+                                .buildUserId(envProps),
+                        andrewgrant.friendsdrinks.email.AvroSerdeFactory
+                                .buildEmail(envProps)));
+
         // Filter by requests so we have a stream of user requests.
-        KStream<UserId, CreateUserRequest> userRequestsKStream = userIdKStream.
+        KStream<UserId, DeleteUserRequest> deleteUserRequests = userIdKStream.
+                filter(((key, value) -> value.getEventType().equals(EventType.DELETE_USER_REQUEST)))
+                .mapValues(value -> value.getDeleteUserRequest());
+
+        KStream<UserId, DeleteRequest> deleteRequestAndEmail = deleteUserRequests
+                .leftJoin(emailTableKeyedByUserId, DeleteRequest::new,
+                        Joined.with(
+                                andrewgrant.friendsdrinks.user.AvroSerdeFactory
+                                        .buildUserId(envProps),
+                                AvroSerdeFactory.buildDeleteUserRequest(envProps),
+                                andrewgrant.friendsdrinks.email.AvroSerdeFactory
+                                        .buildEmail(envProps)));
+
+        KStream<UserId, UserEvent> validatedDeleteUser = deleteRequestAndEmail.mapValues(
+                (key, value) -> {
+                    if (value.getCurrEmailState() == null) {
+                        DeleteUserRejected rejected = DeleteUserRejected.newBuilder()
+                                .setEmail(null)
+                                .setUserId(value.getDeleteUserRequest().getUserId())
+                                .setRequestId(value.getDeleteUserRequest().getRequestId())
+                                .setErrorCode(ErrorCode.DOES_NOT_EXIST.toString())
+                                .build();
+                        return UserEvent.newBuilder()
+                                .setEventType(EventType.DELETE_USER_REJECTED)
+                                .setDeleteUserRejected(rejected)
+                                .build();
+                    } else if (!value.getDeleteUserRequest().getUserId().getId().equals(
+                            value.getCurrEmailState().getUserId())) {
+                        DeleteUserRejected rejected = DeleteUserRejected.newBuilder()
+                                .setEmail(null)
+                                .setUserId(value.getDeleteUserRequest().getUserId())
+                                .setRequestId(value.getDeleteUserRequest().getRequestId())
+                                .setErrorCode(ErrorCode.DOES_NOT_EXIST.toString())
+                                .build();
+                        return UserEvent.newBuilder()
+                                .setEventType(EventType.DELETE_USER_REJECTED)
+                                .setDeleteUserRejected(rejected)
+                                .build();
+                    }
+                    UserId userId = UserId.newBuilder()
+                            .setId(value.getCurrEmailState().getUserId())
+                            .build();
+                    DeleteUserValidated validated = DeleteUserValidated.newBuilder()
+                            .setRequestId(value.getDeleteUserRequest().getRequestId())
+                            .setUserId(userId)
+                            .build();
+                    return UserEvent.newBuilder()
+                            .setEventType(EventType.DELETE_USER_VALIDATED)
+                            .setDeleteUserValidated(validated)
+                            .build();
+                });
+
+        // Filter by requests so we have a stream of user requests.
+        KStream<UserId, CreateUserRequest> createUserRequests = userIdKStream.
                 filter(((key, value) -> value.getEventType().equals(EventType.CREATE_USER_REQUEST)))
                 .mapValues(value -> value.getCreateUserRequest());
 
         // Re-key by email for join.
-        KStream<EmailId, CreateUserRequest> userKStreamKeyedByEmail =
-                userRequestsKStream.selectKey(((key, value) ->
+        KStream<EmailId, CreateUserRequest> createUserRequestsKeyedByEmailId =
+                createUserRequests.selectKey(((key, value) ->
                         new EmailId(value.getEmail())));
 
 
-        KStream<EmailId, Request> userAndEmail = userKStreamKeyedByEmail.leftJoin(emailKTable,
-                Request::new,
-                Joined.with(andrewgrant.friendsdrinks.email.AvroSerdeFactory.buildEmailId(envProps),
-                        AvroSerdeFactory.buildCreateUserRequest(envProps),
-                        andrewgrant.friendsdrinks.email.AvroSerdeFactory.buildEmail(envProps)));
+        KStream<EmailId, CreateRequest> createUserAndEmail =
+                createUserRequestsKeyedByEmailId.leftJoin(emailKTable,
+                        CreateRequest::new,
+                        Joined.with(
+                                andrewgrant.friendsdrinks.email.AvroSerdeFactory
+                                        .buildEmailId(envProps),
+                                AvroSerdeFactory.buildCreateUserRequest(envProps),
+                                andrewgrant.friendsdrinks.email.AvroSerdeFactory
+                                        .buildEmail(envProps)));
 
-        KStream<UserId, UserEvent> validatedUser =
-                userAndEmail.transform(Validator::new, PENDING_EMAILS_STORE_NAME)
+        KStream<UserId, UserEvent> validatedCreateUser =
+                createUserAndEmail.transform(Validator::new, PENDING_EMAILS_STORE_NAME)
                         .selectKey(((key, value) -> {
                            if (value.getEventType().equals(EventType.CREATE_USER_VALIDATED)) {
                               return value.getCreateUserValidated().getUserId();
@@ -111,7 +187,10 @@ public class ValidationService {
                         }));
 
         final String userValidationTopic = envProps.getProperty("user_validation.topic.name");
-        validatedUser.to(userValidationTopic,
+        validatedCreateUser.to(userValidationTopic,
+                Produced.with(AvroSerdeFactory.buildUserId(envProps),
+                        AvroSerdeFactory.buildUserEvent(envProps)));
+        validatedDeleteUser.to(userValidationTopic,
                 Produced.with(AvroSerdeFactory.buildUserId(envProps),
                         AvroSerdeFactory.buildUserEvent(envProps)));
 

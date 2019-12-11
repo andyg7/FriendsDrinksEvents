@@ -12,7 +12,8 @@ import andrewgrant.friendsdrinks.avro.*;
 /**
  * Validates email request.
  */
-public class Validator implements Transformer<EmailId, Request, KeyValue<EmailId, UserEvent>> {
+public class Validator implements
+        Transformer<EmailId, CreateRequest, KeyValue<EmailId, UserEvent>> {
 
     private KeyValueStore<String, String> pendingEmailsStore;
 
@@ -25,8 +26,8 @@ public class Validator implements Transformer<EmailId, Request, KeyValue<EmailId
 
     @Override
     public KeyValue<EmailId, UserEvent> transform(final EmailId emailId,
-                                                  final Request request) {
-        CreateUserRequest userRequest = request.getCreateUserRequest();
+                                                  final CreateRequest createRequest) {
+        CreateUserRequest userRequest = createRequest.getCreateUserRequest();
         String requestedEmail = userRequest.getEmail();
         if (pendingEmailsStore.get(requestedEmail) != null) {
             CreateUserRejected userRejected = CreateUserRejected.newBuilder()
@@ -41,7 +42,7 @@ public class Validator implements Transformer<EmailId, Request, KeyValue<EmailId
                     .build();
             return new KeyValue<>(emailId, user);
         }
-        Email email = request.getCurrEmailState();
+        Email email = createRequest.getCurrEmailState();
         if (email == null) {
             // Add email address to pending state store
             pendingEmailsStore.put(requestedEmail, userRequest.getUserId().getId());
