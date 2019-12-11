@@ -47,7 +47,7 @@ public class WriterServiceTest {
      * @throws IOException
      */
     @Test
-    public void testWriteService() {
+    public void testWriteServiceCreateUserResponse() {
         SpecificAvroSerializer<UserId> userIdSerializer = UserAvro.userIdSerializer(envProps);
         SpecificAvroSerializer<UserEvent> userSerializer = UserAvro.userEventSerializer(envProps);
 
@@ -108,4 +108,63 @@ public class WriterServiceTest {
         assertEquals(EmailEvent.REJECTED, email2.getEventType());
     }
 
+    @Test
+    public void testWriteServiceDeleteUserResponse() {
+        SpecificAvroSerializer<UserId> userIdSerializer = UserAvro.userIdSerializer(envProps);
+        SpecificAvroSerializer<UserEvent> userSerializer = UserAvro.userEventSerializer(envProps);
+
+        ConsumerRecordFactory<UserId, UserEvent> inputFactory =
+                new ConsumerRecordFactory<>(userIdSerializer, userSerializer);
+
+        List<UserEvent> input = new ArrayList<>();
+        DeleteUserResponse deleteUserResponseSuccess = DeleteUserResponse.newBuilder()
+                .setRequestId("1")
+                .setUserId(new UserId(UUID.randomUUID().toString()))
+                .setEmail("email1")
+                .setResult(Result.SUCCESS)
+                .build();
+
+        DeleteUserResponse deleteUserResponseFail = DeleteUserResponse.newBuilder()
+                .setRequestId("2")
+                .setUserId(new UserId(UUID.randomUUID().toString()))
+                .setEmail("email2")
+                .setResult(Result.FAIL)
+                .build();
+
+        input.add(
+                UserEvent.newBuilder()
+                        .setDeleteUserResponse(deleteUserResponseSuccess)
+                        .setEventType(EventType.DELETE_USER_RESPONSE).build());
+        input.add(
+                UserEvent.newBuilder()
+                        .setDeleteUserResponse(deleteUserResponseFail)
+                        .setEventType(EventType.DELETE_USER_RESPONSE).build());
+
+        final String userTopic = envProps.getProperty("user.topic.name");
+        for (UserEvent user : input) {
+            testDriver.pipeInput(inputFactory.create(userTopic,
+                    user.getDeleteUserResponse().getUserId(), user));
+        }
+
+        SpecificAvroDeserializer<EmailId> emailIdDeserializer = EmailAvro
+                .emailIdDeserializer(envProps);
+        SpecificAvroDeserializer<Email> emailDeserializer = EmailAvro
+                .emailDeserializer(envProps);
+
+        final String emailTopic = envProps.getProperty("email.topic.name");
+        List<Email> output = new ArrayList<>();
+        while (true) {
+            ProducerRecord<EmailId, Email> emailRecord =
+                    testDriver.readOutput(emailTopic, emailIdDeserializer, emailDeserializer);
+            if (emailRecord != null) {
+                output.add(emailRecord.value());
+            } else {
+                break;
+            }
+        }
+
+        assertEquals(1, output.size());
+        Email email1 = output.get(0);
+        assertEquals(EmailEvent.RETURNED, email1.getEventType());
+    }
 }

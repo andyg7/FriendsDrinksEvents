@@ -48,7 +48,7 @@ public class WriterService {
                 Consumed.with(AvroSerdeFactory.buildUserId(envProps),
                         AvroSerdeFactory.buildUserEvent(envProps)));
 
-        KStream<UserId, Email> emailKStream = userValidations.filter(((key, value) ->
+        KStream<UserId, Email> createUserEmailEvent = userValidations.filter(((key, value) ->
                 value.getEventType().equals(EventType.CREATE_USER_RESPONSE)
         )).mapValues((key, value) -> {
             Email email = new Email();
@@ -67,12 +67,32 @@ public class WriterService {
             }
         });
 
+        KStream<UserId, Email> deleteUserEmailEvent = userValidations.filter(((key, value) ->
+                value.getEventType().equals(EventType.DELETE_USER_RESPONSE) &&
+                        value.getDeleteUserResponse().getResult().equals(Result.SUCCESS)
+        )).mapValues((key, value) -> {
+            Email email = new Email();
+            DeleteUserResponse response = value.getDeleteUserResponse();
+            email.setEmailId(new EmailId(response.getEmail()));
+            email.setUserId(response.getUserId().getId());
+            email.setEventType(EmailEvent.RETURNED);
+            return email;
+        });
+
         // Re-key on email before publishing to email topic.
-        KStream<EmailId, Email> emailKStreamRekeyed =
-                emailKStream.selectKey(((key, value) -> value.getEmailId()));
+        KStream<EmailId, Email> createUserEmailEventKeyedByEmailId =
+                createUserEmailEvent.selectKey(((key, value) -> value.getEmailId()));
+
+        KStream<EmailId, Email> deleteUserEmailEventKeyedByEmailId =
+                deleteUserEmailEvent.selectKey(((key, value) -> value.getEmailId()));
 
         final String emailTopic = envProps.getProperty("email.topic.name");
-        emailKStreamRekeyed.to(emailTopic,
+        createUserEmailEventKeyedByEmailId.to(emailTopic,
+                Produced.with(andrewgrant.friendsdrinks.email.AvroSerdeFactory
+                                .buildEmailId(envProps),
+                        andrewgrant.friendsdrinks.email.AvroSerdeFactory
+                                .buildEmail(envProps)));
+        deleteUserEmailEventKeyedByEmailId.to(emailTopic,
                 Produced.with(andrewgrant.friendsdrinks.email.AvroSerdeFactory
                                 .buildEmailId(envProps),
                         andrewgrant.friendsdrinks.email.AvroSerdeFactory
