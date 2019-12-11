@@ -128,20 +128,21 @@ public class ValidationService {
                                 .setEventType(EventType.DELETE_USER_REJECTED)
                                 .setDeleteUserRejected(rejected)
                                 .build();
+                    } else {
+                        UserId userId = UserId.newBuilder()
+                                .setId(value.getCurrEmailState().getUserId())
+                                .build();
+                        DeleteUserValidated validated = DeleteUserValidated.newBuilder()
+                                .setRequestId(value.getDeleteUserRequest().getRequestId())
+                                .setUserId(userId)
+                                .setEmail(value.getCurrEmailState().getEmailId()
+                                        .getEmailAddress())
+                                .build();
+                        return UserEvent.newBuilder()
+                                .setEventType(EventType.DELETE_USER_VALIDATED)
+                                .setDeleteUserValidated(validated)
+                                .build();
                     }
-                    UserId userId = UserId.newBuilder()
-                            .setId(value.getCurrEmailState().getUserId())
-                            .build();
-                    DeleteUserValidated validated = DeleteUserValidated.newBuilder()
-                            .setRequestId(value.getDeleteUserRequest().getRequestId())
-                            .setUserId(userId)
-                            .setEmail(value.getCurrEmailState().getEmailId()
-                                    .getEmailAddress())
-                            .build();
-                    return UserEvent.newBuilder()
-                            .setEventType(EventType.DELETE_USER_VALIDATED)
-                            .setDeleteUserValidated(validated)
-                            .build();
                 });
 
         // Filter by requests so we have a stream of user requests.
