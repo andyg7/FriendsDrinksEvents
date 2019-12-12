@@ -3,8 +3,8 @@ package andrewgrant.friendsdrinks.email;
 import java.util.HashMap;
 import java.util.Properties;
 
-import andrewgrant.friendsdrinks.avro.Email;
-import andrewgrant.friendsdrinks.avro.EmailId;
+import andrewgrant.friendsdrinks.email.avro.EmailEvent;
+import andrewgrant.friendsdrinks.email.avro.EmailId;
 
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
@@ -15,8 +15,8 @@ import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
  */
 public class AvroSerdeFactory {
 
-    public static SpecificAvroSerde<Email> buildEmail(Properties properties) {
-        SpecificAvroSerde<Email> serde = new SpecificAvroSerde<>();
+    public static SpecificAvroSerde<EmailEvent> buildEmail(Properties properties) {
+        SpecificAvroSerde<EmailEvent> serde = new SpecificAvroSerde<>();
 
         final HashMap<String, String> serdeConfig = new HashMap<>();
         serdeConfig.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,

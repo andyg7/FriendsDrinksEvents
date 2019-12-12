@@ -14,6 +14,8 @@ import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
 import andrewgrant.friendsdrinks.avro.*;
+import andrewgrant.friendsdrinks.email.avro.EmailEvent;
+import andrewgrant.friendsdrinks.email.avro.EmailId;
 import andrewgrant.friendsdrinks.user.AvroSerdeFactory;
 
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
@@ -46,18 +48,20 @@ public class WriterService {
                 Consumed.with(AvroSerdeFactory.buildUserId(envProps),
                         AvroSerdeFactory.buildUserEvent(envProps)));
 
-        KStream<UserId, Email> createUserEmailEvent = userEventKStream.filter(((key, value) ->
+        KStream<UserId, EmailEvent> createUserEmailEvent = userEventKStream.filter(((key, value) ->
                 value.getEventType().equals(EventType.CREATE_USER_RESPONSE)
         )).mapValues((key, value) -> {
-            Email email = new Email();
+            EmailEvent email = new EmailEvent();
             CreateUserResponse response = value.getCreateUserResponse();
             email.setEmailId(new EmailId(response.getEmail()));
             email.setUserId(response.getUserId().getId());
             if (value.getCreateUserResponse().getResult().equals(Result.SUCCESS)) {
-                email.setEventType(EmailEvent.RESERVED);
+                email.setEventType(andrewgrant.friendsdrinks.email.avro
+                        .EventType.RESERVED);
                 return email;
             } else if (value.getCreateUserResponse().getResult().equals(Result.FAIL)) {
-                email.setEventType(EmailEvent.REJECTED);
+                email.setEventType(andrewgrant.friendsdrinks.email.avro
+                        .EventType.REJECTED);
                 return email;
             } else {
                 throw new RuntimeException(String.format("Received unknown Result %s",
@@ -72,13 +76,13 @@ public class WriterService {
         )).mapValues(value -> value.getDeleteUserResponse());
 
         final String emailTopic = envProps.getProperty("email.topic.name");
-        KStream<UserId, Email> emailsKeyedByUserId = builder.stream(emailTopic,
+        KStream<UserId, EmailEvent> emailsKeyedByUserId = builder.stream(emailTopic,
                 Consumed.with(andrewgrant.friendsdrinks.email.AvroSerdeFactory
                                 .buildEmailId(envProps),
                         andrewgrant.friendsdrinks.email.AvroSerdeFactory
                                 .buildEmail(envProps)))
                 .filter(((key, value) -> value.getEventType()
-                        .equals(EmailEvent.RESERVED)))
+                        .equals(andrewgrant.friendsdrinks.email.avro.EventType.RESERVED)))
                 .selectKey((key, value) -> new UserId(value.getUserId()));
 
         final String emailTmpTopic = envProps.getProperty("email_tmp_3.topic.name");
@@ -89,7 +93,7 @@ public class WriterService {
                         andrewgrant.friendsdrinks.email.AvroSerdeFactory
                                 .buildEmail(envProps)));
 
-        KTable<UserId, Email> emailKTableKeyedByUserId = builder.table(
+        KTable<UserId, EmailEvent> emailKTableKeyedByUserId = builder.table(
                 emailTmpTopic,
                 Consumed.with(andrewgrant.friendsdrinks.user.AvroSerdeFactory
                                 .buildUserId(envProps),
@@ -106,10 +110,11 @@ public class WriterService {
                                 andrewgrant.friendsdrinks.email.AvroSerdeFactory
                                         .buildEmail(envProps)));
 
-        KStream<EmailId, Email> returnedEmailKStream = deleteResponseAndCurrEmailKStream
+        KStream<EmailId, EmailEvent> returnedEmailKStream = deleteResponseAndCurrEmailKStream
                 .mapValues(value ->
-                        Email.newBuilder(value.getCurrEmailState())
-                                .setEventType(EmailEvent.RETURNED)
+                        EmailEvent.newBuilder(value.getCurrEmailState())
+                                .setEventType(andrewgrant.friendsdrinks.email.avro
+                                        .EventType.RETURNED)
                                 .build())
                 .selectKey((key, value) -> value.getEmailId());
 
@@ -120,7 +125,7 @@ public class WriterService {
                                 .buildEmail(envProps)));
 
         // Re-key on email before publishing to email topic.
-        KStream<EmailId, Email> createUserEmailEventKeyedByEmailId =
+        KStream<EmailId, EmailEvent> createUserEmailEventKeyedByEmailId =
                 createUserEmailEvent.selectKey(((key, value) -> value.getEmailId()));
 
         createUserEmailEventKeyedByEmailId.to(emailTopic,

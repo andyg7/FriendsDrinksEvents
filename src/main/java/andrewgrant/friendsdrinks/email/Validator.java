@@ -8,6 +8,8 @@ import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
 
 import andrewgrant.friendsdrinks.avro.*;
+import andrewgrant.friendsdrinks.email.avro.EmailEvent;
+import andrewgrant.friendsdrinks.email.avro.EmailId;
 
 /**
  * Validates email request.
@@ -42,7 +44,7 @@ public class Validator implements
                     .build();
             return new KeyValue<>(emailId, user);
         }
-        Email email = createRequest.getCurrEmailState();
+        EmailEvent email = createRequest.getCurrEmailState();
         if (email == null) {
             // Add email address to pending state store
             pendingEmailsStore.put(requestedEmail, userRequest.getUserId().getId());
@@ -56,7 +58,8 @@ public class Validator implements
                     .setCreateUserValidated(userValidated)
                     .build();
             return new KeyValue<>(emailId, user);
-        } else if (email.getEventType().equals(EmailEvent.RESERVED)) {
+        } else if (email.getEventType().equals(andrewgrant.friendsdrinks.email.avro
+                .EventType.RESERVED)) {
             CreateUserRejected userRejected = CreateUserRejected.newBuilder()
                     .setRequestId(userRequest.getRequestId())
                     .setUserId(userRequest.getUserId())

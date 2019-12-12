@@ -1,5 +1,5 @@
 {
-  "namespace": "andrewgrant.friendsdrinks.avro",
+  "namespace": "andrewgrant.friendsdrinks.email.avro",
   "type": "record",
   "name": "EmailId",
   "fields": [

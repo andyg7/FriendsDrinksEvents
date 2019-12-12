@@ -1,16 +1,18 @@
 package andrewgrant.friendsdrinks.email;
 
 import andrewgrant.friendsdrinks.avro.DeleteUserResponse;
-import andrewgrant.friendsdrinks.avro.Email;
+import andrewgrant.friendsdrinks.email.avro.EmailEvent;
 
 /**
  * Simple DTO.
  */
 public class DeleteResponseAndCurrEmail {
-    private Email currEmailState;
+    private EmailEvent currEmailState;
     private DeleteUserResponse deleteUserResponse;
 
-    public DeleteResponseAndCurrEmail(DeleteUserResponse deleteUserResponse, Email currEmailState) {
+    public DeleteResponseAndCurrEmail(
+            DeleteUserResponse deleteUserResponse,
+            EmailEvent currEmailState) {
         this.deleteUserResponse = deleteUserResponse;
         this.currEmailState = currEmailState;
     }
@@ -19,7 +21,7 @@ public class DeleteResponseAndCurrEmail {
         return deleteUserResponse;
     }
 
-    public Email getCurrEmailState() {
+    public EmailEvent getCurrEmailState() {
         return currEmailState;
     }
 

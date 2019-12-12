@@ -18,6 +18,8 @@ import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
 import andrewgrant.friendsdrinks.avro.*;
+import andrewgrant.friendsdrinks.email.avro.EmailEvent;
+import andrewgrant.friendsdrinks.email.avro.EmailId;
 import andrewgrant.friendsdrinks.user.AvroSerdeFactory;
 
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
@@ -55,16 +57,17 @@ public class ValidationService {
 
         final String emailTopic = envProps.getProperty("email.topic.name");
         // Get stream of email events and clean up state store as they come in
-        KStream<EmailId, Email> emailKStreamRaw = builder.stream(emailTopic,
+        KStream<EmailId, EmailEvent> emailKStreamRaw = builder.stream(emailTopic,
                 Consumed.with(
                         andrewgrant.friendsdrinks.email.AvroSerdeFactory.buildEmailId(envProps),
                         andrewgrant.friendsdrinks.email.AvroSerdeFactory.buildEmail(envProps)));
-        KStream<EmailId, Email> emailKStream = emailKStreamRaw
+        KStream<EmailId, EmailEvent> emailKStream = emailKStreamRaw
                 .transform(PendingEmailsStateStoreCleaner::new, PENDING_EMAILS_STORE_NAME);
 
         // Write events to a tmp topic so we can rebuild a table
         final String emailTmp1Topic = envProps.getProperty("email_tmp_1.topic.name");
-        emailKStream.filter(((key, value) -> value.getEventType().equals(EmailEvent.RESERVED)))
+        emailKStream.filter(((key, value) -> value.getEventType().equals(
+                andrewgrant.friendsdrinks.email.avro.EventType.RESERVED)))
                 .to(emailTmp1Topic,
                         Produced.with(
                                 andrewgrant.friendsdrinks.email.AvroSerdeFactory
@@ -73,7 +76,7 @@ public class ValidationService {
                                         .buildEmail(envProps)));
 
         // Rebuild table. id -> reserved emails.
-        KTable<EmailId, Email> emailKTable = builder.table(emailTmp1Topic,
+        KTable<EmailId, EmailEvent> emailKTable = builder.table(emailTmp1Topic,
                 Consumed.with(andrewgrant.friendsdrinks.email.AvroSerdeFactory
                                 .buildEmailId(envProps),
                         andrewgrant.friendsdrinks.email.AvroSerdeFactory
@@ -85,7 +88,7 @@ public class ValidationService {
                         AvroSerdeFactory.buildUserEvent(envProps)));
 
 
-        KStream<UserId, Email> emailStreamKeyedByUserId = emailKStreamRaw
+        KStream<UserId, EmailEvent> emailStreamKeyedByUserId = emailKStreamRaw
                 .selectKey(((key, value) -> new UserId(value.getUserId())));
 
         final String emailTmp2Topic = envProps.getProperty("email_tmp_2.topic.name");
@@ -96,7 +99,7 @@ public class ValidationService {
                         andrewgrant.friendsdrinks.email.AvroSerdeFactory
                                 .buildEmail(envProps)));
 
-        KTable<UserId, Email> emailTableKeyedByUserId = builder.table(emailTmp2Topic,
+        KTable<UserId, EmailEvent> emailTableKeyedByUserId = builder.table(emailTmp2Topic,
                 Consumed.with(andrewgrant.friendsdrinks.user.AvroSerdeFactory
                                 .buildUserId(envProps),
                         andrewgrant.friendsdrinks.email.AvroSerdeFactory

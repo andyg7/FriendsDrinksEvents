@@ -4,9 +4,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import andrewgrant.friendsdrinks.avro.Email;
 
-import andrewgrant.friendsdrinks.avro.EmailId;
+import andrewgrant.friendsdrinks.email.avro.EmailEvent;
+import andrewgrant.friendsdrinks.email.avro.EmailId;
+
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroDeserializer;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerializer;
 
@@ -15,8 +16,8 @@ import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerializer;
  */
 public class EmailAvro {
 
-    public static SpecificAvroSerializer<Email> emailSerializer(Properties envProps) {
-        SpecificAvroSerializer<Email> serializer = new SpecificAvroSerializer<>();
+    public static SpecificAvroSerializer<EmailEvent> emailSerializer(Properties envProps) {
+        SpecificAvroSerializer<EmailEvent> serializer = new SpecificAvroSerializer<>();
         Map<String, String> config = new HashMap<>();
         config.put("schema.registry.url", envProps.getProperty("schema.registry.url"));
         serializer.configure(config, false);
@@ -31,8 +32,8 @@ public class EmailAvro {
         return serializer;
     }
 
-    public static SpecificAvroDeserializer<Email> emailDeserializer(Properties envProps) {
-        SpecificAvroDeserializer<Email> deserializer = new SpecificAvroDeserializer<>();
+    public static SpecificAvroDeserializer<EmailEvent> emailDeserializer(Properties envProps) {
+        SpecificAvroDeserializer<EmailEvent> deserializer = new SpecificAvroDeserializer<>();
         Map<String, String> config = new HashMap<>();
         config.put("schema.registry.url", envProps.getProperty("schema.registry.url"));
         deserializer.configure(config, false);

@@ -1,16 +1,16 @@
 package andrewgrant.friendsdrinks.email;
 
 import andrewgrant.friendsdrinks.avro.CreateUserRequest;
-import andrewgrant.friendsdrinks.avro.Email;
+import andrewgrant.friendsdrinks.email.avro.EmailEvent;
 
 /**
  * Class to represent a request from a user for an email address.
  */
 public class CreateRequest {
     private CreateUserRequest createUserRequest;
-    private Email currEmailState;
+    private EmailEvent currEmailState;
 
-    public CreateRequest(CreateUserRequest createUserRequest, Email currEmailState) {
+    public CreateRequest(CreateUserRequest createUserRequest, EmailEvent currEmailState) {
         this.createUserRequest = createUserRequest;
         this.currEmailState = currEmailState;
     }
@@ -19,7 +19,7 @@ public class CreateRequest {
         return createUserRequest;
     }
 
-    public Email getCurrEmailState() {
+    public EmailEvent getCurrEmailState() {
         return currEmailState;
     }
 }

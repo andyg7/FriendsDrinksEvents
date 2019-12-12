@@ -19,6 +19,8 @@ import java.util.Properties;
 import java.util.UUID;
 
 import andrewgrant.friendsdrinks.avro.*;
+import andrewgrant.friendsdrinks.email.avro.EmailEvent;
+import andrewgrant.friendsdrinks.email.avro.EmailId;
 import andrewgrant.friendsdrinks.user.UserAvro;
 
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroDeserializer;
@@ -54,23 +56,24 @@ public class ValidationServiceTest {
         SpecificAvroSerializer<UserEvent> userSerializer = UserAvro.userEventSerializer(envProps);
         SpecificAvroSerializer<UserId> userIdSerializer = UserAvro.userIdSerializer(envProps);
 
-        SpecificAvroSerializer<Email> emailSerializer = EmailAvro.emailSerializer(envProps);
+        SpecificAvroSerializer<EmailEvent> emailSerializer = EmailAvro.emailSerializer(envProps);
         SpecificAvroSerializer<EmailId> emailIdSerializer = EmailAvro.emailIdSerializer(envProps);
 
-        List<Email> emailInput = new ArrayList<>();
+        List<EmailEvent> emailInput = new ArrayList<>();
         String takenEmail = "takenemail@test.com";
         String userId = UUID.randomUUID().toString();
-        emailInput.add(Email.newBuilder()
+        emailInput.add(EmailEvent.newBuilder()
                 .setEmailId(new EmailId(takenEmail))
                 .setUserId(userId)
-                .setEventType(EmailEvent.RESERVED)
+                .setEventType(andrewgrant.friendsdrinks.email.avro
+                        .EventType.RESERVED)
                 .build());
 
-        ConsumerRecordFactory<EmailId, Email> emailInputFactory =
+        ConsumerRecordFactory<EmailId, EmailEvent> emailInputFactory =
                 new ConsumerRecordFactory<>(emailIdSerializer, emailSerializer);
 
         final String emailTopic = envProps.getProperty("email.topic.name");
-        for (Email email : emailInput) {
+        for (EmailEvent email : emailInput) {
             testDriver.pipeInput(
                     emailInputFactory.create(emailTopic, email.getEmailId(), email));
         }
@@ -166,23 +169,24 @@ public class ValidationServiceTest {
         SpecificAvroSerializer<UserEvent> userSerializer = UserAvro.userEventSerializer(envProps);
         SpecificAvroSerializer<UserId> userIdSerializer = UserAvro.userIdSerializer(envProps);
 
-        SpecificAvroSerializer<Email> emailSerializer = EmailAvro.emailSerializer(envProps);
+        SpecificAvroSerializer<EmailEvent> emailSerializer = EmailAvro.emailSerializer(envProps);
         SpecificAvroSerializer<EmailId> emailIdSerializer = EmailAvro.emailIdSerializer(envProps);
 
-        List<Email> emailInput = new ArrayList<>();
+        List<EmailEvent> emailInput = new ArrayList<>();
         String takenEmail = "takenemail@test.com";
         String userId = UUID.randomUUID().toString();
-        emailInput.add(Email.newBuilder()
+        emailInput.add(EmailEvent.newBuilder()
                 .setEmailId(new EmailId(takenEmail))
                 .setUserId(userId)
-                .setEventType(EmailEvent.RESERVED)
+                .setEventType(andrewgrant.friendsdrinks.email.avro
+                        .EventType.RESERVED)
                 .build());
 
-        ConsumerRecordFactory<EmailId, Email> emailInputFactory =
+        ConsumerRecordFactory<EmailId, EmailEvent> emailInputFactory =
                 new ConsumerRecordFactory<>(emailIdSerializer, emailSerializer);
 
         final String emailTopic = envProps.getProperty("email.topic.name");
-        for (Email email : emailInput) {
+        for (EmailEvent email : emailInput) {
             testDriver.pipeInput(
                     emailInputFactory.create(emailTopic, email.getEmailId(), email));
         }

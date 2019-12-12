@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.util.*;
 
 import andrewgrant.friendsdrinks.avro.*;
+import andrewgrant.friendsdrinks.email.avro.EmailEvent;
+import andrewgrant.friendsdrinks.email.avro.EmailId;
 import andrewgrant.friendsdrinks.user.UserAvro;
 
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroDeserializer;
@@ -85,13 +87,13 @@ public class WriterServiceTest {
 
         SpecificAvroDeserializer<EmailId> emailIdDeserializer = EmailAvro
                 .emailIdDeserializer(envProps);
-        SpecificAvroDeserializer<Email> emailDeserializer = EmailAvro
+        SpecificAvroDeserializer<EmailEvent> emailDeserializer = EmailAvro
                 .emailDeserializer(envProps);
 
         final String emailTopic = envProps.getProperty("email.topic.name");
-        List<Email> output = new ArrayList<>();
+        List<EmailEvent> output = new ArrayList<>();
         while (true) {
-            ProducerRecord<EmailId, Email> emailRecord =
+            ProducerRecord<EmailId, EmailEvent> emailRecord =
                     testDriver.readOutput(emailTopic, emailIdDeserializer, emailDeserializer);
             if (emailRecord != null) {
                 output.add(emailRecord.value());
@@ -101,23 +103,26 @@ public class WriterServiceTest {
         }
 
         assertEquals(2, output.size());
-        Email email1 = output.get(0);
-        assertEquals(EmailEvent.RESERVED, email1.getEventType());
-        Email email2 = output.get(1);
-        assertEquals(EmailEvent.REJECTED, email2.getEventType());
+        EmailEvent email1 = output.get(0);
+        assertEquals(andrewgrant.friendsdrinks.email.avro
+                .EventType.RESERVED, email1.getEventType());
+        EmailEvent email2 = output.get(1);
+        assertEquals(andrewgrant.friendsdrinks.email.avro
+                .EventType.REJECTED, email2.getEventType());
     }
 
     @Test
     public void testWriteServiceDeleteUserResponse() throws InterruptedException {
         SpecificAvroSerializer<EmailId> emailIdSerializer = EmailAvro.emailIdSerializer(envProps);
-        SpecificAvroSerializer<Email> emailSerializer = EmailAvro.emailSerializer(envProps);
-        ConsumerRecordFactory<EmailId, Email> emailInputFactory =
+        SpecificAvroSerializer<EmailEvent> emailSerializer = EmailAvro.emailSerializer(envProps);
+        ConsumerRecordFactory<EmailId, EmailEvent> emailInputFactory =
                 new ConsumerRecordFactory<>(emailIdSerializer, emailSerializer);
         UserId userId = UserId.newBuilder()
                 .setId("userId")
                 .build();
-        Email email = Email.newBuilder()
-                .setEventType(EmailEvent.RESERVED)
+        EmailEvent email = EmailEvent.newBuilder()
+                .setEventType(andrewgrant.friendsdrinks.email.avro
+                        .EventType.RESERVED)
                 .setEmailId(EmailId.newBuilder().setEmailAddress("hello").build())
                 .setUserId(userId.getId())
                 .build();
@@ -152,12 +157,12 @@ public class WriterServiceTest {
 
         SpecificAvroDeserializer<EmailId> emailIdDeserializer = EmailAvro
                 .emailIdDeserializer(envProps);
-        SpecificAvroDeserializer<Email> emailDeserializer = EmailAvro
+        SpecificAvroDeserializer<EmailEvent> emailDeserializer = EmailAvro
                 .emailDeserializer(envProps);
 
-        List<Email> output = new ArrayList<>();
+        List<EmailEvent> output = new ArrayList<>();
         while (true) {
-            ProducerRecord<EmailId, Email> emailRecord =
+            ProducerRecord<EmailId, EmailEvent> emailRecord =
                     testDriver.readOutput(emailTopic, emailIdDeserializer, emailDeserializer);
             if (emailRecord != null) {
                 output.add(emailRecord.value());
@@ -167,8 +172,9 @@ public class WriterServiceTest {
         }
 
         assertEquals(1, output.size());
-        Email email1 = output.get(0);
-        assertEquals(EmailEvent.RETURNED, email1.getEventType());
+        EmailEvent email1 = output.get(0);
+        assertEquals(andrewgrant.friendsdrinks.email.avro
+                .EventType.RETURNED, email1.getEventType());
         assertEquals(userId.getId(), email.getUserId());
     }
 }
