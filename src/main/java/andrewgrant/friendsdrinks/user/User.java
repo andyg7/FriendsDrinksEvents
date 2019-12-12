@@ -1,6 +1,6 @@
 package andrewgrant.friendsdrinks.user;
 
-import andrewgrant.friendsdrinks.avro.UserId;
+import andrewgrant.friendsdrinks.user.avro.UserId;
 
 /**
  * POJO class for User.

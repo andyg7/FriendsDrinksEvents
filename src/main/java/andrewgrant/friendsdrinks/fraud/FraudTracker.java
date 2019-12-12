@@ -1,6 +1,6 @@
 package andrewgrant.friendsdrinks.fraud;
 
-import andrewgrant.friendsdrinks.avro.UserEvent;
+import andrewgrant.friendsdrinks.user.avro.UserEvent;
 
 /**
  * Class that represents a user request.

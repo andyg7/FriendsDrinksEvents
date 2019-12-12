@@ -15,10 +15,10 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.*;
 
-import andrewgrant.friendsdrinks.avro.*;
 import andrewgrant.friendsdrinks.email.avro.EmailEvent;
 import andrewgrant.friendsdrinks.email.avro.EmailId;
 import andrewgrant.friendsdrinks.user.UserAvro;
+import andrewgrant.friendsdrinks.user.avro.*;
 
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroDeserializer;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerializer;

@@ -7,9 +7,9 @@ import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
 
-import andrewgrant.friendsdrinks.avro.*;
 import andrewgrant.friendsdrinks.email.avro.EmailEvent;
 import andrewgrant.friendsdrinks.email.avro.EmailId;
+import andrewgrant.friendsdrinks.user.avro.*;
 
 /**
  * Validates email request.

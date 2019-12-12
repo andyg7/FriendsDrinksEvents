@@ -3,7 +3,7 @@ package andrewgrant.friendsdrinks.user;
 import java.util.HashMap;
 import java.util.Properties;
 
-import andrewgrant.friendsdrinks.avro.*;
+import andrewgrant.friendsdrinks.user.avro.*;
 
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;

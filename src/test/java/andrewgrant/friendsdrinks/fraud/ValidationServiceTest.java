@@ -17,8 +17,8 @@ import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
 
-import andrewgrant.friendsdrinks.avro.*;
 import andrewgrant.friendsdrinks.user.UserAvro;
+import andrewgrant.friendsdrinks.user.avro.*;
 
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroDeserializer;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerializer;

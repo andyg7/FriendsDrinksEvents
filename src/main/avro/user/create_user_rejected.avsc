@@ -1,5 +1,5 @@
 {
-  "namespace": "andrewgrant.friendsdrinks.avro",
+  "namespace": "andrewgrant.friendsdrinks.user.avro",
   "type": "record",
   "name": "CreateUserRejected",
   "fields": [

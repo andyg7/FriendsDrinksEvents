@@ -4,8 +4,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import andrewgrant.friendsdrinks.avro.UserEvent;
-import andrewgrant.friendsdrinks.avro.UserId;
+import andrewgrant.friendsdrinks.user.avro.UserEvent;
+import andrewgrant.friendsdrinks.user.avro.UserId;
+
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroDeserializer;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerializer;
 
