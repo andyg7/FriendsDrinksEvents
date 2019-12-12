@@ -6,11 +6,11 @@ import andrewgrant.friendsdrinks.avro.Email;
 /**
  * Class to represent a delete request from a user.
  */
-public class DeleteRequest {
+public class DeleteRequestAndCurrEmail {
     private DeleteUserRequest deleteUserRequest;
     private Email currEmailState;
 
-    public DeleteRequest(DeleteUserRequest deleteUserRequest, Email currEmailState) {
+    public DeleteRequestAndCurrEmail(DeleteUserRequest deleteUserRequest, Email currEmailState) {
         this.deleteUserRequest = deleteUserRequest;
         this.currEmailState = currEmailState;
     }

@@ -60,7 +60,7 @@ dependencies {
 test {
     testLogging {
         outputs.upToDateWhen { false }
-        showStandardStreams = true
+        showStandardStreams = false
         exceptionFormat = 'full'
     }
 }

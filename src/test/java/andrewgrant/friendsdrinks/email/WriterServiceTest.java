@@ -41,7 +41,6 @@ public class WriterServiceTest {
         testDriver = new TopologyTestDriver(topology, streamProps);
     }
 
-
     /**
      * Integration test that requires kafka and schema registry to be running.
      * @throws IOException
@@ -108,4 +107,68 @@ public class WriterServiceTest {
         assertEquals(EmailEvent.REJECTED, email2.getEventType());
     }
 
+    @Test
+    public void testWriteServiceDeleteUserResponse() throws InterruptedException {
+        SpecificAvroSerializer<EmailId> emailIdSerializer = EmailAvro.emailIdSerializer(envProps);
+        SpecificAvroSerializer<Email> emailSerializer = EmailAvro.emailSerializer(envProps);
+        ConsumerRecordFactory<EmailId, Email> emailInputFactory =
+                new ConsumerRecordFactory<>(emailIdSerializer, emailSerializer);
+        UserId userId = UserId.newBuilder()
+                .setId("userId")
+                .build();
+        Email email = Email.newBuilder()
+                .setEventType(EmailEvent.RESERVED)
+                .setEmailId(EmailId.newBuilder().setEmailAddress("hello").build())
+                .setUserId(userId.getId())
+                .build();
+
+        final String emailTopic = envProps.getProperty("email.topic.name");
+        testDriver.pipeInput(emailInputFactory.create(emailTopic,
+                email.getEmailId(), email));
+
+        Thread.sleep(2000);
+
+        List<UserEvent> input = new ArrayList<>();
+        DeleteUserResponse deleteUserResponseSuccess = DeleteUserResponse.newBuilder()
+                .setRequestId("1")
+                .setUserId(userId)
+                .setResult(Result.SUCCESS)
+                .build();
+        input.add(
+                UserEvent.newBuilder()
+                        .setDeleteUserResponse(deleteUserResponseSuccess)
+                        .setEventType(EventType.DELETE_USER_RESPONSE).build());
+
+        SpecificAvroSerializer<UserId> userIdSerializer = UserAvro.userIdSerializer(envProps);
+        SpecificAvroSerializer<UserEvent> userSerializer = UserAvro.userEventSerializer(envProps);
+        ConsumerRecordFactory<UserId, UserEvent> userInputFactory =
+                new ConsumerRecordFactory<>(userIdSerializer, userSerializer);
+
+        final String userTopic = envProps.getProperty("user.topic.name");
+        for (UserEvent user : input) {
+            testDriver.pipeInput(userInputFactory.create(userTopic,
+                    user.getDeleteUserResponse().getUserId(), user));
+        }
+
+        SpecificAvroDeserializer<EmailId> emailIdDeserializer = EmailAvro
+                .emailIdDeserializer(envProps);
+        SpecificAvroDeserializer<Email> emailDeserializer = EmailAvro
+                .emailDeserializer(envProps);
+
+        List<Email> output = new ArrayList<>();
+        while (true) {
+            ProducerRecord<EmailId, Email> emailRecord =
+                    testDriver.readOutput(emailTopic, emailIdDeserializer, emailDeserializer);
+            if (emailRecord != null) {
+                output.add(emailRecord.value());
+            } else {
+                break;
+            }
+        }
+
+        assertEquals(1, output.size());
+        Email email1 = output.get(0);
+        assertEquals(EmailEvent.RETURNED, email1.getEventType());
+        assertEquals(userId.getId(), email.getUserId());
+    }
 }

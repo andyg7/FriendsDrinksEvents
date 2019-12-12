@@ -107,8 +107,8 @@ public class ValidationService {
                 filter(((key, value) -> value.getEventType().equals(EventType.DELETE_USER_REQUEST)))
                 .mapValues(value -> value.getDeleteUserRequest());
 
-        KStream<UserId, DeleteRequest> deleteRequestAndEmail = deleteUserRequests
-                .leftJoin(emailTableKeyedByUserId, DeleteRequest::new,
+        KStream<UserId, DeleteRequestAndCurrEmail> deleteRequestAndEmail = deleteUserRequests
+                .leftJoin(emailTableKeyedByUserId, DeleteRequestAndCurrEmail::new,
                         Joined.with(
                                 andrewgrant.friendsdrinks.user.AvroSerdeFactory
                                         .buildUserId(envProps),

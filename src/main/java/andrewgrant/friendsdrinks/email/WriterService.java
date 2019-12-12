@@ -6,9 +6,7 @@ import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
-import org.apache.kafka.streams.kstream.Consumed;
-import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.Produced;
+import org.apache.kafka.streams.kstream.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,11 +42,11 @@ public class WriterService {
         final StreamsBuilder builder = new StreamsBuilder();
 
         final String userTopic = envProps.getProperty("user.topic.name");
-        KStream<UserId, UserEvent> userValidations = builder.stream(userTopic,
+        KStream<UserId, UserEvent> userEventKStream = builder.stream(userTopic,
                 Consumed.with(AvroSerdeFactory.buildUserId(envProps),
                         AvroSerdeFactory.buildUserEvent(envProps)));
 
-        KStream<UserId, Email> createUserEmailEvent = userValidations.filter(((key, value) ->
+        KStream<UserId, Email> createUserEmailEvent = userEventKStream.filter(((key, value) ->
                 value.getEventType().equals(EventType.CREATE_USER_RESPONSE)
         )).mapValues((key, value) -> {
             Email email = new Email();
@@ -67,11 +65,64 @@ public class WriterService {
             }
         });
 
+        KStream<UserId, DeleteUserResponse> deleteUserResponses =
+                userEventKStream.filter(((key, value) ->
+                value.getEventType().equals(EventType.DELETE_USER_RESPONSE) &&
+                        value.getDeleteUserResponse().getResult().equals(Result.SUCCESS)
+        )).mapValues(value -> value.getDeleteUserResponse());
+
+        final String emailTopic = envProps.getProperty("email.topic.name");
+        KStream<UserId, Email> emailsKeyedByUserId = builder.stream(emailTopic,
+                Consumed.with(andrewgrant.friendsdrinks.email.AvroSerdeFactory
+                                .buildEmailId(envProps),
+                        andrewgrant.friendsdrinks.email.AvroSerdeFactory
+                                .buildEmail(envProps)))
+                .filter(((key, value) -> value.getEventType()
+                        .equals(EmailEvent.RESERVED)))
+                .selectKey((key, value) -> new UserId(value.getUserId()));
+
+        final String emailTmpTopic = envProps.getProperty("email_tmp_3.topic.name");
+        emailsKeyedByUserId.to(emailTmpTopic,
+                Produced.with(
+                        andrewgrant.friendsdrinks.user.AvroSerdeFactory
+                                .buildUserId(envProps),
+                        andrewgrant.friendsdrinks.email.AvroSerdeFactory
+                                .buildEmail(envProps)));
+
+        KTable<UserId, Email> emailKTableKeyedByUserId = builder.table(
+                emailTmpTopic,
+                Consumed.with(andrewgrant.friendsdrinks.user.AvroSerdeFactory
+                                .buildUserId(envProps),
+                        andrewgrant.friendsdrinks.email.AvroSerdeFactory
+                                .buildEmail(envProps)));
+
+        KStream<UserId, DeleteResponseAndCurrEmail> deleteResponseAndCurrEmailKStream =
+                deleteUserResponses.join(emailKTableKeyedByUserId,
+                        DeleteResponseAndCurrEmail::new,
+                        Joined.with(
+                                andrewgrant.friendsdrinks.user.AvroSerdeFactory
+                                        .buildUserId(envProps),
+                                AvroSerdeFactory.buildDeleteUserResponse(envProps),
+                                andrewgrant.friendsdrinks.email.AvroSerdeFactory
+                                        .buildEmail(envProps)));
+
+        KStream<EmailId, Email> returnedEmailKStream = deleteResponseAndCurrEmailKStream
+                .mapValues(value ->
+                        Email.newBuilder(value.getCurrEmailState())
+                                .setEventType(EmailEvent.RETURNED)
+                                .build())
+                .selectKey((key, value) -> value.getEmailId());
+
+        returnedEmailKStream.to(emailTopic,
+                Produced.with(andrewgrant.friendsdrinks.email.AvroSerdeFactory
+                                .buildEmailId(envProps),
+                        andrewgrant.friendsdrinks.email.AvroSerdeFactory
+                                .buildEmail(envProps)));
+
         // Re-key on email before publishing to email topic.
         KStream<EmailId, Email> createUserEmailEventKeyedByEmailId =
                 createUserEmailEvent.selectKey(((key, value) -> value.getEmailId()));
 
-        final String emailTopic = envProps.getProperty("email.topic.name");
         createUserEmailEventKeyedByEmailId.to(emailTopic,
                 Produced.with(andrewgrant.friendsdrinks.email.AvroSerdeFactory
                                 .buildEmailId(envProps),
