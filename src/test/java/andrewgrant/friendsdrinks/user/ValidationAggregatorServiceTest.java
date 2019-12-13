@@ -241,7 +241,6 @@ public class ValidationAggregatorServiceTest {
 
         DeleteUserValidated userValidated = DeleteUserValidated.newBuilder()
                 .setRequestId(requestId)
-                .setEmail(email)
                 .setUserId(userId)
                 .build();
 

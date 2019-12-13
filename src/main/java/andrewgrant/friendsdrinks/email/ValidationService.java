@@ -138,8 +138,6 @@ public class ValidationService {
                         DeleteUserValidated validated = DeleteUserValidated.newBuilder()
                                 .setRequestId(value.getDeleteUserRequest().getRequestId())
                                 .setUserId(userId)
-                                .setEmail(value.getCurrEmailState().getEmailId()
-                                        .getEmailAddress())
                                 .build();
                         return UserEvent.newBuilder()
                                 .setEventType(EventType.DELETE_USER_VALIDATED)

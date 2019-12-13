@@ -4,5 +4,5 @@ package andrewgrant.friendsdrinks.user;
  * Error codes.
  */
 public enum ErrorCode {
-    InvalidRequest
+    InvalidRequest, DOES_NOT_EXIST
 }
