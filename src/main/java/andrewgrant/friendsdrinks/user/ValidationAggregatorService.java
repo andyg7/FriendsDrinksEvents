@@ -89,7 +89,7 @@ public class ValidationAggregatorService {
                 )
                 .toStream((key, value) -> key.key())
                 .filter(((key, value) -> value != null))
-                .filter(((key, value) -> value >= 1L));
+                .filter(((key, value) -> value >= 2L));
 
         final String userTopic = envProps.getProperty("user.topic.name");
         KStream<UserId, UserEvent> userEvents = builder.stream(

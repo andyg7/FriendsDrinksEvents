@@ -248,7 +248,9 @@ public class ValidationAggregatorServiceTest {
                 .setEventType(EventType.DELETE_USER_VALIDATED)
                 .setDeleteUserValidated(userValidated)
                 .build();
+
         List<UserEvent> userEvents = new ArrayList<>();
+        userEvents.add(validatedUserEvent);
         userEvents.add(validatedUserEvent);
 
         final String userValidationsTopic = envProps.getProperty("user_validation.topic.name");

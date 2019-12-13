@@ -102,5 +102,7 @@ public class ValidationServiceTest {
             }
         }
         assertEquals(1, output.size());
+        UserEvent userEventOutput = output.get(0);
+        assertEquals(EventType.DELETE_USER_VALIDATED, userEventOutput.getEventType());
     }
 }
