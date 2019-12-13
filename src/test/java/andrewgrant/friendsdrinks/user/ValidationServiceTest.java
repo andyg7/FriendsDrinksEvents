@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.UUID;
 
 import andrewgrant.friendsdrinks.user.avro.*;
 
@@ -78,15 +79,35 @@ public class ValidationServiceTest {
                 .setRequestId("2")
                 .build();
 
-        UserEvent userEventRequest = UserEvent
+        UserEvent userEventRequest1 = UserEvent
                 .newBuilder()
                 .setEventType(EventType.DELETE_USER_REQUEST)
                 .setDeleteUserRequest(validDeleteRequest)
                 .build();
 
-        testDriver.pipeInput(inputFactory.create(userTopic,
-                userEventRequest.getDeleteUserRequest().getUserId(),
-                userEventRequest));
+        DeleteUserRequest invalidDeleteRequest = DeleteUserRequest
+                .newBuilder()
+                .setUserId(UserId.newBuilder()
+                        .setId(UUID.randomUUID().toString())
+                        .build())
+                .setRequestId("2")
+                .build();
+
+        UserEvent userEventRequest2 = UserEvent
+                .newBuilder()
+                .setEventType(EventType.DELETE_USER_REQUEST)
+                .setDeleteUserRequest(invalidDeleteRequest)
+                .build();
+
+        List<UserEvent> userEvents = new ArrayList<>();
+        userEvents.add(userEventRequest1);
+        userEvents.add(userEventRequest2);
+
+        for (UserEvent userEvent : userEvents) {
+            testDriver.pipeInput(inputFactory.create(userTopic,
+                    userEvent.getDeleteUserRequest().getUserId(),
+                    userEvent));
+        }
 
         final String userValidationsTopic = envProps.getProperty("user_validation.topic.name");
         SpecificAvroDeserializer<UserId> userIdDeserializer = UserAvro.userIdDeserializer(envProps);
@@ -101,8 +122,11 @@ public class ValidationServiceTest {
                 break;
             }
         }
-        assertEquals(1, output.size());
-        UserEvent userEventOutput = output.get(0);
-        assertEquals(EventType.DELETE_USER_VALIDATED, userEventOutput.getEventType());
+        assertEquals(2, output.size());
+        UserEvent userEventOutput1 = output.get(0);
+        assertEquals(EventType.DELETE_USER_VALIDATED, userEventOutput1.getEventType());
+
+        UserEvent userEventOutput2 = output.get(1);
+        assertEquals(EventType.DELETE_USER_REJECTED, userEventOutput2.getEventType());
     }
 }

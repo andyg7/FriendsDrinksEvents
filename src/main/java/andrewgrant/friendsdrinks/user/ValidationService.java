@@ -56,7 +56,7 @@ public class ValidationService {
                     if (rightValue == null) {
                         DeleteUserRejected rejected = DeleteUserRejected.newBuilder()
                                 .setErrorCode(ErrorCode.DOES_NOT_EXIST.toString())
-                                .setUserId(null)
+                                .setUserId(leftValue.getUserId())
                                 .setRequestId(leftValue.getRequestId())
                                 .build();
                         return UserEvent.newBuilder()
