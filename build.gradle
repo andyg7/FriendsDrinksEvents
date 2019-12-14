@@ -4,7 +4,6 @@ buildscript {
     }
     dependencies {
         classpath 'com.commercehub.gradle.plugin:gradle-avro-plugin:0.15.1'
-        classpath 'com.github.jengelman.gradle.plugins:shadow:4.0.2'
     }
 }
 
@@ -34,7 +33,6 @@ tasks.withType(com.github.spotbugs.SpotBugsTask) {
 }
 
 apply plugin: 'com.commercehub.gradle.plugin.avro'
-apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'checkstyle'
 
 checkstyle {
