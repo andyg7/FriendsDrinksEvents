@@ -168,7 +168,7 @@ public class ValidationAggregatorServiceTest {
                 .setRequestId(requestId)
                 .setEmail(email)
                 .setUserId(userId)
-                .setErrorCode(ErrorCode.DOS.toString())
+                .setErrorCode(ErrorCode.TOO_MANY_REQUESTS.toString())
                 .build();
 
         UserEvent userEvent2 = UserEvent.newBuilder()
