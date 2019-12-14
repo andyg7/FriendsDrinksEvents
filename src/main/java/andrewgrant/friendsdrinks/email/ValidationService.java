@@ -44,7 +44,7 @@ public class ValidationService {
         return props;
     }
 
-    public static final String PENDING_EMAILS_STORE_NAME = "pending_emails_store_name";
+    public static final String PENDING_EMAILS_STORE_NAME = "pending_emails_state_store_name";
 
     public Topology buildTopology(Properties envProps) {
         final StreamsBuilder builder = new StreamsBuilder();
