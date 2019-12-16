@@ -6,9 +6,12 @@ import static andrewgrant.friendsdrinks.email.Config.TEST_CONFIG_FILE;
 import static andrewgrant.friendsdrinks.env.Properties.loadEnvProperties;
 
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.serialization.Deserializer;
+import org.apache.kafka.common.serialization.Serializer;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.test.ConsumerRecordFactory;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -23,8 +26,8 @@ import andrewgrant.friendsdrinks.email.avro.EmailId;
 import andrewgrant.friendsdrinks.user.UserAvro;
 import andrewgrant.friendsdrinks.user.avro.*;
 
-import io.confluent.kafka.streams.serdes.avro.SpecificAvroDeserializer;
-import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerializer;
+import io.confluent.kafka.schemaregistry.client.MockSchemaRegistryClient;
+import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 
 /**
  * Tests for validation.
@@ -36,15 +39,47 @@ public class ValidationServiceTest {
     private static Topology topology;
     private static Properties streamProps;
     private static TopologyTestDriver testDriver;
+    private static UserAvro userAvro;
+    private static EmailAvro emailAvro;
 
     @BeforeClass
-    public static void setup() throws IOException {
-        service = new ValidationService();
+    public static void setup() throws IOException, RestClientException {
         envProps = loadEnvProperties(TEST_CONFIG_FILE);
-        topology = service.buildTopology(envProps);
 
+        MockSchemaRegistryClient registryClient = new MockSchemaRegistryClient();
+        // user topic
+        final String userTopic = envProps.getProperty("user.topic.name");
+        registryClient.register(userTopic + "-key", UserId.getClassSchema());
+        registryClient.register(userTopic + "-value", UserEvent.getClassSchema());
+        // user validation topic
+        final String userValidationTopic = envProps.getProperty("user_validation.topic.name");
+        registryClient.register(userValidationTopic + "-key", UserId.getClassSchema());
+        registryClient.register(userValidationTopic + "-value", UserEvent.getClassSchema());
+        // email topic
+        final String emailTopic = envProps.getProperty("email.topic.name");
+        registryClient.register(emailTopic + "-key", EmailId.getClassSchema());
+        registryClient.register(emailTopic + "-value", EmailEvent.getClassSchema());
+        final String emailTmp1Topic = envProps.getProperty("email_tmp_1.topic.name");
+        registryClient.register(emailTmp1Topic + "-key", EmailId.getClassSchema());
+        registryClient.register(emailTmp1Topic + "-value", EmailEvent.getClassSchema());
+        final String emailTmp2Topic = envProps.getProperty("email_tmp_2.topic.name");
+        registryClient.register(emailTmp2Topic + "-key", UserId.getClassSchema());
+        registryClient.register(emailTmp2Topic + "-value", EmailEvent.getClassSchema());
+        final String emailTmp3Topic = envProps.getProperty("email_tmp_3.topic.name");
+        registryClient.register(emailTmp3Topic + "-key", UserId.getClassSchema());
+        registryClient.register(emailTmp3Topic + "-value", EmailEvent.getClassSchema());
+        userAvro = new UserAvro(envProps, registryClient);
+        emailAvro = new EmailAvro(envProps, registryClient);
+
+        service = new ValidationService();
+        topology = service.buildTopology(envProps, userAvro, emailAvro);
         streamProps = service.buildStreamsProperties(envProps);
         testDriver = new TopologyTestDriver(topology, streamProps);
+    }
+
+    @AfterClass
+    public static void cleanup() {
+        testDriver.close();
     }
 
     /**
@@ -53,11 +88,11 @@ public class ValidationServiceTest {
      */
     @Test
     public void testValidationCreateUserRequest() {
-        SpecificAvroSerializer<UserEvent> userSerializer = UserAvro.userEventSerializer(envProps);
-        SpecificAvroSerializer<UserId> userIdSerializer = UserAvro.userIdSerializer(envProps);
+        Serializer<UserEvent> userSerializer = userAvro.userEventSerializer();
+        Serializer<UserId> userIdSerializer = userAvro.userIdSerializer();
 
-        SpecificAvroSerializer<EmailEvent> emailSerializer = EmailAvro.emailSerializer(envProps);
-        SpecificAvroSerializer<EmailId> emailIdSerializer = EmailAvro.emailIdSerializer(envProps);
+        Serializer<EmailEvent> emailSerializer = emailAvro.emailSerializer();
+        Serializer<EmailId> emailIdSerializer = emailAvro.emailIdSerializer();
 
         List<EmailEvent> emailInput = new ArrayList<>();
         String takenEmail = "takenemail@test.com";
@@ -127,8 +162,8 @@ public class ValidationServiceTest {
         }
 
         final String userValidationTopic = envProps.getProperty("user_validation.topic.name");
-        SpecificAvroDeserializer<UserId> userIdDeserializer = UserAvro.userIdDeserializer(envProps);
-        SpecificAvroDeserializer<UserEvent> userDeserializer = UserAvro.userDeserializer(envProps);
+        Deserializer<UserId> userIdDeserializer = userAvro.userIdDeserializer();
+        Deserializer<UserEvent> userDeserializer = userAvro.userDeserializer();
 
         List<UserEvent> userValidationOutput = new ArrayList<>();
         while (true) {
@@ -166,11 +201,11 @@ public class ValidationServiceTest {
 
     @Test
     public void testValidationDeleteUserRequest() {
-        SpecificAvroSerializer<UserEvent> userSerializer = UserAvro.userEventSerializer(envProps);
-        SpecificAvroSerializer<UserId> userIdSerializer = UserAvro.userIdSerializer(envProps);
+        Serializer<UserEvent> userSerializer = userAvro.userEventSerializer();
+        Serializer<UserId> userIdSerializer = userAvro.userIdSerializer();
 
-        SpecificAvroSerializer<EmailEvent> emailSerializer = EmailAvro.emailSerializer(envProps);
-        SpecificAvroSerializer<EmailId> emailIdSerializer = EmailAvro.emailIdSerializer(envProps);
+        Serializer<EmailEvent> emailSerializer = emailAvro.emailSerializer();
+        Serializer<EmailId> emailIdSerializer = emailAvro.emailIdSerializer();
 
         List<EmailEvent> emailInput = new ArrayList<>();
         String takenEmail = "takenemail@test.com";
@@ -220,8 +255,8 @@ public class ValidationServiceTest {
         }
 
         final String userValidationTopic = envProps.getProperty("user_validation.topic.name");
-        SpecificAvroDeserializer<UserId> userIdDeserializer = UserAvro.userIdDeserializer(envProps);
-        SpecificAvroDeserializer<UserEvent> userDeserializer = UserAvro.userDeserializer(envProps);
+        Deserializer<UserId> userIdDeserializer = userAvro.userIdDeserializer();
+        Deserializer<UserEvent> userDeserializer = userAvro.userDeserializer();
 
         List<UserEvent> userValidationOutput = new ArrayList<>();
         while (true) {

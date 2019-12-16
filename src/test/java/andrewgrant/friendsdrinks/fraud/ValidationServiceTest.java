@@ -6,9 +6,13 @@ import static andrewgrant.friendsdrinks.email.Config.TEST_CONFIG_FILE;
 import static andrewgrant.friendsdrinks.env.Properties.loadEnvProperties;
 
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.serialization.Deserializer;
+import org.apache.kafka.common.serialization.Serializer;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.test.ConsumerRecordFactory;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -20,8 +24,8 @@ import java.util.UUID;
 import andrewgrant.friendsdrinks.user.UserAvro;
 import andrewgrant.friendsdrinks.user.avro.*;
 
-import io.confluent.kafka.streams.serdes.avro.SpecificAvroDeserializer;
-import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerializer;
+import io.confluent.kafka.schemaregistry.client.MockSchemaRegistryClient;
+import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 
 
 /**
@@ -29,22 +33,50 @@ import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerializer;
  */
 public class ValidationServiceTest {
 
+    private static Topology topology;
+    private static Properties streamProps;
+    private static Properties envProps;
+    private static ValidationService service;
+    private static TopologyTestDriver testDriver;
+    private static UserAvro userAvro;
+
+    @BeforeClass
+    public static void setup() throws IOException, RestClientException {
+        envProps = loadEnvProperties(TEST_CONFIG_FILE);
+        MockSchemaRegistryClient registryClient = new MockSchemaRegistryClient();
+        // user topic
+        final String userTopic = envProps.getProperty("user.topic.name");
+        registryClient.register(userTopic + "-key", UserId.getClassSchema());
+        registryClient.register(userTopic + "-value", UserEvent.getClassSchema());
+        // user validation topic
+        final String userValidationTopic = envProps.getProperty("user_validation.topic.name");
+        registryClient.register(userValidationTopic + "-key", UserId.getClassSchema());
+        registryClient.register(userValidationTopic + "-value", UserEvent.getClassSchema());
+        // user validation topic
+        final String fraudTmpTopic = envProps.getProperty("fraud_tmp.topic.name");
+        registryClient.register(fraudTmpTopic + "-key", UserId.getClassSchema());
+        registryClient.register(fraudTmpTopic + "-value", UserEvent.getClassSchema());
+        userAvro = new UserAvro(envProps, registryClient);
+
+        service = new ValidationService();
+        topology = service.buildTopology(envProps, userAvro);
+        streamProps = service.buildStreamsProperties(envProps);
+        testDriver = new TopologyTestDriver(topology, streamProps);
+    }
+
+    @AfterClass
+    public static void cleanup() {
+        testDriver.close();
+    }
     /**
      * Tests validate.
      */
     @Test
-    public void testValidate() throws IOException {
-        ValidationService service = new ValidationService();
-        Properties envProps = loadEnvProperties(TEST_CONFIG_FILE);
-        Topology topology = service.buildTopology(envProps);
-
-        Properties streamProps = service.buildStreamsProperties(envProps);
-        TopologyTestDriver testDriver = new TopologyTestDriver(topology, streamProps);
-
-        SpecificAvroSerializer<UserEvent> userEventSerializer =
-                UserAvro.userEventSerializer(envProps);
-        SpecificAvroSerializer<UserId> userIdSerializer =
-                UserAvro.userIdSerializer(envProps);
+    public void testValidate() {
+        Serializer<UserEvent> userEventSerializer =
+                userAvro.userEventSerializer();
+        Serializer<UserId> userIdSerializer =
+                userAvro.userIdSerializer();
 
         List<UserEvent> userEvents = new ArrayList<>();
         String userId1 = UUID.randomUUID().toString();
@@ -111,8 +143,8 @@ public class ValidationServiceTest {
         }
 
         final String userValidationTopic = envProps.getProperty("user_validation.topic.name");
-        SpecificAvroDeserializer<UserId> userIdDeserializer = UserAvro.userIdDeserializer(envProps);
-        SpecificAvroDeserializer<UserEvent> userDeserializer = UserAvro.userDeserializer(envProps);
+        Deserializer<UserId> userIdDeserializer = userAvro.userIdDeserializer();
+        Deserializer<UserEvent> userDeserializer = userAvro.userDeserializer();
 
         List<UserEvent> userValidationOutput = new ArrayList<>();
         while (true) {

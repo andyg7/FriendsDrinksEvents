@@ -30,12 +30,13 @@ public class ValidationAggregatorService {
 
     private static final Logger log = LoggerFactory.getLogger(ValidationAggregatorService.class);
 
-    public Topology buildTopology(Properties envProps) {
+    public Topology buildTopology(Properties envProps,
+                                  UserAvro userAvro) {
         StreamsBuilder builder = new StreamsBuilder();
         final String userValidationsTopic = envProps.getProperty("user_validation.topic.name");
 
-        SpecificAvroSerde<UserId> userIdSerde = AvroSerdeFactory.buildUserId(envProps);
-        SpecificAvroSerde<UserEvent> userEventSerde = AvroSerdeFactory.buildUserEvent(envProps);
+        SpecificAvroSerde<UserId> userIdSerde = userAvro.userIdSerde();
+        SpecificAvroSerde<UserEvent> userEventSerde = userAvro.userEventSerde();
         KStream<UserId, UserEvent> userValidations = builder
                 .stream(userValidationsTopic, Consumed.with(
                         userIdSerde, userEventSerde));
@@ -109,7 +110,7 @@ public class ValidationAggregatorService {
 
 
         SpecificAvroSerde<CreateUserRequest> createUserRequestSerde =
-                AvroSerdeFactory.buildCreateUserRequest(envProps);
+                userAvro.createUserRequestSerde();
         createValidationCount.join(createUserRequestsKeyedByRequestId,
                 (leftValue, rightValue) -> {
                     CreateUserResponse response = CreateUserResponse.newBuilder()
@@ -129,7 +130,7 @@ public class ValidationAggregatorService {
                 .to(userTopic, Produced.with(userIdSerde, userEventSerde));
 
         SpecificAvroSerde<DeleteUserRequest> deleteUserRequestSerde =
-                AvroSerdeFactory.buildDeleteUserRequest(envProps);
+                userAvro.deleteUserRequestSerde();
         deleteValidationCount.join(deleteUserRequestsKeyedByRequestId,
                 (leftValue, rightValue) -> {
                     DeleteUserResponse response = DeleteUserResponse.newBuilder()
@@ -227,7 +228,8 @@ public class ValidationAggregatorService {
         }
         Properties envProps = loadEnvProperties(args[0]);
         ValidationAggregatorService service = new ValidationAggregatorService();
-        Topology topology = service.buildTopology(envProps);
+        UserAvro userAvro = new UserAvro(envProps, null);
+        Topology topology = service.buildTopology(envProps, userAvro);
         log.debug("Built stream");
 
         Properties streamProps = service.buildStreamProperties(envProps);

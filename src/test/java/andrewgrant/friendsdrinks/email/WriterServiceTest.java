@@ -6,9 +6,12 @@ import static andrewgrant.friendsdrinks.email.Config.TEST_CONFIG_FILE;
 import static andrewgrant.friendsdrinks.env.Properties.loadEnvProperties;
 
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.serialization.Deserializer;
+import org.apache.kafka.common.serialization.Serializer;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.test.ConsumerRecordFactory;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -20,8 +23,9 @@ import andrewgrant.friendsdrinks.email.avro.EmailId;
 import andrewgrant.friendsdrinks.user.UserAvro;
 import andrewgrant.friendsdrinks.user.avro.*;
 
-import io.confluent.kafka.streams.serdes.avro.SpecificAvroDeserializer;
-import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerializer;
+import io.confluent.kafka.schemaregistry.client.MockSchemaRegistryClient;
+import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
+
 
 /**
  * Tests for EmailWriterService.
@@ -33,14 +37,46 @@ public class WriterServiceTest {
     private static Topology topology;
     private static Properties streamProps;
     private static TopologyTestDriver testDriver;
+    private static UserAvro userAvro;
+    private static EmailAvro emailAvro;
 
     @BeforeClass
-    public static void setup() throws IOException {
-        service = new WriterService();
+    public static void setup() throws IOException, RestClientException {
         envProps = loadEnvProperties(TEST_CONFIG_FILE);
-        topology = service.buildTopology(envProps);
+        MockSchemaRegistryClient registryClient = new MockSchemaRegistryClient();
+        // user topic
+        final String userTopic = envProps.getProperty("user.topic.name");
+        registryClient.register(userTopic + "-key", UserId.getClassSchema());
+        registryClient.register(userTopic + "-value", UserEvent.getClassSchema());
+        // user validation topic
+        final String userValidationTopic = envProps.getProperty("user_validation.topic.name");
+        registryClient.register(userValidationTopic + "-key", UserId.getClassSchema());
+        registryClient.register(userValidationTopic + "-value", UserEvent.getClassSchema());
+        // email topic
+        final String emailTopic = envProps.getProperty("email.topic.name");
+        registryClient.register(emailTopic + "-key", EmailId.getClassSchema());
+        registryClient.register(emailTopic + "-value", EmailEvent.getClassSchema());
+        final String emailTmp1Topic = envProps.getProperty("email_tmp_1.topic.name");
+        registryClient.register(emailTmp1Topic + "-key", EmailId.getClassSchema());
+        registryClient.register(emailTmp1Topic + "-value", EmailEvent.getClassSchema());
+        final String emailTmp2Topic = envProps.getProperty("email_tmp_2.topic.name");
+        registryClient.register(emailTmp2Topic + "-key", UserId.getClassSchema());
+        registryClient.register(emailTmp2Topic + "-value", EmailEvent.getClassSchema());
+        final String emailTmp3Topic = envProps.getProperty("email_tmp_3.topic.name");
+        registryClient.register(emailTmp3Topic + "-key", UserId.getClassSchema());
+        registryClient.register(emailTmp3Topic + "-value", EmailEvent.getClassSchema());
+        userAvro = new UserAvro(envProps, registryClient);
+        emailAvro = new EmailAvro(envProps, registryClient);
+
+        service = new WriterService();
+        topology = service.buildTopology(envProps, userAvro, emailAvro);
         streamProps = service.buildStreamsProperties(envProps);
         testDriver = new TopologyTestDriver(topology, streamProps);
+    }
+
+    @AfterClass
+    public static void cleanup() {
+        testDriver.close();
     }
 
     /**
@@ -49,8 +85,8 @@ public class WriterServiceTest {
      */
     @Test
     public void testWriteServiceCreateUserResponse() {
-        SpecificAvroSerializer<UserId> userIdSerializer = UserAvro.userIdSerializer(envProps);
-        SpecificAvroSerializer<UserEvent> userSerializer = UserAvro.userEventSerializer(envProps);
+        Serializer<UserId> userIdSerializer = userAvro.userIdSerializer();
+        Serializer<UserEvent> userSerializer = userAvro.userEventSerializer();
 
         ConsumerRecordFactory<UserId, UserEvent> inputFactory =
                 new ConsumerRecordFactory<>(userIdSerializer, userSerializer);
@@ -85,10 +121,10 @@ public class WriterServiceTest {
                     user.getCreateUserResponse().getUserId(), user));
         }
 
-        SpecificAvroDeserializer<EmailId> emailIdDeserializer = EmailAvro
-                .emailIdDeserializer(envProps);
-        SpecificAvroDeserializer<EmailEvent> emailDeserializer = EmailAvro
-                .emailDeserializer(envProps);
+        Deserializer<EmailId> emailIdDeserializer = emailAvro
+                .emailIdDeserializer();
+        Deserializer<EmailEvent> emailDeserializer = emailAvro
+                .emailDeserializer();
 
         final String emailTopic = envProps.getProperty("email.topic.name");
         List<EmailEvent> output = new ArrayList<>();
@@ -112,9 +148,9 @@ public class WriterServiceTest {
     }
 
     @Test
-    public void testWriteServiceDeleteUserResponse() throws InterruptedException {
-        SpecificAvroSerializer<EmailId> emailIdSerializer = EmailAvro.emailIdSerializer(envProps);
-        SpecificAvroSerializer<EmailEvent> emailSerializer = EmailAvro.emailSerializer(envProps);
+    public void testWriteServiceDeleteUserResponse() {
+        Serializer<EmailId> emailIdSerializer = emailAvro.emailIdSerializer();
+        Serializer<EmailEvent> emailSerializer = emailAvro.emailSerializer();
         ConsumerRecordFactory<EmailId, EmailEvent> emailInputFactory =
                 new ConsumerRecordFactory<>(emailIdSerializer, emailSerializer);
         UserId userId = UserId.newBuilder()
@@ -131,8 +167,6 @@ public class WriterServiceTest {
         testDriver.pipeInput(emailInputFactory.create(emailTopic,
                 email.getEmailId(), email));
 
-        Thread.sleep(2000);
-
         List<UserEvent> input = new ArrayList<>();
         DeleteUserResponse deleteUserResponseSuccess = DeleteUserResponse.newBuilder()
                 .setRequestId("1")
@@ -144,8 +178,8 @@ public class WriterServiceTest {
                         .setDeleteUserResponse(deleteUserResponseSuccess)
                         .setEventType(EventType.DELETE_USER_RESPONSE).build());
 
-        SpecificAvroSerializer<UserId> userIdSerializer = UserAvro.userIdSerializer(envProps);
-        SpecificAvroSerializer<UserEvent> userSerializer = UserAvro.userEventSerializer(envProps);
+        Serializer<UserId> userIdSerializer = userAvro.userIdSerializer();
+        Serializer<UserEvent> userSerializer = userAvro.userEventSerializer();
         ConsumerRecordFactory<UserId, UserEvent> userInputFactory =
                 new ConsumerRecordFactory<>(userIdSerializer, userSerializer);
 
@@ -155,10 +189,10 @@ public class WriterServiceTest {
                     user.getDeleteUserResponse().getUserId(), user));
         }
 
-        SpecificAvroDeserializer<EmailId> emailIdDeserializer = EmailAvro
-                .emailIdDeserializer(envProps);
-        SpecificAvroDeserializer<EmailEvent> emailDeserializer = EmailAvro
-                .emailDeserializer(envProps);
+        Deserializer<EmailId> emailIdDeserializer = emailAvro
+                .emailIdDeserializer();
+        Deserializer<EmailEvent> emailDeserializer = emailAvro
+                .emailDeserializer();
 
         List<EmailEvent> output = new ArrayList<>();
         while (true) {

@@ -16,7 +16,7 @@ import java.time.Duration;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
-import andrewgrant.friendsdrinks.user.AvroSerdeFactory;
+import andrewgrant.friendsdrinks.user.UserAvro;
 import andrewgrant.friendsdrinks.user.avro.*;
 
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
@@ -29,43 +29,44 @@ public class ValidationService {
 
     private static final Logger log = LoggerFactory.getLogger(ValidationService.class);
 
-    public Topology buildTopology(Properties envProps) {
+    public Topology buildTopology(Properties envProps,
+                                  UserAvro userAvro) {
         final StreamsBuilder builder = new StreamsBuilder();
 
         final String userTopic = envProps.getProperty("user.topic.name");
         final String fraudTmpTopic = envProps.getProperty("fraud_tmp.topic.name");
         KStream<UserId, UserEvent> users = builder
                 .stream(userTopic,
-                        Consumed.with(AvroSerdeFactory.buildUserId(envProps),
-                                AvroSerdeFactory.buildUserEvent(envProps)));
+                        Consumed.with(userAvro.userIdSerde(),
+                                userAvro.userEventSerde()));
 
         users.filter(((key, value) -> value.getEventType().equals(EventType.CREATE_USER_REQUEST)))
                 .groupByKey(
-                        Grouped.with(AvroSerdeFactory.buildUserId(envProps),
-                                AvroSerdeFactory.buildUserEvent(envProps)))
+                        Grouped.with(userAvro.userIdSerde(),
+                                userAvro.userEventSerde()))
                 .windowedBy(SessionWindows.with(Duration.ofMinutes(1)))
                 .aggregate(
                         () -> 0L,
                         ((key, value, aggregate) -> 1 + aggregate),
                         ((aggKey, aggOne, aggTwo) -> aggOne + aggTwo),
-                        Materialized.with(AvroSerdeFactory.buildUserId(envProps), Serdes.Long())
+                        Materialized.with(userAvro.userIdSerde(), Serdes.Long())
                 )
                 // Get rid of windowed key.
                 .toStream(((key, value) -> key.key()))
                 .to(fraudTmpTopic,
-                        Produced.with(AvroSerdeFactory.buildUserId(envProps),
+                        Produced.with(userAvro.userIdSerde(),
                                 Serdes.Long()));
 
         KTable<UserId, Long> userRequestCount = builder.table(fraudTmpTopic,
-                Consumed.with(AvroSerdeFactory.buildUserId(envProps),
+                Consumed.with(userAvro.userIdSerde(),
                         Serdes.Long()));
 
         KStream<UserId, FraudTracker> trackedUsers = users.filter(((key, value) ->
                 value.getEventType().equals(EventType.CREATE_USER_REQUEST)))
                 .leftJoin(userRequestCount,
                         FraudTracker::new,
-                        Joined.with(AvroSerdeFactory.buildUserId(envProps),
-                        AvroSerdeFactory.buildUserEvent(envProps),
+                        Joined.with(userAvro.userIdSerde(),
+                        userAvro.userEventSerde(),
                         Serdes.Long()));
 
         KStream<UserId, FraudTracker>[] trackedUserResults = trackedUsers.branch(
@@ -90,8 +91,8 @@ public class ValidationService {
                             .build();
                 })
                 .to(userValidationsTopic, Produced.with(
-                        AvroSerdeFactory.buildUserId(envProps),
-                        AvroSerdeFactory.buildUserEvent(envProps)));
+                        userAvro.userIdSerde(),
+                        userAvro.userEventSerde()));
 
         // Rejected requests.
         trackedUserResults[1].mapValues(value -> value.getUserEvent())
@@ -108,8 +109,8 @@ public class ValidationService {
                             .build();
                 })
                 .to(userValidationsTopic, Produced.with(
-                        AvroSerdeFactory.buildUserId(envProps),
-                        AvroSerdeFactory.buildUserEvent(envProps)));
+                        userAvro.userIdSerde(),
+                        userAvro.userEventSerde()));
 
         return builder.build();
     }
@@ -134,7 +135,9 @@ public class ValidationService {
         ValidationService validationService =
                 new ValidationService();
         Properties envProps = loadEnvProperties(args[0]);
-        Topology topology = validationService.buildTopology(envProps);
+        UserAvro userAvro = new UserAvro(envProps, null);
+        Topology topology = validationService.buildTopology(envProps,
+                userAvro);
         log.debug("Built stream");
 
         Properties streamProps = validationService.buildStreamsProperties(envProps);

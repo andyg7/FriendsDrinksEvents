@@ -17,6 +17,7 @@ import java.util.concurrent.CountDownLatch;
 import andrewgrant.friendsdrinks.user.avro.*;
 
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
+import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 
 /**
  * Validates delete user requests.
@@ -24,27 +25,26 @@ import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 public class ValidationService {
     private static final Logger log = LoggerFactory.getLogger(ValidationService.class);
 
-    public Topology buildTopology(Properties envProps) {
+    public Topology buildTopology(Properties envProps,
+                                  UserAvro userAvro) {
 
         StreamsBuilder builder = new StreamsBuilder();
         final String usersTopic = envProps.getProperty("user.topic.name");
 
+        SpecificAvroSerde<UserId> userIdSerde = userAvro.userIdSerde();
+        SpecificAvroSerde<UserEvent> userEventSerde = userAvro.userEventSerde();
         KStream<UserId, UserEvent> rawUserKStream = builder.stream(usersTopic,
-                Consumed.with(AvroSerdeFactory.buildUserId(envProps),
-                        AvroSerdeFactory.buildUserEvent(envProps)));
+                Consumed.with(userIdSerde, userEventSerde));
 
         final String usersTmpTopic = envProps.getProperty("user_tmp.topic.name");
         rawUserKStream.filter(((key, value) -> value.getEventType()
                 .equals(EventType.CREATE_USER_RESPONSE) &&
                 value.getCreateUserResponse().getResult().equals(Result.SUCCESS)))
                 .to(usersTmpTopic,
-                        Produced.with(
-                                AvroSerdeFactory.buildUserId(envProps),
-                                AvroSerdeFactory.buildUserEvent(envProps)));
+                        Produced.with(userIdSerde, userEventSerde));
 
         KTable<UserId, UserEvent> userKTable = builder.table(usersTmpTopic,
-                Consumed.with(AvroSerdeFactory.buildUserId(envProps),
-                        AvroSerdeFactory.buildUserEvent(envProps)));
+                Consumed.with(userIdSerde, userEventSerde));
 
         KStream<UserId, DeleteUserRequest> deleteRequestKStream = rawUserKStream
                 .filter(((key, value) -> value.getEventType()
@@ -74,14 +74,12 @@ public class ValidationService {
                                 .build();
                     }
                 }, Joined.with(
-                        AvroSerdeFactory.buildUserId(envProps),
-                        AvroSerdeFactory.buildDeleteUserRequest(envProps),
-                        AvroSerdeFactory.buildUserEvent(envProps)));
+                        userIdSerde, userAvro.deleteUserRequestSerde(),
+                        userEventSerde));
 
         final String userValidationsTopic = envProps.getProperty("user_validation.topic.name");
         validatedRequests.to(userValidationsTopic,
-                Produced.with(AvroSerdeFactory.buildUserId(envProps),
-                        AvroSerdeFactory.buildUserEvent(envProps)));
+                Produced.with(userIdSerde, userEventSerde));
         return builder.build();
     }
 
@@ -103,7 +101,8 @@ public class ValidationService {
         }
         Properties envProps = loadEnvProperties(args[0]);
         ValidationService service = new ValidationService();
-        Topology topology = service.buildTopology(envProps);
+        UserAvro userAvro = new UserAvro(envProps, null);
+        Topology topology = service.buildTopology(envProps, userAvro);
         log.debug("Built stream");
 
         Properties streamProps = service.buildStreamProperties(envProps);

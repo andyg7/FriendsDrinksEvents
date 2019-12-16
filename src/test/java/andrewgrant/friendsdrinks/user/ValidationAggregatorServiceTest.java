@@ -6,9 +6,12 @@ import static andrewgrant.friendsdrinks.email.Config.TEST_CONFIG_FILE;
 import static andrewgrant.friendsdrinks.env.Properties.loadEnvProperties;
 
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.serialization.Deserializer;
+import org.apache.kafka.common.serialization.Serializer;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.test.ConsumerRecordFactory;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -21,29 +24,42 @@ import java.util.UUID;
 import andrewgrant.friendsdrinks.fraud.ErrorCode;
 import andrewgrant.friendsdrinks.user.avro.*;
 
-import io.confluent.kafka.streams.serdes.avro.SpecificAvroDeserializer;
-import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerializer;
+import io.confluent.kafka.schemaregistry.client.MockSchemaRegistryClient;
+import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 
 /**
  * Tests validation aggregator.
  */
 public class ValidationAggregatorServiceTest {
 
-    private static Topology topology;
-    private static Properties streamProps;
     private static Properties envProps;
-    private static ValidationAggregatorService service;
     private static TopologyTestDriver testDriver;
+    private static UserAvro userAvro;
 
     @BeforeClass
-    public static void setup() throws IOException {
-        service = new ValidationAggregatorService();
+    public static void setup() throws IOException, RestClientException {
         envProps = loadEnvProperties(TEST_CONFIG_FILE);
-        topology = service.buildTopology(envProps);
-        streamProps = service.buildStreamProperties(envProps);
+        MockSchemaRegistryClient registryClient = new MockSchemaRegistryClient();
+        // user topic
+        final String userTopic = envProps.getProperty("user.topic.name");
+        registryClient.register(userTopic + "-key", UserId.getClassSchema());
+        registryClient.register(userTopic + "-value", UserEvent.getClassSchema());
+        // user validation topic
+        final String userValidationTopic = envProps.getProperty("user_validation.topic.name");
+        registryClient.register(userValidationTopic + "-key", UserId.getClassSchema());
+        registryClient.register(userValidationTopic + "-value", UserEvent.getClassSchema());
+        userAvro = new UserAvro(envProps, registryClient);
+
+        ValidationAggregatorService service = new ValidationAggregatorService();
+        Topology topology = service.buildTopology(envProps, userAvro);
+        Properties streamProps = service.buildStreamProperties(envProps);
         testDriver = new TopologyTestDriver(topology, streamProps);
     }
 
+    @AfterClass
+    public static void cleanup() {
+        testDriver.close();
+    }
     @Test
     public void testValidateValidCreateRequest() {
         String requestId = UUID.randomUUID().toString();
@@ -60,9 +76,9 @@ public class ValidationAggregatorServiceTest {
                 .setEventType(EventType.CREATE_USER_REQUEST)
                 .setCreateUserRequest(userRequest)
                 .build();
-        SpecificAvroSerializer<UserId> userIdSerializer = UserAvro.userIdSerializer(envProps);
-        SpecificAvroSerializer<UserEvent> userEventSerializer =
-                UserAvro.userEventSerializer(envProps);
+        Serializer<UserId> userIdSerializer = userAvro.userIdSerializer();
+        Serializer<UserEvent> userEventSerializer =
+                userAvro.userEventSerializer();
 
         ConsumerRecordFactory<UserId, UserEvent> inputFactory =
                 new ConsumerRecordFactory<>(userIdSerializer, userEventSerializer);
@@ -105,8 +121,8 @@ public class ValidationAggregatorServiceTest {
                     userEvent));
         }
 
-        SpecificAvroDeserializer<UserId> userIdDeserializer = UserAvro.userIdDeserializer(envProps);
-        SpecificAvroDeserializer<UserEvent> userDeserializer = UserAvro.userDeserializer(envProps);
+        Deserializer<UserId> userIdDeserializer = userAvro.userIdDeserializer();
+        Deserializer<UserEvent> userDeserializer = userAvro.userDeserializer();
         List<UserEvent> output = new ArrayList<>();
         while (true) {
             ProducerRecord<UserId, UserEvent> userEventRecord = testDriver.readOutput(
@@ -141,9 +157,9 @@ public class ValidationAggregatorServiceTest {
                 .setEventType(EventType.CREATE_USER_REQUEST)
                 .setCreateUserRequest(userRequest)
                 .build();
-        SpecificAvroSerializer<UserId> userIdSerializer = UserAvro.userIdSerializer(envProps);
-        SpecificAvroSerializer<UserEvent> userEventSerializer =
-                UserAvro.userEventSerializer(envProps);
+        Serializer<UserId> userIdSerializer = userAvro.userIdSerializer();
+        Serializer<UserEvent> userEventSerializer =
+                userAvro.userEventSerializer();
 
         ConsumerRecordFactory<UserId, UserEvent> inputFactory =
                 new ConsumerRecordFactory<>(userIdSerializer, userEventSerializer);
@@ -193,8 +209,8 @@ public class ValidationAggregatorServiceTest {
             }
         }
 
-        SpecificAvroDeserializer<UserId> userIdDeserializer = UserAvro.userIdDeserializer(envProps);
-        SpecificAvroDeserializer<UserEvent> userDeserializer = UserAvro.userDeserializer(envProps);
+        Deserializer<UserId> userIdDeserializer = userAvro.userIdDeserializer();
+        Deserializer<UserEvent> userDeserializer = userAvro.userDeserializer();
         List<UserEvent> output = new ArrayList<>();
         while (true) {
             ProducerRecord<UserId, UserEvent> userEventRecord = testDriver.readOutput(
@@ -215,7 +231,6 @@ public class ValidationAggregatorServiceTest {
     @Test
     public void testValidateValidDeleteRequest() {
         String requestId = UUID.randomUUID().toString();
-        String email = "hello@hello.com";
         UserId userId = UserId.newBuilder()
                 .setId(UUID.randomUUID().toString())
                 .build();
@@ -227,9 +242,9 @@ public class ValidationAggregatorServiceTest {
                 .setEventType(EventType.DELETE_USER_REQUEST)
                 .setDeleteUserRequest(userRequest)
                 .build();
-        SpecificAvroSerializer<UserId> userIdSerializer = UserAvro.userIdSerializer(envProps);
-        SpecificAvroSerializer<UserEvent> userEventSerializer =
-                UserAvro.userEventSerializer(envProps);
+        Serializer<UserId> userIdSerializer = userAvro.userIdSerializer();
+        Serializer<UserEvent> userEventSerializer =
+                userAvro.userEventSerializer();
 
         ConsumerRecordFactory<UserId, UserEvent> inputFactory =
                 new ConsumerRecordFactory<>(userIdSerializer, userEventSerializer);
@@ -260,8 +275,8 @@ public class ValidationAggregatorServiceTest {
                     userEvent));
         }
 
-        SpecificAvroDeserializer<UserId> userIdDeserializer = UserAvro.userIdDeserializer(envProps);
-        SpecificAvroDeserializer<UserEvent> userDeserializer = UserAvro.userDeserializer(envProps);
+        Deserializer<UserId> userIdDeserializer = userAvro.userIdDeserializer();
+        Deserializer<UserEvent> userDeserializer = userAvro.userDeserializer();
         List<UserEvent> output = new ArrayList<>();
         while (true) {
             ProducerRecord<UserId, UserEvent> userEventRecord = testDriver.readOutput(
