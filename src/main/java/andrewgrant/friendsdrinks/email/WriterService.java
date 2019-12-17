@@ -80,7 +80,7 @@ public class WriterService {
         final String emailTopic = envProps.getProperty("email.topic.name");
         KStream<UserId, EmailEvent> emailsKeyedByUserId = builder.stream(emailTopic,
                 Consumed.with(emailAvro.emailIdSerde(),
-                        emailAvro.emailSerde()))
+                        emailAvro.emailEventSerde()))
                 .filter(((key, value) -> value.getEventType()
                         .equals(andrewgrant.friendsdrinks.email.avro.EventType.RESERVED)))
                 .selectKey((key, value) -> new UserId(value.getUserId()));
@@ -89,19 +89,19 @@ public class WriterService {
         emailsKeyedByUserId.to(emailTmpTopic,
                 Produced.with(
                         userAvro.userIdSerde(),
-                        emailAvro.emailSerde()));
+                        emailAvro.emailEventSerde()));
 
         KTable<UserId, EmailEvent> emailKTableKeyedByUserId = builder.table(
                 emailTmpTopic,
                 Consumed.with(userAvro.userIdSerde(),
-                        emailAvro.emailSerde()));
+                        emailAvro.emailEventSerde()));
 
         KStream<UserId, DeleteResponseAndCurrEmail> deleteResponseAndCurrEmailKStream =
                 deleteUserResponses.join(emailKTableKeyedByUserId,
                         DeleteResponseAndCurrEmail::new,
                         Joined.with(userAvro.userIdSerde(),
                                 userAvro.deleteUserResponseSerde(),
-                                emailAvro.emailSerde()));
+                                emailAvro.emailEventSerde()));
 
         KStream<EmailId, EmailEvent> returnedEmailKStream = deleteResponseAndCurrEmailKStream
                 .mapValues(value ->
@@ -113,7 +113,7 @@ public class WriterService {
 
         returnedEmailKStream.to(emailTopic,
                 Produced.with(emailAvro.emailIdSerde(),
-                        emailAvro.emailSerde()));
+                        emailAvro.emailEventSerde()));
 
         // Re-key on email before publishing to email topic.
         KStream<EmailId, EmailEvent> createUserEmailEventKeyedByEmailId =
@@ -121,7 +121,7 @@ public class WriterService {
 
         createUserEmailEventKeyedByEmailId.to(emailTopic,
                 Produced.with(emailAvro.emailIdSerde(),
-                        emailAvro.emailSerde()));
+                        emailAvro.emailEventSerde()));
         return builder.build();
     }
 

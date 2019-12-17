@@ -90,7 +90,7 @@ public class UserAvro {
         return serde;
     }
 
-    public Deserializer<UserEvent> userDeserializer() {
+    public Deserializer<UserEvent> userEventDeserializer() {
         SpecificAvroSerde<UserEvent> serde = new SpecificAvroSerde<>(registryClient);
         Map<String, String> config = new HashMap<>();
         config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,

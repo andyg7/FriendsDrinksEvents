@@ -91,7 +91,7 @@ public class ValidationServiceTest {
         Serializer<UserEvent> userSerializer = userAvro.userEventSerializer();
         Serializer<UserId> userIdSerializer = userAvro.userIdSerializer();
 
-        Serializer<EmailEvent> emailSerializer = emailAvro.emailSerializer();
+        Serializer<EmailEvent> emailSerializer = emailAvro.emailEventSerializer();
         Serializer<EmailId> emailIdSerializer = emailAvro.emailIdSerializer();
 
         List<EmailEvent> emailInput = new ArrayList<>();
@@ -163,7 +163,7 @@ public class ValidationServiceTest {
 
         final String userValidationTopic = envProps.getProperty("user_validation.topic.name");
         Deserializer<UserId> userIdDeserializer = userAvro.userIdDeserializer();
-        Deserializer<UserEvent> userDeserializer = userAvro.userDeserializer();
+        Deserializer<UserEvent> userDeserializer = userAvro.userEventDeserializer();
 
         List<UserEvent> userValidationOutput = new ArrayList<>();
         while (true) {
@@ -204,7 +204,7 @@ public class ValidationServiceTest {
         Serializer<UserEvent> userSerializer = userAvro.userEventSerializer();
         Serializer<UserId> userIdSerializer = userAvro.userIdSerializer();
 
-        Serializer<EmailEvent> emailSerializer = emailAvro.emailSerializer();
+        Serializer<EmailEvent> emailSerializer = emailAvro.emailEventSerializer();
         Serializer<EmailId> emailIdSerializer = emailAvro.emailIdSerializer();
 
         List<EmailEvent> emailInput = new ArrayList<>();
@@ -256,7 +256,7 @@ public class ValidationServiceTest {
 
         final String userValidationTopic = envProps.getProperty("user_validation.topic.name");
         Deserializer<UserId> userIdDeserializer = userAvro.userIdDeserializer();
-        Deserializer<UserEvent> userDeserializer = userAvro.userDeserializer();
+        Deserializer<UserEvent> userDeserializer = userAvro.userEventDeserializer();
 
         List<UserEvent> userValidationOutput = new ArrayList<>();
         while (true) {

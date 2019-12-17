@@ -144,7 +144,7 @@ public class ValidationServiceTest {
 
         final String userValidationTopic = envProps.getProperty("user_validation.topic.name");
         Deserializer<UserId> userIdDeserializer = userAvro.userIdDeserializer();
-        Deserializer<UserEvent> userDeserializer = userAvro.userDeserializer();
+        Deserializer<UserEvent> userDeserializer = userAvro.userEventDeserializer();
 
         List<UserEvent> userValidationOutput = new ArrayList<>();
         while (true) {

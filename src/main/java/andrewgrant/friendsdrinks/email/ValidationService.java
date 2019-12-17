@@ -61,7 +61,7 @@ public class ValidationService {
         // Get stream of email events and clean up state store as they come in
         KStream<EmailId, EmailEvent> emailKStreamRaw = builder.stream(emailTopic,
                 Consumed.with(
-                        emailAvro.emailIdSerde(), emailAvro.emailSerde()));
+                        emailAvro.emailIdSerde(), emailAvro.emailEventSerde()));
         KStream<EmailId, EmailEvent> emailKStream = emailKStreamRaw
                 .transform(PendingEmailsStateStoreCleaner::new, PENDING_EMAILS_STORE_NAME);
 
@@ -71,12 +71,12 @@ public class ValidationService {
                 andrewgrant.friendsdrinks.email.avro.EventType.RESERVED)))
                 .to(emailTmp1Topic,
                         Produced.with(emailAvro.emailIdSerde(),
-                                emailAvro.emailSerde()));
+                                emailAvro.emailEventSerde()));
 
         // Rebuild table. id -> reserved emails.
         KTable<EmailId, EmailEvent> emailKTable = builder.table(emailTmp1Topic,
                 Consumed.with(emailAvro.emailIdSerde(),
-                        emailAvro.emailSerde()));
+                        emailAvro.emailEventSerde()));
 
         final String userTopic = envProps.getProperty("user.topic.name");
         KStream<UserId, UserEvent> userIdKStream = builder.stream(userTopic,
@@ -91,11 +91,11 @@ public class ValidationService {
         emailStreamKeyedByUserId.to(emailTmp2Topic,
                 Produced.with(
                         userAvro.userIdSerde(),
-                        emailAvro.emailSerde()));
+                        emailAvro.emailEventSerde()));
 
         KTable<UserId, EmailEvent> emailTableKeyedByUserId = builder.table(emailTmp2Topic,
                 Consumed.with(userAvro.userIdSerde(),
-                        emailAvro.emailSerde()));
+                        emailAvro.emailEventSerde()));
 
         // Filter by requests so we have a stream of user requests.
         KStream<UserId, DeleteUserRequest> deleteUserRequests = userIdKStream.
@@ -107,7 +107,7 @@ public class ValidationService {
                         Joined.with(
                                 userAvro.userIdSerde(),
                                 userAvro.deleteUserRequestSerde(),
-                                emailAvro.emailSerde()));
+                                emailAvro.emailEventSerde()));
 
         KStream<UserId, UserEvent> validatedDeleteUser = deleteRequestAndEmail.mapValues(
                 (key, value) -> {
@@ -153,7 +153,7 @@ public class ValidationService {
                         Joined.with(
                                 emailAvro.emailIdSerde(),
                                 userAvro.createUserRequestSerde(),
-                                emailAvro.emailSerde()));
+                                emailAvro.emailEventSerde()));
 
         KStream<UserId, UserEvent> validatedCreateUser =
                 createUserAndEmail.transform(Validator::new, PENDING_EMAILS_STORE_NAME)

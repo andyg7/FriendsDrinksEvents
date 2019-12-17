@@ -122,7 +122,7 @@ public class ValidationAggregatorServiceTest {
         }
 
         Deserializer<UserId> userIdDeserializer = userAvro.userIdDeserializer();
-        Deserializer<UserEvent> userDeserializer = userAvro.userDeserializer();
+        Deserializer<UserEvent> userDeserializer = userAvro.userEventDeserializer();
         List<UserEvent> output = new ArrayList<>();
         while (true) {
             ProducerRecord<UserId, UserEvent> userEventRecord = testDriver.readOutput(
@@ -210,7 +210,7 @@ public class ValidationAggregatorServiceTest {
         }
 
         Deserializer<UserId> userIdDeserializer = userAvro.userIdDeserializer();
-        Deserializer<UserEvent> userDeserializer = userAvro.userDeserializer();
+        Deserializer<UserEvent> userDeserializer = userAvro.userEventDeserializer();
         List<UserEvent> output = new ArrayList<>();
         while (true) {
             ProducerRecord<UserId, UserEvent> userEventRecord = testDriver.readOutput(
@@ -276,7 +276,7 @@ public class ValidationAggregatorServiceTest {
         }
 
         Deserializer<UserId> userIdDeserializer = userAvro.userIdDeserializer();
-        Deserializer<UserEvent> userDeserializer = userAvro.userDeserializer();
+        Deserializer<UserEvent> userDeserializer = userAvro.userEventDeserializer();
         List<UserEvent> output = new ArrayList<>();
         while (true) {
             ProducerRecord<UserId, UserEvent> userEventRecord = testDriver.readOutput(

@@ -131,7 +131,7 @@ public class ValidationServiceTest {
 
         final String userValidationsTopic = envProps.getProperty("user_validation.topic.name");
         Deserializer<UserId> userIdDeserializer = userAvro.userIdDeserializer();
-        Deserializer<UserEvent> userDeserializer = userAvro.userDeserializer();
+        Deserializer<UserEvent> userDeserializer = userAvro.userEventDeserializer();
         List<UserEvent> output = new ArrayList<>();
         while (true) {
             ProducerRecord<UserId, UserEvent> userEventRecord = testDriver.readOutput(

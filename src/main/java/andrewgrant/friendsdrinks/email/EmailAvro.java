@@ -27,7 +27,7 @@ public class EmailAvro {
         this.registryClient = registryClient;
     }
 
-    public Serializer<EmailEvent> emailSerializer() {
+    public Serializer<EmailEvent> emailEventSerializer() {
         SpecificAvroSerde<EmailEvent> serde = new SpecificAvroSerde<>(registryClient);
         Map<String, String> config = new HashMap<>();
         config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
@@ -36,7 +36,7 @@ public class EmailAvro {
         return serde.serializer();
     }
 
-    public SpecificAvroSerde<EmailEvent> emailSerde() {
+    public SpecificAvroSerde<EmailEvent> emailEventSerde() {
         SpecificAvroSerde<EmailEvent> serde = new SpecificAvroSerde<>(registryClient);
         Map<String, String> config = new HashMap<>();
         config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
@@ -63,7 +63,7 @@ public class EmailAvro {
         return serde.serializer();
     }
 
-    public Deserializer<EmailEvent> emailDeserializer() {
+    public Deserializer<EmailEvent> emailEventDeserializer() {
         SpecificAvroSerde<EmailEvent> serde = new SpecificAvroSerde<>(registryClient);
         Map<String, String> config = new HashMap<>();
         config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,

@@ -124,7 +124,7 @@ public class WriterServiceTest {
         Deserializer<EmailId> emailIdDeserializer = emailAvro
                 .emailIdDeserializer();
         Deserializer<EmailEvent> emailDeserializer = emailAvro
-                .emailDeserializer();
+                .emailEventDeserializer();
 
         final String emailTopic = envProps.getProperty("email.topic.name");
         List<EmailEvent> output = new ArrayList<>();
@@ -150,7 +150,7 @@ public class WriterServiceTest {
     @Test
     public void testWriteServiceDeleteUserResponse() {
         Serializer<EmailId> emailIdSerializer = emailAvro.emailIdSerializer();
-        Serializer<EmailEvent> emailSerializer = emailAvro.emailSerializer();
+        Serializer<EmailEvent> emailSerializer = emailAvro.emailEventSerializer();
         ConsumerRecordFactory<EmailId, EmailEvent> emailInputFactory =
                 new ConsumerRecordFactory<>(emailIdSerializer, emailSerializer);
         UserId userId = UserId.newBuilder()
@@ -192,7 +192,7 @@ public class WriterServiceTest {
         Deserializer<EmailId> emailIdDeserializer = emailAvro
                 .emailIdDeserializer();
         Deserializer<EmailEvent> emailDeserializer = emailAvro
-                .emailDeserializer();
+                .emailEventDeserializer();
 
         List<EmailEvent> output = new ArrayList<>();
         while (true) {
