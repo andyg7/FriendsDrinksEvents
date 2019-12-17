@@ -56,7 +56,9 @@ public class ValidationServiceTest {
         final String fraudTmpTopic = envProps.getProperty("fraud_tmp.topic.name");
         registryClient.register(fraudTmpTopic + "-key", UserId.getClassSchema());
         registryClient.register(fraudTmpTopic + "-value", UserEvent.getClassSchema());
-        userAvro = new UserAvro(envProps, registryClient);
+        userAvro = new UserAvro(
+                envProps.getProperty("schema.registry.url"),
+                registryClient);
 
         service = new ValidationService();
         topology = service.buildTopology(envProps, userAvro);

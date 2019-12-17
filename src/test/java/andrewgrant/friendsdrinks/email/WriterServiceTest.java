@@ -65,8 +65,12 @@ public class WriterServiceTest {
         final String emailTmp3Topic = envProps.getProperty("email_tmp_3.topic.name");
         registryClient.register(emailTmp3Topic + "-key", UserId.getClassSchema());
         registryClient.register(emailTmp3Topic + "-value", EmailEvent.getClassSchema());
-        userAvro = new UserAvro(envProps, registryClient);
-        emailAvro = new EmailAvro(envProps, registryClient);
+        userAvro = new UserAvro(
+                envProps.getProperty("schema.registry.url"),
+                registryClient);
+        emailAvro = new EmailAvro(
+                envProps.getProperty("schema.registry.url"),
+                registryClient);
 
         service = new WriterService();
         topology = service.buildTopology(envProps, userAvro, emailAvro);

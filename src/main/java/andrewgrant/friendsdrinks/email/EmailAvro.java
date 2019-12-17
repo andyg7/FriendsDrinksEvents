@@ -5,7 +5,6 @@ import org.apache.kafka.common.serialization.Serializer;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 
 import andrewgrant.friendsdrinks.email.avro.EmailEvent;
 import andrewgrant.friendsdrinks.email.avro.EmailId;
@@ -19,11 +18,11 @@ import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
  */
 public class EmailAvro {
 
-    private Properties envProps;
+    private String registryUrl;
     private SchemaRegistryClient registryClient;
 
-    public EmailAvro(Properties envProps, SchemaRegistryClient registryClient) {
-        this.envProps = envProps;
+    public EmailAvro(String registryUrl, SchemaRegistryClient registryClient) {
+        this.registryUrl = registryUrl;
         this.registryClient = registryClient;
     }
 
@@ -31,7 +30,7 @@ public class EmailAvro {
         SpecificAvroSerde<EmailEvent> serde = new SpecificAvroSerde<>(registryClient);
         Map<String, String> config = new HashMap<>();
         config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
-                envProps.getProperty("schema.registry.url"));
+                registryUrl);
         serde.configure(config, false);
         return serde.serializer();
     }
@@ -40,7 +39,7 @@ public class EmailAvro {
         SpecificAvroSerde<EmailEvent> serde = new SpecificAvroSerde<>(registryClient);
         Map<String, String> config = new HashMap<>();
         config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
-                envProps.getProperty("schema.registry.url"));
+                registryUrl);
         serde.configure(config, false);
         return serde;
     }
@@ -49,7 +48,7 @@ public class EmailAvro {
         SpecificAvroSerde<EmailId> serde = new SpecificAvroSerde<>(registryClient);
         Map<String, String> config = new HashMap<>();
         config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
-                envProps.getProperty("schema.registry.url"));
+                registryUrl);
         serde.configure(config, true);
         return serde;
     }
@@ -58,7 +57,7 @@ public class EmailAvro {
         SpecificAvroSerde<EmailId> serde = new SpecificAvroSerde<>(registryClient);
         Map<String, String> config = new HashMap<>();
         config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
-                envProps.getProperty("schema.registry.url"));
+                registryUrl);
         serde.configure(config, true);
         return serde.serializer();
     }
@@ -67,7 +66,7 @@ public class EmailAvro {
         SpecificAvroSerde<EmailEvent> serde = new SpecificAvroSerde<>(registryClient);
         Map<String, String> config = new HashMap<>();
         config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
-                envProps.getProperty("schema.registry.url"));
+                registryUrl);
         serde.configure(config, false);
         return serde.deserializer();
     }
@@ -76,7 +75,7 @@ public class EmailAvro {
         SpecificAvroSerde<EmailId> serde = new SpecificAvroSerde<>(registryClient);
         Map<String, String> config = new HashMap<>();
         config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
-                envProps.getProperty("schema.registry.url"));
+                registryUrl);
         serde.configure(config, true);
         return serde.deserializer();
     }

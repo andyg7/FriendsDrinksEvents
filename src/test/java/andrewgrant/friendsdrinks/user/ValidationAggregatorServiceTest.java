@@ -48,7 +48,9 @@ public class ValidationAggregatorServiceTest {
         final String userValidationTopic = envProps.getProperty("user_validation.topic.name");
         registryClient.register(userValidationTopic + "-key", UserId.getClassSchema());
         registryClient.register(userValidationTopic + "-value", UserEvent.getClassSchema());
-        userAvro = new UserAvro(envProps, registryClient);
+        userAvro = new UserAvro(
+                envProps.getProperty("schema.registry.url"),
+                registryClient);
 
         ValidationAggregatorService service = new ValidationAggregatorService();
         Topology topology = service.buildTopology(envProps, userAvro);

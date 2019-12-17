@@ -50,7 +50,9 @@ public class ValidationServiceTest {
         final String userValidationTopic = envProps.getProperty("user_validation.topic.name");
         registryClient.register(userValidationTopic + "-key", UserId.getClassSchema());
         registryClient.register(userValidationTopic + "-value", UserEvent.getClassSchema());
-        userAvro = new UserAvro(envProps, registryClient);
+        userAvro = new UserAvro(
+                envProps.getProperty("schema.registry.url"),
+                registryClient);
 
         ValidationService service = new ValidationService();
         Topology topology = service.buildTopology(envProps, userAvro);

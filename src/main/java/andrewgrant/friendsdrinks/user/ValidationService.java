@@ -101,7 +101,9 @@ public class ValidationService {
         }
         Properties envProps = loadEnvProperties(args[0]);
         ValidationService service = new ValidationService();
-        UserAvro userAvro = new UserAvro(envProps, null);
+        UserAvro userAvro = new UserAvro(
+                envProps.getProperty("schema.registry.url"),
+                null);
         Topology topology = service.buildTopology(envProps, userAvro);
         log.debug("Built stream");
 

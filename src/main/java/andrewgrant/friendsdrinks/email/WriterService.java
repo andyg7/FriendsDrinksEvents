@@ -133,8 +133,12 @@ public class WriterService {
 
         WriterService writerService = new WriterService();
         Properties envProps = loadEnvProperties(args[0]);
-        UserAvro userAvro = new UserAvro(envProps, null);
-        EmailAvro emailAvro = new EmailAvro(envProps, null);
+        UserAvro userAvro = new UserAvro(
+                envProps.getProperty("schema.registry.url"),
+                null);
+        EmailAvro emailAvro = new EmailAvro(
+                envProps.getProperty("schema.registry.url"),
+                null);
         Topology topology = writerService.buildTopology(envProps,
                 userAvro, emailAvro);
         log.debug("Built stream");
