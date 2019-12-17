@@ -26,8 +26,18 @@ public class EmailAvro {
         this.registryClient = registryClient;
     }
 
+    public EmailAvro(String registryUrl) {
+        this.registryUrl = registryUrl;
+        this.registryClient = null;
+    }
+
     public Serializer<EmailEvent> emailEventSerializer() {
-        SpecificAvroSerde<EmailEvent> serde = new SpecificAvroSerde<>(registryClient);
+        SpecificAvroSerde<EmailEvent> serde;
+        if (registryClient != null) {
+            serde = new SpecificAvroSerde<>(registryClient);
+        } else {
+            serde = new SpecificAvroSerde<>();
+        }
         Map<String, String> config = new HashMap<>();
         config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
                 registryUrl);
@@ -36,7 +46,12 @@ public class EmailAvro {
     }
 
     public SpecificAvroSerde<EmailEvent> emailEventSerde() {
-        SpecificAvroSerde<EmailEvent> serde = new SpecificAvroSerde<>(registryClient);
+        SpecificAvroSerde<EmailEvent> serde;
+        if (registryClient != null) {
+            serde = new SpecificAvroSerde<>(registryClient);
+        } else {
+            serde = new SpecificAvroSerde<>();
+        }
         Map<String, String> config = new HashMap<>();
         config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
                 registryUrl);
@@ -45,7 +60,12 @@ public class EmailAvro {
     }
 
     public SpecificAvroSerde<EmailId> emailIdSerde() {
-        SpecificAvroSerde<EmailId> serde = new SpecificAvroSerde<>(registryClient);
+        SpecificAvroSerde<EmailId> serde;
+        if (registryClient != null) {
+            serde = new SpecificAvroSerde<>(registryClient);
+        } else {
+            serde = new SpecificAvroSerde<>();
+        }
         Map<String, String> config = new HashMap<>();
         config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
                 registryUrl);
@@ -54,7 +74,12 @@ public class EmailAvro {
     }
 
     public Serializer<EmailId> emailIdSerializer() {
-        SpecificAvroSerde<EmailId> serde = new SpecificAvroSerde<>(registryClient);
+        SpecificAvroSerde<EmailId> serde;
+        if (registryClient != null) {
+            serde = new SpecificAvroSerde<>(registryClient);
+        } else {
+            serde = new SpecificAvroSerde<>();
+        }
         Map<String, String> config = new HashMap<>();
         config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
                 registryUrl);
@@ -63,7 +88,12 @@ public class EmailAvro {
     }
 
     public Deserializer<EmailEvent> emailEventDeserializer() {
-        SpecificAvroSerde<EmailEvent> serde = new SpecificAvroSerde<>(registryClient);
+        SpecificAvroSerde<EmailEvent> serde;
+        if (registryClient != null) {
+            serde = new SpecificAvroSerde<>(registryClient);
+        } else {
+            serde = new SpecificAvroSerde<>();
+        }
         Map<String, String> config = new HashMap<>();
         config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
                 registryUrl);
@@ -72,7 +102,12 @@ public class EmailAvro {
     }
 
     public Deserializer<EmailId> emailIdDeserializer() {
-        SpecificAvroSerde<EmailId> serde = new SpecificAvroSerde<>(registryClient);
+        SpecificAvroSerde<EmailId> serde;
+        if (registryClient != null) {
+            serde = new SpecificAvroSerde<>(registryClient);
+        } else {
+            serde = new SpecificAvroSerde<>();
+        }
         Map<String, String> config = new HashMap<>();
         config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
                 registryUrl);

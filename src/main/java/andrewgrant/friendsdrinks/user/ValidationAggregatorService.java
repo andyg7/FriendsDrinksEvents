@@ -229,8 +229,7 @@ public class ValidationAggregatorService {
         Properties envProps = loadEnvProperties(args[0]);
         ValidationAggregatorService service = new ValidationAggregatorService();
         UserAvro userAvro = new UserAvro(
-                envProps.getProperty("schema.registry.url"),
-                null);
+                envProps.getProperty("schema.registry.url"));
         Topology topology = service.buildTopology(envProps, userAvro);
         log.debug("Built stream");
 
