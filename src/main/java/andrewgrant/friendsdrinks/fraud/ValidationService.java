@@ -61,12 +61,16 @@ public class ValidationService {
                 Consumed.with(userAvro.userIdSerde(),
                         Serdes.Long()));
 
-        KStream<UserId, FraudTracker> trackedUsers = users.filter(((key, value) ->
-                value.getEventType().equals(EventType.CREATE_USER_REQUEST)))
+        KStream<UserId, CreateUserRequest> userRequests = users.filter((
+                (key, value) -> value.getEventType()
+                        .equals(EventType.CREATE_USER_REQUEST)))
+                .mapValues(value -> value.getCreateUserRequest());
+
+        KStream<UserId, FraudTracker> trackedUsers = userRequests
                 .leftJoin(userRequestCount,
                         FraudTracker::new,
                         Joined.with(userAvro.userIdSerde(),
-                        userAvro.userEventSerde(),
+                        userAvro.createUserRequestSerde(),
                         Serdes.Long()));
 
         KStream<UserId, FraudTracker>[] trackedUserResults = trackedUsers.branch(
@@ -78,12 +82,12 @@ public class ValidationService {
         final String userValidationsTopic = envProps.getProperty("user_validation.topic.name");
 
         // Validated requests.
-        trackedUserResults[0].mapValues(value -> value.getUserEvent())
+        trackedUserResults[0].mapValues(value -> value.getRequest())
                 .mapValues(value -> {
                     CreateUserValidated userValidated = CreateUserValidated.newBuilder()
-                            .setEmail(value.getCreateUserRequest().getEmail())
-                            .setUserId(value.getCreateUserRequest().getUserId())
-                            .setRequestId(value.getCreateUserRequest().getRequestId())
+                            .setEmail(value.getEmail())
+                            .setUserId(value.getUserId())
+                            .setRequestId(value.getRequestId())
                             .build();
                     return UserEvent.newBuilder()
                             .setEventType(EventType.CREATE_USER_VALIDATED)
@@ -95,12 +99,12 @@ public class ValidationService {
                         userAvro.userEventSerde()));
 
         // Rejected requests.
-        trackedUserResults[1].mapValues(value -> value.getUserEvent())
+        trackedUserResults[1].mapValues(value -> value.getRequest())
                 .mapValues(value -> {
                     CreateUserRejected userRejected = CreateUserRejected.newBuilder()
-                            .setEmail(value.getCreateUserRequest().getEmail())
-                            .setUserId(value.getCreateUserRequest().getUserId())
-                            .setRequestId(value.getCreateUserRequest().getRequestId())
+                            .setEmail(value.getEmail())
+                            .setUserId(value.getUserId())
+                            .setRequestId(value.getRequestId())
                             .setErrorCode(ErrorCode.TOO_MANY_REQUESTS.toString())
                             .build();
                     return UserEvent.newBuilder()

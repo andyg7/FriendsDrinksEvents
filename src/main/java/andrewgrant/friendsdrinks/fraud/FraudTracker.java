@@ -1,21 +1,21 @@
 package andrewgrant.friendsdrinks.fraud;
 
-import andrewgrant.friendsdrinks.user.avro.UserEvent;
+import andrewgrant.friendsdrinks.user.avro.CreateUserRequest;
 
 /**
  * Class that represents a user request.
  */
 public class FraudTracker {
-    private UserEvent userEvent;
+    private CreateUserRequest request;
     private Long count;
 
-    public FraudTracker(UserEvent userEvent, Long count) {
-        this.userEvent = userEvent;
+    public FraudTracker(CreateUserRequest request, Long count) {
+        this.request = request;
         this.count = count;
     }
 
-    public UserEvent getUserEvent() {
-        return userEvent;
+    public CreateUserRequest getRequest() {
+        return request;
     }
 
     public Long getCount() {
