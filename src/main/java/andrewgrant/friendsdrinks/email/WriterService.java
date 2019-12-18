@@ -70,6 +70,14 @@ public class WriterService {
                         value.getCreateUserResponse().getResult().toString()));
             }
         });
+        final String emailTopic = envProps.getProperty("email.topic.name");
+        // Re-key on email before publishing to email topic.
+        KStream<EmailId, EmailEvent> createUserEmailEventKeyedByEmailId =
+                createUserEmailEvent.selectKey(((key, value) -> value.getEmailId()));
+
+        createUserEmailEventKeyedByEmailId.to(emailTopic,
+                Produced.with(emailAvro.emailIdSerde(),
+                        emailAvro.emailEventSerde()));
 
         KStream<UserId, DeleteUserResponse> deleteUserResponses =
                 userEventKStream.filter(((key, value) ->
@@ -77,7 +85,6 @@ public class WriterService {
                         value.getDeleteUserResponse().getResult().equals(Result.SUCCESS)
         )).mapValues(value -> value.getDeleteUserResponse());
 
-        final String emailTopic = envProps.getProperty("email.topic.name");
         KStream<UserId, EmailEvent> emailsKeyedByUserId = builder.stream(emailTopic,
                 Consumed.with(emailAvro.emailIdSerde(),
                         emailAvro.emailEventSerde()))
@@ -115,13 +122,6 @@ public class WriterService {
                 Produced.with(emailAvro.emailIdSerde(),
                         emailAvro.emailEventSerde()));
 
-        // Re-key on email before publishing to email topic.
-        KStream<EmailId, EmailEvent> createUserEmailEventKeyedByEmailId =
-                createUserEmailEvent.selectKey(((key, value) -> value.getEmailId()));
-
-        createUserEmailEventKeyedByEmailId.to(emailTopic,
-                Produced.with(emailAvro.emailIdSerde(),
-                        emailAvro.emailEventSerde()));
         return builder.build();
     }
 
