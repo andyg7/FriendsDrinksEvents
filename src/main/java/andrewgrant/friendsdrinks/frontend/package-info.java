@@ -1,4 +1,4 @@
 /**
- * Bootstrap schema helpers.
+ * Frontend for interacting with backend services.
  */
 package andrewgrant.friendsdrinks.frontend;
