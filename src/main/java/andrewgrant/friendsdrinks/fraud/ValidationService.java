@@ -66,14 +66,14 @@ public class ValidationService {
                         .equals(EventType.CREATE_USER_REQUEST)))
                 .mapValues(value -> value.getCreateUserRequest());
 
-        KStream<UserId, FraudTracker> trackedUsers = userRequests
+        KStream<UserId, Tracker> trackedUsers = userRequests
                 .leftJoin(userRequestCount,
-                        FraudTracker::new,
+                        Tracker::new,
                         Joined.with(userAvro.userIdSerde(),
                         userAvro.createUserRequestSerde(),
                         Serdes.Long()));
 
-        KStream<UserId, FraudTracker>[] trackedUserResults = trackedUsers.branch(
+        KStream<UserId, Tracker>[] trackedUserResults = trackedUsers.branch(
                 (key, tracker) -> tracker.getCount() == null ||
                         tracker.getCount() < 10,
                 (key, value) -> true

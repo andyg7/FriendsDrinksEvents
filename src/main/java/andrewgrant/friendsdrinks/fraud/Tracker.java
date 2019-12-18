@@ -5,11 +5,11 @@ import andrewgrant.friendsdrinks.user.avro.CreateUserRequest;
 /**
  * Class that represents a user request.
  */
-public class FraudTracker {
+public class Tracker {
     private CreateUserRequest request;
     private Long count;
 
-    public FraudTracker(CreateUserRequest request, Long count) {
+    public Tracker(CreateUserRequest request, Long count) {
         this.request = request;
         this.count = count;
     }
