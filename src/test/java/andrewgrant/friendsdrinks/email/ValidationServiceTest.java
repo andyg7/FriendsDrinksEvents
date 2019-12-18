@@ -193,13 +193,13 @@ public class ValidationServiceTest {
         UserEvent rejectedUser = userValidationOutput.get(1);
         assertEquals(newUserId2, rejectedUser.getCreateUserRejected().getUserId().getId());
         assertEquals(EventType.CREATE_USER_REJECTED, rejectedUser.getEventType());
-        assertEquals(ErrorCode.EXISTS.toString(),
+        assertEquals(ErrorCode.Exists.toString(),
                 rejectedUser.getCreateUserRejected().getErrorCode());
 
         UserEvent rejectedUser2 = userValidationOutput.get(2);
         assertEquals(newUserId3, rejectedUser2.getCreateUserRejected().getUserId().getId());
         assertEquals(EventType.CREATE_USER_REJECTED, rejectedUser.getEventType());
-        assertEquals(ErrorCode.PENDING.toString(),
+        assertEquals(ErrorCode.Pending.toString(),
                 rejectedUser2.getCreateUserRejected().getErrorCode());
     }
 

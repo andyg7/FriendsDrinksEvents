@@ -115,7 +115,7 @@ public class ValidationService {
                         DeleteUserRejected rejected = DeleteUserRejected.newBuilder()
                                 .setUserId(value.getDeleteUserRequest().getUserId())
                                 .setRequestId(value.getDeleteUserRequest().getRequestId())
-                                .setErrorCode(ErrorCode.DOES_NOT_EXIST.toString())
+                                .setErrorCode(ErrorCode.DoesNotExist.toString())
                                 .build();
                         return UserEvent.newBuilder()
                                 .setEventType(EventType.DELETE_USER_REJECTED)

@@ -168,7 +168,7 @@ public class ValidationServiceTest {
         UserEvent rejectedUser = userValidationOutput.get(17);
         assertEquals(userId4, rejectedUser.getCreateUserRejected().getUserId().getId());
         assertEquals(EventType.CREATE_USER_REJECTED, rejectedUser.getEventType());
-        assertEquals("TOO_MANY_REQUESTS", rejectedUser.getCreateUserRejected().getErrorCode());
+        assertEquals("TooManyRequests", rejectedUser.getCreateUserRejected().getErrorCode());
     }
 
 }

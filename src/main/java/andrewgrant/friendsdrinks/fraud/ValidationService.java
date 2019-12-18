@@ -105,7 +105,7 @@ public class ValidationService {
                             .setEmail(value.getEmail())
                             .setUserId(value.getUserId())
                             .setRequestId(value.getRequestId())
-                            .setErrorCode(ErrorCode.TOO_MANY_REQUESTS.toString())
+                            .setErrorCode(ErrorCode.TooManyRequests.toString())
                             .build();
                     return UserEvent.newBuilder()
                             .setEventType(EventType.CREATE_USER_REJECTED)

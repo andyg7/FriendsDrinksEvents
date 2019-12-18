@@ -33,7 +33,7 @@ public class Validator implements
         String requestedEmail = userRequest.getEmail();
         if (pendingEmailsStore.get(requestedEmail) != null) {
             CreateUserRejected userRejected = CreateUserRejected.newBuilder()
-                    .setErrorCode(ErrorCode.PENDING.name())
+                    .setErrorCode(ErrorCode.Pending.name())
                     .setUserId(userRequest.getUserId())
                     .setEmail(userRequest.getEmail())
                     .setRequestId(userRequest.getRequestId())
@@ -64,7 +64,7 @@ public class Validator implements
                     .setRequestId(userRequest.getRequestId())
                     .setUserId(userRequest.getUserId())
                     .setEmail(userRequest.getEmail())
-                    .setErrorCode(ErrorCode.EXISTS.name())
+                    .setErrorCode(ErrorCode.Exists.name())
                     .build();
             UserEvent user = UserEvent.newBuilder()
                     .setEventType(EventType.CREATE_USER_REJECTED)
