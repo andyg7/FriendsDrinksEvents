@@ -77,7 +77,8 @@ services:
      - schema-registry
      - kafka-setup
    command:
-     "bash -c 'java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.email.WriterService /app/dev.properties
+     "bash -c 'sleep 75 && \
+          java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.email.WriterService /app/dev.properties
           '"
 
   email-validation-service:
@@ -87,7 +88,8 @@ services:
       - schema-registry
       - kafka-setup
     command:
-      "bash -c 'java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.email.ValidationService /app/dev.properties
+      "bash -c 'sleep 75 && \
+          java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.email.ValidationService /app/dev.properties
           '"
 
   fraud-validation-service:
@@ -97,7 +99,8 @@ services:
       - schema-registry
       - kafka-setup
     command:
-      "bash -c 'java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.fraud.ValidationService /app/dev.properties
+      "bash -c 'sleep 75 && \
+          java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.fraud.ValidationService /app/dev.properties
           '"
 
   user-validation-service:
@@ -107,7 +110,8 @@ services:
       - schema-registry
       - kafka-setup
     command:
-      "bash -c 'java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.user.ValidationService /app/dev.properties
+      "bash -c 'sleep 75 && \
+          java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.user.ValidationService /app/dev.properties
           '"
 
   user-validation-aggregator-service:
@@ -117,5 +121,6 @@ services:
       - schema-registry
       - kafka-setup
     command:
-      "bash -c 'java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.user.ValidationAggregatorService /app/dev.properties
+      "bash -c 'sleep 75 && \
+          java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.user.ValidationAggregatorService /app/dev.properties
           '"
