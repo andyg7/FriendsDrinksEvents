@@ -45,7 +45,7 @@ public class ValidationAggregatorServiceTest {
         registryClient.register(userTopic + "-key", UserId.getClassSchema());
         registryClient.register(userTopic + "-value", UserEvent.getClassSchema());
         // user validation topic
-        final String userValidationTopic = envProps.getProperty("user_validation.topic.name");
+        final String userValidationTopic = envProps.getProperty("userValidation.topic.name");
         registryClient.register(userValidationTopic + "-key", UserId.getClassSchema());
         registryClient.register(userValidationTopic + "-value", UserEvent.getClassSchema());
         userAvro = new UserAvro(
@@ -94,6 +94,7 @@ public class ValidationAggregatorServiceTest {
                 .setRequestId(requestId)
                 .setEmail(email)
                 .setUserId(userId)
+                .setSource("source")
                 .build();
 
         UserEvent userEvent1 = UserEvent.newBuilder()
@@ -105,6 +106,7 @@ public class ValidationAggregatorServiceTest {
                 .setRequestId(requestId)
                 .setEmail(email)
                 .setUserId(userId)
+                .setSource("source")
                 .build();
 
         UserEvent userEvent2 = UserEvent.newBuilder()
@@ -116,7 +118,7 @@ public class ValidationAggregatorServiceTest {
         userEvents.add(userEvent1);
         userEvents.add(userEvent2);
 
-        final String userValidationsTopic = envProps.getProperty("user_validation.topic.name");
+        final String userValidationsTopic = envProps.getProperty("userValidation.topic.name");
         for (UserEvent userEvent : userEvents) {
             testDriver.pipeInput(inputFactory.create(userValidationsTopic,
                     userEvent.getCreateUserValidated().getUserId(),
@@ -175,6 +177,7 @@ public class ValidationAggregatorServiceTest {
                 .setRequestId(requestId)
                 .setEmail(email)
                 .setUserId(userId)
+                .setSource("source")
                 .build();
 
         UserEvent userEvent1 = UserEvent.newBuilder()
@@ -198,7 +201,7 @@ public class ValidationAggregatorServiceTest {
         userEvents.add(userEvent1);
         userEvents.add(userEvent2);
 
-        final String userValidationsTopic = envProps.getProperty("user_validation.topic.name");
+        final String userValidationsTopic = envProps.getProperty("userValidation.topic.name");
         for (UserEvent userEvent : userEvents) {
             if (userEvent.getEventType().equals(EventType.CREATE_USER_VALIDATED)) {
                 testDriver.pipeInput(inputFactory.create(userValidationsTopic,
@@ -270,7 +273,7 @@ public class ValidationAggregatorServiceTest {
         userEvents.add(validatedUserEvent);
         userEvents.add(validatedUserEvent);
 
-        final String userValidationsTopic = envProps.getProperty("user_validation.topic.name");
+        final String userValidationsTopic = envProps.getProperty("userValidation.topic.name");
         for (UserEvent userEvent : userEvents) {
             testDriver.pipeInput(inputFactory.create(userValidationsTopic,
                     userEvent.getDeleteUserValidated().getUserId(),

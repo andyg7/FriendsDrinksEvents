@@ -52,6 +52,7 @@ public class Validator implements
                     .setUserId(userRequest.getUserId())
                     .setEmail(userRequest.getEmail())
                     .setRequestId(userRequest.getRequestId())
+                    .setSource("email")
                     .build();
             UserEvent user = UserEvent.newBuilder()
                     .setEventType(EventType.CREATE_USER_VALIDATED)
@@ -73,7 +74,7 @@ public class Validator implements
             return new KeyValue<>(emailId, user);
         }
 
-        throw new RuntimeException();
+        throw new RuntimeException("Something bad happened");
     }
 
     @Override

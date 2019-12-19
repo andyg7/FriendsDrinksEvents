@@ -49,11 +49,11 @@ public class ValidationServiceTest {
         registryClient.register(userTopic + "-key", UserId.getClassSchema());
         registryClient.register(userTopic + "-value", UserEvent.getClassSchema());
         // user validation topic
-        final String userValidationTopic = envProps.getProperty("user_validation.topic.name");
+        final String userValidationTopic = envProps.getProperty("userValidation.topic.name");
         registryClient.register(userValidationTopic + "-key", UserId.getClassSchema());
         registryClient.register(userValidationTopic + "-value", UserEvent.getClassSchema());
         // user validation topic
-        final String fraudTmpTopic = envProps.getProperty("fraud_tmp.topic.name");
+        final String fraudTmpTopic = envProps.getProperty("fraudTmp.topic.name");
         registryClient.register(fraudTmpTopic + "-key", UserId.getClassSchema());
         registryClient.register(fraudTmpTopic + "-value", UserEvent.getClassSchema());
         userAvro = new UserAvro(
@@ -144,7 +144,7 @@ public class ValidationServiceTest {
                             user.getCreateUserRequest().getUserId(), user));
         }
 
-        final String userValidationTopic = envProps.getProperty("user_validation.topic.name");
+        final String userValidationTopic = envProps.getProperty("userValidation.topic.name");
         Deserializer<UserId> userIdDeserializer = userAvro.userIdDeserializer();
         Deserializer<UserEvent> userDeserializer = userAvro.userEventDeserializer();
 

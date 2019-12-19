@@ -36,7 +36,7 @@ public class ValidationService {
         KStream<UserId, UserEvent> rawUserKStream = builder.stream(usersTopic,
                 Consumed.with(userIdSerde, userEventSerde));
 
-        final String usersTmpTopic = envProps.getProperty("user_tmp.topic.name");
+        final String usersTmpTopic = envProps.getProperty("userTmp.topic.name");
         rawUserKStream.filter(((key, value) -> value.getEventType()
                 .equals(EventType.CREATE_USER_RESPONSE) &&
                 value.getCreateUserResponse().getResult().equals(Result.SUCCESS)))
@@ -77,7 +77,7 @@ public class ValidationService {
                         userIdSerde, userAvro.deleteUserRequestSerde(),
                         userEventSerde));
 
-        final String userValidationsTopic = envProps.getProperty("user_validation.topic.name");
+        final String userValidationsTopic = envProps.getProperty("userValidation.topic.name");
         validatedRequests.to(userValidationsTopic,
                 Produced.with(userIdSerde, userEventSerde));
         return builder.build();

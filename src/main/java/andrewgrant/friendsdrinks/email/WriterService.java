@@ -92,7 +92,7 @@ public class WriterService {
                         .equals(andrewgrant.friendsdrinks.email.avro.EventType.RESERVED)))
                 .selectKey((key, value) -> new UserId(value.getUserId()));
 
-        final String emailTmpTopic = envProps.getProperty("email_tmp_3.topic.name");
+        final String emailTmpTopic = envProps.getProperty("emailTmp3.topic.name");
         emailsKeyedByUserId.to(emailTmpTopic,
                 Produced.with(
                         userAvro.userIdSerde(),

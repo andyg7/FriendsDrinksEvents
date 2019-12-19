@@ -34,7 +34,7 @@ public class ValidationService {
         final StreamsBuilder builder = new StreamsBuilder();
 
         final String userTopic = envProps.getProperty("user.topic.name");
-        final String fraudTmpTopic = envProps.getProperty("fraud_tmp.topic.name");
+        final String fraudTmpTopic = envProps.getProperty("fraudTmp.topic.name");
         KStream<UserId, UserEvent> users = builder
                 .stream(userTopic,
                         Consumed.with(userAvro.userIdSerde(),
@@ -79,7 +79,7 @@ public class ValidationService {
                 (key, value) -> true
         );
 
-        final String userValidationsTopic = envProps.getProperty("user_validation.topic.name");
+        final String userValidationsTopic = envProps.getProperty("userValidation.topic.name");
 
         // Validated requests.
         trackedUserResults[0].mapValues(value -> value.getRequest())
@@ -88,6 +88,7 @@ public class ValidationService {
                             .setEmail(value.getEmail())
                             .setUserId(value.getUserId())
                             .setRequestId(value.getRequestId())
+                            .setSource("fraud")
                             .build();
                     return UserEvent.newBuilder()
                             .setEventType(EventType.CREATE_USER_VALIDATED)

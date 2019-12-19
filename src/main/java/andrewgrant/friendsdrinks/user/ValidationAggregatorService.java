@@ -33,7 +33,7 @@ public class ValidationAggregatorService {
     public Topology buildTopology(Properties envProps,
                                   UserAvro userAvro) {
         StreamsBuilder builder = new StreamsBuilder();
-        final String userValidationsTopic = envProps.getProperty("user_validation.topic.name");
+        final String userValidationsTopic = envProps.getProperty("userValidation.topic.name");
 
         SpecificAvroSerde<UserId> userIdSerde = userAvro.userIdSerde();
         SpecificAvroSerde<UserEvent> userEventSerde = userAvro.userEventSerde();

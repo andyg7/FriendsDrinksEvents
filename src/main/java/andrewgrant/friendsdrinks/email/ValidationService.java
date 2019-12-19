@@ -66,7 +66,7 @@ public class ValidationService {
                 .transform(PendingEmailsStateStoreCleaner::new, PENDING_EMAILS_STORE_NAME);
 
         // Write events to a tmp topic so we can rebuild a table
-        final String emailTmp1Topic = envProps.getProperty("email_tmp_1.topic.name");
+        final String emailTmp1Topic = envProps.getProperty("emailTmp1.topic.name");
         emailKStream.filter(((key, value) -> value.getEventType().equals(
                 andrewgrant.friendsdrinks.email.avro.EventType.RESERVED)))
                 .to(emailTmp1Topic,
@@ -87,7 +87,7 @@ public class ValidationService {
         KStream<UserId, EmailEvent> emailStreamKeyedByUserId = emailKStreamRaw
                 .selectKey(((key, value) -> new UserId(value.getUserId())));
 
-        final String emailTmp2Topic = envProps.getProperty("email_tmp_2.topic.name");
+        final String emailTmp2Topic = envProps.getProperty("emailTmp2.topic.name");
         emailStreamKeyedByUserId.to(emailTmp2Topic,
                 Produced.with(
                         userAvro.userIdSerde(),
@@ -165,7 +165,7 @@ public class ValidationService {
                            }
                         }));
 
-        final String userValidationTopic = envProps.getProperty("user_validation.topic.name");
+        final String userValidationTopic = envProps.getProperty("userValidation.topic.name");
         validatedCreateUser.to(userValidationTopic,
                 Produced.with(
                         userAvro.userIdSerde(),
