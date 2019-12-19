@@ -9,6 +9,7 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 
 import java.io.IOException;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 import andrewgrant.friendsdrinks.user.UserAvro;
@@ -26,9 +27,9 @@ public class CreateUserRequestCli {
     public static void main(String[] args) throws IOException,
             ExecutionException,
             InterruptedException {
-        if (args.length != 4) {
+        if (args.length != 2) {
             throw new IllegalArgumentException("Program expects " +
-                    "1) path to config 2) user id 3) email 4) request id");
+                    "1) path to config 2) email");
         }
         Properties envProps = loadEnvProperties(args[0]);
         UserAvro userAvro = new UserAvro("http://localhost:8081");
@@ -43,12 +44,12 @@ public class CreateUserRequestCli {
                         userAvro.userIdSerializer(),
                         userAvro.userEventSerializer());
         UserId userId = UserId.newBuilder()
-                .setId(args[1])
+                .setId(UUID.randomUUID().toString())
                 .build();
         CreateUserRequest request = CreateUserRequest.newBuilder()
-                .setEmail(args[2])
+                .setEmail(args[1])
                 .setUserId(userId)
-                .setRequestId(args[3])
+                .setRequestId(UUID.randomUUID().toString())
                 .build();
         UserEvent userEvent = UserEvent.newBuilder()
                 .setEventType(EventType.CREATE_USER_REQUEST)

@@ -63,7 +63,7 @@ public class ValidationAggregatorService {
         // Request id -> number of validations for create user requests
         KStream<String, Long> createValidationCount = validationResultsKeyedByRequestId
                 .groupByKey(Grouped.with(Serdes.String(), userEventSerde))
-                .windowedBy(SessionWindows.with(Duration.ofMinutes(5)))
+                .windowedBy(SessionWindows.with(Duration.ofSeconds(10)))
                 .aggregate(
                         () -> 0L,
                         (requestId, user, total) ->
@@ -79,7 +79,7 @@ public class ValidationAggregatorService {
         // Request id -> number of validations for delete user requests
         KStream<String, Long> deleteValidationCount = validationResultsKeyedByRequestId
                 .groupByKey(Grouped.with(Serdes.String(), userEventSerde))
-                .windowedBy(SessionWindows.with(Duration.ofMinutes(5)))
+                .windowedBy(SessionWindows.with(Duration.ofSeconds(10)))
                 .aggregate(
                         () -> 0L,
                         (requestId, user, total) ->
@@ -124,7 +124,7 @@ public class ValidationAggregatorService {
                             .setCreateUserResponse(response)
                             .build();
                 },
-                JoinWindows.of(Duration.ofMinutes(5)),
+                JoinWindows.of(Duration.ofSeconds(10)),
                 Joined.with(Serdes.String(), Serdes.Long(), createUserRequestSerde))
                 .selectKey(((key, value) -> value.getCreateUserResponse().getUserId()))
                 .to(userTopic, Produced.with(userIdSerde, userEventSerde));
@@ -143,7 +143,7 @@ public class ValidationAggregatorService {
                             .setDeleteUserResponse(response)
                             .build();
                 },
-                JoinWindows.of(Duration.ofMinutes(5)),
+                JoinWindows.of(Duration.ofSeconds(10)),
                 Joined.with(Serdes.String(), Serdes.Long(), deleteUserRequestSerde))
                 .selectKey(((key, value) -> value.getDeleteUserResponse().getUserId()))
                 .to(userTopic, Produced.with(userIdSerde, userEventSerde));
@@ -176,7 +176,7 @@ public class ValidationAggregatorService {
                             .setCreateUserResponse(response)
                             .build();
                 },
-                JoinWindows.of(Duration.ofMinutes(5)),
+                JoinWindows.of(Duration.ofSeconds(10)),
                 Joined.with(Serdes.String(), userEventSerde, createUserRequestSerde))
                 .groupByKey(Grouped.with(Serdes.String(), userEventSerde))
                 .reduce((key, value) -> value)
@@ -199,7 +199,7 @@ public class ValidationAggregatorService {
                             .setDeleteUserResponse(response)
                             .build();
                 },
-                JoinWindows.of(Duration.ofMinutes(5)),
+                JoinWindows.of(Duration.ofSeconds(10)),
                 Joined.with(Serdes.String(), userEventSerde, deleteUserRequestSerde))
                 .groupByKey(Grouped.with(Serdes.String(), userEventSerde))
                 .reduce((key, value) -> value)
