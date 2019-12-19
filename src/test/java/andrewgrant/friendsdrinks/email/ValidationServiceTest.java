@@ -48,9 +48,9 @@ public class ValidationServiceTest {
 
         MockSchemaRegistryClient registryClient = new MockSchemaRegistryClient();
         // user topic
-        final String userTopic = envProps.getProperty("user.topic.name");
-        registryClient.register(userTopic + "-key", UserId.getClassSchema());
-        registryClient.register(userTopic + "-value", UserEvent.getClassSchema());
+        final String userTopicName = envProps.getProperty("user.topic.name");
+        registryClient.register(userTopicName + "-key", UserId.getClassSchema());
+        registryClient.register(userTopicName + "-value", UserEvent.getClassSchema());
         // user validation topic
         final String userValidationTopic = envProps.getProperty("userValidation.topic.name");
         registryClient.register(userValidationTopic + "-key", UserId.getClassSchema());

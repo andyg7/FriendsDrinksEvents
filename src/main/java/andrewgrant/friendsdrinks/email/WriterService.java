@@ -45,10 +45,9 @@ public class WriterService {
                                   EmailAvro emailAvro) {
         final StreamsBuilder builder = new StreamsBuilder();
 
-        final String userTopic = envProps.getProperty("user.topic.name");
-        KStream<UserId, UserEvent> userEventKStream = builder.stream(userTopic,
-                Consumed.with(userAvro.userIdSerde(),
-                        userAvro.userEventSerde()));
+        final String userTopicName = envProps.getProperty("user.topic.name");
+        KStream<UserId, UserEvent> userEventKStream = builder.stream(userTopicName,
+                userAvro.consumedWith());
 
         KStream<UserId, EmailEvent> createUserEmailEvent = userEventKStream.filter(((key, value) ->
                 value.getEventType().equals(EventType.CREATE_USER_RESPONSE)
@@ -75,9 +74,7 @@ public class WriterService {
         KStream<EmailId, EmailEvent> createUserEmailEventKeyedByEmailId =
                 createUserEmailEvent.selectKey(((key, value) -> value.getEmailId()));
 
-        createUserEmailEventKeyedByEmailId.to(emailTopic,
-                Produced.with(emailAvro.emailIdSerde(),
-                        emailAvro.emailEventSerde()));
+        createUserEmailEventKeyedByEmailId.to(emailTopic, emailAvro.producedWith());
 
         KStream<UserId, DeleteUserResponse> deleteUserResponses =
                 userEventKStream.filter(((key, value) ->
@@ -86,8 +83,7 @@ public class WriterService {
         )).mapValues(value -> value.getDeleteUserResponse());
 
         KStream<UserId, EmailEvent> emailsKeyedByUserId = builder.stream(emailTopic,
-                Consumed.with(emailAvro.emailIdSerde(),
-                        emailAvro.emailEventSerde()))
+                emailAvro.consumedWith())
                 .filter(((key, value) -> value.getEventType()
                         .equals(andrewgrant.friendsdrinks.email.avro.EventType.RESERVED)))
                 .selectKey((key, value) -> new UserId(value.getUserId()));
@@ -118,9 +114,7 @@ public class WriterService {
                                 .build())
                 .selectKey((key, value) -> value.getEmailId());
 
-        returnedEmailKStream.to(emailTopic,
-                Produced.with(emailAvro.emailIdSerde(),
-                        emailAvro.emailEventSerde()));
+        returnedEmailKStream.to(emailTopic, emailAvro.producedWith());
 
         return builder.build();
     }
@@ -133,8 +127,10 @@ public class WriterService {
 
         WriterService writerService = new WriterService();
         Properties envProps = loadEnvProperties(args[0]);
-        UserAvro userAvro = new UserAvro(envProps.getProperty("schema.registry.url"));
-        EmailAvro emailAvro = new EmailAvro(envProps.getProperty("schema.registry.url"));
+        UserAvro userAvro =
+                new UserAvro(envProps.getProperty("schema.registry.url"));
+        EmailAvro emailAvro =
+                new EmailAvro(envProps.getProperty("schema.registry.url"));
         Topology topology = writerService.buildTopology(envProps,
                 userAvro, emailAvro);
         log.debug("Built stream");

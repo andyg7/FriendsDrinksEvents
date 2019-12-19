@@ -45,9 +45,9 @@ public class ValidationServiceTest {
         envProps = loadEnvProperties(TEST_CONFIG_FILE);
         MockSchemaRegistryClient registryClient = new MockSchemaRegistryClient();
         // user topic
-        final String userTopic = envProps.getProperty("user.topic.name");
-        registryClient.register(userTopic + "-key", UserId.getClassSchema());
-        registryClient.register(userTopic + "-value", UserEvent.getClassSchema());
+        final String userTopicName = envProps.getProperty("user.topic.name");
+        registryClient.register(userTopicName + "-key", UserId.getClassSchema());
+        registryClient.register(userTopicName + "-value", UserEvent.getClassSchema());
         // user validation topic
         final String userValidationTopic = envProps.getProperty("userValidation.topic.name");
         registryClient.register(userValidationTopic + "-key", UserId.getClassSchema());
@@ -120,10 +120,10 @@ public class ValidationServiceTest {
 
         ConsumerRecordFactory<UserId, UserEvent> inputFactory =
                 new ConsumerRecordFactory<>(userIdSerializer, userEventSerializer);
-        final String userTopic = envProps.getProperty("user.topic.name");
+        final String userTopicName = envProps.getProperty("user.topic.name");
         for (UserEvent userEvent : userEvents) {
             testDriver.pipeInput(
-                    inputFactory.create(userTopic,
+                    inputFactory.create(userTopicName,
                             userEvent.getCreateUserRequest().getUserId(), userEvent));
         }
 
@@ -140,7 +140,7 @@ public class ValidationServiceTest {
                     .setCreateUserRequest(userRequest)
                     .build();
             testDriver.pipeInput(
-                    inputFactory.create(userTopic,
+                    inputFactory.create(userTopicName,
                             user.getCreateUserRequest().getUserId(), user));
         }
 

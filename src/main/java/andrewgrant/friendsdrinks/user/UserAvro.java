@@ -2,6 +2,8 @@ package andrewgrant.friendsdrinks.user;
 
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serializer;
+import org.apache.kafka.streams.kstream.Consumed;
+import org.apache.kafka.streams.kstream.Produced;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,7 +16,7 @@ import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 
 
 /**
- * Class for building User serializer and deserializer.
+ * Class for building serialization related for user topic.
  */
 public class UserAvro {
 
@@ -156,4 +158,13 @@ public class UserAvro {
         serde.configure(config, true);
         return serde.deserializer();
     }
+
+    public Consumed<UserId, UserEvent> consumedWith() {
+        return Consumed.with(userIdSerde(), userEventSerde());
+    }
+
+    public Produced<UserId, UserEvent> producedWith() {
+        return Produced.with(userIdSerde(), userEventSerde());
+    }
+
 }

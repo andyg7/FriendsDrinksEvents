@@ -2,6 +2,8 @@ package andrewgrant.friendsdrinks.email;
 
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serializer;
+import org.apache.kafka.streams.kstream.Consumed;
+import org.apache.kafka.streams.kstream.Produced;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -113,6 +115,14 @@ public class EmailAvro {
                 registryUrl);
         serde.configure(config, true);
         return serde.deserializer();
+    }
+
+    public Consumed<EmailId, EmailEvent> consumedWith() {
+        return Consumed.with(emailIdSerde(), emailEventSerde());
+    }
+
+    public Produced<EmailId, EmailEvent> producedWith() {
+        return Produced.with(emailIdSerde(), emailEventSerde());
     }
 
 }

@@ -35,11 +35,9 @@ public class ValidationAggregatorService {
         StreamsBuilder builder = new StreamsBuilder();
         final String userValidationsTopic = envProps.getProperty("userValidation.topic.name");
 
-        SpecificAvroSerde<UserId> userIdSerde = userAvro.userIdSerde();
         SpecificAvroSerde<UserEvent> userEventSerde = userAvro.userEventSerde();
         KStream<UserId, UserEvent> userValidations = builder
-                .stream(userValidationsTopic, Consumed.with(
-                        userIdSerde, userEventSerde));
+                .stream(userValidationsTopic, userAvro.consumedWith());
 
         // Re-key by request id.
         KStream<String, UserEvent> validationResultsKeyedByRequestId = userValidations
@@ -92,9 +90,9 @@ public class ValidationAggregatorService {
                 .filter(((key, value) -> value != null))
                 .filter(((key, value) -> value >= 2L));
 
-        final String userTopic = envProps.getProperty("user.topic.name");
+        final String userTopicName = envProps.getProperty("user.topic.name");
         KStream<UserId, UserEvent> userEvents = builder.stream(
-                userTopic, Consumed.with(userIdSerde, userEventSerde));
+                userTopicName, userAvro.consumedWith());
 
         KStream<String, CreateUserRequest> createUserRequestsKeyedByRequestId = userEvents
                 .filter(((key, value) ->
@@ -127,7 +125,7 @@ public class ValidationAggregatorService {
                 JoinWindows.of(Duration.ofSeconds(10)),
                 Joined.with(Serdes.String(), Serdes.Long(), createUserRequestSerde))
                 .selectKey(((key, value) -> value.getCreateUserResponse().getUserId()))
-                .to(userTopic, Produced.with(userIdSerde, userEventSerde));
+                .to(userTopicName, userAvro.producedWith());
 
         SpecificAvroSerde<DeleteUserRequest> deleteUserRequestSerde =
                 userAvro.deleteUserRequestSerde();
@@ -146,7 +144,7 @@ public class ValidationAggregatorService {
                 JoinWindows.of(Duration.ofSeconds(10)),
                 Joined.with(Serdes.String(), Serdes.Long(), deleteUserRequestSerde))
                 .selectKey(((key, value) -> value.getDeleteUserResponse().getUserId()))
-                .to(userTopic, Produced.with(userIdSerde, userEventSerde));
+                .to(userTopicName, userAvro.producedWith());
 
         KStream<String, CreateUserRequest> createUserRequestsKeyedByRequestId2 = userEvents
                 .filter(((key, value) ->
@@ -182,7 +180,7 @@ public class ValidationAggregatorService {
                 .reduce((key, value) -> value)
                 .toStream()
                 .selectKey(((key, value) -> value.getCreateUserResponse().getUserId()))
-                .to(userTopic, Produced.with(userIdSerde, userEventSerde));
+                .to(userTopicName, userAvro.producedWith());
 
         // Rejected delete user requests
         validationResultsKeyedByRequestId.filter(((key, value) ->
@@ -205,7 +203,7 @@ public class ValidationAggregatorService {
                 .reduce((key, value) -> value)
                 .toStream()
                 .selectKey(((key, value) -> value.getDeleteUserResponse().getUserId()))
-                .to(userTopic, Produced.with(userIdSerde, userEventSerde));
+                .to(userTopicName, userAvro.producedWith());
 
         return builder.build();
     }

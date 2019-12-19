@@ -41,9 +41,9 @@ public class ValidationAggregatorServiceTest {
         envProps = loadEnvProperties(TEST_CONFIG_FILE);
         MockSchemaRegistryClient registryClient = new MockSchemaRegistryClient();
         // user topic
-        final String userTopic = envProps.getProperty("user.topic.name");
-        registryClient.register(userTopic + "-key", UserId.getClassSchema());
-        registryClient.register(userTopic + "-value", UserEvent.getClassSchema());
+        final String userTopicName = envProps.getProperty("user.topic.name");
+        registryClient.register(userTopicName + "-key", UserId.getClassSchema());
+        registryClient.register(userTopicName + "-value", UserEvent.getClassSchema());
         // user validation topic
         final String userValidationTopic = envProps.getProperty("userValidation.topic.name");
         registryClient.register(userValidationTopic + "-key", UserId.getClassSchema());
@@ -84,9 +84,9 @@ public class ValidationAggregatorServiceTest {
 
         ConsumerRecordFactory<UserId, UserEvent> inputFactory =
                 new ConsumerRecordFactory<>(userIdSerializer, userEventSerializer);
-        final String userTopic = envProps.getProperty("user.topic.name");
+        final String userTopicName = envProps.getProperty("user.topic.name");
         // Pipe initial request to user topic.
-        testDriver.pipeInput(inputFactory.create(userTopic,
+        testDriver.pipeInput(inputFactory.create(userTopicName,
                 userEventRequest.getCreateUserRequest().getUserId(),
                 userEventRequest));
 
@@ -130,7 +130,7 @@ public class ValidationAggregatorServiceTest {
         List<UserEvent> output = new ArrayList<>();
         while (true) {
             ProducerRecord<UserId, UserEvent> userEventRecord = testDriver.readOutput(
-                    userTopic, userIdDeserializer, userDeserializer);
+                    userTopicName, userIdDeserializer, userDeserializer);
             if (userEventRecord != null) {
                 if (userEventRecord.value().getEventType().equals(EventType.CREATE_USER_RESPONSE)) {
                     output.add(userEventRecord.value());
@@ -167,9 +167,9 @@ public class ValidationAggregatorServiceTest {
 
         ConsumerRecordFactory<UserId, UserEvent> inputFactory =
                 new ConsumerRecordFactory<>(userIdSerializer, userEventSerializer);
-        final String userTopic = envProps.getProperty("user.topic.name");
+        final String userTopicName = envProps.getProperty("user.topic.name");
         // Pipe initial request to user topic.
-        testDriver.pipeInput(inputFactory.create(userTopic,
+        testDriver.pipeInput(inputFactory.create(userTopicName,
                 userEventRequest.getCreateUserRequest().getUserId(),
                 userEventRequest));
 
@@ -219,7 +219,7 @@ public class ValidationAggregatorServiceTest {
         List<UserEvent> output = new ArrayList<>();
         while (true) {
             ProducerRecord<UserId, UserEvent> userEventRecord = testDriver.readOutput(
-                    userTopic, userIdDeserializer, userDeserializer);
+                    userTopicName, userIdDeserializer, userDeserializer);
             if (userEventRecord != null &&
                     !userEventRecord.value().getEventType().equals(EventType.CREATE_USER_REQUEST)) {
                 output.add(userEventRecord.value());
@@ -253,9 +253,9 @@ public class ValidationAggregatorServiceTest {
 
         ConsumerRecordFactory<UserId, UserEvent> inputFactory =
                 new ConsumerRecordFactory<>(userIdSerializer, userEventSerializer);
-        final String userTopic = envProps.getProperty("user.topic.name");
+        final String userTopicName = envProps.getProperty("user.topic.name");
         // Pipe initial request to user topic.
-        testDriver.pipeInput(inputFactory.create(userTopic,
+        testDriver.pipeInput(inputFactory.create(userTopicName,
                 userEventRequest.getDeleteUserRequest().getUserId(),
                 userEventRequest));
 
@@ -285,7 +285,7 @@ public class ValidationAggregatorServiceTest {
         List<UserEvent> output = new ArrayList<>();
         while (true) {
             ProducerRecord<UserId, UserEvent> userEventRecord = testDriver.readOutput(
-                    userTopic, userIdDeserializer, userDeserializer);
+                    userTopicName, userIdDeserializer, userDeserializer);
             if (userEventRecord != null) {
                 if (userEventRecord.value().getEventType().equals(EventType.DELETE_USER_RESPONSE)) {
                     output.add(userEventRecord.value());

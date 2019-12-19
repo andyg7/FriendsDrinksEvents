@@ -33,12 +33,10 @@ public class ValidationService {
                                   UserAvro userAvro) {
         final StreamsBuilder builder = new StreamsBuilder();
 
-        final String userTopic = envProps.getProperty("user.topic.name");
+        final String userTopicName = envProps.getProperty("user.topic.name");
         final String fraudTmpTopic = envProps.getProperty("fraudTmp.topic.name");
         KStream<UserId, UserEvent> users = builder
-                .stream(userTopic,
-                        Consumed.with(userAvro.userIdSerde(),
-                                userAvro.userEventSerde()));
+                .stream(userTopicName, userAvro.consumedWith());
 
         users.filter(((key, value) -> value.getEventType().equals(EventType.CREATE_USER_REQUEST)))
                 .groupByKey(
@@ -95,9 +93,7 @@ public class ValidationService {
                             .setCreateUserValidated(userValidated)
                             .build();
                 })
-                .to(userValidationsTopic, Produced.with(
-                        userAvro.userIdSerde(),
-                        userAvro.userEventSerde()));
+                .to(userValidationsTopic, userAvro.producedWith());
 
         // Rejected requests.
         trackedUserResults[1].mapValues(value -> value.getRequest())
@@ -113,9 +109,7 @@ public class ValidationService {
                             .setCreateUserRejected(userRejected)
                             .build();
                 })
-                .to(userValidationsTopic, Produced.with(
-                        userAvro.userIdSerde(),
-                        userAvro.userEventSerde()));
+                .to(userValidationsTopic, userAvro.producedWith());
 
         return builder.build();
     }

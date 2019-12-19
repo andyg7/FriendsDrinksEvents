@@ -29,12 +29,12 @@ public class ValidationService {
                                   UserAvro userAvro) {
 
         StreamsBuilder builder = new StreamsBuilder();
-        final String usersTopic = envProps.getProperty("user.topic.name");
+        final String userTopicName = envProps.getProperty("user.topic.name");
 
         SpecificAvroSerde<UserId> userIdSerde = userAvro.userIdSerde();
         SpecificAvroSerde<UserEvent> userEventSerde = userAvro.userEventSerde();
-        KStream<UserId, UserEvent> rawUserKStream = builder.stream(usersTopic,
-                Consumed.with(userIdSerde, userEventSerde));
+        KStream<UserId, UserEvent> rawUserKStream = builder.stream(userTopicName,
+                userAvro.consumedWith());
 
         final String usersTmpTopic = envProps.getProperty("userTmp.topic.name");
         rawUserKStream.filter(((key, value) -> value.getEventType()

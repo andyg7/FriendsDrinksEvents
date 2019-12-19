@@ -45,9 +45,9 @@ public class WriterServiceTest {
         envProps = loadEnvProperties(TEST_CONFIG_FILE);
         MockSchemaRegistryClient registryClient = new MockSchemaRegistryClient();
         // user topic
-        final String userTopic = envProps.getProperty("user.topic.name");
-        registryClient.register(userTopic + "-key", UserId.getClassSchema());
-        registryClient.register(userTopic + "-value", UserEvent.getClassSchema());
+        final String userTopicName = envProps.getProperty("user.topic.name");
+        registryClient.register(userTopicName + "-key", UserId.getClassSchema());
+        registryClient.register(userTopicName + "-value", UserEvent.getClassSchema());
         // user validation topic
         final String userValidationTopic = envProps.getProperty("userValidation.topic.name");
         registryClient.register(userValidationTopic + "-key", UserId.getClassSchema());
@@ -119,9 +119,9 @@ public class WriterServiceTest {
                         .setCreateUserResponse(createUserResponseFail)
                         .setEventType(EventType.CREATE_USER_RESPONSE).build());
 
-        final String userTopic = envProps.getProperty("user.topic.name");
+        final String userTopicName = envProps.getProperty("user.topic.name");
         for (UserEvent user : input) {
-            testDriver.pipeInput(inputFactory.create(userTopic,
+            testDriver.pipeInput(inputFactory.create(userTopicName,
                     user.getCreateUserResponse().getUserId(), user));
         }
 
@@ -187,9 +187,9 @@ public class WriterServiceTest {
         ConsumerRecordFactory<UserId, UserEvent> userInputFactory =
                 new ConsumerRecordFactory<>(userIdSerializer, userSerializer);
 
-        final String userTopic = envProps.getProperty("user.topic.name");
+        final String userTopicName = envProps.getProperty("user.topic.name");
         for (UserEvent user : input) {
-            testDriver.pipeInput(userInputFactory.create(userTopic,
+            testDriver.pipeInput(userInputFactory.create(userTopicName,
                     user.getDeleteUserResponse().getUserId(), user));
         }
 

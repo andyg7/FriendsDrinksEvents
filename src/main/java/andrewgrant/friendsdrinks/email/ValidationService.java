@@ -78,10 +78,9 @@ public class ValidationService {
                 Consumed.with(emailAvro.emailIdSerde(),
                         emailAvro.emailEventSerde()));
 
-        final String userTopic = envProps.getProperty("user.topic.name");
-        KStream<UserId, UserEvent> userIdKStream = builder.stream(userTopic,
-                Consumed.with(userAvro.userIdSerde(),
-                        userAvro.userEventSerde()));
+        final String userTopicName = envProps.getProperty("user.topic.name");
+        KStream<UserId, UserEvent> userIdKStream = builder.stream(userTopicName,
+                userAvro.consumedWith());
 
 
         KStream<UserId, EmailEvent> emailStreamKeyedByUserId = emailKStreamRaw
@@ -166,13 +165,8 @@ public class ValidationService {
                         }));
 
         final String userValidationTopic = envProps.getProperty("userValidation.topic.name");
-        validatedCreateUser.to(userValidationTopic,
-                Produced.with(
-                        userAvro.userIdSerde(),
-                        userAvro.userEventSerde()));
-        validatedDeleteUser.to(userValidationTopic,
-                Produced.with(userAvro.userIdSerde(),
-                        userAvro.userEventSerde()));
+        validatedCreateUser.to(userValidationTopic, userAvro.producedWith());
+        validatedDeleteUser.to(userValidationTopic, userAvro.producedWith());
 
         return builder.build();
     }
@@ -185,8 +179,10 @@ public class ValidationService {
 
         ValidationService validationService = new ValidationService();
         Properties envProps = loadEnvProperties(args[0]);
-        UserAvro userAvro = new UserAvro(envProps.getProperty("schema.registry.url"));
-        EmailAvro emailAvro = new EmailAvro(envProps.getProperty("schema.registry.url"));
+        UserAvro userAvro =
+                new UserAvro(envProps.getProperty("schema.registry.url"));
+        EmailAvro emailAvro =
+                new EmailAvro(envProps.getProperty("schema.registry.url"));
         Topology topology = validationService.buildTopology(envProps,
                 userAvro, emailAvro);
         log.debug("Built stream");
