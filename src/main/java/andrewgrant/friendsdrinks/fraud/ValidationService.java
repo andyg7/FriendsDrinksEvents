@@ -34,7 +34,7 @@ public class ValidationService {
         final StreamsBuilder builder = new StreamsBuilder();
 
         final String userTopicName = envProps.getProperty("user.topic.name");
-        final String fraudTmpTopic = envProps.getProperty("fraudTmp.topic.name");
+        final String fraudPrivateTopic = envProps.getProperty("fraudPrivate.topic.name");
         KStream<UserId, UserEvent> users = builder
                 .stream(userTopicName, userAvro.consumedWith());
 
@@ -51,11 +51,11 @@ public class ValidationService {
                 )
                 // Get rid of windowed key.
                 .toStream(((key, value) -> key.key()))
-                .to(fraudTmpTopic,
+                .to(fraudPrivateTopic,
                         Produced.with(userAvro.userIdSerde(),
                                 Serdes.Long()));
 
-        KTable<UserId, Long> userRequestCount = builder.table(fraudTmpTopic,
+        KTable<UserId, Long> userRequestCount = builder.table(fraudPrivateTopic,
                 Consumed.with(userAvro.userIdSerde(),
                         Serdes.Long()));
 

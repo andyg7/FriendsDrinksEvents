@@ -66,15 +66,15 @@ public class ValidationService {
                 .transform(PendingEmailsStateStoreCleaner::new, PENDING_EMAILS_STORE_NAME);
 
         // Write events to a tmp topic so we can rebuild a table
-        final String emailTmp1Topic = envProps.getProperty("emailTmp1.topic.name");
+        final String emailPrivate1Topic = envProps.getProperty("emailPrivate1.topic.name");
         emailKStream.filter(((key, value) -> value.getEventType().equals(
                 andrewgrant.friendsdrinks.email.avro.EventType.RESERVED)))
-                .to(emailTmp1Topic,
+                .to(emailPrivate1Topic,
                         Produced.with(emailAvro.emailIdSerde(),
                                 emailAvro.emailEventSerde()));
 
         // Rebuild table. id -> reserved emails.
-        KTable<EmailId, EmailEvent> emailKTable = builder.table(emailTmp1Topic,
+        KTable<EmailId, EmailEvent> emailKTable = builder.table(emailPrivate1Topic,
                 Consumed.with(emailAvro.emailIdSerde(),
                         emailAvro.emailEventSerde()));
 
@@ -86,13 +86,13 @@ public class ValidationService {
         KStream<UserId, EmailEvent> emailStreamKeyedByUserId = emailKStreamRaw
                 .selectKey(((key, value) -> new UserId(value.getUserId())));
 
-        final String emailTmp2Topic = envProps.getProperty("emailTmp2.topic.name");
-        emailStreamKeyedByUserId.to(emailTmp2Topic,
+        final String emailPrivate2Topic = envProps.getProperty("emailPrivate2.topic.name");
+        emailStreamKeyedByUserId.to(emailPrivate2Topic,
                 Produced.with(
                         userAvro.userIdSerde(),
                         emailAvro.emailEventSerde()));
 
-        KTable<UserId, EmailEvent> emailTableKeyedByUserId = builder.table(emailTmp2Topic,
+        KTable<UserId, EmailEvent> emailTableKeyedByUserId = builder.table(emailPrivate2Topic,
                 Consumed.with(userAvro.userIdSerde(),
                         emailAvro.emailEventSerde()));
 

@@ -43,9 +43,9 @@ public class ValidationServiceTest {
         final String userTopicName = envProps.getProperty("user.topic.name");
         registryClient.register(userTopicName + "-key", UserId.getClassSchema());
         registryClient.register(userTopicName + "-value", UserEvent.getClassSchema());
-        final String userTmpTopic = envProps.getProperty("userTmp.topic.name");
-        registryClient.register(userTmpTopic + "-key", UserId.getClassSchema());
-        registryClient.register(userTmpTopic + "-value", UserEvent.getClassSchema());
+        final String userPrivateTopic = envProps.getProperty("userPrivate.topic.name");
+        registryClient.register(userPrivateTopic + "-key", UserId.getClassSchema());
+        registryClient.register(userPrivateTopic + "-value", UserEvent.getClassSchema());
         // user validation topic
         final String userValidationTopic = envProps.getProperty("userValidation.topic.name");
         registryClient.register(userValidationTopic + "-key", UserId.getClassSchema());

@@ -56,15 +56,15 @@ public class WriterServiceTest {
         final String emailTopic = envProps.getProperty("email.topic.name");
         registryClient.register(emailTopic + "-key", EmailId.getClassSchema());
         registryClient.register(emailTopic + "-value", EmailEvent.getClassSchema());
-        final String emailTmp1Topic = envProps.getProperty("emailTmp1.topic.name");
-        registryClient.register(emailTmp1Topic + "-key", EmailId.getClassSchema());
-        registryClient.register(emailTmp1Topic + "-value", EmailEvent.getClassSchema());
-        final String emailTmp2Topic = envProps.getProperty("emailTmp2.topic.name");
-        registryClient.register(emailTmp2Topic + "-key", UserId.getClassSchema());
-        registryClient.register(emailTmp2Topic + "-value", EmailEvent.getClassSchema());
-        final String emailTmp3Topic = envProps.getProperty("emailTmp3.topic.name");
-        registryClient.register(emailTmp3Topic + "-key", UserId.getClassSchema());
-        registryClient.register(emailTmp3Topic + "-value", EmailEvent.getClassSchema());
+        final String emailPrivate1Topic = envProps.getProperty("emailPrivate1.topic.name");
+        registryClient.register(emailPrivate1Topic + "-key", EmailId.getClassSchema());
+        registryClient.register(emailPrivate1Topic + "-value", EmailEvent.getClassSchema());
+        final String emailPrivate2Topic = envProps.getProperty("emailPrivate2.topic.name");
+        registryClient.register(emailPrivate2Topic + "-key", UserId.getClassSchema());
+        registryClient.register(emailPrivate2Topic + "-value", EmailEvent.getClassSchema());
+        final String emailPrivate3Topic = envProps.getProperty("emailPrivate3.topic.name");
+        registryClient.register(emailPrivate3Topic + "-key", UserId.getClassSchema());
+        registryClient.register(emailPrivate3Topic + "-value", EmailEvent.getClassSchema());
         userAvro = new UserAvro(
                 envProps.getProperty("schema.registry.url"),
                 registryClient);

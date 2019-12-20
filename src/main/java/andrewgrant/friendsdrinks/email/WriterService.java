@@ -88,14 +88,14 @@ public class WriterService {
                         .equals(andrewgrant.friendsdrinks.email.avro.EventType.RESERVED)))
                 .selectKey((key, value) -> new UserId(value.getUserId()));
 
-        final String emailTmpTopic = envProps.getProperty("emailTmp3.topic.name");
-        emailsKeyedByUserId.to(emailTmpTopic,
+        final String emailPrivateTopic = envProps.getProperty("emailPrivate3.topic.name");
+        emailsKeyedByUserId.to(emailPrivateTopic,
                 Produced.with(
                         userAvro.userIdSerde(),
                         emailAvro.emailEventSerde()));
 
         KTable<UserId, EmailEvent> emailKTableKeyedByUserId = builder.table(
-                emailTmpTopic,
+                emailPrivateTopic,
                 Consumed.with(userAvro.userIdSerde(),
                         emailAvro.emailEventSerde()));
 

@@ -36,14 +36,14 @@ public class ValidationService {
         KStream<UserId, UserEvent> rawUserKStream = builder.stream(userTopicName,
                 userAvro.consumedWith());
 
-        final String usersTmpTopic = envProps.getProperty("userTmp.topic.name");
+        final String usersPrivateTopic = envProps.getProperty("userPrivate.topic.name");
         rawUserKStream.filter(((key, value) -> value.getEventType()
                 .equals(EventType.CREATE_USER_RESPONSE) &&
                 value.getCreateUserResponse().getResult().equals(Result.SUCCESS)))
-                .to(usersTmpTopic,
+                .to(usersPrivateTopic,
                         Produced.with(userIdSerde, userEventSerde));
 
-        KTable<UserId, UserEvent> userKTable = builder.table(usersTmpTopic,
+        KTable<UserId, UserEvent> userKTable = builder.table(usersPrivateTopic,
                 Consumed.with(userIdSerde, userEventSerde));
 
         KStream<UserId, DeleteUserRequest> deleteRequestKStream = rawUserKStream
