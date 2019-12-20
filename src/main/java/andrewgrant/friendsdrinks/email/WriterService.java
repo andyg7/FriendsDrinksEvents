@@ -2,6 +2,7 @@ package andrewgrant.friendsdrinks.email;
 
 import static andrewgrant.friendsdrinks.env.Properties.loadEnvProperties;
 
+import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
@@ -10,6 +11,7 @@ import org.apache.kafka.streams.kstream.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
@@ -49,26 +51,46 @@ public class WriterService {
         KStream<UserId, UserEvent> userEventKStream = builder.stream(userTopicName,
                 userAvro.consumedWith());
 
-        KStream<UserId, EmailEvent> createUserEmailEvent = userEventKStream.filter(((key, value) ->
-                value.getEventType().equals(EventType.CREATE_USER_RESPONSE)
-        )).mapValues((key, value) -> {
-            EmailEvent email = new EmailEvent();
-            CreateUserResponse response = value.getCreateUserResponse();
-            email.setEmailId(new EmailId(response.getEmail()));
-            email.setUserId(response.getUserId().getId());
-            if (value.getCreateUserResponse().getResult().equals(Result.SUCCESS)) {
-                email.setEventType(andrewgrant.friendsdrinks.email.avro
-                        .EventType.RESERVED);
-                return email;
-            } else if (value.getCreateUserResponse().getResult().equals(Result.FAIL)) {
-                email.setEventType(andrewgrant.friendsdrinks.email.avro
-                        .EventType.REJECTED);
-                return email;
-            } else {
-                throw new RuntimeException(String.format("Received unknown Result %s",
-                        value.getCreateUserResponse().getResult().toString()));
-            }
-        });
+        KStream<String, CreateUserRequest> createUserRequests =
+                userEventKStream.filter(((key, value) ->
+                        value.getEventType().equals(EventType.CREATE_USER_REQUEST)))
+                        .mapValues(value -> value.getCreateUserRequest())
+                        .selectKey((key, value) -> value.getRequestId());
+
+        KStream<String, CreateUserResponse> createUserResponses =
+                userEventKStream.filter(((key, value) ->
+                        value.getEventType().equals(EventType.CREATE_USER_RESPONSE)))
+                        .mapValues(value -> value.getCreateUserResponse())
+                        .selectKey((key, value) -> value.getRequestId());
+
+        KStream<UserId, EmailEvent> createUserEmailEvent = createUserResponses
+                .join(createUserRequests,
+                        (leftValue, rightValue) -> {
+                            EmailEvent email = new EmailEvent();
+                            email.setEmailId(new EmailId(rightValue.getEmail()));
+                            email.setUserId(rightValue.getUserId().getId());
+                            if (leftValue.getResult().equals(Result.SUCCESS)) {
+                                email.setEventType(andrewgrant.friendsdrinks.email.avro
+                                        .EventType.RESERVED);
+                                return email;
+                            } else if (leftValue.getResult().equals(Result.FAIL)){
+                                email.setEventType(andrewgrant.friendsdrinks.email.avro
+                                        .EventType.REJECTED);
+                                return email;
+                            } else {
+                                throw new RuntimeException(
+                                        String.format("Received unknown Result %s",
+                                                leftValue.getResult().toString()));
+                            }
+                        },
+                        JoinWindows.of(Duration.ofSeconds(10)),
+                        Joined.with(
+                                Serdes.String(),
+                                userAvro.createUserResponseSerde(),
+                                userAvro.createUserRequestSerde()))
+                .selectKey((key, value) -> new UserId(value.getUserId()));
+
+
         final String emailTopic = envProps.getProperty("email.topic.name");
         // Re-key on email before publishing to email topic.
         KStream<EmailId, EmailEvent> createUserEmailEventKeyedByEmailId =

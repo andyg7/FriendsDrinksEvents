@@ -75,7 +75,6 @@ public class ValidationServiceTest {
                 .setUserId(userId)
                 .setResult(Result.SUCCESS)
                 .setRequestId("1")
-                .setEmail("email")
                 .build();
 
         UserEvent userEventResponse = UserEvent.newBuilder()

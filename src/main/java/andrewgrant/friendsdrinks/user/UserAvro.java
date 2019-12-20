@@ -103,6 +103,20 @@ public class UserAvro {
         return serde;
     }
 
+    public SpecificAvroSerde<CreateUserResponse> createUserResponseSerde() {
+        SpecificAvroSerde<CreateUserResponse> serde;
+        if (registryClient != null) {
+            serde = new SpecificAvroSerde<>(registryClient);
+        } else {
+            serde = new SpecificAvroSerde<>();
+        }
+        Map<String, String> config = new HashMap<>();
+        config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
+                registryUrl);
+        serde.configure(config, false);
+        return serde;
+    }
+
     public SpecificAvroSerde<DeleteUserRequest> deleteUserRequestSerde() {
         SpecificAvroSerde<DeleteUserRequest> serde;
         if (registryClient != null) {

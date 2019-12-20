@@ -96,24 +96,41 @@ public class WriterServiceTest {
                 new ConsumerRecordFactory<>(userIdSerializer, userSerializer);
 
         List<UserEvent> input = new ArrayList<>();
+        CreateUserRequest createUserRequestSuccess = CreateUserRequest.newBuilder()
+                .setRequestId("1")
+                .setUserId(new UserId("user1"))
+                .setEmail("email1")
+                .build();
+
         CreateUserResponse createUserResponseSuccess = CreateUserResponse.newBuilder()
                 .setRequestId("1")
-                .setUserId(new UserId(UUID.randomUUID().toString()))
-                .setEmail("email1")
+                .setUserId(new UserId("user1"))
                 .setResult(Result.SUCCESS)
                 .build();
 
+        CreateUserRequest createUserRequestFail = CreateUserRequest.newBuilder()
+                .setRequestId("2")
+                .setUserId(new UserId("user2"))
+                .setEmail("email1")
+                .build();
         CreateUserResponse createUserResponseFail = CreateUserResponse.newBuilder()
                 .setRequestId("2")
-                .setUserId(new UserId(UUID.randomUUID().toString()))
-                .setEmail("email2")
+                .setUserId(new UserId("user2"))
                 .setResult(Result.FAIL)
                 .build();
 
         input.add(
                 UserEvent.newBuilder()
+                        .setCreateUserRequest(createUserRequestSuccess)
+                        .setEventType(EventType.CREATE_USER_REQUEST).build());
+        input.add(
+                UserEvent.newBuilder()
                         .setCreateUserResponse(createUserResponseSuccess)
                         .setEventType(EventType.CREATE_USER_RESPONSE).build());
+        input.add(
+                UserEvent.newBuilder()
+                        .setCreateUserRequest(createUserRequestFail)
+                        .setEventType(EventType.CREATE_USER_REQUEST).build());
         input.add(
                 UserEvent.newBuilder()
                         .setCreateUserResponse(createUserResponseFail)
@@ -121,8 +138,13 @@ public class WriterServiceTest {
 
         final String userTopicName = envProps.getProperty("user.topic.name");
         for (UserEvent user : input) {
-            testDriver.pipeInput(inputFactory.create(userTopicName,
-                    user.getCreateUserResponse().getUserId(), user));
+            if (user.getCreateUserResponse() != null) {
+                testDriver.pipeInput(inputFactory.create(userTopicName,
+                        user.getCreateUserResponse().getUserId(), user));
+            } else {
+                testDriver.pipeInput(inputFactory.create(userTopicName,
+                        user.getCreateUserRequest().getUserId(), user));
+            }
         }
 
         Deserializer<EmailId> emailIdDeserializer = emailAvro

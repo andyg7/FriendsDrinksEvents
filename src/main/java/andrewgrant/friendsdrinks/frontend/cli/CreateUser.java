@@ -1,4 +1,4 @@
-package andrewgrant.friendsdrinks.frontend;
+package andrewgrant.friendsdrinks.frontend.cli;
 
 import static andrewgrant.friendsdrinks.env.Properties.loadEnvProperties;
 
@@ -22,7 +22,7 @@ import andrewgrant.friendsdrinks.user.avro.UserId;
 /**
  * Bootstraps schemas.
  */
-public class CreateUserRequestCli {
+public class CreateUser {
 
     public static void main(String[] args) throws IOException,
             ExecutionException,

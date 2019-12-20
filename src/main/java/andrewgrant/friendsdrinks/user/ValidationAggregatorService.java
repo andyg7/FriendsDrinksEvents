@@ -115,7 +115,6 @@ public class ValidationAggregatorService {
                             .setRequestId(rightValue.getRequestId())
                             .setUserId(rightValue.getUserId())
                             .setResult(Result.SUCCESS)
-                            .setEmail(rightValue.getEmail())
                             .build();
                     return UserEvent.newBuilder()
                             .setEventType(EventType.CREATE_USER_RESPONSE)
@@ -166,7 +165,6 @@ public class ValidationAggregatorService {
                     CreateUserResponse response = CreateUserResponse.newBuilder()
                             .setRequestId(rightValue.getRequestId())
                             .setUserId(rightValue.getUserId())
-                            .setEmail(rightValue.getEmail())
                             .setResult(Result.FAIL)
                             .build();
                     return UserEvent.newBuilder()
