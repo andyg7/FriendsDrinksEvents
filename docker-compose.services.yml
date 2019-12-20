@@ -2,7 +2,7 @@
 version: '3.7'
 
 services:
-  email-writer:
+  email-writer-1:
    image: fdimage:latest
    networks:
      - kafka-network
@@ -11,7 +11,16 @@ services:
           java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.email.WriterService /app/dev.properties
           '"
 
-  email-validation-service:
+  email-writer-2:
+    image: fdimage:latest
+    networks:
+      - kafka-network
+    command:
+      "bash -c '
+          java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.email.WriterService /app/dev.properties
+          '"
+
+  email-validation-service-1:
     image: fdimage:latest
     networks:
       - kafka-network
@@ -20,7 +29,16 @@ services:
           java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.email.ValidationService /app/dev.properties
           '"
 
-  fraud-validation-service:
+  email-validation-service-2:
+    image: fdimage:latest
+    networks:
+      - kafka-network
+    command:
+      "bash -c '
+          java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.email.ValidationService /app/dev.properties
+          '"
+
+  fraud-validation-service-1:
     image: fdimage:latest
     networks:
       - kafka-network
@@ -29,7 +47,17 @@ services:
           java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.fraud.ValidationService /app/dev.properties
           '"
 
-  user-validation-service:
+  fraud-validation-service-2:
+    image: fdimage:latest
+    networks:
+      - kafka-network
+    command:
+      "bash -c '
+          java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.fraud.ValidationService /app/dev.properties
+          '"
+
+
+  user-validation-service-1:
     image: fdimage:latest
     networks:
       - kafka-network
@@ -38,7 +66,25 @@ services:
           java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.user.ValidationService /app/dev.properties
           '"
 
-  user-validation-aggregator-service:
+  user-validation-service-2:
+    image: fdimage:latest
+    networks:
+      - kafka-network
+    command:
+      "bash -c '
+          java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.user.ValidationService /app/dev.properties
+          '"
+
+  user-validation-aggregator-service-1:
+    image: fdimage:latest
+    networks:
+      - kafka-network
+    command:
+      "bash -c '
+          java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.user.ValidationAggregatorService /app/dev.properties
+          '"
+
+  user-validation-aggregator-service-2:
     image: fdimage:latest
     networks:
       - kafka-network
