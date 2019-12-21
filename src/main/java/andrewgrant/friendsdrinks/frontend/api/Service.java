@@ -99,6 +99,7 @@ public class Service {
 
         try {
             jettyServer.start();
+            jettyServer.join();
         } catch (final Exception e) {
             throw new RuntimeException(e);
         }
