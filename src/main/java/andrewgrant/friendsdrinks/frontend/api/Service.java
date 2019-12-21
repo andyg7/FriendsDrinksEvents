@@ -63,7 +63,8 @@ public class Service {
         return "Hello, world!";
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException,
+            InterruptedException {
         if (args.length != 2) {
             throw new IllegalArgumentException("Program expects " +
                     "1) path to config 2) app port");
@@ -76,11 +77,11 @@ public class Service {
         Properties streamProps = service.buildStreamsProperties(envProps);
         KafkaStreams streams = new KafkaStreams(topology, streamProps);
         int port = Integer.parseInt(args[1]);
-        startRestService(port, service);
-        startStreams(streams);
+        service.startRestService(port);
+        service.startStreams(streams);
     }
 
-    private static void startRestService(int port, Service service) {
+    private void startRestService(int port) {
         final ServletContextHandler context =
                 new ServletContextHandler(ServletContextHandler.SESSIONS);
         context.setContextPath("/");
@@ -89,7 +90,7 @@ public class Service {
         jettyServer.setHandler(context);
 
         final ResourceConfig rc = new ResourceConfig();
-        rc.register(service);
+        rc.register(this);
         rc.register(JacksonFeature.class);
 
         final ServletContainer sc = new ServletContainer(rc);
@@ -104,7 +105,8 @@ public class Service {
         log.info("Listening on " + jettyServer.getURI());
     }
 
-    private static void startStreams(KafkaStreams streams) {
+    private void startStreams(KafkaStreams streams)
+            throws InterruptedException {
         final CountDownLatch latch = new CountDownLatch(1);
 
         // Attach shutdown handler to catch Control-C.
@@ -116,12 +118,7 @@ public class Service {
             }
         });
 
-        try {
-            streams.start();
-            latch.await();
-        } catch (Throwable e) {
-            System.exit(1);
-        }
-        System.exit(0);
+        streams.start();
+        latch.await();
     }
 }
