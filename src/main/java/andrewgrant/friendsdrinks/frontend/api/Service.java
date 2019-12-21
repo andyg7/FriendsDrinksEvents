@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
@@ -59,7 +60,8 @@ public class Service {
         return builder.build();
     }
 
-    public Properties buildStreamsProperties(Properties envProps) {
+    public Properties buildStreamsProperties(Properties envProps,
+                                             URI uri) {
         Properties props = new Properties();
         props.put(StreamsConfig.APPLICATION_ID_CONFIG,
                 envProps.getProperty("frontend_application.id"));
@@ -67,6 +69,8 @@ public class Service {
                 envProps.getProperty("bootstrap.servers"));
         props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
                 envProps.getProperty("schema.registry.url"));
+        props.put(StreamsConfig.APPLICATION_SERVER_CONFIG,
+                uri.getHost() + ":" + uri.getPort());
         return props;
     }
 
@@ -123,14 +127,15 @@ public class Service {
                         userAvro.userEventSerializer());
         Service service = new Service(userProducer, envProps.getProperty("user.topic.name"));
         Topology topology = service.buildTopology(envProps, userAvro);
-        Properties streamProps = service.buildStreamsProperties(envProps);
+        String portStr = args[1];
+        int port = Integer.parseInt(portStr);
+        URI uri = service.startRestService(port);
+        Properties streamProps = service.buildStreamsProperties(envProps, uri);
         KafkaStreams streams = new KafkaStreams(topology, streamProps);
-        int port = Integer.parseInt(args[1]);
-        service.startRestService(port);
         service.startStreams(streams);
     }
 
-    private void startRestService(int port) {
+    private URI startRestService(int port) {
         final Server jettyServer = new Server(port);
         final ServletContextHandler context =
                 new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
@@ -147,11 +152,11 @@ public class Service {
 
         try {
             jettyServer.start();
-            jettyServer.join();
         } catch (final Exception e) {
             throw new RuntimeException(e);
         }
         log.info("Listening on " + jettyServer.getURI());
+        return jettyServer.getURI();
     }
 
     private void startStreams(KafkaStreams streams)
