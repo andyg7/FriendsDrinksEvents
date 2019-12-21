@@ -52,7 +52,7 @@ public class Service {
         props.put(StreamsConfig.APPLICATION_ID_CONFIG,
                 envProps.getProperty("frontend_application.id"));
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG,
-                "localhost:29092");
+                envProps.getProperty("bootstrap.servers"));
         return props;
     }
 
@@ -71,7 +71,8 @@ public class Service {
         }
 
         Properties envProps = loadEnvProperties(args[0]);
-        UserAvro userAvro = new UserAvro("http://localhost:8081");
+        UserAvro userAvro = new UserAvro(
+                envProps.getProperty("schema.registry.url"));
         Service service = new Service();
         Topology topology = service.buildTopology(envProps, userAvro);
         Properties streamProps = service.buildStreamsProperties(envProps);
@@ -82,19 +83,18 @@ public class Service {
     }
 
     private void startRestService(int port) {
-        final ServletContextHandler context =
-                new ServletContextHandler(ServletContextHandler.SESSIONS);
-        context.setContextPath("/");
-
         final Server jettyServer = new Server(port);
+        final ServletContextHandler context =
+                new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
+        context.setContextPath("/");
         jettyServer.setHandler(context);
 
         final ResourceConfig rc = new ResourceConfig();
         rc.register(this);
         rc.register(JacksonFeature.class);
-
         final ServletContainer sc = new ServletContainer(rc);
         final ServletHolder holder = new ServletHolder(sc);
+
         context.addServlet(holder, "/*");
 
         try {
