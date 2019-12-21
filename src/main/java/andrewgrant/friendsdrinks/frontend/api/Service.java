@@ -28,10 +28,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
 import andrewgrant.friendsdrinks.user.UserAvro;
-import andrewgrant.friendsdrinks.user.avro.CreateUserRequest;
-import andrewgrant.friendsdrinks.user.avro.EventType;
-import andrewgrant.friendsdrinks.user.avro.UserEvent;
-import andrewgrant.friendsdrinks.user.avro.UserId;
+import andrewgrant.friendsdrinks.user.avro.*;
 
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 
@@ -75,9 +72,9 @@ public class Service {
 
     @POST
     @Path("/user")
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public String createUser(final CreateUserRequestBean createUserRequest)
+    public CreateUserResponseBean createUser(final CreateUserRequestBean createUserRequest)
             throws ExecutionException, InterruptedException {
         String userIdStr = UUID.randomUUID().toString();
         UserId userId = UserId.newBuilder()
@@ -99,7 +96,10 @@ public class Service {
                         userEvent.getCreateUserRequest().getUserId(),
                         userEvent);
         userProducer.send(record).get();
-        return requestId;
+        CreateUserResponseBean responseBean =
+                new CreateUserResponseBean();
+        responseBean.setRequestId(requestId);
+        return responseBean;
     }
 
     public static void main(String[] args) throws IOException,
