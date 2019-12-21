@@ -77,7 +77,7 @@ public class Service {
     @Path("/user")
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.APPLICATION_JSON)
-    public String createUser(CreateUserRequestBean createUserRequest)
+    public String createUser(final CreateUserRequestBean createUserRequest)
             throws ExecutionException, InterruptedException {
         String userIdStr = UUID.randomUUID().toString();
         UserId userId = UserId.newBuilder()
