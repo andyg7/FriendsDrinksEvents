@@ -44,6 +44,7 @@ import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 /**
  * Implements frontend REST API for interacting with backend.
  */
+@Path("v1")
 public class Service {
 
     private static final Logger log = LoggerFactory.getLogger(Service.class);
@@ -133,8 +134,7 @@ public class Service {
         return responseBean;
     }
 
-    public static void main(String[] args) throws IOException,
-            InterruptedException {
+    public static void main(String[] args) throws IOException {
         if (args.length != 2) {
             throw new IllegalArgumentException("Program expects " +
                     "1) path to config 2) app port");
