@@ -5,12 +5,10 @@ import static andrewgrant.friendsdrinks.env.Properties.loadEnvProperties;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
-import org.apache.kafka.streams.kstream.*;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -22,73 +20,48 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
-import java.time.Duration;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
 import andrewgrant.friendsdrinks.user.UserAvro;
-import andrewgrant.friendsdrinks.user.avro.CreateUserRequest;
-import andrewgrant.friendsdrinks.user.avro.EventType;
-import andrewgrant.friendsdrinks.user.avro.UserEvent;
-import andrewgrant.friendsdrinks.user.avro.UserId;
+import andrewgrant.friendsdrinks.user.avro.*;
 
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 
 /**
  * Implements frontend REST API for interacting with backend.
  */
+@Path("v1")
 public class Service {
 
     private static final Logger log = LoggerFactory.getLogger(Service.class);
-    private final String requestsStore = "requests-store";
-
     private KafkaProducer<UserId, UserEvent> userProducer;
-    private Properties envProps;
+    private String userTopicName;
 
     public Service(KafkaProducer<UserId, UserEvent> userProducer,
-                   Properties envProps) {
+                   String userTopicName) {
         this.userProducer = userProducer;
-        this.envProps = envProps;
+        this.userTopicName = userTopicName;
     }
 
-    public Topology buildTopology(UserAvro userAvro) {
+    public Topology buildTopology(Properties envProps,
+                                  UserAvro userAvro) {
         final StreamsBuilder builder = new StreamsBuilder();
 
-        SessionWindows sessionWindows = SessionWindows.with(Duration.ofMinutes(10));
-        final long oneMinute = 1000 * 60;
-        sessionWindows = sessionWindows.until(oneMinute);
         final String userTopicName = envProps.getProperty("user.topic.name");
-        final String frontendPrivateTopicName =
-                envProps.getProperty("frontendPrivate.topic.name");
-        builder.stream(userTopicName,
-                userAvro.consumedWith())
-                .filter(((key, value) ->
-                        value.getEventType().equals(EventType.CREATE_USER_RESPONSE)))
-                .mapValues(value -> value.getCreateUserResponse())
-                .selectKey((key, value) -> value.getRequestId())
-                .groupByKey(Grouped.with(
-                        Serdes.String(),
-                        userAvro.createUserResponseSerde()))
-                .windowedBy(sessionWindows)
-                .reduce((value1, value2) -> value1)
-                .toStream((key, value) -> key.key())
-                .to(frontendPrivateTopicName, Produced.with(Serdes.String(),
-                        userAvro.createUserResponseSerde()));
-        builder.table(frontendPrivateTopicName,
-                Consumed.with(Serdes.String(), userAvro.createUserResponseSerde()),
-                Materialized.as(requestsStore));
+        builder.table(userTopicName,
+                userAvro.consumedWith());
 
         return builder.build();
     }
 
-    public Properties buildStreamsProperties(String uri) {
+    public Properties buildStreamsProperties(Properties envProps,
+                                             URI uri) {
         Properties props = new Properties();
         props.put(StreamsConfig.APPLICATION_ID_CONFIG,
                 envProps.getProperty("frontend_application.id"));
@@ -96,7 +69,8 @@ public class Service {
                 envProps.getProperty("bootstrap.servers"));
         props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
                 envProps.getProperty("schema.registry.url"));
-        props.put(StreamsConfig.APPLICATION_SERVER_CONFIG, uri);
+        props.put(StreamsConfig.APPLICATION_SERVER_CONFIG,
+                uri.getHost() + ":" + uri.getPort());
         return props;
     }
 
@@ -120,7 +94,6 @@ public class Service {
                 .setEventType(EventType.CREATE_USER_REQUEST)
                 .setCreateUserRequest(request)
                 .build();
-        final String userTopicName = envProps.getProperty("user.topic.name");
         ProducerRecord<UserId, UserEvent> record =
                 new ProducerRecord<>(
                         userTopicName,
@@ -152,20 +125,14 @@ public class Service {
                         producerProps,
                         userAvro.userIdSerializer(),
                         userAvro.userEventSerializer());
-        Service service = new Service(userProducer, envProps);
-        Topology topology = service.buildTopology(userAvro);
+        Service service = new Service(userProducer, envProps.getProperty("user.topic.name"));
+        Topology topology = service.buildTopology(envProps, userAvro);
         String portStr = args[1];
-        String streamsUri = "localhost:" + portStr;
-        Properties streamProps = service.buildStreamsProperties(streamsUri);
-        KafkaStreams streams = new KafkaStreams(topology, streamProps);
-        service.startStreams(streams);
-
         int port = Integer.parseInt(portStr);
         URI uri = service.startRestService(port);
-        if (uri.getPort() != port) {
-            throw new RuntimeException(String.format("Failed to bind to port %d. " +
-                    "Instead we're listening on %d", port, uri.getPort()));
-        }
+        Properties streamProps = service.buildStreamsProperties(envProps, uri);
+        KafkaStreams streams = new KafkaStreams(topology, streamProps);
+        service.startStreams(streams);
     }
 
     private URI startRestService(int port) {
@@ -192,14 +159,20 @@ public class Service {
         return jettyServer.getURI();
     }
 
-    private void startStreams(KafkaStreams streams) {
+    private void startStreams(KafkaStreams streams)
+            throws InterruptedException {
+        final CountDownLatch latch = new CountDownLatch(1);
+
         // Attach shutdown handler to catch Control-C.
         Runtime.getRuntime().addShutdownHook(new Thread("streams-shutdown-hook") {
             @Override
             public void run() {
                 streams.close();
+                latch.countDown();
             }
         });
+
         streams.start();
+        latch.await();
     }
 }
