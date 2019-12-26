@@ -228,6 +228,7 @@ public class ValidationAggregatorService {
                 envProps.getProperty("schema.registry.url"));
         Topology topology = service.buildTopology(envProps, userAvro);
         log.debug("Built stream");
+        log.info("Topology description:\n {}", topology.describe());
 
         Properties streamProps = service.buildStreamProperties(envProps);
         final KafkaStreams streams = new KafkaStreams(topology, streamProps);

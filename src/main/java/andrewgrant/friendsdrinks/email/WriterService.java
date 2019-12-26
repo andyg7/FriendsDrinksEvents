@@ -156,6 +156,7 @@ public class WriterService {
         Topology topology = writerService.buildTopology(envProps,
                 userAvro, emailAvro);
         log.debug("Built stream");
+        log.info("Topology description:\n {}", topology.describe());
 
         Properties streamProps = writerService.buildStreamsProperties(envProps);
         final KafkaStreams streams = new KafkaStreams(topology, streamProps);

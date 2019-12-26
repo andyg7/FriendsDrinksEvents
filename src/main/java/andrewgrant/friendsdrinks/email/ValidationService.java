@@ -185,7 +185,9 @@ public class ValidationService {
                 new EmailAvro(envProps.getProperty("schema.registry.url"));
         Topology topology = validationService.buildTopology(envProps,
                 userAvro, emailAvro);
+
         log.debug("Built stream");
+        log.info("Topology description:\n {}", topology.describe());
 
         Properties streamProps = validationService.buildStreamsProperties(envProps);
         final KafkaStreams streams = new KafkaStreams(topology, streamProps);

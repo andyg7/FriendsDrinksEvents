@@ -139,6 +139,7 @@ public class ValidationService {
         Topology topology = validationService.buildTopology(envProps,
                 userAvro);
         log.debug("Built stream");
+        log.info("Topology description:\n {}", topology.describe());
 
         Properties streamProps = validationService.buildStreamsProperties(envProps);
         final KafkaStreams streams = new KafkaStreams(topology, streamProps);
