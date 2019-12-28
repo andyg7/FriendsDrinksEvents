@@ -125,14 +125,14 @@ public class Service {
                         producerProps,
                         userAvro.userIdSerializer(),
                         userAvro.userEventSerializer());
-        Service service = new Service(userProducer, envProps.getProperty("user.topic.name"));
-        Topology topology = service.buildTopology(envProps, userAvro);
+        Service main = new Service(userProducer, envProps.getProperty("user.topic.name"));
+        Topology topology = main.buildTopology(envProps, userAvro);
         String portStr = args[1];
         int port = Integer.parseInt(portStr);
-        URI uri = service.startRestService(port);
-        Properties streamProps = service.buildStreamsProperties(envProps, uri);
+        URI uri = main.startRestService(port);
+        Properties streamProps = main.buildStreamsProperties(envProps, uri);
         KafkaStreams streams = new KafkaStreams(topology, streamProps);
-        service.startStreams(streams);
+        main.startStreams(streams);
     }
 
     private URI startRestService(int port) {

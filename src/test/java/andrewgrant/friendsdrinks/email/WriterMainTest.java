@@ -30,7 +30,7 @@ import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientExcept
 /**
  * Tests for EmailWriterService.
  */
-public class WriterServiceTest {
+public class WriterMainTest {
 
     private static WriterService service;
     private static Properties envProps;

@@ -101,7 +101,7 @@ services:
       - "8080"
     command:
       "bash -c 'sleep 15 && \
-          java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.frontend.api.Service /app/dev.properties 8080
+          java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.frontend.api.Main /app/dev.properties 8080
           '"
 
 networks:

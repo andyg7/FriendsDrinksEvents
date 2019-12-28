@@ -31,7 +31,7 @@ import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientExcept
 /**
  * Tests fraud validation service.
  */
-public class ValidationServiceTest {
+public class ValidationMainTest {
 
     private static Topology topology;
     private static Properties streamProps;

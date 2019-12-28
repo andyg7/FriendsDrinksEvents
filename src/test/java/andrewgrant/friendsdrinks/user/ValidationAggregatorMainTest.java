@@ -30,7 +30,7 @@ import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientExcept
 /**
  * Tests validation aggregator.
  */
-public class ValidationAggregatorServiceTest {
+public class ValidationAggregatorMainTest {
 
     private static Properties envProps;
     private static TopologyTestDriver testDriver;

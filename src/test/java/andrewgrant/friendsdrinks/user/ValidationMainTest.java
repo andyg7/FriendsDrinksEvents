@@ -29,7 +29,7 @@ import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientExcept
 /**
  * Tests validation service.
  */
-public class ValidationServiceTest {
+public class ValidationMainTest {
 
     private static Properties envProps;
     private static TopologyTestDriver testDriver;
