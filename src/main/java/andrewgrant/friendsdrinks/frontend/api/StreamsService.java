@@ -1,10 +1,7 @@
 package andrewgrant.friendsdrinks.frontend.api;
 
 import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.streams.KafkaStreams;
-import org.apache.kafka.streams.StreamsBuilder;
-import org.apache.kafka.streams.StreamsConfig;
-import org.apache.kafka.streams.Topology;
+import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.*;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
@@ -12,6 +9,7 @@ import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import java.time.Duration;
 import java.util.Properties;
 
+import andrewgrant.friendsdrinks.email.EmailAvro;
 import andrewgrant.friendsdrinks.user.UserAvro;
 import andrewgrant.friendsdrinks.user.avro.CreateUserResponse;
 import andrewgrant.friendsdrinks.user.avro.EventType;
@@ -24,25 +22,28 @@ import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 public class StreamsService {
 
     private static final String requestsStore = "requests-store";
+    private static final String emailsStore = "emails-store";
     private KafkaStreams streams;
 
     public StreamsService(Properties envProps,
                           String uri,
-                          UserAvro userAvro) {
-        Topology topology = buildTopology(envProps, userAvro);
+                          UserAvro userAvro,
+                          EmailAvro emailAvro) {
+        Topology topology = buildTopology(envProps, userAvro, emailAvro);
         Properties streamProps = buildStreamsProperties(envProps, uri);
         streams = new KafkaStreams(topology, streamProps);
     }
 
     private Topology buildTopology(Properties envProps,
-                                          UserAvro userAvro) {
+                                   UserAvro userAvro,
+                                   EmailAvro emailAvro) {
         final StreamsBuilder builder = new StreamsBuilder();
 
         SessionWindows sessionWindows = SessionWindows.with(Duration.ofMinutes(1));
         final long tenMinutesInMs = 1000 * 60 * 10;
         sessionWindows = sessionWindows.until(tenMinutesInMs);
         final String userTopicName = envProps.getProperty("user.topic.name");
-        final String frontendPrivateTopicName =
+        final String frontendPrivate1TopicName =
                 envProps.getProperty("frontendPrivate1.topic.name");
         builder.stream(userTopicName,
                 userAvro.consumedWith())
@@ -56,12 +57,35 @@ public class StreamsService {
                 .windowedBy(sessionWindows)
                 .reduce((value1, value2) -> value1)
                 .toStream((key, value) -> key.key())
-                .to(frontendPrivateTopicName, Produced.with(Serdes.String(),
+                .to(frontendPrivate1TopicName, Produced.with(Serdes.String(),
                         userAvro.createUserResponseSerde()));
-
-        builder.table(frontendPrivateTopicName,
+        builder.table(frontendPrivate1TopicName,
                 Consumed.with(Serdes.String(), userAvro.createUserResponseSerde()),
                 Materialized.as(requestsStore));
+
+
+        final String emailPrivate4TopicName =
+                envProps.getProperty("emailPrivate4.topic.name");
+        final String emailTopicName = envProps.getProperty("email.topic.name");
+        builder.stream(emailTopicName, emailAvro.consumedWith())
+                .filter(((key, value) ->
+                        value.getEventType().equals(
+                                andrewgrant.friendsdrinks.email.avro.EventType.RESERVED) ||
+                                value.getEventType().equals(
+                                        andrewgrant.friendsdrinks.email.avro.EventType.RETURNED)))
+                .mapValues(value -> {
+                    if (value.getEventType().equals(
+                            andrewgrant.friendsdrinks.email.avro.EventType.RETURNED)) {
+                        return null;
+                    } else {
+                        return value.getUserId();
+                    }
+                })
+                .selectKey(((key, value) -> key.getEmailAddress()))
+                .to(emailPrivate4TopicName, Produced.with(Serdes.String(), Serdes.String()));
+        builder.table(emailPrivate4TopicName,
+                Consumed.with(Serdes.String(), Serdes.String()),
+                Materialized.as(emailsStore));
 
         return builder.build();
     }
@@ -78,8 +102,12 @@ public class StreamsService {
         return props;
     }
 
-    public ReadOnlyKeyValueStore<String, CreateUserResponse> getRequestKVStore() {
+    public ReadOnlyKeyValueStore<String, CreateUserResponse> getRequestsKvStore() {
         return streams.store(requestsStore, QueryableStoreTypes.keyValueStore());
+    }
+
+    public ReadOnlyKeyValueStore<String, String> getEmailsKvStore() {
+        return streams.store(emailsStore, QueryableStoreTypes.keyValueStore());
     }
 
     public KafkaStreams getStreams() {

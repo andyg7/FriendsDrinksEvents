@@ -2,8 +2,12 @@ package andrewgrant.friendsdrinks.frontend.api;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -70,7 +74,7 @@ public class Handler {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public GetUserResponseBean getUser(final GetUserRequestBean getUserRequest) {
-        ReadOnlyKeyValueStore<String, CreateUserResponse> kv = streamsService.getRequestKVStore();
+        ReadOnlyKeyValueStore<String, CreateUserResponse> kv = streamsService.getRequestsKvStore();
         CreateUserResponse createUserResponse = kv.get(getUserRequest.getRequestId());
         String status;
         if (createUserResponse == null) {
@@ -85,6 +89,23 @@ public class Handler {
         GetUserResponseBean responseBean = new GetUserResponseBean();
         responseBean.setStatus(status);
         return responseBean;
+    }
+
+    @GET
+    @Path("/emails")
+    @Produces(MediaType.APPLICATION_JSON)
+    public GetEmailsResponseBean getEmails() {
+        ReadOnlyKeyValueStore<String, String> kv = streamsService.getEmailsKvStore();
+        KeyValueIterator<String, String> allKvs = kv.all();
+        List<String> emails = new ArrayList<>();
+        while (allKvs.hasNext()) {
+            KeyValue<String, String> keyValue = allKvs.next();
+            emails.add(keyValue.key);
+        }
+        allKvs.close();
+        GetEmailsResponseBean getEmailsResponseBean = new GetEmailsResponseBean();
+        getEmailsResponseBean.setEmails(emails);
+        return getEmailsResponseBean;
     }
 
 }

@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Properties;
 
+import andrewgrant.friendsdrinks.email.EmailAvro;
 import andrewgrant.friendsdrinks.user.UserAvro;
 import andrewgrant.friendsdrinks.user.avro.UserEvent;
 import andrewgrant.friendsdrinks.user.avro.UserId;
@@ -38,6 +39,8 @@ public class Main {
         Properties envProps = loadEnvProperties(args[0]);
         UserAvro userAvro = new UserAvro(
                 envProps.getProperty("schema.registry.url"));
+        EmailAvro emailAvro =
+                new EmailAvro(envProps.getProperty("schema.registry.url"));
 
         Properties producerProps = new Properties();
         producerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
@@ -47,13 +50,16 @@ public class Main {
                         producerProps,
                         userAvro.userIdSerializer(),
                         userAvro.userEventSerializer());
-
-
         String portStr = args[1];
         String streamsUri = "localhost:" + portStr;
-        StreamsService streamsService = new StreamsService(envProps, streamsUri, userAvro);
+        StreamsService streamsService = new StreamsService(envProps,
+                streamsUri,
+                userAvro,
+                emailAvro);
         KafkaStreams streams = streamsService.getStreams();
         Main.startStreams(streams);
+
+        Thread.sleep(10000);
 
         int port = Integer.parseInt(portStr);
         Handler handler = new Handler(userProducer, envProps, streamsService);
