@@ -38,9 +38,9 @@ public class StreamsService {
                                           UserAvro userAvro) {
         final StreamsBuilder builder = new StreamsBuilder();
 
-        SessionWindows sessionWindows = SessionWindows.with(Duration.ofMinutes(10));
-        final long oneMinute = 1000 * 60;
-        sessionWindows = sessionWindows.until(oneMinute);
+        SessionWindows sessionWindows = SessionWindows.with(Duration.ofMinutes(1));
+        final long tenMinutesInMs = 1000 * 60 * 10;
+        sessionWindows = sessionWindows.until(tenMinutesInMs);
         final String userTopicName = envProps.getProperty("user.topic.name");
         final String frontendPrivateTopicName =
                 envProps.getProperty("frontendPrivate1.topic.name");
@@ -78,7 +78,7 @@ public class StreamsService {
         return props;
     }
 
-    public ReadOnlyKeyValueStore<String, CreateUserResponse> getKeyValueStore() {
+    public ReadOnlyKeyValueStore<String, CreateUserResponse> getRequestKVStore() {
         return streams.store(requestsStore, QueryableStoreTypes.keyValueStore());
     }
 

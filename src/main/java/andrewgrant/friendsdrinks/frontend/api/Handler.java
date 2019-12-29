@@ -70,7 +70,7 @@ public class Handler {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public GetUserResponseBean getUser(final GetUserRequestBean getUserRequest) {
-        ReadOnlyKeyValueStore<String, CreateUserResponse> kv = streamsService.getKeyValueStore();
+        ReadOnlyKeyValueStore<String, CreateUserResponse> kv = streamsService.getRequestKVStore();
         CreateUserResponse createUserResponse = kv.get(getUserRequest.getRequestId());
         String status;
         if (createUserResponse == null) {
