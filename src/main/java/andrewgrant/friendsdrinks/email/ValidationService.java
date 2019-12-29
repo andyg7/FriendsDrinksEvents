@@ -65,13 +65,27 @@ public class ValidationService {
         KStream<EmailId, EmailEvent> emailKStream = emailKStreamRaw
                 .transform(PendingEmailsStateStoreCleaner::new, PENDING_EMAILS_STORE_NAME);
 
-        // Write events to a tmp topic so we can rebuild a table
+        // Write events to a tmp topic so we can rebuild a table of currently reserved emails.
         final String emailPrivate1Topic = envProps.getProperty("emailPrivate1.topic.name");
         emailKStream.filter(((key, value) -> value.getEventType().equals(
-                andrewgrant.friendsdrinks.email.avro.EventType.RESERVED)))
+                andrewgrant.friendsdrinks.email.avro.EventType.RESERVED) ||
+                value.getEventType().equals(
+                        andrewgrant.friendsdrinks.email.avro.EventType.RETURNED
+                )))
+                .mapValues(value -> {
+                    if (value.getEventType().equals(
+                            andrewgrant.friendsdrinks.email.avro.EventType.RESERVED)) {
+                        return value;
+                    } else if (value.getEventType().equals(
+                            andrewgrant.friendsdrinks.email.avro.EventType.RETURNED)) {
+                        return null;
+                    } else {
+                        throw new RuntimeException("Did not expect event type");
+                    }
+                })
                 .to(emailPrivate1Topic,
                         Produced.with(emailAvro.emailIdSerde(),
-                                emailAvro.emailEventSerde()));
+                                    emailAvro.emailEventSerde()));
 
         // Rebuild table. id -> reserved emails.
         KTable<EmailId, EmailEvent> emailKTable = builder.table(emailPrivate1Topic,
