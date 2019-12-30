@@ -70,12 +70,12 @@ public class Handler {
     }
 
     @GET
-    @Path("/user")
+    @Path("/requests/{requestId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public GetUserResponseBean getUser(final GetUserRequestBean getUserRequest) {
+    public GetUserResponseBean getUser(@PathParam("requestId") final String requestId) {
         ReadOnlyKeyValueStore<String, CreateUserResponse> kv = streamsService.getRequestsKvStore();
-        CreateUserResponse createUserResponse = kv.get(getUserRequest.getRequestId());
+        CreateUserResponse createUserResponse = kv.get(requestId);
         String status;
         if (createUserResponse == null) {
             status = "Unknown";

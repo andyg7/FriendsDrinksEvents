@@ -71,12 +71,12 @@ public class Main {
             @Override
             public void run() {
                 streamsService.close();
+                userProducer.close();
                 try {
                     jettyServer.stop();
                 } catch (Exception e){
                     throw new RuntimeException(e);
                 }
-                userProducer.close();
             }
         });
         streams.start();
@@ -95,6 +95,8 @@ public class Main {
         final ServletContextHandler context =
                 new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
         context.setContextPath("/");
+        final Server jettyServer = new Server(port);
+        jettyServer.setHandler(context);
 
         final ResourceConfig rc = new ResourceConfig();
         rc.register(handler);
@@ -104,8 +106,6 @@ public class Main {
 
         context.addServlet(holder, "/*");
 
-        final Server jettyServer = new Server(port);
-        jettyServer.setHandler(context);
         return jettyServer;
     }
 
