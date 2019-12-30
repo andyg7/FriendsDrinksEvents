@@ -57,23 +57,44 @@ public class Main {
                 userAvro,
                 emailAvro);
         KafkaStreams streams = streamsService.getStreams();
-        Main.startStreams(streams);
 
+        Main.startStreams(streams);
         Thread.sleep(10000);
 
         int port = Integer.parseInt(portStr);
         Handler handler = new Handler(userProducer, envProps, streamsService);
-        URI uri = Main.startRestService(handler, port);
+        Server jettyServer = Main.createServer(handler, port);
+        URI uri = jettyServer.getURI();
         if (uri.getPort() != port) {
             throw new RuntimeException(String.format("Failed to bind to port %d. " +
                     "Instead we're listening on %d", port, uri.getPort()));
         }
         log.info("Started server and streams");
+        // Attach shutdown handler to catch Control-C.
+        Runtime.getRuntime().addShutdownHook(new Thread("streams-shutdown-hook") {
+            @Override
+            public void run() {
+                streamsService.close();
+                try {
+                    jettyServer.stop();
+                } catch (Exception e){
+                    throw new RuntimeException(e);
+                }
+                userProducer.close();
+            }
+        });
+        streams.start();
+        try {
+            jettyServer.start();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        log.info("Listening on " + jettyServer.getURI());
         Thread.currentThread().join();
     }
 
-    private static URI startRestService(Handler handler,
-                                        int port) {
+    private static Server createServer(Handler handler,
+                                       int port) {
         final ServletContextHandler context =
                 new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
         context.setContextPath("/");
@@ -88,23 +109,11 @@ public class Main {
 
         final Server jettyServer = new Server(port);
         jettyServer.setHandler(context);
-        try {
-            jettyServer.start();
-        } catch (final Exception e) {
-            throw new RuntimeException(e);
-        }
-        log.info("Listening on " + jettyServer.getURI());
-        return jettyServer.getURI();
+        return jettyServer;
     }
 
     private static void startStreams(KafkaStreams streams) {
         // Attach shutdown handler to catch Control-C.
-        Runtime.getRuntime().addShutdownHook(new Thread("streams-shutdown-hook") {
-            @Override
-            public void run() {
-                streams.close();
-            }
-        });
         streams.start();
     }
 }
