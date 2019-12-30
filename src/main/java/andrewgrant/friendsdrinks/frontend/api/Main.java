@@ -57,10 +57,6 @@ public class Main {
                 userAvro,
                 emailAvro);
         KafkaStreams streams = streamsService.getStreams();
-
-        Main.startStreams(streams);
-        Thread.sleep(10000);
-
         int port = Integer.parseInt(portStr);
         Handler handler = new Handler(userProducer, envProps, streamsService);
         Server jettyServer = Main.createServer(handler, port);
@@ -84,6 +80,7 @@ public class Main {
             }
         });
         streams.start();
+        Thread.sleep(10000);
         try {
             jettyServer.start();
         } catch (Exception e) {
@@ -112,8 +109,4 @@ public class Main {
         return jettyServer;
     }
 
-    private static void startStreams(KafkaStreams streams) {
-        // Attach shutdown handler to catch Control-C.
-        streams.start();
-    }
 }
