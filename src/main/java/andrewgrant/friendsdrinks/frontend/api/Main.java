@@ -42,30 +42,21 @@ public class Main {
         EmailAvro emailAvro =
                 new EmailAvro(envProps.getProperty("schema.registry.url"));
 
-        Properties producerProps = new Properties();
-        producerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
-                envProps.getProperty("bootstrap.servers"));
-        KafkaProducer<UserId, UserEvent> userProducer =
-                new KafkaProducer<>(
-                        producerProps,
-                        userAvro.userIdSerializer(),
-                        userAvro.userEventSerializer());
         String portStr = args[1];
         String streamsUri = "localhost:" + portStr;
-        StreamsService streamsService = new StreamsService(envProps,
-                streamsUri,
-                userAvro,
-                emailAvro);
+        StreamsService streamsService = new StreamsService(envProps, streamsUri,
+                userAvro, emailAvro);
         KafkaStreams streams = streamsService.getStreams();
         int port = Integer.parseInt(portStr);
+        KafkaProducer<UserId, UserEvent> userProducer = buildUserProducer(envProps,
+                userAvro);
         Handler handler = new Handler(userProducer, envProps, streamsService);
-        Server jettyServer = Main.createServer(handler, port);
+        Server jettyServer = Main.buildServer(handler, port);
         URI uri = jettyServer.getURI();
         if (uri.getPort() != port) {
             throw new RuntimeException(String.format("Failed to bind to port %d. " +
                     "Instead we're listening on %d", port, uri.getPort()));
         }
-        log.info("Started server and streams");
         // Attach shutdown handler to catch Control-C.
         Runtime.getRuntime().addShutdownHook(new Thread("streams-shutdown-hook") {
             @Override
@@ -90,8 +81,19 @@ public class Main {
         Thread.currentThread().join();
     }
 
-    private static Server createServer(Handler handler,
-                                       int port) {
+    private static KafkaProducer<UserId, UserEvent> buildUserProducer(Properties envProps,
+                                                                      UserAvro userAvro) {
+        Properties producerProps = new Properties();
+        producerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
+                envProps.getProperty("bootstrap.servers"));
+        return new KafkaProducer<>(
+                producerProps,
+                userAvro.userIdSerializer(),
+                userAvro.userEventSerializer());
+    }
+
+    private static Server buildServer(Handler handler,
+                                      int port) {
         final ServletContextHandler context =
                 new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
         context.setContextPath("/");
