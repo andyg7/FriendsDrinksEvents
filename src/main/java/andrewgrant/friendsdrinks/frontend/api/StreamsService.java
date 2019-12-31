@@ -114,8 +114,4 @@ public class StreamsService {
         return streams;
     }
 
-    public void close() {
-        streams.close();
-    }
-
 }

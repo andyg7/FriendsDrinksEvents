@@ -61,7 +61,7 @@ public class Main {
         Runtime.getRuntime().addShutdownHook(new Thread("streams-shutdown-hook") {
             @Override
             public void run() {
-                streamsService.close();
+                streams.close();
                 userProducer.close();
                 try {
                     jettyServer.stop();
