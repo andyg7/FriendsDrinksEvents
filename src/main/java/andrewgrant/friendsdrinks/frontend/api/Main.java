@@ -52,11 +52,6 @@ public class Main {
                 userAvro);
         Handler handler = new Handler(userProducer, envProps, streamsService);
         Server jettyServer = Main.buildServer(handler, port);
-        URI uri = jettyServer.getURI();
-        if (uri.getPort() != port) {
-            throw new RuntimeException(String.format("Failed to bind to port %d. " +
-                    "Instead we're listening on %d", port, uri.getPort()));
-        }
         // Attach shutdown handler to catch Control-C.
         Runtime.getRuntime().addShutdownHook(new Thread("streams-shutdown-hook") {
             @Override
@@ -71,9 +66,13 @@ public class Main {
             }
         });
         streams.start();
-        Thread.sleep(10000);
         try {
             jettyServer.start();
+            URI uri = jettyServer.getURI();
+            if (uri.getPort() != port) {
+                throw new RuntimeException(String.format("Failed to bind to port %d. " +
+                        "Instead we're listening on %d", port, uri.getPort()));
+            }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

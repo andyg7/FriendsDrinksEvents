@@ -100,7 +100,7 @@ services:
     ports:
       - "8080"
     command:
-      "bash -c 'sleep 30 && \
+      "bash -c '
           java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.frontend.api.Main /app/dev.properties 8080
           '"
 
