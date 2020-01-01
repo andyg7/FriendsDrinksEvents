@@ -1,9 +1,13 @@
 package andrewgrant.friendsdrinks.frontend.api;
 
+import static andrewgrant.friendsdrinks.frontend.api.StreamsService.EMAILS_STORE;
+import static andrewgrant.friendsdrinks.frontend.api.StreamsService.REQUESTS_STORE;
+
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.state.KeyValueIterator;
+import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 
 import java.util.ArrayList;
@@ -16,7 +20,6 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
 import andrewgrant.friendsdrinks.user.avro.*;
-
 
 /**
  * Implements frontend REST API for interacting with backend.
@@ -37,7 +40,7 @@ public class Handler {
     }
 
     @POST
-    @Path("/user")
+    @Path("/users")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public CreateUserResponseBean createUser(final CreateUserRequestBean createUserRequest)
@@ -72,9 +75,10 @@ public class Handler {
     @GET
     @Path("/requests/{requestId}")
     @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_JSON)
-    public GetUserResponseBean getUser(@PathParam("requestId") final String requestId) {
-        ReadOnlyKeyValueStore<String, CreateUserResponse> kv = streamsService.getRequestsKvStore();
+    public GetRequestResponseBean getUser(@PathParam("requestId") final String requestId) {
+        ReadOnlyKeyValueStore<String, CreateUserResponse> kv =
+                streamsService.getStreams().store(REQUESTS_STORE,
+                        QueryableStoreTypes.keyValueStore());
         CreateUserResponse createUserResponse = kv.get(requestId);
         String status;
         if (createUserResponse == null) {
@@ -86,16 +90,37 @@ public class Handler {
         } else {
             throw new RuntimeException("Failed to get status for request");
         }
-        GetUserResponseBean responseBean = new GetUserResponseBean();
+        GetRequestResponseBean responseBean = new GetRequestResponseBean();
         responseBean.setStatus(status);
         return responseBean;
+    }
+
+    @GET
+    @Path("/requests")
+    @Produces(MediaType.APPLICATION_JSON)
+    public GetRequestsResponseBean getUsers() {
+        ReadOnlyKeyValueStore<String, CreateUserResponse> kv =
+                streamsService.getStreams().store(REQUESTS_STORE,
+                        QueryableStoreTypes.keyValueStore());
+        KeyValueIterator<String, CreateUserResponse> allKvs = kv.all();
+        List<String> requests = new ArrayList<>();
+        while (allKvs.hasNext()) {
+            KeyValue<String, CreateUserResponse> keyValue = allKvs.next();
+            requests.add(keyValue.key);
+        }
+        allKvs.close();
+        GetRequestsResponseBean response = new GetRequestsResponseBean();
+        response.setRequests(requests);
+        return response;
     }
 
     @GET
     @Path("/emails")
     @Produces(MediaType.APPLICATION_JSON)
     public GetEmailsResponseBean getEmails() {
-        ReadOnlyKeyValueStore<String, String> kv = streamsService.getEmailsKvStore();
+        ReadOnlyKeyValueStore<String, String> kv =
+                streamsService.getStreams().store(EMAILS_STORE,
+                        QueryableStoreTypes.keyValueStore());
         KeyValueIterator<String, String> allKvs = kv.all();
         List<String> emails = new ArrayList<>();
         while (allKvs.hasNext()) {

@@ -3,7 +3,7 @@ package andrewgrant.friendsdrinks.frontend.api;
 /**
  * DTO for GetUserResponseBean .
  */
-public class GetUserResponseBean {
+public class GetRequestResponseBean {
     private String status;
 
     public String getStatus() {
