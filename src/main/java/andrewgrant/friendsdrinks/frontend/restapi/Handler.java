@@ -1,7 +1,7 @@
-package andrewgrant.friendsdrinks.frontend.api;
+package andrewgrant.friendsdrinks.frontend.restapi;
 
-import static andrewgrant.friendsdrinks.frontend.api.StreamsService.EMAILS_STORE;
-import static andrewgrant.friendsdrinks.frontend.api.StreamsService.REQUESTS_STORE;
+import static andrewgrant.friendsdrinks.frontend.restapi.StreamsService.EMAILS_STORE;
+import static andrewgrant.friendsdrinks.frontend.restapi.StreamsService.REQUESTS_STORE;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;

@@ -1,4 +1,4 @@
-package andrewgrant.friendsdrinks.frontend.api;
+package andrewgrant.friendsdrinks.frontend.restapi;
 
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.*;

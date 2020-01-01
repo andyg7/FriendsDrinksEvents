@@ -1,4 +1,4 @@
-package andrewgrant.friendsdrinks.frontend.api;
+package andrewgrant.friendsdrinks.frontend.restapi;
 
 import static andrewgrant.friendsdrinks.env.Properties.loadEnvProperties;
 
