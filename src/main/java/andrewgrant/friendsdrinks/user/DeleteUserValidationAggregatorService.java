@@ -42,6 +42,9 @@ public class DeleteUserValidationAggregatorService {
 
         // Re-key by request id.
         KStream<String, UserEvent> validationResultsKeyedByRequestId = userValidations
+                .filter(((key, value) ->
+                        value.getEventType().equals(EventType.DELETE_USER_VALIDATED) ||
+                                value.getEventType().equals(EventType.DELETE_USER_REJECTED)))
                 .selectKey((key, value) -> {
                     EventType eventType = value.getEventType();
                     if (eventType.equals(EventType.DELETE_USER_VALIDATED)) {
