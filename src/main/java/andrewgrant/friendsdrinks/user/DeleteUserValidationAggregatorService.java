@@ -24,11 +24,12 @@ import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 
 
 /**
- * Aggregates validations and returns final result to orders topic.
+ * Aggregates delete user validations and returns final result to orders topic.
  */
-public class ValidationAggregatorService {
+public class DeleteUserValidationAggregatorService {
 
-    private static final Logger log = LoggerFactory.getLogger(ValidationAggregatorService.class);
+    private static final Logger log = LoggerFactory
+            .getLogger(DeleteUserValidationAggregatorService.class);
 
     public Topology buildTopology(Properties envProps,
                                   UserAvro userAvro) {
@@ -43,12 +44,8 @@ public class ValidationAggregatorService {
         KStream<String, UserEvent> validationResultsKeyedByRequestId = userValidations
                 .selectKey((key, value) -> {
                     EventType eventType = value.getEventType();
-                    if (eventType.equals(EventType.CREATE_USER_VALIDATED)) {
-                        return value.getCreateUserValidated().getRequestId();
-                    } else if (eventType.equals(EventType.CREATE_USER_REJECTED)) {
-                        return value.getCreateUserRejected().getRequestId();
-                    } else if (eventType.equals(EventType.DELETE_USER_VALIDATED)) {
-                       return value.getDeleteUserValidated().getRequestId();
+                    if (eventType.equals(EventType.DELETE_USER_VALIDATED)) {
+                        return value.getDeleteUserValidated().getRequestId();
                     } else if (eventType.equals(EventType.DELETE_USER_REJECTED)) {
                         return value.getDeleteUserRejected().getRequestId();
                     } else {
@@ -57,22 +54,6 @@ public class ValidationAggregatorService {
                                         "events, but found %s", value.getEventType().toString()));
                     }
                 });
-
-        // Request id -> number of validations for create user requests
-        KStream<String, Long> createValidationCount = validationResultsKeyedByRequestId
-                .groupByKey(Grouped.with(Serdes.String(), userEventSerde))
-                .windowedBy(SessionWindows.with(Duration.ofSeconds(10)))
-                .aggregate(
-                        () -> 0L,
-                        (requestId, user, total) ->
-                                user.getEventType().equals(EventType.CREATE_USER_VALIDATED) ?
-                                        Long.valueOf(total + 1L) : total,
-                        (k, a, b) -> b == null ? a : b,
-                        Materialized.with(null, Serdes.Long())
-                )
-                .toStream((key, value) -> key.key())
-                .filter(((key, value) -> value != null))
-                .filter(((key, value) -> value >= 2L));
 
         // Request id -> number of validations for delete user requests
         KStream<String, Long> deleteValidationCount = validationResultsKeyedByRequestId
@@ -94,11 +75,6 @@ public class ValidationAggregatorService {
         KStream<UserId, UserEvent> userEvents = builder.stream(
                 userTopicName, userAvro.consumedWith());
 
-        KStream<String, CreateUserRequest> createUserRequestsKeyedByRequestId = userEvents
-                .filter(((key, value) ->
-                        value.getEventType().equals(EventType.CREATE_USER_REQUEST)))
-                .mapValues(value -> value.getCreateUserRequest())
-                .selectKey((key, value) -> value.getRequestId());
 
         KStream<String, DeleteUserRequest> deleteUserRequestsKeyedByRequestId = userEvents
                 .filter(((key, value) ->
@@ -106,25 +82,6 @@ public class ValidationAggregatorService {
                 .mapValues(value -> value.getDeleteUserRequest())
                 .selectKey((key, value) -> value.getRequestId());
 
-
-        SpecificAvroSerde<CreateUserRequest> createUserRequestSerde =
-                userAvro.createUserRequestSerde();
-        createValidationCount.join(createUserRequestsKeyedByRequestId,
-                (leftValue, rightValue) -> {
-                    CreateUserResponse response = CreateUserResponse.newBuilder()
-                            .setRequestId(rightValue.getRequestId())
-                            .setUserId(rightValue.getUserId())
-                            .setResult(Result.SUCCESS)
-                            .build();
-                    return UserEvent.newBuilder()
-                            .setEventType(EventType.CREATE_USER_RESPONSE)
-                            .setCreateUserResponse(response)
-                            .build();
-                },
-                JoinWindows.of(Duration.ofSeconds(10)),
-                Joined.with(Serdes.String(), Serdes.Long(), createUserRequestSerde))
-                .selectKey(((key, value) -> value.getCreateUserResponse().getUserId()))
-                .to(userTopicName, userAvro.producedWith());
 
         SpecificAvroSerde<DeleteUserRequest> deleteUserRequestSerde =
                 userAvro.deleteUserRequestSerde();
@@ -145,40 +102,11 @@ public class ValidationAggregatorService {
                 .selectKey(((key, value) -> value.getDeleteUserResponse().getUserId()))
                 .to(userTopicName, userAvro.producedWith());
 
-        KStream<String, CreateUserRequest> createUserRequestsKeyedByRequestId2 = userEvents
-                .filter(((key, value) ->
-                        value.getEventType().equals(EventType.CREATE_USER_REQUEST)))
-                .mapValues(value -> value.getCreateUserRequest())
-                .selectKey((key, value) -> value.getRequestId());
-
         KStream<String, DeleteUserRequest> deleteUserRequestsKeyedByRequestId2 = userEvents
                 .filter(((key, value) ->
                         value.getEventType().equals(EventType.DELETE_USER_REQUEST)))
                 .mapValues(value -> value.getDeleteUserRequest())
                 .selectKey((key, value) -> value.getRequestId());
-
-        // Rejected create user requests
-        validationResultsKeyedByRequestId.filter(((key, value) ->
-                value.getEventType().equals(EventType.CREATE_USER_REJECTED))).join(
-                createUserRequestsKeyedByRequestId2,
-                (leftValue, rightValue) -> {
-                    CreateUserResponse response = CreateUserResponse.newBuilder()
-                            .setRequestId(rightValue.getRequestId())
-                            .setUserId(rightValue.getUserId())
-                            .setResult(Result.FAIL)
-                            .build();
-                    return UserEvent.newBuilder()
-                            .setEventType(EventType.CREATE_USER_RESPONSE)
-                            .setCreateUserResponse(response)
-                            .build();
-                },
-                JoinWindows.of(Duration.ofSeconds(10)),
-                Joined.with(Serdes.String(), userEventSerde, createUserRequestSerde))
-                .groupByKey(Grouped.with(Serdes.String(), userEventSerde))
-                .reduce((key, value) -> value)
-                .toStream()
-                .selectKey(((key, value) -> value.getCreateUserResponse().getUserId()))
-                .to(userTopicName, userAvro.producedWith());
 
         // Rejected delete user requests
         validationResultsKeyedByRequestId.filter(((key, value) ->
@@ -209,7 +137,7 @@ public class ValidationAggregatorService {
     public Properties buildStreamProperties(Properties envProps) {
         Properties props = new Properties();
         props.put(StreamsConfig.APPLICATION_ID_CONFIG,
-                envProps.getProperty("user_validation_aggregator_application.id"));
+                envProps.getProperty("delete_user_validation_aggregator_application.id"));
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG,
                 envProps.getProperty("bootstrap.servers"));
         props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
@@ -223,7 +151,7 @@ public class ValidationAggregatorService {
                     "the path to an environment configuration file.");
         }
         Properties envProps = loadEnvProperties(args[0]);
-        ValidationAggregatorService service = new ValidationAggregatorService();
+        DeleteUserValidationAggregatorService service = new DeleteUserValidationAggregatorService();
         UserAvro userAvro = new UserAvro(
                 envProps.getProperty("schema.registry.url"));
         Topology topology = service.buildTopology(envProps, userAvro);

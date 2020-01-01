@@ -26,16 +26,16 @@ import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 
 
 /**
- * Service for validating requests based on email.
+ * Service for validating create user requests based on email.
  */
-public class ValidationService {
-    private static final Logger log = LoggerFactory.getLogger(ValidationService.class);
+public class CreateUserValidationService {
+    private static final Logger log = LoggerFactory.getLogger(CreateUserValidationService.class);
 
     public Properties buildStreamsProperties(Properties envProps) {
         Properties props = new Properties();
 
         props.put(StreamsConfig.APPLICATION_ID_CONFIG,
-                envProps.getProperty("email_validation_application.id"));
+                envProps.getProperty("create_user_email_validation_application.id"));
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG,
                 envProps.getProperty("bootstrap.servers"));
         props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
@@ -96,59 +96,6 @@ public class ValidationService {
         KStream<UserId, UserEvent> userIdKStream = builder.stream(userTopicName,
                 userAvro.consumedWith());
 
-
-        KStream<UserId, EmailEvent> emailStreamKeyedByUserId = emailKStreamRaw
-                .selectKey(((key, value) -> new UserId(value.getUserId())));
-
-        final String emailPrivate2Topic = envProps.getProperty("emailPrivate2.topic.name");
-        emailStreamKeyedByUserId.to(emailPrivate2Topic,
-                Produced.with(
-                        userAvro.userIdSerde(),
-                        emailAvro.emailEventSerde()));
-
-        KTable<UserId, EmailEvent> emailTableKeyedByUserId = builder.table(emailPrivate2Topic,
-                Consumed.with(userAvro.userIdSerde(),
-                        emailAvro.emailEventSerde()));
-
-        // Filter by requests so we have a stream of user requests.
-        KStream<UserId, DeleteUserRequest> deleteUserRequests = userIdKStream.
-                filter(((key, value) -> value.getEventType().equals(EventType.DELETE_USER_REQUEST)))
-                .mapValues(value -> value.getDeleteUserRequest());
-
-        KStream<UserId, DeleteRequestAndCurrEmail> deleteRequestAndEmail = deleteUserRequests
-                .leftJoin(emailTableKeyedByUserId, DeleteRequestAndCurrEmail::new,
-                        Joined.with(
-                                userAvro.userIdSerde(),
-                                userAvro.deleteUserRequestSerde(),
-                                emailAvro.emailEventSerde()));
-
-        KStream<UserId, UserEvent> validatedDeleteUser = deleteRequestAndEmail.mapValues(
-                (key, value) -> {
-                    if (value.getCurrEmailState() == null) {
-                        DeleteUserRejected rejected = DeleteUserRejected.newBuilder()
-                                .setUserId(value.getDeleteUserRequest().getUserId())
-                                .setRequestId(value.getDeleteUserRequest().getRequestId())
-                                .setErrorCode(ErrorCode.DoesNotExist.toString())
-                                .build();
-                        return UserEvent.newBuilder()
-                                .setEventType(EventType.DELETE_USER_REJECTED)
-                                .setDeleteUserRejected(rejected)
-                                .build();
-                    } else {
-                        UserId userId = UserId.newBuilder()
-                                .setId(value.getCurrEmailState().getUserId())
-                                .build();
-                        DeleteUserValidated validated = DeleteUserValidated.newBuilder()
-                                .setRequestId(value.getDeleteUserRequest().getRequestId())
-                                .setUserId(userId)
-                                .build();
-                        return UserEvent.newBuilder()
-                                .setEventType(EventType.DELETE_USER_VALIDATED)
-                                .setDeleteUserValidated(validated)
-                                .build();
-                    }
-                });
-
         // Filter by requests so we have a stream of user requests.
         KStream<UserId, CreateUserRequest> createUserRequests = userIdKStream.
                 filter(((key, value) -> value.getEventType().equals(EventType.CREATE_USER_REQUEST)))
@@ -158,7 +105,6 @@ public class ValidationService {
         KStream<EmailId, CreateUserRequest> createUserRequestsKeyedByEmailId =
                 createUserRequests.selectKey(((key, value) ->
                         new EmailId(value.getEmail())));
-
 
         KStream<EmailId, CreateRequest> createUserAndEmail =
                 createUserRequestsKeyedByEmailId.leftJoin(emailKTable,
@@ -180,7 +126,6 @@ public class ValidationService {
 
         final String userValidationTopic = envProps.getProperty("userValidation.topic.name");
         validatedCreateUser.to(userValidationTopic, userAvro.producedWith());
-        validatedDeleteUser.to(userValidationTopic, userAvro.producedWith());
 
         return builder.build();
     }
@@ -191,7 +136,7 @@ public class ValidationService {
                     "the path to an environment configuration file.");
         }
 
-        ValidationService validationService = new ValidationService();
+        CreateUserValidationService validationService = new CreateUserValidationService();
         Properties envProps = loadEnvProperties(args[0]);
         UserAvro userAvro =
                 new UserAvro(envProps.getProperty("schema.registry.url"));

@@ -30,7 +30,7 @@ import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientExcept
 /**
  * Tests validation aggregator.
  */
-public class ValidationAggregatorMainTest {
+public class CreateUserValidationAggregatorTest {
 
     private static Properties envProps;
     private static TopologyTestDriver testDriver;
@@ -52,7 +52,7 @@ public class ValidationAggregatorMainTest {
                 envProps.getProperty("schema.registry.url"),
                 registryClient);
 
-        ValidationAggregatorService service = new ValidationAggregatorService();
+        CreateUserValidationAggregatorService service = new CreateUserValidationAggregatorService();
         Topology topology = service.buildTopology(envProps, userAvro);
         Properties streamProps = service.buildStreamProperties(envProps);
         testDriver = new TopologyTestDriver(topology, streamProps);
@@ -231,73 +231,6 @@ public class ValidationAggregatorMainTest {
         assertEquals(1, output.size());
         assertEquals(EventType.CREATE_USER_RESPONSE, output.get(0).getEventType());
         assertEquals(Result.FAIL, output.get(0).getCreateUserResponse().getResult());
-    }
-
-    @Test
-    public void testValidateValidDeleteRequest() {
-        String requestId = UUID.randomUUID().toString();
-        UserId userId = UserId.newBuilder()
-                .setId(UUID.randomUUID().toString())
-                .build();
-        DeleteUserRequest userRequest = DeleteUserRequest.newBuilder()
-                .setRequestId(requestId)
-                .setUserId(userId)
-                .build();
-        UserEvent userEventRequest = UserEvent.newBuilder()
-                .setEventType(EventType.DELETE_USER_REQUEST)
-                .setDeleteUserRequest(userRequest)
-                .build();
-        Serializer<UserId> userIdSerializer = userAvro.userIdSerializer();
-        Serializer<UserEvent> userEventSerializer =
-                userAvro.userEventSerializer();
-
-        ConsumerRecordFactory<UserId, UserEvent> inputFactory =
-                new ConsumerRecordFactory<>(userIdSerializer, userEventSerializer);
-        final String userTopicName = envProps.getProperty("user.topic.name");
-        // Pipe initial request to user topic.
-        testDriver.pipeInput(inputFactory.create(userTopicName,
-                userEventRequest.getDeleteUserRequest().getUserId(),
-                userEventRequest));
-
-        DeleteUserValidated userValidated = DeleteUserValidated.newBuilder()
-                .setRequestId(requestId)
-                .setUserId(userId)
-                .build();
-
-        UserEvent validatedUserEvent = UserEvent.newBuilder()
-                .setEventType(EventType.DELETE_USER_VALIDATED)
-                .setDeleteUserValidated(userValidated)
-                .build();
-
-        List<UserEvent> userEvents = new ArrayList<>();
-        userEvents.add(validatedUserEvent);
-        userEvents.add(validatedUserEvent);
-
-        final String userValidationsTopic = envProps.getProperty("userValidation.topic.name");
-        for (UserEvent userEvent : userEvents) {
-            testDriver.pipeInput(inputFactory.create(userValidationsTopic,
-                    userEvent.getDeleteUserValidated().getUserId(),
-                    userEvent));
-        }
-
-        Deserializer<UserId> userIdDeserializer = userAvro.userIdDeserializer();
-        Deserializer<UserEvent> userDeserializer = userAvro.userEventDeserializer();
-        List<UserEvent> output = new ArrayList<>();
-        while (true) {
-            ProducerRecord<UserId, UserEvent> userEventRecord = testDriver.readOutput(
-                    userTopicName, userIdDeserializer, userDeserializer);
-            if (userEventRecord != null) {
-                if (userEventRecord.value().getEventType().equals(EventType.DELETE_USER_RESPONSE)) {
-                    output.add(userEventRecord.value());
-                }
-            } else {
-                break;
-            }
-        }
-
-        assertEquals(1, output.size());
-        assertEquals(EventType.DELETE_USER_RESPONSE, output.get(0).getEventType());
-        assertEquals(Result.SUCCESS, output.get(0).getDeleteUserResponse().getResult());
     }
 
 }

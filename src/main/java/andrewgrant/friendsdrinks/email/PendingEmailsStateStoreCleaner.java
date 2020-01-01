@@ -1,6 +1,6 @@
 package andrewgrant.friendsdrinks.email;
 
-import static andrewgrant.friendsdrinks.email.ValidationService.PENDING_EMAILS_STORE_NAME;
+import static andrewgrant.friendsdrinks.email.CreateUserValidationService.PENDING_EMAILS_STORE_NAME;
 
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.Transformer;

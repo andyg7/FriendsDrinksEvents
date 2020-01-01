@@ -30,11 +30,11 @@ import io.confluent.kafka.schemaregistry.client.MockSchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 
 /**
- * Tests for validation.
+ * Tests validation logic for create user aggregator.
  */
-public class ValidationMainTest {
+public class CreateUserValidationServiceTest {
 
-    private static ValidationService service;
+    private static CreateUserValidationService service;
     private static Properties envProps;
     private static Topology topology;
     private static Properties streamProps;
@@ -75,7 +75,7 @@ public class ValidationMainTest {
                 envProps.getProperty("schema.registry.url"),
                 registryClient);
 
-        service = new ValidationService();
+        service = new CreateUserValidationService();
         topology = service.buildTopology(envProps, userAvro, emailAvro);
         streamProps = service.buildStreamsProperties(envProps);
         testDriver = new TopologyTestDriver(topology, streamProps);
@@ -203,84 +203,4 @@ public class ValidationMainTest {
                 rejectedUser2.getCreateUserRejected().getErrorCode());
     }
 
-    @Test
-    public void testValidationDeleteUserRequest() {
-        Serializer<UserEvent> userSerializer = userAvro.userEventSerializer();
-        Serializer<UserId> userIdSerializer = userAvro.userIdSerializer();
-
-        Serializer<EmailEvent> emailSerializer = emailAvro.emailEventSerializer();
-        Serializer<EmailId> emailIdSerializer = emailAvro.emailIdSerializer();
-
-        List<EmailEvent> emailInput = new ArrayList<>();
-        String takenEmail = "takenemail@test.com";
-        String userId = UUID.randomUUID().toString();
-        emailInput.add(EmailEvent.newBuilder()
-                .setEmailId(new EmailId(takenEmail))
-                .setUserId(userId)
-                .setEventType(andrewgrant.friendsdrinks.email.avro
-                        .EventType.RESERVED)
-                .build());
-
-        ConsumerRecordFactory<EmailId, EmailEvent> emailInputFactory =
-                new ConsumerRecordFactory<>(emailIdSerializer, emailSerializer);
-
-        final String emailTopic = envProps.getProperty("email.topic.name");
-        for (EmailEvent email : emailInput) {
-            testDriver.pipeInput(
-                    emailInputFactory.create(emailTopic, email.getEmailId(), email));
-        }
-
-        List<UserEvent> userInput = new ArrayList<>();
-        // Valid request.
-        DeleteUserRequest validRequest = DeleteUserRequest.newBuilder()
-                .setRequestId(UUID.randomUUID().toString())
-                .setUserId(new UserId(userId))
-                .build();
-        DeleteUserRequest invalidRequest = DeleteUserRequest.newBuilder()
-                .setRequestId(UUID.randomUUID().toString())
-                .setUserId(new UserId(UUID.randomUUID().toString()))
-                .build();
-        userInput.add(UserEvent.newBuilder()
-                .setEventType(EventType.DELETE_USER_REQUEST)
-                .setDeleteUserRequest(validRequest)
-                .build());
-        userInput.add(UserEvent.newBuilder()
-                .setEventType(EventType.DELETE_USER_REQUEST)
-                .setDeleteUserRequest(invalidRequest)
-                .build());
-
-        ConsumerRecordFactory<UserId, UserEvent> userInputFactory =
-                new ConsumerRecordFactory<>(userIdSerializer, userSerializer);
-        final String userTopic = envProps.getProperty("user.topic.name");
-        for (UserEvent user : userInput) {
-            testDriver.pipeInput(
-                    userInputFactory.create(userTopic,
-                            user.getDeleteUserRequest().getUserId(), user));
-        }
-
-        final String userValidationTopic = envProps.getProperty("userValidation.topic.name");
-        Deserializer<UserId> userIdDeserializer = userAvro.userIdDeserializer();
-        Deserializer<UserEvent> userDeserializer = userAvro.userEventDeserializer();
-
-        List<UserEvent> userValidationOutput = new ArrayList<>();
-        while (true) {
-            ProducerRecord<UserId, UserEvent> userRecord = testDriver.readOutput(
-                    userValidationTopic, userIdDeserializer, userDeserializer);
-            if (userRecord != null) {
-                EventType eventType = userRecord.value().getEventType();
-                if (eventType.equals(EventType.DELETE_USER_REJECTED) ||
-                        eventType.equals(EventType.DELETE_USER_VALIDATED)) {
-                    userValidationOutput.add(userRecord.value());
-                }
-            } else {
-                break;
-            }
-        }
-
-        assertEquals(2, userValidationOutput.size());
-        UserEvent userEvent1 = userValidationOutput.get(0);
-        assertEquals(EventType.DELETE_USER_VALIDATED, userEvent1.getEventType());
-        UserEvent userEvent2 = userValidationOutput.get(1);
-        assertEquals(EventType.DELETE_USER_REJECTED, userEvent2.getEventType());
-    }
 }
