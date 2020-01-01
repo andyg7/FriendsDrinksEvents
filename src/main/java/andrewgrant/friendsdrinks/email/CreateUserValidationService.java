@@ -35,7 +35,7 @@ public class CreateUserValidationService {
         Properties props = new Properties();
 
         props.put(StreamsConfig.APPLICATION_ID_CONFIG,
-                envProps.getProperty("create_user_email_validation_application.id"));
+                envProps.getProperty("email_create_user_validation_application.id"));
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG,
                 envProps.getProperty("bootstrap.servers"));
         props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,

@@ -11,13 +11,21 @@ services:
           java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.email.WriterService /app/dev.properties
           '"
 
-  email-validation-service:
+  email-create-user-validation-service:
     image: fdimage:latest
     networks:
       - kafka-network
     command:
       "bash -c '
-          java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.email.ValidationService /app/dev.properties
+          java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.email.CreateUserValidationService /app/dev.properties
+          '"
+  email-delete-user-validation-service:
+    image: fdimage:latest
+    networks:
+      - kafka-network
+    command:
+      "bash -c '
+          java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.email.DeleteUserValidationService /app/dev.properties
           '"
 
   fraud-validation-service:
@@ -29,22 +37,13 @@ services:
           java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.fraud.ValidationService /app/dev.properties
           '"
 
-  create-user-validation-service:
+  user-validation-service:
     image: fdimage:latest
     networks:
       - kafka-network
     command:
       "bash -c '
-          java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.user.CreateUserValidationService /app/dev.properties
-          '"
-
-  delete-user-validation-service:
-    image: fdimage:latest
-    networks:
-      - kafka-network
-    command:
-      "bash -c '
-          java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.user.DeleteUserValidationService /app/dev.properties
+          java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.user.ValidationService /app/dev.properties
           '"
 
   create-user-validation-aggregator-service:

@@ -31,7 +31,7 @@ public class DeleteUserValidationService {
         Properties props = new Properties();
 
         props.put(StreamsConfig.APPLICATION_ID_CONFIG,
-                envProps.getProperty("delete_user_email_validation_application.id"));
+                envProps.getProperty("email_delete_user_validation_application.id"));
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG,
                 envProps.getProperty("bootstrap.servers"));
         props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
