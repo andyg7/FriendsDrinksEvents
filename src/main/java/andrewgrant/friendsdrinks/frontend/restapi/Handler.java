@@ -24,7 +24,6 @@ import andrewgrant.friendsdrinks.user.avro.*;
 /**
  * Implements frontend REST API for interacting with backend.
  */
-@Path("v1")
 public class Handler {
 
     private KafkaProducer<UserId, UserEvent> userProducer;

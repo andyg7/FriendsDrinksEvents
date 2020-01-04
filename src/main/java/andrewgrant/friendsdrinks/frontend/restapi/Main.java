@@ -105,7 +105,7 @@ public class Main {
         final ServletContainer sc = new ServletContainer(rc);
         final ServletHolder holder = new ServletHolder(sc);
 
-        context.addServlet(holder, "/*");
+        context.addServlet(holder, "/v1/*");
 
         return jettyServer;
     }
