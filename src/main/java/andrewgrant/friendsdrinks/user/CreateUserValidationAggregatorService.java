@@ -140,6 +140,8 @@ public class CreateUserValidationAggregatorService {
                 envProps.getProperty("bootstrap.servers"));
         props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
                 envProps.getProperty("schema.registry.url"));
+        // Disable caching.
+        props.put(StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG, 0);
         return props;
     }
 
