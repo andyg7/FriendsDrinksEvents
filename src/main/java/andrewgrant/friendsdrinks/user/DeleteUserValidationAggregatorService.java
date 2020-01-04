@@ -61,7 +61,7 @@ public class DeleteUserValidationAggregatorService {
         // Request id -> number of validations for delete user requests
         KStream<String, Long> deleteValidationCount = validationResultsKeyedByRequestId
                 .groupByKey(Grouped.with(Serdes.String(), userEventSerde))
-                .windowedBy(SessionWindows.with(Duration.ofSeconds(10)))
+                .windowedBy(SessionWindows.with(Duration.ofSeconds(1)))
                 .aggregate(
                         () -> 0L,
                         (requestId, user, total) ->

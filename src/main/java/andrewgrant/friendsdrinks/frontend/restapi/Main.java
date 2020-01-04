@@ -60,7 +60,7 @@ public class Main {
                 userProducer.close();
                 try {
                     jettyServer.stop();
-                } catch (Exception e){
+                } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
             }

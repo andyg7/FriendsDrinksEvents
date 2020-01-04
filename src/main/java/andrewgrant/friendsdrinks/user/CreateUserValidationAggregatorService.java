@@ -61,7 +61,7 @@ public class CreateUserValidationAggregatorService {
         // Request id -> number of validations for create user requests
         KStream<String, Long> createValidationCount = validationResultsKeyedByRequestId
                 .groupByKey(Grouped.with(Serdes.String(), userEventSerde))
-                .windowedBy(SessionWindows.with(Duration.ofSeconds(10)))
+                .windowedBy(SessionWindows.with(Duration.ofSeconds(1)))
                 .aggregate(
                         () -> 0L,
                         (requestId, user, total) ->
@@ -82,7 +82,9 @@ public class CreateUserValidationAggregatorService {
                 .filter(((key, value) ->
                         value.getEventType().equals(EventType.CREATE_USER_REQUEST)))
                 .mapValues(value -> value.getCreateUserRequest())
-                .selectKey((key, value) -> value.getRequestId());
+                .selectKey((key, value) -> value.getRequestId())
+                .through((String) envProps.get("userAggregationPrivate.topic.name"),
+                        Produced.with(Serdes.String(), userAvro.createUserRequestSerde()));
 
         SpecificAvroSerde<CreateUserRequest> createUserRequestSerde =
                 userAvro.createUserRequestSerde();
@@ -104,16 +106,10 @@ public class CreateUserValidationAggregatorService {
                 .to(userTopicName, userAvro.producedWith());
 
 
-        KStream<String, CreateUserRequest> createUserRequestsKeyedByRequestId2 = userEvents
-                .filter(((key, value) ->
-                        value.getEventType().equals(EventType.CREATE_USER_REQUEST)))
-                .mapValues(value -> value.getCreateUserRequest())
-                .selectKey((key, value) -> value.getRequestId());
-
         // Rejected create user requests
         validationResultsKeyedByRequestId.filter(((key, value) ->
                 value.getEventType().equals(EventType.CREATE_USER_REJECTED))).join(
-                createUserRequestsKeyedByRequestId2,
+                createUserRequestsKeyedByRequestId,
                 (leftValue, rightValue) -> {
                     CreateUserResponse response = CreateUserResponse.newBuilder()
                             .setRequestId(rightValue.getRequestId())
