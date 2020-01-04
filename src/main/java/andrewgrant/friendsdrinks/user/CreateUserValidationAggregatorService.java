@@ -72,7 +72,16 @@ public class CreateUserValidationAggregatorService {
                 )
                 .toStream((key, value) -> key.key())
                 .filter(((key, value) -> value != null))
-                .filter(((key, value) -> value >= 2L));
+                .filter(((key, value) -> value >= 2L))
+                .groupByKey(Grouped.with(Serdes.String(), Serdes.Long()))
+                .reduce(((aggVal, newVal) -> {
+                    if (aggVal == 0) {
+                        return newVal;
+                    } else {
+                        return aggVal;
+                    }
+                }))
+                .toStream();
 
         final String userTopicName = envProps.getProperty("user.topic.name");
         KStream<UserId, UserEvent> userEvents = builder.stream(
