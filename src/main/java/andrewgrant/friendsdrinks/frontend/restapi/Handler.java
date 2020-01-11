@@ -20,6 +20,11 @@ import java.util.concurrent.ExecutionException;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
+import andrewgrant.friendsdrinks.frontend.restapi.email.GetEmailsResponseBean;
+import andrewgrant.friendsdrinks.frontend.restapi.request.GetRequestResponseBean;
+import andrewgrant.friendsdrinks.frontend.restapi.request.GetRequestsResponseBean;
+import andrewgrant.friendsdrinks.frontend.restapi.user.CreateUserRequestBean;
+import andrewgrant.friendsdrinks.frontend.restapi.user.CreateUserResponseBean;
 import andrewgrant.friendsdrinks.user.avro.*;
 
 /**

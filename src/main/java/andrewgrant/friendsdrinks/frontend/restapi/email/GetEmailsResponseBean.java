@@ -1,4 +1,4 @@
-package andrewgrant.friendsdrinks.frontend.restapi;
+package andrewgrant.friendsdrinks.frontend.restapi.email;
 
 import java.util.List;
 

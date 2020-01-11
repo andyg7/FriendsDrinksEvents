@@ -1,4 +1,4 @@
-package andrewgrant.friendsdrinks.frontend.restapi;
+package andrewgrant.friendsdrinks.frontend.restapi.request;
 
 /**
  * DTO for GetUserResponseBean .
