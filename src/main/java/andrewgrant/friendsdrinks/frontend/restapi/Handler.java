@@ -76,9 +76,14 @@ public class Handler {
 
         CreateUserResponse createUserResponse = kv.get(requestId);
         if (createUserResponse == null) {
-            // Give the backend some more time.
-            Thread.sleep(1000);
-            createUserResponse = kv.get(requestId);
+            for (int i = 0; i < 10; i++) {
+                if (createUserResponse != null) {
+                    break;
+                }
+                // Give the backend some more time.
+                Thread.sleep(500);
+                createUserResponse = kv.get(requestId);
+            }
         }
         if (createUserResponse == null) {
             throw new RuntimeException(String.format(
