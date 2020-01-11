@@ -34,8 +34,8 @@ public class DeleteUserValidationAggregatorService {
     public Topology buildTopology(Properties envProps,
                                   UserAvro userAvro) {
         StreamsBuilder builder = new StreamsBuilder();
-        final String userValidationsTopic = envProps.getProperty("userValidation.topic.name");
 
+        final String userValidationsTopic = envProps.getProperty("userValidation.topic.name");
         SpecificAvroSerde<UserEvent> userEventSerde = userAvro.userEventSerde();
         KStream<UserId, UserEvent> userValidations = builder
                 .stream(userValidationsTopic, userAvro.consumedWith());
@@ -53,7 +53,7 @@ public class DeleteUserValidationAggregatorService {
                         return value.getDeleteUserRejected().getRequestId();
                     } else {
                         throw new RuntimeException(
-                                String.format("Topic should only contain validated or rejected " +
+                                String.format("Expecting only validated or rejected " +
                                         "events, but found %s", value.getEventType().toString()));
                     }
                 });
@@ -145,6 +145,8 @@ public class DeleteUserValidationAggregatorService {
                 envProps.getProperty("bootstrap.servers"));
         props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
                 envProps.getProperty("schema.registry.url"));
+        // Disable caching.
+        props.put(StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG, 0);
         return props;
     }
 

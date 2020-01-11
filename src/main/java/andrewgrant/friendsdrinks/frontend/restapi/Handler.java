@@ -25,6 +25,7 @@ import andrewgrant.friendsdrinks.frontend.restapi.request.GetRequestResponseBean
 import andrewgrant.friendsdrinks.frontend.restapi.request.GetRequestsResponseBean;
 import andrewgrant.friendsdrinks.frontend.restapi.user.CreateUserRequestBean;
 import andrewgrant.friendsdrinks.frontend.restapi.user.CreateUserResponseBean;
+import andrewgrant.friendsdrinks.frontend.restapi.user.DeleteUserResponseBean;
 import andrewgrant.friendsdrinks.user.avro.*;
 
 /**
@@ -72,8 +73,6 @@ public class Handler {
                         userEvent.getCreateUserRequest().getUserId(),
                         userEvent);
         userProducer.send(record).get();
-        CreateUserResponseBean responseBean =
-                new CreateUserResponseBean();
 
         ReadOnlyKeyValueStore<String, CreateUserResponse> kv =
                 streams.store(REQUESTS_STORE,
@@ -94,11 +93,71 @@ public class Handler {
             throw new RuntimeException(String.format(
                     "Failed to get CreateUserResponse for request id %s", requestId));
         }
-        responseBean.setUserId(createUserResponse.getUserId().getId());
-        responseBean.setResult(createUserResponse.getResult().toString());
+
+        CreateUserResponseBean responseBean =
+                new CreateUserResponseBean();
+
+        Result result = createUserResponse.getResult();
+        responseBean.setResult(result.toString());
+        if (result.equals(Result.SUCCESS)) {
+            // Only return user id if a user was actually created.
+            responseBean.setUserId(createUserResponse.getUserId().getId());
+        }
+
         return responseBean;
     }
 
+    @DELETE
+    @Path("/users/{userId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public DeleteUserResponseBean deleteUser(@PathParam("userId") final String userIdStr)
+            throws ExecutionException, InterruptedException {
+        UserId userId = UserId.newBuilder()
+                .setId(userIdStr)
+                .build();
+        String requestId = UUID.randomUUID().toString();
+        DeleteUserRequest request = DeleteUserRequest.newBuilder()
+                .setUserId(userId)
+                .setRequestId(requestId)
+                .build();
+        UserEvent userEvent = UserEvent.newBuilder()
+                .setEventType(EventType.DELETE_USER_REQUEST)
+                .setDeleteUserRequest(request)
+                .build();
+        final String userTopicName = envProps.getProperty("user.topic.name");
+        ProducerRecord<UserId, UserEvent> record =
+                new ProducerRecord<>(
+                        userTopicName,
+                        userEvent.getDeleteUserRequest().getUserId(),
+                        userEvent);
+        userProducer.send(record).get();
+
+        ReadOnlyKeyValueStore<String, DeleteUserResponse> kv =
+                streams.store(REQUESTS_STORE,
+                        QueryableStoreTypes.keyValueStore());
+
+        DeleteUserResponse deleteUserResponse = kv.get(requestId);
+        if (deleteUserResponse == null) {
+            for (int i = 0; i < 10; i++) {
+                if (deleteUserResponse != null) {
+                    break;
+                }
+                // Give the backend some more time.
+                Thread.sleep(500);
+                deleteUserResponse = kv.get(requestId);
+            }
+        }
+        if (deleteUserResponse == null) {
+            throw new RuntimeException(String.format(
+                    "Failed to get DeleteUserResponse for request id %s", requestId));
+        }
+
+        DeleteUserResponseBean responseBean =
+                new DeleteUserResponseBean();
+
+        responseBean.setResult(deleteUserResponse.getResult().toString());
+        return responseBean;
+    }
     @GET
     @Path("/requests/{requestId}")
     @Produces(MediaType.APPLICATION_JSON)
