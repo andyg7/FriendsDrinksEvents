@@ -5,6 +5,7 @@ import static andrewgrant.friendsdrinks.frontend.restapi.StreamsService.REQUESTS
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
@@ -29,14 +30,14 @@ public class Handler {
 
     private KafkaProducer<UserId, UserEvent> userProducer;
     private Properties envProps;
-    private StreamsService streamsService;
+    private KafkaStreams streams;
 
     public Handler(KafkaProducer<UserId, UserEvent> userProducer,
                    Properties envProps,
-                   StreamsService streamsService) {
+                   KafkaStreams streams) {
         this.userProducer = userProducer;
         this.envProps = envProps;
-        this.streamsService = streamsService;
+        this.streams = streams;
     }
 
     @POST
@@ -68,16 +69,32 @@ public class Handler {
         userProducer.send(record).get();
         CreateUserResponseBean responseBean =
                 new CreateUserResponseBean();
-        responseBean.setRequestId(requestId);
+
+        ReadOnlyKeyValueStore<String, CreateUserResponse> kv =
+                streams.store(REQUESTS_STORE,
+                        QueryableStoreTypes.keyValueStore());
+
+        CreateUserResponse createUserResponse = kv.get(requestId);
+        if (createUserResponse == null) {
+            // Give the backend some more time.
+            Thread.sleep(1000);
+            createUserResponse = kv.get(requestId);
+        }
+        if (createUserResponse == null) {
+            throw new RuntimeException(String.format(
+                    "Failed to get CreateUserResponse for request id %s", requestId));
+        }
+        responseBean.setUserId(createUserResponse.getUserId().getId());
+        responseBean.setResult(createUserResponse.getResult().toString());
         return responseBean;
     }
 
     @GET
     @Path("/requests/{requestId}")
     @Produces(MediaType.APPLICATION_JSON)
-    public GetRequestResponseBean getUser(@PathParam("requestId") final String requestId) {
+    public GetRequestResponseBean getRequest(@PathParam("requestId") final String requestId) {
         ReadOnlyKeyValueStore<String, CreateUserResponse> kv =
-                streamsService.getStreams().store(REQUESTS_STORE,
+                streams.store(REQUESTS_STORE,
                         QueryableStoreTypes.keyValueStore());
         CreateUserResponse createUserResponse = kv.get(requestId);
         String status;
@@ -98,9 +115,9 @@ public class Handler {
     @GET
     @Path("/requests")
     @Produces(MediaType.APPLICATION_JSON)
-    public GetRequestsResponseBean getUsers() {
+    public GetRequestsResponseBean getRequests() {
         ReadOnlyKeyValueStore<String, CreateUserResponse> kv =
-                streamsService.getStreams().store(REQUESTS_STORE,
+                streams.store(REQUESTS_STORE,
                         QueryableStoreTypes.keyValueStore());
         KeyValueIterator<String, CreateUserResponse> allKvs = kv.all();
         List<String> requests = new ArrayList<>();
@@ -119,7 +136,7 @@ public class Handler {
     @Produces(MediaType.APPLICATION_JSON)
     public GetEmailsResponseBean getEmails() {
         ReadOnlyKeyValueStore<String, String> kv =
-                streamsService.getStreams().store(EMAILS_STORE,
+                streams.store(EMAILS_STORE,
                         QueryableStoreTypes.keyValueStore());
         KeyValueIterator<String, String> allKvs = kv.all();
         List<String> emails = new ArrayList<>();

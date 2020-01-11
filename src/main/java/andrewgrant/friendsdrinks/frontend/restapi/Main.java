@@ -50,7 +50,7 @@ public class Main {
         int port = Integer.parseInt(portStr);
         KafkaProducer<UserId, UserEvent> userProducer = buildUserProducer(envProps,
                 userAvro);
-        Handler handler = new Handler(userProducer, envProps, streamsService);
+        Handler handler = new Handler(userProducer, envProps, streams);
         Server jettyServer = Main.buildServer(handler, port);
         // Attach shutdown handler to catch Control-C.
         Runtime.getRuntime().addShutdownHook(new Thread("streams-shutdown-hook") {

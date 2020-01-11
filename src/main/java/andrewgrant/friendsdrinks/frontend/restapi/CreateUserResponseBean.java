@@ -4,16 +4,29 @@ package andrewgrant.friendsdrinks.frontend.restapi;
  * DTO for CreateUserResponse.
  */
 public class CreateUserResponseBean {
-    private String requestId;
+
+    private String userId;
+    private String result;
 
     public CreateUserResponseBean() {
     }
 
-    public String getRequestId() {
-        return requestId;
+    public String getResult() {
+        return result;
     }
 
-    public void setRequestId(String requestId) {
-        this.requestId = requestId;
+    public void setResult(String result) {
+        this.result = result;
     }
+
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+
 }
