@@ -187,18 +187,18 @@ public class CreateUserValidationServiceTest {
         assertEquals(3, userValidationOutput.size());
 
         UserEvent validatedUser = userValidationOutput.get(0);
-        assertEquals(newUserId, validatedUser.getCreateUserValidated().getUserId().getId());
         assertEquals(EventType.CREATE_USER_VALIDATED, validatedUser.getEventType());
+        assertEquals(newUserId, validatedUser.getCreateUserValidated().getUserId().getId());
 
         UserEvent rejectedUser = userValidationOutput.get(1);
-        assertEquals(newUserId2, rejectedUser.getCreateUserRejected().getUserId().getId());
         assertEquals(EventType.CREATE_USER_REJECTED, rejectedUser.getEventType());
+        assertEquals(newUserId2, rejectedUser.getCreateUserRejected().getUserId().getId());
         assertEquals(ErrorCode.Exists.toString(),
                 rejectedUser.getCreateUserRejected().getErrorCode());
 
         UserEvent rejectedUser2 = userValidationOutput.get(2);
+        assertEquals(EventType.CREATE_USER_REJECTED, rejectedUser2.getEventType());
         assertEquals(newUserId3, rejectedUser2.getCreateUserRejected().getUserId().getId());
-        assertEquals(EventType.CREATE_USER_REJECTED, rejectedUser.getEventType());
         assertEquals(ErrorCode.Pending.toString(),
                 rejectedUser2.getCreateUserRejected().getErrorCode());
     }

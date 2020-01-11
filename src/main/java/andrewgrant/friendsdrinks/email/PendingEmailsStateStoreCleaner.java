@@ -2,8 +2,7 @@ package andrewgrant.friendsdrinks.email;
 
 import static andrewgrant.friendsdrinks.email.CreateUserValidationService.PENDING_EMAILS_STORE_NAME;
 
-import org.apache.kafka.streams.KeyValue;
-import org.apache.kafka.streams.kstream.Transformer;
+import org.apache.kafka.streams.processor.Processor;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
 
@@ -15,7 +14,7 @@ import andrewgrant.friendsdrinks.email.avro.EventType;
  * Cleans state store holding pending emails.
  */
 public class PendingEmailsStateStoreCleaner implements
-        Transformer<EmailId, EmailEvent, KeyValue<EmailId, EmailEvent>> {
+        Processor<EmailId, EmailEvent> {
 
     private KeyValueStore<String, String> pendingEmailsStore;
 
@@ -26,15 +25,17 @@ public class PendingEmailsStateStoreCleaner implements
     }
 
     @Override
-    public KeyValue<EmailId, EmailEvent> transform(EmailId emailId, EmailEvent value) {
+    public void process(EmailId emailId, EmailEvent value) {
         if (value.getEventType().equals(EventType.REJECTED) ||
                 value.getEventType().equals(EventType.RESERVED)) {
             String v = pendingEmailsStore.get(value.getEmailId().getEmailAddress());
             if (v != null && v.equals(value.getUserId())) {
                 pendingEmailsStore.put(value.getEmailId().getEmailAddress(), null);
             }
+        } else {
+            throw new RuntimeException(String.format("Received unexpected event type %s",
+                    value.getEventType().toString()));
         }
-        return new KeyValue<>(emailId, value);
     }
 
     @Override

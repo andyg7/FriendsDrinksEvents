@@ -58,12 +58,14 @@ public class CreateUserValidationService {
         builder.addStateStore(pendingEmails);
 
         final String emailTopic = envProps.getProperty("email.topic.name");
-        // Get stream of email events and clean up state store as they come in
-        KStream<EmailId, EmailEvent> emailKStreamRaw = builder.stream(emailTopic,
+        KStream<EmailId, EmailEvent> emailKStream = builder.stream(emailTopic,
                 Consumed.with(
                         emailAvro.emailIdSerde(), emailAvro.emailEventSerde()));
-        KStream<EmailId, EmailEvent> emailKStream = emailKStreamRaw
-                .transform(PendingEmailsStateStoreCleaner::new, PENDING_EMAILS_STORE_NAME);
+
+        // Immediately remove rejected emails from state store.
+        emailKStream.filter((key, value) -> value.getEventType().equals(
+                andrewgrant.friendsdrinks.email.avro.EventType.REJECTED))
+                .process(PendingEmailsStateStoreCleaner::new, PENDING_EMAILS_STORE_NAME);
 
         // Write events to a tmp topic so we can rebuild a table of currently reserved emails.
         final String emailPrivate1Topic = envProps.getProperty("emailPrivate1.topic.name");
@@ -91,6 +93,12 @@ public class CreateUserValidationService {
         KTable<EmailId, EmailEvent> emailKTable = builder.table(emailPrivate1Topic,
                 Consumed.with(emailAvro.emailIdSerde(),
                         emailAvro.emailEventSerde()));
+
+        // Now that reserved emails and in the KTable, its safe to remove them
+        // from the state store.
+        emailKTable.toStream().filter(((key, value) -> value.getEventType().equals(
+                andrewgrant.friendsdrinks.email.avro.EventType.RESERVED)))
+                .process(PendingEmailsStateStoreCleaner::new, PENDING_EMAILS_STORE_NAME);
 
         final String userTopicName = envProps.getProperty("user.topic.name");
         KStream<UserId, UserEvent> userIdKStream = builder.stream(userTopicName,
