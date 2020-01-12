@@ -45,5 +45,18 @@ public class Handler {
         return getEmailsResponseBean;
     }
 
+    @GET
+    @Path("/{email}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public GetEmailResponseBean getEmail(@PathParam("email") final String email) {
+        ReadOnlyKeyValueStore<String, String> kv =
+                streams.store(EMAILS_STORE,
+                        QueryableStoreTypes.keyValueStore());
+        String userId = kv.get(email);
+        GetEmailResponseBean getEmailResponseBean = new GetEmailResponseBean();
+        getEmailResponseBean.setUserId(userId);
+        return getEmailResponseBean;
+    }
+
 }
 
