@@ -96,8 +96,9 @@ public class CreateUserValidationService {
 
         // Now that reserved emails and in the KTable, its safe to remove them
         // from the state store.
-        emailKTable.toStream().filter(((key, value) -> value.getEventType().equals(
-                andrewgrant.friendsdrinks.email.avro.EventType.RESERVED)))
+        emailKTable.toStream().filter(((key, value) -> value != null &&
+                value.getEventType().equals(
+                        andrewgrant.friendsdrinks.email.avro.EventType.RESERVED)))
                 .process(PendingEmailsStateStoreCleaner::new, PENDING_EMAILS_STORE_NAME);
 
         final String userTopicName = envProps.getProperty("user.topic.name");
