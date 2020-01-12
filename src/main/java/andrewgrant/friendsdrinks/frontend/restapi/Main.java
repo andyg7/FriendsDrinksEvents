@@ -50,8 +50,8 @@ public class Main {
         int port = Integer.parseInt(portStr);
         KafkaProducer<UserId, UserEvent> userProducer = buildUserProducer(envProps,
                 userAvro);
-        Handler handler = new Handler(userProducer, envProps, streams);
-        Server jettyServer = Main.buildServer(handler, port);
+        Server jettyServer = Main.buildServer(envProps,
+                streams, userAvro, port);
         // Attach shutdown handler to catch Control-C.
         Runtime.getRuntime().addShutdownHook(new Thread("streams-shutdown-hook") {
             @Override
@@ -91,23 +91,66 @@ public class Main {
                 userAvro.userEventSerializer());
     }
 
-    private static Server buildServer(Handler handler,
+    private static Server buildServer(Properties envProps,
+                                      KafkaStreams streams,
+                                      UserAvro userAvro,
                                       int port) {
+        // Jetty server context handler.
         final ServletContextHandler context =
                 new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
-        context.setContextPath("/");
+        context.setContextPath("/v1");
         final Server jettyServer = new Server(port);
         jettyServer.setHandler(context);
 
+        context.addServlet(buildUsersHolder(envProps, userAvro, streams), "/users/*");
+        context.addServlet(buildEmailsHolder(streams), "/emails/*");
+        context.addServlet(buildRequestsHolder(streams), "/requests/*");
+
+        return jettyServer;
+    }
+
+    private static ServletHolder buildUsersHolder(Properties envProps,
+                                                 UserAvro userAvro,
+                                                 KafkaStreams streams) {
+        KafkaProducer<UserId, UserEvent> userProducer = buildUserProducer(envProps,
+                userAvro);
+        andrewgrant.friendsdrinks.frontend.restapi.user.Handler handler =
+                new andrewgrant.friendsdrinks.frontend.restapi.user.Handler(
+                        userProducer, envProps, streams);
         final ResourceConfig rc = new ResourceConfig();
         rc.register(handler);
         rc.register(JacksonFeature.class);
+        // Jersey container for ResourceConfig.
         final ServletContainer sc = new ServletContainer(rc);
-        final ServletHolder holder = new ServletHolder(sc);
+        // Jetty class that holds sc which is an
+        // implementation of the javax Servlet interface.
+        return new ServletHolder(sc);
+    }
 
-        context.addServlet(holder, "/*");
+    private static ServletHolder buildEmailsHolder(KafkaStreams streams) {
+        andrewgrant.friendsdrinks.frontend.restapi.email.Handler handler =
+                new andrewgrant.friendsdrinks.frontend.restapi.email.Handler(streams);
+        final ResourceConfig rc = new ResourceConfig();
+        rc.register(handler);
+        rc.register(JacksonFeature.class);
+        // Jersey container for ResourceConfig.
+        final ServletContainer sc = new ServletContainer(rc);
+        // Jetty class that holds sc which is an
+        // implementation of the javax Servlet interface.
+        return new ServletHolder(sc);
+    }
 
-        return jettyServer;
+    private static ServletHolder buildRequestsHolder(KafkaStreams streams) {
+        andrewgrant.friendsdrinks.frontend.restapi.request.Handler handler =
+                new andrewgrant.friendsdrinks.frontend.restapi.request.Handler(streams);
+        final ResourceConfig rc = new ResourceConfig();
+        rc.register(handler);
+        rc.register(JacksonFeature.class);
+        // Jersey container for ResourceConfig.
+        final ServletContainer sc = new ServletContainer(rc);
+        // Jetty class that holds sc which is an
+        // implementation of the javax Servlet interface.
+        return new ServletHolder(sc);
     }
 
 }
