@@ -1,4 +1,4 @@
-package andrewgrant.friendsdrinks.frontend.restapi.email;
+package andrewgrant.friendsdrinks.frontend.restapi.emails;
 
 import static andrewgrant.friendsdrinks.frontend.restapi.StreamsService.EMAILS_STORE;
 

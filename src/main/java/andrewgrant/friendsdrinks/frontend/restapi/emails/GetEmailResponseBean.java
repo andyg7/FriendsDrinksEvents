@@ -1,4 +1,4 @@
-package andrewgrant.friendsdrinks.frontend.restapi.email;
+package andrewgrant.friendsdrinks.frontend.restapi.emails;
 
 /**
  * DTO for GetEmailResponseBean.

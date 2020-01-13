@@ -1,4 +1,4 @@
-package andrewgrant.friendsdrinks.frontend.restapi.user;
+package andrewgrant.friendsdrinks.frontend.restapi.users;
 
 /**
  * DTO for a CreateUserRequest.

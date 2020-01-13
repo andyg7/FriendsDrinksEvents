@@ -1,4 +1,4 @@
-package andrewgrant.friendsdrinks.frontend.restapi.request;
+package andrewgrant.friendsdrinks.frontend.restapi.requests;
 
 import static andrewgrant.friendsdrinks.frontend.restapi.StreamsService.REQUESTS_STORE;
 

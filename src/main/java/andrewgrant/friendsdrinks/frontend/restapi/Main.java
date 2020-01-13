@@ -114,8 +114,8 @@ public class Main {
                                                  KafkaStreams streams) {
         KafkaProducer<UserId, UserEvent> userProducer = buildUserProducer(envProps,
                 userAvro);
-        andrewgrant.friendsdrinks.frontend.restapi.user.Handler handler =
-                new andrewgrant.friendsdrinks.frontend.restapi.user.Handler(
+        andrewgrant.friendsdrinks.frontend.restapi.users.Handler handler =
+                new andrewgrant.friendsdrinks.frontend.restapi.users.Handler(
                         userProducer, envProps, streams);
         final ResourceConfig rc = new ResourceConfig();
         rc.register(handler);
@@ -128,8 +128,8 @@ public class Main {
     }
 
     private static ServletHolder buildEmailsHolder(KafkaStreams streams) {
-        andrewgrant.friendsdrinks.frontend.restapi.email.Handler handler =
-                new andrewgrant.friendsdrinks.frontend.restapi.email.Handler(streams);
+        andrewgrant.friendsdrinks.frontend.restapi.emails.Handler handler =
+                new andrewgrant.friendsdrinks.frontend.restapi.emails.Handler(streams);
         final ResourceConfig rc = new ResourceConfig();
         rc.register(handler);
         rc.register(JacksonFeature.class);
@@ -141,8 +141,8 @@ public class Main {
     }
 
     private static ServletHolder buildRequestsHolder(KafkaStreams streams) {
-        andrewgrant.friendsdrinks.frontend.restapi.request.Handler handler =
-                new andrewgrant.friendsdrinks.frontend.restapi.request.Handler(streams);
+        andrewgrant.friendsdrinks.frontend.restapi.requests.Handler handler =
+                new andrewgrant.friendsdrinks.frontend.restapi.requests.Handler(streams);
         final ResourceConfig rc = new ResourceConfig();
         rc.register(handler);
         rc.register(JacksonFeature.class);
