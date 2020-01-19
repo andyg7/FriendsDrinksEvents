@@ -1,6 +1,7 @@
 package andrewgrant.friendsdrinks.frontend.restapi.users;
 
-import static andrewgrant.friendsdrinks.frontend.restapi.StreamsService.REQUESTS_STORE;
+import static andrewgrant.friendsdrinks.frontend.restapi.StreamsService.CREATE_USER_REQUESTS_STORE;
+import static andrewgrant.friendsdrinks.frontend.restapi.StreamsService.DELETE_USER_REQUESTS_STORE;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -64,7 +65,7 @@ public class Handler {
         userProducer.send(record).get();
 
         ReadOnlyKeyValueStore<String, CreateUserResponse> kv =
-                streams.store(REQUESTS_STORE,
+                streams.store(CREATE_USER_REQUESTS_STORE,
                         QueryableStoreTypes.keyValueStore());
 
         CreateUserResponse createUserResponse = kv.get(requestId);
@@ -122,7 +123,7 @@ public class Handler {
         userProducer.send(record).get();
 
         ReadOnlyKeyValueStore<String, DeleteUserResponse> kv =
-                streams.store(REQUESTS_STORE,
+                streams.store(DELETE_USER_REQUESTS_STORE,
                         QueryableStoreTypes.keyValueStore());
 
         DeleteUserResponse deleteUserResponse = kv.get(requestId);

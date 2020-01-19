@@ -64,7 +64,7 @@ services:
           java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.user.DeleteUserValidationAggregatorService /app/dev.properties
           '"
 
-  front-end-api:
+  frontend-api:
     image: fdimage:latest
     networks:
       - kafka-network

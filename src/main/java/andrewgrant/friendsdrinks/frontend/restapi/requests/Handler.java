@@ -1,6 +1,6 @@
 package andrewgrant.friendsdrinks.frontend.restapi.requests;
 
-import static andrewgrant.friendsdrinks.frontend.restapi.StreamsService.REQUESTS_STORE;
+import static andrewgrant.friendsdrinks.frontend.restapi.StreamsService.CREATE_USER_REQUESTS_STORE;
 
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
@@ -33,7 +33,7 @@ public class Handler {
     @Produces(MediaType.APPLICATION_JSON)
     public GetRequestResponseBean getRequest(@PathParam("requestId") final String requestId) {
         ReadOnlyKeyValueStore<String, CreateUserResponse> kv =
-                streams.store(REQUESTS_STORE,
+                streams.store(CREATE_USER_REQUESTS_STORE,
                         QueryableStoreTypes.keyValueStore());
         CreateUserResponse createUserResponse = kv.get(requestId);
         String status;
@@ -56,7 +56,7 @@ public class Handler {
     @Produces(MediaType.APPLICATION_JSON)
     public GetRequestsResponseBean getRequests() {
         ReadOnlyKeyValueStore<String, CreateUserResponse> kv =
-                streams.store(REQUESTS_STORE,
+                streams.store(CREATE_USER_REQUESTS_STORE,
                         QueryableStoreTypes.keyValueStore());
         KeyValueIterator<String, CreateUserResponse> allKvs = kv.all();
         List<String> requests = new ArrayList<>();
