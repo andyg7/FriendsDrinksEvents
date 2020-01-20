@@ -104,7 +104,6 @@ public class Main {
 
         context.addServlet(buildUsersHolder(envProps, userAvro, streams), "/users/*");
         context.addServlet(buildEmailsHolder(streams), "/emails/*");
-        context.addServlet(buildRequestsHolder(streams), "/requests/*");
 
         return jettyServer;
     }
@@ -140,17 +139,5 @@ public class Main {
         return new ServletHolder(sc);
     }
 
-    private static ServletHolder buildRequestsHolder(KafkaStreams streams) {
-        andrewgrant.friendsdrinks.frontend.restapi.requests.Handler handler =
-                new andrewgrant.friendsdrinks.frontend.restapi.requests.Handler(streams);
-        final ResourceConfig rc = new ResourceConfig();
-        rc.register(handler);
-        rc.register(JacksonFeature.class);
-        // Jersey container for ResourceConfig.
-        final ServletContainer sc = new ServletContainer(rc);
-        // Jetty class that holds sc which is an
-        // implementation of the javax Servlet interface.
-        return new ServletHolder(sc);
-    }
 
 }

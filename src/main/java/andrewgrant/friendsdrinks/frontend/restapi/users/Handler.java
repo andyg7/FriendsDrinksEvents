@@ -6,9 +6,13 @@ import static andrewgrant.friendsdrinks.frontend.restapi.StreamsService.DELETE_U
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -64,9 +68,8 @@ public class Handler {
                         userEvent);
         userProducer.send(record).get();
 
-        ReadOnlyKeyValueStore<String, CreateUserResponse> kv =
-                streams.store(CREATE_USER_REQUESTS_STORE,
-                        QueryableStoreTypes.keyValueStore());
+        ReadOnlyKeyValueStore<String, CreateUserResponse> kv = streams.store(CREATE_USER_REQUESTS_STORE,
+                QueryableStoreTypes.keyValueStore());
 
         CreateUserResponse createUserResponse = kv.get(requestId);
         if (createUserResponse == null) {
@@ -84,9 +87,7 @@ public class Handler {
                     "Failed to get CreateUserResponse for request id %s", requestId));
         }
 
-        CreateUserResponseBean responseBean =
-                new CreateUserResponseBean();
-
+        CreateUserResponseBean responseBean = new CreateUserResponseBean();
         Result result = createUserResponse.getResult();
         responseBean.setResult(result.toString());
         if (result.equals(Result.SUCCESS)) {
@@ -115,11 +116,10 @@ public class Handler {
                 .setDeleteUserRequest(request)
                 .build();
         final String userTopicName = envProps.getProperty("user.topic.name");
-        ProducerRecord<UserId, UserEvent> record =
-                new ProducerRecord<>(
-                        userTopicName,
-                        userEvent.getDeleteUserRequest().getUserId(),
-                        userEvent);
+        ProducerRecord<UserId, UserEvent> record = new ProducerRecord<>(
+                userTopicName,
+                userEvent.getDeleteUserRequest().getUserId(),
+                userEvent);
         userProducer.send(record).get();
 
         ReadOnlyKeyValueStore<String, DeleteUserResponse> kv =
@@ -142,11 +142,92 @@ public class Handler {
                     "Failed to get DeleteUserResponse for request id %s", requestId));
         }
 
-        DeleteUserResponseBean responseBean =
-                new DeleteUserResponseBean();
-
+        DeleteUserResponseBean responseBean = new DeleteUserResponseBean();
         responseBean.setResult(deleteUserResponse.getResult().toString());
         return responseBean;
     }
 
+    @GET
+    @Path("/createRequests/{requestId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public GetRequestResponseBean getCreateRequest(@PathParam("requestId") final String requestId) {
+        ReadOnlyKeyValueStore<String, CreateUserResponse> kv =
+                streams.store(CREATE_USER_REQUESTS_STORE,
+                        QueryableStoreTypes.keyValueStore());
+        CreateUserResponse createUserResponse = kv.get(requestId);
+        String status;
+        if (createUserResponse == null) {
+            status = "Unknown";
+        } else if (createUserResponse.getResult().equals(Result.SUCCESS)) {
+            status = "Success";
+        } else if (createUserResponse.getResult().equals(Result.FAIL)) {
+            status = "Fail";
+        } else {
+            throw new RuntimeException("Failed to get status for request");
+        }
+        GetRequestResponseBean responseBean = new GetRequestResponseBean();
+        responseBean.setStatus(status);
+        return responseBean;
+    }
+
+    @GET
+    @Path("/createRequests")
+    @Produces(MediaType.APPLICATION_JSON)
+    public GetRequestsResponseBean getCreateRequests() {
+        ReadOnlyKeyValueStore<String, CreateUserResponse> kv =
+                streams.store(CREATE_USER_REQUESTS_STORE,
+                        QueryableStoreTypes.keyValueStore());
+        KeyValueIterator<String, CreateUserResponse> allKvs = kv.all();
+        List<String> requests = new ArrayList<>();
+        while (allKvs.hasNext()) {
+            KeyValue<String, CreateUserResponse> keyValue = allKvs.next();
+            requests.add(keyValue.key);
+        }
+        allKvs.close();
+        GetRequestsResponseBean response = new GetRequestsResponseBean();
+        response.setRequests(requests);
+        return response;
+    }
+
+    @GET
+    @Path("/deleteRequests/{requestId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public GetRequestResponseBean getDeleteRequest(@PathParam("requestId") final String requestId) {
+        ReadOnlyKeyValueStore<String, DeleteUserResponse> kv =
+                streams.store(DELETE_USER_REQUESTS_STORE,
+                        QueryableStoreTypes.keyValueStore());
+        DeleteUserResponse deleteUserResponse = kv.get(requestId);
+        String status;
+        if (deleteUserResponse == null) {
+            status = "Unknown";
+        } else if (deleteUserResponse.getResult().equals(Result.SUCCESS)) {
+            status = "Success";
+        } else if (deleteUserResponse.getResult().equals(Result.FAIL)) {
+            status = "Fail";
+        } else {
+            throw new RuntimeException("Failed to get status for request");
+        }
+        GetRequestResponseBean responseBean = new GetRequestResponseBean();
+        responseBean.setStatus(status);
+        return responseBean;
+    }
+
+    @GET
+    @Path("/deleteRequests")
+    @Produces(MediaType.APPLICATION_JSON)
+    public GetRequestsResponseBean getDeleteRequests() {
+        ReadOnlyKeyValueStore<String, DeleteUserResponse> kv =
+                streams.store(DELETE_USER_REQUESTS_STORE,
+                        QueryableStoreTypes.keyValueStore());
+        KeyValueIterator<String, DeleteUserResponse> allKvs = kv.all();
+        List<String> requests = new ArrayList<>();
+        while (allKvs.hasNext()) {
+            KeyValue<String, DeleteUserResponse> keyValue = allKvs.next();
+            requests.add(keyValue.key);
+        }
+        allKvs.close();
+        GetRequestsResponseBean response = new GetRequestsResponseBean();
+        response.setRequests(requests);
+        return response;
+    }
 }

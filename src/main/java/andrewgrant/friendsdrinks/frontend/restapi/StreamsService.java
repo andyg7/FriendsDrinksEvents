@@ -79,8 +79,8 @@ public class StreamsService {
                                               KStream<UserId, UserEvent> userEventKStream,
                                               UserAvro userAvro,
                                               String privateTopicName) {
-        SessionWindows sessionWindows = SessionWindows.with(Duration.ofMinutes(5));
-        final long tenMinutesInMs = 1000 * 60 * 10;
+        SessionWindows sessionWindows = SessionWindows.with(Duration.ofSeconds(5));
+        final long tenMinutesInMs = 1000 * 60 * 1;
         sessionWindows = sessionWindows.until(tenMinutesInMs);
         userEventKStream.filter(((key, value) ->
                 value.getEventType().equals(EventType.CREATE_USER_RESPONSE)))
@@ -103,8 +103,8 @@ public class StreamsService {
                                               KStream<UserId, UserEvent> userEventKStream,
                                               UserAvro userAvro,
                                               String privateTopicName) {
-        SessionWindows sessionWindows = SessionWindows.with(Duration.ofMinutes(5));
-        final long tenMinutesInMs = 1000 * 60 * 10;
+        SessionWindows sessionWindows = SessionWindows.with(Duration.ofSeconds(5));
+        final long tenMinutesInMs = 1000 * 60 * 1;
         sessionWindows = sessionWindows.until(tenMinutesInMs);
         userEventKStream.filter(((key, value) ->
                 value.getEventType().equals(EventType.DELETE_USER_RESPONSE)))
