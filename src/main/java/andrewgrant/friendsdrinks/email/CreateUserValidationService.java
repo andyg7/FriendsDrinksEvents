@@ -92,9 +92,7 @@ public class CreateUserValidationService {
                                     emailAvro.emailEventSerde()));
 
         // Rebuild table. id -> reserved emails.
-        KTable<EmailId, EmailEvent> emailKTable = builder.table(currEmailTopic,
-                Consumed.with(emailAvro.emailIdSerde(),
-                        emailAvro.emailEventSerde()));
+        KTable<EmailId, EmailEvent> emailKTable = builder.table(currEmailTopic, emailAvro.consumedWith());
 
         // Now that reserved emails and in the KTable, its safe to remove them
         // from the state store.
