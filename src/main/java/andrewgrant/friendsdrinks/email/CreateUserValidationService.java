@@ -84,7 +84,7 @@ public class CreateUserValidationService {
                         return null;
                     } else {
                         throw new RuntimeException(String.format("Did not expect event type %s",
-                                value.getEventType().toString());
+                                value.getEventType().toString()));
                     }
                 })
                 .to(currEmailTopic,
