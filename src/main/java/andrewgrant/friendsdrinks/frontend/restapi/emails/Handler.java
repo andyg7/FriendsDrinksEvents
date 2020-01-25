@@ -55,8 +55,11 @@ public class Handler {
         ReadOnlyKeyValueStore<EmailId, EmailEvent> kv =
                 streams.store(EMAILS_STORE,
                         QueryableStoreTypes.keyValueStore());
-        String userId = kv.get(EmailId.newBuilder().setEmailAddress(email).build())
-                .getUserId();
+        EmailEvent emailEvent = kv.get(EmailId.newBuilder().setEmailAddress(email).build());
+        String userId = null;
+        if (emailEvent != null) {
+            userId = emailEvent.getUserId();
+        }
         GetEmailResponseBean getEmailResponseBean = new GetEmailResponseBean();
         getEmailResponseBean.setUserId(userId);
         return getEmailResponseBean;
