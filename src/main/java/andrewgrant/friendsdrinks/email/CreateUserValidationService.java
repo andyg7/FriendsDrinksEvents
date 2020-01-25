@@ -67,8 +67,9 @@ public class CreateUserValidationService {
                 andrewgrant.friendsdrinks.email.avro.EventType.REJECTED))
                 .process(PendingEmailsStateStoreCleaner::new, PENDING_EMAILS_STORE_NAME);
 
-        // Write events to a tmp topic so we can rebuild a table of currently reserved emails.
-        final String emailPrivate1Topic = envProps.getProperty("emailPrivate1.topic.name");
+        // Update changelog topic that holds current set of reserved emails.
+        // Topic is not private and will be consumed by other services.
+        final String currEmailTopic = envProps.getProperty("currEmail.topic.name");
         emailKStream.filter(((key, value) -> value.getEventType().equals(
                 andrewgrant.friendsdrinks.email.avro.EventType.RESERVED) ||
                 value.getEventType().equals(
@@ -82,15 +83,16 @@ public class CreateUserValidationService {
                             andrewgrant.friendsdrinks.email.avro.EventType.RETURNED)) {
                         return null;
                     } else {
-                        throw new RuntimeException("Did not expect event type");
+                        throw new RuntimeException(String.format("Did not expect event type %s",
+                                value.getEventType().toString());
                     }
                 })
-                .to(emailPrivate1Topic,
+                .to(currEmailTopic,
                         Produced.with(emailAvro.emailIdSerde(),
                                     emailAvro.emailEventSerde()));
 
         // Rebuild table. id -> reserved emails.
-        KTable<EmailId, EmailEvent> emailKTable = builder.table(emailPrivate1Topic,
+        KTable<EmailId, EmailEvent> emailKTable = builder.table(currEmailTopic,
                 Consumed.with(emailAvro.emailIdSerde(),
                         emailAvro.emailEventSerde()));
 

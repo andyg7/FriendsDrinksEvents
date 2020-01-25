@@ -42,35 +42,15 @@ public class StreamsService {
         final String userTopicName = envProps.getProperty("user.topic.name");
         KStream<UserId, UserEvent> userEventKStream = builder.stream(userTopicName,
                 Consumed.with(userAvro.userIdSerde(), userAvro.userEventSerde()));
-        final String frontendPrivate1TopicName =
-                envProps.getProperty("frontendPrivate1.topic.name");
+
+        final String frontendPrivate1TopicName = envProps.getProperty("frontendPrivate1.topic.name");
         buildCreateUserRequestsStore(builder, userEventKStream, userAvro, frontendPrivate1TopicName);
-        final String frontendPrivate2TopicName =
-                envProps.getProperty("frontendPrivate2.topic.name");
+
+        final String frontendPrivate2TopicName = envProps.getProperty("frontendPrivate2.topic.name");
         buildDeleteUserRequestsStore(builder, userEventKStream, userAvro, frontendPrivate2TopicName);
 
-        final String emailPrivate4TopicName =
-                envProps.getProperty("emailPrivate4.topic.name");
-        final String emailTopicName = envProps.getProperty("email.topic.name");
-        builder.stream(emailTopicName, emailAvro.consumedWith())
-                .filter(((key, value) ->
-                        value.getEventType().equals(
-                                andrewgrant.friendsdrinks.email.avro.EventType.RESERVED) ||
-                                value.getEventType().equals(
-                                        andrewgrant.friendsdrinks.email.avro.EventType.RETURNED)))
-                .mapValues(value -> {
-                    if (value.getEventType().equals(
-                            andrewgrant.friendsdrinks.email.avro.EventType.RETURNED)) {
-                        return null;
-                    } else {
-                        return value.getUserId();
-                    }
-                })
-                .selectKey(((key, value) -> key.getEmailAddress()))
-                .to(emailPrivate4TopicName, Produced.with(Serdes.String(), Serdes.String()));
-        builder.table(emailPrivate4TopicName,
-                Consumed.with(Serdes.String(), Serdes.String()),
-                Materialized.as(EMAILS_STORE));
+        final String currEmailTopicName = envProps.getProperty("currEmail.topic.name");
+        builder.table(currEmailTopicName, emailAvro.consumedWith(), Materialized.as(EMAILS_STORE));
 
         return builder.build();
     }
@@ -125,8 +105,7 @@ public class StreamsService {
 
     private static Properties buildStreamsProperties(Properties envProps, String uri) {
         Properties props = new Properties();
-        props.put(StreamsConfig.APPLICATION_ID_CONFIG,
-                envProps.getProperty("frontend_application.id"));
+        props.put(StreamsConfig.APPLICATION_ID_CONFIG, "222");
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG,
                 envProps.getProperty("bootstrap.servers"));
         props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,

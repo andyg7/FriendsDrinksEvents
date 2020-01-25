@@ -14,6 +14,9 @@ import java.util.List;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
+import andrewgrant.friendsdrinks.email.avro.EmailEvent;
+import andrewgrant.friendsdrinks.email.avro.EmailId;
+
 /**
  * Implements frontend REST API for interacting with backend.
  */
@@ -30,14 +33,14 @@ public class Handler {
     @Path("/")
     @Produces(MediaType.APPLICATION_JSON)
     public GetEmailsResponseBean getEmails() {
-        ReadOnlyKeyValueStore<String, String> kv =
+        ReadOnlyKeyValueStore<EmailId, EmailEvent> kv =
                 streams.store(EMAILS_STORE,
                         QueryableStoreTypes.keyValueStore());
-        KeyValueIterator<String, String> allKvs = kv.all();
+        KeyValueIterator<EmailId, EmailEvent> allKvs = kv.all();
         List<String> emails = new ArrayList<>();
         while (allKvs.hasNext()) {
-            KeyValue<String, String> keyValue = allKvs.next();
-            emails.add(keyValue.key);
+            KeyValue<EmailId, EmailEvent> keyValue = allKvs.next();
+            emails.add(keyValue.key.getEmailAddress());
         }
         allKvs.close();
         GetEmailsResponseBean getEmailsResponseBean = new GetEmailsResponseBean();
@@ -49,10 +52,11 @@ public class Handler {
     @Path("/{email}")
     @Produces(MediaType.APPLICATION_JSON)
     public GetEmailResponseBean getEmail(@PathParam("email") final String email) {
-        ReadOnlyKeyValueStore<String, String> kv =
+        ReadOnlyKeyValueStore<EmailId, EmailEvent> kv =
                 streams.store(EMAILS_STORE,
                         QueryableStoreTypes.keyValueStore());
-        String userId = kv.get(email);
+        String userId = kv.get(EmailId.newBuilder().setEmailAddress(email).build())
+                .getUserId();
         GetEmailResponseBean getEmailResponseBean = new GetEmailResponseBean();
         getEmailResponseBean.setUserId(userId);
         return getEmailResponseBean;
