@@ -116,8 +116,7 @@ public class WriterService {
                         userAvro.userIdSerde(),
                         emailAvro.emailEventSerde()));
 
-        KTable<UserId, EmailEvent> emailKTableKeyedByUserId = builder.table(
-                emailPrivateTopic,
+        KTable<UserId, EmailEvent> emailKTableKeyedByUserId = builder.table(emailPrivateTopic,
                 Consumed.with(userAvro.userIdSerde(),
                         emailAvro.emailEventSerde()));
 

@@ -59,8 +59,7 @@ public class CreateUserValidationService {
 
         final String emailTopic = envProps.getProperty("email.topic.name");
         KStream<EmailId, EmailEvent> emailKStream = builder.stream(emailTopic,
-                Consumed.with(
-                        emailAvro.emailIdSerde(), emailAvro.emailEventSerde()));
+                Consumed.with(emailAvro.emailIdSerde(), emailAvro.emailEventSerde()));
 
         // Immediately remove rejected emails from state store.
         emailKStream.filter((key, value) -> value.getEventType().equals(
@@ -69,7 +68,7 @@ public class CreateUserValidationService {
 
         // Update changelog topic that holds current set of reserved emails.
         // Topic is not private and will be consumed by other services.
-        final String currEmailTopic = envProps.getProperty("currEmail.topic.name");
+        final String currEmailTopicName = envProps.getProperty("currEmail.topic.name");
         emailKStream.filter(((key, value) -> value.getEventType().equals(
                 andrewgrant.friendsdrinks.email.avro.EventType.RESERVED) ||
                 value.getEventType().equals(
@@ -87,12 +86,12 @@ public class CreateUserValidationService {
                                 value.getEventType().toString()));
                     }
                 })
-                .to(currEmailTopic,
+                .to(currEmailTopicName,
                         Produced.with(emailAvro.emailIdSerde(),
                                     emailAvro.emailEventSerde()));
 
         // Rebuild table. id -> reserved emails.
-        KTable<EmailId, EmailEvent> emailKTable = builder.table(currEmailTopic, emailAvro.consumedWith());
+        KTable<EmailId, EmailEvent> emailKTable = builder.table(currEmailTopicName, emailAvro.consumedWith());
 
         // Now that reserved emails and in the KTable, its safe to remove them
         // from the state store.

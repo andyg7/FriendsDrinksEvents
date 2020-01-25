@@ -22,7 +22,7 @@ public class StreamsService {
 
     public static final String CREATE_USER_REQUESTS_STORE = "create-user-requests-store";
     public static final String DELETE_USER_REQUESTS_STORE = "delete-user-requests-store";
-    public static final String EMAILS_STORE = "emails-store";
+    public static final String EMAILS_STORE = "emails-store-1";
     private KafkaStreams streams;
 
     public StreamsService(Properties envProps,
@@ -50,7 +50,9 @@ public class StreamsService {
         buildDeleteUserRequestsStore(builder, userEventKStream, userAvro, frontendPrivate2TopicName);
 
         final String currEmailTopicName = envProps.getProperty("currEmail.topic.name");
-        builder.table(currEmailTopicName, emailAvro.consumedWith(), Materialized.as(EMAILS_STORE));
+        builder.table(currEmailTopicName,
+                emailAvro.consumedWith().withOffsetResetPolicy(Topology.AutoOffsetReset.EARLIEST),
+                Materialized.as(EMAILS_STORE));
 
         return builder.build();
     }
