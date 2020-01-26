@@ -53,8 +53,7 @@ public class CreateUserValidationService {
 
         final StoreBuilder pendingEmails = Stores
                 .keyValueStoreBuilder(Stores.persistentKeyValueStore(PENDING_EMAILS_STORE_NAME),
-                        Serdes.String(), Serdes.String())
-                .withLoggingEnabled(new HashMap<>());
+                        Serdes.String(), Serdes.String()).withLoggingEnabled(new HashMap<>());
         builder.addStateStore(pendingEmails);
 
         final String emailTopic = envProps.getProperty("email.topic.name");
@@ -72,33 +71,27 @@ public class CreateUserValidationService {
         final String currEmailTopicName = envProps.getProperty("currEmail.topic.name");
         emailKStream.filter(((key, value) -> value.getEventType().equals(
                 andrewgrant.friendsdrinks.email.avro.EventType.RESERVED) ||
-                value.getEventType().equals(
-                        andrewgrant.friendsdrinks.email.avro.EventType.RETURNED
+                value.getEventType().equals(andrewgrant.friendsdrinks.email.avro.EventType.RETURNED
                 )))
                 .mapValues(value -> {
-                    if (value.getEventType().equals(
-                            andrewgrant.friendsdrinks.email.avro.EventType.RESERVED)) {
+                    if (value.getEventType().equals(andrewgrant.friendsdrinks.email.avro.EventType.RESERVED)) {
                         return value;
-                    } else if (value.getEventType().equals(
-                            andrewgrant.friendsdrinks.email.avro.EventType.RETURNED)) {
+                    } else if (value.getEventType().equals(andrewgrant.friendsdrinks.email.avro.EventType.RETURNED)) {
                         return null;
                     } else {
                         throw new RuntimeException(String.format("Did not expect event type %s",
                                 value.getEventType().toString()));
                     }
                 })
-                .to(currEmailTopicName,
-                        Produced.with(emailAvro.emailIdSerde(),
-                                    emailAvro.emailEventSerde()));
+                .to(currEmailTopicName, Produced.with(emailAvro.emailIdSerde(), emailAvro.emailEventSerde()));
 
         // Rebuild table. id -> reserved emails.
         KTable<EmailId, EmailEvent> emailKTable = builder.table(currEmailTopicName, emailAvro.consumedWith());
 
-        // Now that reserved emails and in the KTable, its safe to remove them
+        // Now that reserved emails are in the KTable, its safe to remove them
         // from the state store.
         emailKTable.toStream().filter(((key, value) -> value != null &&
-                value.getEventType().equals(
-                        andrewgrant.friendsdrinks.email.avro.EventType.RESERVED)))
+                value.getEventType().equals(andrewgrant.friendsdrinks.email.avro.EventType.RESERVED)))
                 .process(PendingEmailsStateStoreCleaner::new, PENDING_EMAILS_STORE_NAME);
 
         final String userTopicName = envProps.getProperty("user.topic.name");
@@ -117,8 +110,7 @@ public class CreateUserValidationService {
 
         KStream<EmailId, CreateRequest> createUserAndEmail =
                 createUserRequestsKeyedByEmailId.leftJoin(emailKTable,
-                        CreateRequest::new,
-                        Joined.with(
+                        CreateRequest::new, Joined.with(
                                 emailAvro.emailIdSerde(),
                                 userAvro.createUserRequestSerde(),
                                 emailAvro.emailEventSerde()));
