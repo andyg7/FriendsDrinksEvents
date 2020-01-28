@@ -50,9 +50,7 @@ public class StreamsService {
         buildDeleteUserRequestsStore(builder, userEventKStream, userAvro, frontendPrivate2TopicName);
 
         final String currEmailTopicName = envProps.getProperty("currEmail.topic.name");
-        builder.table(currEmailTopicName,
-                emailAvro.consumedWith().withOffsetResetPolicy(Topology.AutoOffsetReset.EARLIEST),
-                Materialized.as(EMAILS_STORE));
+        builder.table(currEmailTopicName, emailAvro.consumedWith(), Materialized.as(EMAILS_STORE));
 
         return builder.build();
     }

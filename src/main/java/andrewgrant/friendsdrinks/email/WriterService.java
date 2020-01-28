@@ -91,11 +91,11 @@ public class WriterService {
                 .selectKey((key, value) -> new UserId(value.getUserId()));
 
 
-        final String emailTopic = envProps.getProperty("email.topic.name");
         // Re-key on email before publishing to email topic.
         KStream<EmailId, EmailEvent> createUserEmailEventKeyedByEmailId =
                 createUserEmailEvent.selectKey(((key, value) -> value.getEmailId()));
 
+        final String emailTopic = envProps.getProperty("email.topic.name");
         createUserEmailEventKeyedByEmailId.to(emailTopic, emailAvro.producedWith());
 
         KStream<UserId, DeleteUserResponse> deleteUserResponses =

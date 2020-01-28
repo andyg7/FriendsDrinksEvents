@@ -58,8 +58,7 @@ public class CreateUserValidationService {
 
         final String emailTopic = envProps.getProperty("email.topic.name");
         KStream<EmailId, EmailEvent> emailKStream = builder.stream(emailTopic,
-                Consumed.with(emailAvro.emailIdSerde(), emailAvro.emailEventSerde())
-                        .withOffsetResetPolicy(Topology.AutoOffsetReset.EARLIEST));
+                Consumed.with(emailAvro.emailIdSerde(), emailAvro.emailEventSerde()));
 
         // Immediately remove rejected emails from state store.
         emailKStream.filter((key, value) -> value.getEventType().equals(
