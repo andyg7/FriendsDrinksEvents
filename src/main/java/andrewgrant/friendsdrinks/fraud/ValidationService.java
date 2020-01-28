@@ -35,20 +35,17 @@ public class ValidationService {
 
         final String userTopicName = envProps.getProperty("user.topic.name");
         final String fraudPrivateTopic = envProps.getProperty("fraudPrivate.topic.name");
-        KStream<UserId, UserEvent> users = builder
-                .stream(userTopicName, userAvro.consumedWith());
+        KStream<UserId, UserEvent> users = builder.stream(userTopicName, userAvro.consumedWith());
 
         users.filter(((key, value) -> value.getEventType().equals(EventType.CREATE_USER_REQUEST)))
-                .groupByKey(
-                        Grouped.with(userAvro.userIdSerde(),
-                                userAvro.userEventSerde()))
+                .groupByKey(Grouped.with(userAvro.userIdSerde(),
+                        userAvro.userEventSerde()))
                 .windowedBy(SessionWindows.with(Duration.ofMinutes(1)))
                 .aggregate(
                         () -> 0L,
                         ((key, value, aggregate) -> 1 + aggregate),
                         ((aggKey, aggOne, aggTwo) -> aggOne + aggTwo),
-                        Materialized.with(userAvro.userIdSerde(), Serdes.Long())
-                )
+                        Materialized.with(userAvro.userIdSerde(), Serdes.Long()))
                 // Get rid of windowed key.
                 .toStream(((key, value) -> key.key()))
                 .to(fraudPrivateTopic,
@@ -56,12 +53,10 @@ public class ValidationService {
                                 Serdes.Long()));
 
         KTable<UserId, Long> userRequestCount = builder.table(fraudPrivateTopic,
-                Consumed.with(userAvro.userIdSerde(),
-                        Serdes.Long()));
+                Consumed.with(userAvro.userIdSerde(), Serdes.Long()));
 
         KStream<UserId, CreateUserRequest> userRequests = users.filter((
-                (key, value) -> value.getEventType()
-                        .equals(EventType.CREATE_USER_REQUEST)))
+                (key, value) -> value.getEventType().equals(EventType.CREATE_USER_REQUEST)))
                 .mapValues(value -> value.getCreateUserRequest());
 
         KStream<UserId, Tracker> trackedUsers = userRequests
@@ -74,8 +69,7 @@ public class ValidationService {
         KStream<UserId, Tracker>[] trackedUserResults = trackedUsers.branch(
                 (key, tracker) -> tracker.getCount() == null ||
                         tracker.getCount() < 10,
-                (key, value) -> true
-        );
+                (key, value) -> true);
 
         final String userValidationsTopic = envProps.getProperty("userValidation.topic.name");
 
