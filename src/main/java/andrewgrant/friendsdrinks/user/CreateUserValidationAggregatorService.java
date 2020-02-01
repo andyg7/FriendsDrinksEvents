@@ -151,8 +151,7 @@ public class CreateUserValidationAggregatorService {
         }
         Properties envProps = load(args[0]);
         CreateUserValidationAggregatorService service = new CreateUserValidationAggregatorService();
-        UserAvro userAvro = new UserAvro(
-                envProps.getProperty("schema.registry.url"));
+        UserAvro userAvro = new UserAvro(envProps.getProperty("schema.registry.url"));
         Topology topology = service.buildTopology(envProps, userAvro);
         log.debug("Built stream");
         log.info("Topology description:\n {}", topology.describe());

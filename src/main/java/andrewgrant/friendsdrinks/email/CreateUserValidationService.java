@@ -138,10 +138,8 @@ public class CreateUserValidationService {
 
         CreateUserValidationService validationService = new CreateUserValidationService();
         Properties envProps = load(args[0]);
-        UserAvro userAvro =
-                new UserAvro(envProps.getProperty("schema.registry.url"));
-        EmailAvro emailAvro =
-                new EmailAvro(envProps.getProperty("schema.registry.url"));
+        UserAvro userAvro = new UserAvro(envProps.getProperty("schema.registry.url"));
+        EmailAvro emailAvro = new EmailAvro(envProps.getProperty("schema.registry.url"));
         Topology topology = validationService.buildTopology(envProps,
                 userAvro, emailAvro);
 
@@ -169,6 +167,5 @@ public class CreateUserValidationService {
         }
         System.exit(0);
     }
-
 
 }
