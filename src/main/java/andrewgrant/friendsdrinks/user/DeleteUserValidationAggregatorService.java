@@ -1,6 +1,6 @@
 package andrewgrant.friendsdrinks.user;
 
-import static andrewgrant.friendsdrinks.env.Properties.loadEnvProperties;
+import static andrewgrant.friendsdrinks.env.Properties.load;
 
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
@@ -155,7 +155,7 @@ public class DeleteUserValidationAggregatorService {
             throw new IllegalArgumentException("This program takes one argument: " +
                     "the path to an environment configuration file.");
         }
-        Properties envProps = loadEnvProperties(args[0]);
+        Properties envProps = load(args[0]);
         DeleteUserValidationAggregatorService service = new DeleteUserValidationAggregatorService();
         UserAvro userAvro = new UserAvro(
                 envProps.getProperty("schema.registry.url"));

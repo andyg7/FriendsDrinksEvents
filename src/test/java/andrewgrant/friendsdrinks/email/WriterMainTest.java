@@ -3,7 +3,7 @@ package andrewgrant.friendsdrinks.email;
 import static org.junit.Assert.*;
 
 import static andrewgrant.friendsdrinks.email.Config.TEST_CONFIG_FILE;
-import static andrewgrant.friendsdrinks.env.Properties.loadEnvProperties;
+import static andrewgrant.friendsdrinks.env.Properties.load;
 
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.Deserializer;
@@ -42,7 +42,7 @@ public class WriterMainTest {
 
     @BeforeClass
     public static void setup() throws IOException, RestClientException {
-        envProps = loadEnvProperties(TEST_CONFIG_FILE);
+        envProps = load(TEST_CONFIG_FILE);
         MockSchemaRegistryClient registryClient = new MockSchemaRegistryClient();
         // user topic
         final String userTopicName = envProps.getProperty("user.topic.name");

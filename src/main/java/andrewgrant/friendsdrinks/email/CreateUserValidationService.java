@@ -1,6 +1,6 @@
 package andrewgrant.friendsdrinks.email;
 
-import static andrewgrant.friendsdrinks.env.Properties.loadEnvProperties;
+import static andrewgrant.friendsdrinks.env.Properties.load;
 
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
@@ -137,7 +137,7 @@ public class CreateUserValidationService {
         }
 
         CreateUserValidationService validationService = new CreateUserValidationService();
-        Properties envProps = loadEnvProperties(args[0]);
+        Properties envProps = load(args[0]);
         UserAvro userAvro =
                 new UserAvro(envProps.getProperty("schema.registry.url"));
         EmailAvro emailAvro =

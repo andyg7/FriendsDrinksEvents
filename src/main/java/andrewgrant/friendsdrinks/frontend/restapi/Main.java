@@ -1,6 +1,6 @@
 package andrewgrant.friendsdrinks.frontend.restapi;
 
-import static andrewgrant.friendsdrinks.env.Properties.loadEnvProperties;
+import static andrewgrant.friendsdrinks.env.Properties.load;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -36,7 +36,7 @@ public class Main {
                     "1) path to config 2) app port");
         }
 
-        Properties envProps = loadEnvProperties(args[0]);
+        Properties envProps = load(args[0]);
         UserAvro userAvro = new UserAvro(
                 envProps.getProperty("schema.registry.url"));
         EmailAvro emailAvro =

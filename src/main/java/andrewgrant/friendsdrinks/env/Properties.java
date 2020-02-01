@@ -8,7 +8,7 @@ import java.io.IOException;
  */
 public class Properties {
 
-    public static java.util.Properties loadEnvProperties(String fileName) throws IOException {
+    public static java.util.Properties load(String fileName) throws IOException {
         java.util.Properties envProps = new java.util.Properties();
         FileInputStream input = new FileInputStream(fileName);
         try {

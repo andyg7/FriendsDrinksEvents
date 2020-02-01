@@ -1,9 +1,10 @@
 {
   "namespace": "andrewgrant.friendsdrinks.avro",
   "type": "record",
-  "name": "FriendsDrinks",
+  "name": "CreateFriendsDrinksRequest",
   "fields": [
     {"name": "requestId", "type": "string"},
+    {"name": "friendsDrinksId", "type": "string"},
     {"name": "requesterUserId", "type": "string"},
     {"name": "userIds", "type": { "type": "array", "items": "string" } },
     {"name": "schedule", "type": "string"}

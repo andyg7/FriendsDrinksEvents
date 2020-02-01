@@ -1,0 +1,9 @@
+{
+  "namespace": "andrewgrant.friendsdrinks.user.avro",
+  "type": "record",
+  "name": "CreateFriendsDrinksResponse",
+  "fields": [
+    {"name": "requestId", "type": "string"},
+    {"name": "errorCode", "type": "string" }
+  ]
+}

@@ -1,6 +1,6 @@
 package andrewgrant.friendsdrinks.user;
 
-import static andrewgrant.friendsdrinks.env.Properties.loadEnvProperties;
+import static andrewgrant.friendsdrinks.env.Properties.load;
 
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
@@ -86,8 +86,7 @@ public class CreateUserValidationAggregatorService {
                 .through((String) envProps.get("userAggregationPrivate.topic.name"),
                         Produced.with(Serdes.String(), userAvro.createUserRequestSerde()));
 
-        SpecificAvroSerde<CreateUserRequest> createUserRequestSerde =
-                userAvro.createUserRequestSerde();
+        SpecificAvroSerde<CreateUserRequest> createUserRequestSerde = userAvro.createUserRequestSerde();
         createValidationCount.join(createUserRequestsKeyedByRequestId,
                 (leftValue, rightValue) -> {
                     CreateUserResponse response = CreateUserResponse.newBuilder()
@@ -150,7 +149,7 @@ public class CreateUserValidationAggregatorService {
             throw new IllegalArgumentException("This program takes one argument: " +
                     "the path to an environment configuration file.");
         }
-        Properties envProps = loadEnvProperties(args[0]);
+        Properties envProps = load(args[0]);
         CreateUserValidationAggregatorService service = new CreateUserValidationAggregatorService();
         UserAvro userAvro = new UserAvro(
                 envProps.getProperty("schema.registry.url"));

@@ -1,6 +1,6 @@
 package andrewgrant.friendsdrinks.email;
 
-import static andrewgrant.friendsdrinks.env.Properties.loadEnvProperties;
+import static andrewgrant.friendsdrinks.env.Properties.load;
 
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -120,7 +120,7 @@ public class DeleteUserValidationService {
         }
 
         DeleteUserValidationService validationService = new DeleteUserValidationService();
-        Properties envProps = loadEnvProperties(args[0]);
+        Properties envProps = load(args[0]);
         UserAvro userAvro =
                 new UserAvro(envProps.getProperty("schema.registry.url"));
         EmailAvro emailAvro =

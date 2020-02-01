@@ -1,6 +1,6 @@
 package andrewgrant.friendsdrinks.user;
 
-import static andrewgrant.friendsdrinks.env.Properties.loadEnvProperties;
+import static andrewgrant.friendsdrinks.env.Properties.load;
 
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -99,7 +99,7 @@ public class ValidationService {
             throw new IllegalArgumentException("This program takes one argument: " +
                     "the path to an environment configuration file.");
         }
-        Properties envProps = loadEnvProperties(args[0]);
+        Properties envProps = load(args[0]);
         ValidationService service = new ValidationService();
         UserAvro userAvro = new UserAvro(
                 envProps.getProperty("schema.registry.url"));
