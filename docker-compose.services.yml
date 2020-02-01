@@ -28,15 +28,6 @@ services:
           java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.email.DeleteUserValidationService /app/dev.properties
           '"
 
-  fraud-validation-service:
-    image: fdimage:latest
-    networks:
-      - kafka-network
-    command:
-      "bash -c '
-          java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.fraud.ValidationService /app/dev.properties
-          '"
-
   user-validation-service:
     image: fdimage:latest
     networks:

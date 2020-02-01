@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
 
-import andrewgrant.friendsdrinks.fraud.ErrorCode;
+import andrewgrant.friendsdrinks.email.ErrorCode;
 import andrewgrant.friendsdrinks.user.avro.*;
 
 import io.confluent.kafka.schemaregistry.client.MockSchemaRegistryClient;
@@ -62,6 +62,7 @@ public class CreateUserValidationAggregatorTest {
     public static void cleanup() {
         testDriver.close();
     }
+
     @Test
     public void testValidateValidCreateRequest() {
         String requestId = UUID.randomUUID().toString();
@@ -102,21 +103,9 @@ public class CreateUserValidationAggregatorTest {
                 .setCreateUserValidated(userValidated1)
                 .build();
 
-        CreateUserValidated userValidated2 = CreateUserValidated.newBuilder()
-                .setRequestId(requestId)
-                .setEmail(email)
-                .setUserId(userId)
-                .setSource("source")
-                .build();
-
-        UserEvent userEvent2 = UserEvent.newBuilder()
-                .setEventType(EventType.CREATE_USER_VALIDATED)
-                .setCreateUserValidated(userValidated2)
-                .build();
 
         List<UserEvent> userEvents = new ArrayList<>();
         userEvents.add(userEvent1);
-        userEvents.add(userEvent2);
 
         final String userValidationsTopic = envProps.getProperty("userValidation.topic.name");
         for (UserEvent userEvent : userEvents) {
@@ -173,23 +162,11 @@ public class CreateUserValidationAggregatorTest {
                 userEventRequest.getCreateUserRequest().getUserId(),
                 userEventRequest));
 
-        CreateUserValidated userValidated1 = CreateUserValidated.newBuilder()
-                .setRequestId(requestId)
-                .setEmail(email)
-                .setUserId(userId)
-                .setSource("source")
-                .build();
-
-        UserEvent userEvent1 = UserEvent.newBuilder()
-                .setEventType(EventType.CREATE_USER_VALIDATED)
-                .setCreateUserValidated(userValidated1)
-                .build();
-
         CreateUserRejected userRejected = CreateUserRejected.newBuilder()
                 .setRequestId(requestId)
                 .setEmail(email)
                 .setUserId(userId)
-                .setErrorCode(ErrorCode.TooManyRequests.toString())
+                .setErrorCode(ErrorCode.Exists.toString())
                 .build();
 
         UserEvent userEvent2 = UserEvent.newBuilder()
@@ -198,7 +175,6 @@ public class CreateUserValidationAggregatorTest {
                 .build();
 
         List<UserEvent> userEvents = new ArrayList<>();
-        userEvents.add(userEvent1);
         userEvents.add(userEvent2);
 
         final String userValidationsTopic = envProps.getProperty("userValidation.topic.name");
