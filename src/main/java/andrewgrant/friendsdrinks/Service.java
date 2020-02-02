@@ -7,11 +7,13 @@ import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
-import org.apache.kafka.streams.kstream.Consumed;
+import org.apache.kafka.streams.kstream.*;
 
 import java.io.IOException;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
+
+import andrewgrant.friendsdrinks.avro.*;
 
 /**
  * Main FriendsDrinks service.
@@ -21,8 +23,39 @@ public class Service {
     private Topology buildTopology(Properties envProps, FriendsDrinksAvro avro) {
         StreamsBuilder builder = new StreamsBuilder();
         final String friendsDrinksTopicName = envProps.getProperty("friendsdrinks.topic.name");
-        builder.stream(friendsDrinksTopicName,
-                Consumed.with(Serdes.String(), avro.createFriendsDrinksEventSerde()));
+
+        KTable<String, Long> friendsDrinksCount = builder.stream(friendsDrinksTopicName,
+                Consumed.with(Serdes.String(), avro.createFriendsDrinksEventSerde()))
+                .filter(((s, friendsDrinksEvent) ->
+                        friendsDrinksEvent.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_RESPONSE) &&
+                                friendsDrinksEvent.getCreateFriendsDrinksResponse().getResult().equals(Result.SUCCESS)))
+                .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getCreateFriendsDrinksResponse())
+                .groupByKey()
+                .count();
+
+        KStream<String, CreateFriendsDrinksRequest> requests = builder.stream(friendsDrinksTopicName,
+                Consumed.with(Serdes.String(), avro.createFriendsDrinksEventSerde()))
+                .filter(((s, friendsDrinksEvent) -> friendsDrinksEvent.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_REQUEST)))
+                .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getCreateFriendsDrinksRequest());
+
+        KStream<String, FriendsDrinksEvent> responses = requests.leftJoin(friendsDrinksCount,
+                (request, count) -> {
+                    CreateFriendsDrinksResponse.Builder response = CreateFriendsDrinksResponse.newBuilder();
+                    if (count == null) {
+                        response.setResult(Result.SUCCESS);
+                    } else if (count < 5) {
+                        response.setResult(Result.SUCCESS);
+                    } else {
+                        response.setResult(Result.FAIL);
+                    }
+                    FriendsDrinksEvent event = FriendsDrinksEvent.newBuilder()
+                            .setEventType(EventType.CREATE_FRIENDS_DRINKS_RESPONSE)
+                            .build();
+                    return event;
+                },
+                Joined.with(Serdes.String(), avro.createFriendsDrinksRequestSerde(), Serdes.Long()));
+
+        responses.to(friendsDrinksTopicName, Produced.with(Serdes.String(), avro.createFriendsDrinksEventSerde()));
         return builder.build();
     }
 
