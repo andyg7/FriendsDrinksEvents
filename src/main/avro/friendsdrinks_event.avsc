@@ -1,0 +1,10 @@
+{
+  "namespace": "andrewgrant.friendsdrinks.avro",
+  "type": "record",
+  "name": "FriendsDrinksEvent",
+  "fields": [
+    {"name": "eventType", "type": {"type": "enum", "name": "EventType", "symbols" : ["CREATE_FRIENDS_DRINKS_REQUEST", "DELETE_FRIENDS_DRINKS_RESPONSE"] } },
+    {"name": "createFriendsDrinksRequest", "type": ["null", "CreateFriendsDrinksRequest"], "default": null},
+    {"name": "createFriendsDrinksResponse", "type": ["null", "CreateFriendsDrinksResponse"], "default": null}
+  ]
+}
