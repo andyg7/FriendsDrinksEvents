@@ -50,6 +50,7 @@ public class Service {
                     }
                     FriendsDrinksEvent event = FriendsDrinksEvent.newBuilder()
                             .setEventType(EventType.CREATE_FRIENDS_DRINKS_RESPONSE)
+                            .setCreateFriendsDrinksResponse(response.build())
                             .build();
                     return event;
                 },
