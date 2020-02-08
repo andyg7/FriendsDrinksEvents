@@ -1,12 +1,15 @@
 package andrewgrant.friendsdrinks;
 
+import org.apache.kafka.common.serialization.Deserializer;
+import org.apache.kafka.common.serialization.Serializer;
+
 import java.util.HashMap;
 import java.util.Map;
 
 import andrewgrant.friendsdrinks.avro.CreateFriendsDrinksRequest;
 import andrewgrant.friendsdrinks.avro.CreateFriendsDrinksResponse;
-
 import andrewgrant.friendsdrinks.avro.FriendsDrinksEvent;
+
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
@@ -66,5 +69,15 @@ public class FriendsDrinksAvro {
         config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, registryUrl);
         serde.configure(config, false);
         return serde;
+    }
+
+    public Serializer<FriendsDrinksEvent> friendsDrinksEventSerializer() {
+        SpecificAvroSerde<FriendsDrinksEvent> serde = createFriendsDrinksEventSerde();
+        return serde.serializer();
+    }
+
+    public Deserializer<FriendsDrinksEvent> friendsDrinksEventDeserializer() {
+        SpecificAvroSerde<FriendsDrinksEvent> serde = createFriendsDrinksEventSerde();
+        return serde.deserializer();
     }
 }
