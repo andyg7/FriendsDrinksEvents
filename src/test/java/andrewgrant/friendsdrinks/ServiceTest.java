@@ -19,9 +19,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Properties;
 
-import andrewgrant.friendsdrinks.avro.CreateFriendsDrinksRequest;
-import andrewgrant.friendsdrinks.avro.EventType;
-import andrewgrant.friendsdrinks.avro.FriendsDrinksEvent;
+import andrewgrant.friendsdrinks.avro.*;
 
 import io.confluent.kafka.schemaregistry.client.MockSchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
@@ -52,7 +50,7 @@ public class ServiceTest {
     }
 
     @Test
-    public void testService() {
+    public void testNewFriendsDrinksSuccess() {
         CreateFriendsDrinksRequest request = CreateFriendsDrinksRequest.newBuilder()
                 .setFriendsDrinksId("friendsDrinksId")
                 .setRequestId("reqId")
@@ -76,6 +74,61 @@ public class ServiceTest {
         ProducerRecord<String, FriendsDrinksEvent> output =
                 testDriver.readOutput(friendsDrinksTopicName, stringDeserializer, friendsDrinksEventDeserializer);
         assertEquals(output.value().getEventType(), EventType.CREATE_FRIENDS_DRINKS_RESPONSE);
+        assertEquals(output.value().getCreateFriendsDrinksResponse().getResult(), Result.SUCCESS);
+    }
+
+    @Test
+    public void testNewFriendsDrinksFail() {
+        String requesterUserId = "requester123";
+        String requestId = "request123";
+        CreateFriendsDrinksRequest request = CreateFriendsDrinksRequest.newBuilder()
+                .setFriendsDrinksId("friendsDrinksId")
+                .setRequestId(requestId)
+                .setUserIds(Arrays.asList("b", "c"))
+                .setRequesterUserId(requesterUserId)
+                .setSchedule("blah")
+                .build();
+        FriendsDrinksEvent requestEvent = FriendsDrinksEvent.newBuilder()
+                .setEventType(EventType.CREATE_FRIENDS_DRINKS_REQUEST)
+                .setCreateFriendsDrinksRequest(request)
+                .build();
+
+        ConsumerRecordFactory<String, FriendsDrinksEvent> inputFactory =
+                new ConsumerRecordFactory<>(Serdes.String().serializer(), avro.friendsDrinksEventSerializer());
+
+        for (int i = 0; i < 5; i++) {
+            CreateFriendsDrinksResponse response = CreateFriendsDrinksResponse.newBuilder()
+                    .setRequestId(String.valueOf(i))
+                    .setResult(Result.SUCCESS)
+                    .build();
+            FriendsDrinksEvent event = FriendsDrinksEvent.newBuilder()
+                    .setEventType(EventType.CREATE_FRIENDS_DRINKS_RESPONSE)
+                    .setCreateFriendsDrinksResponse(response)
+                    .build();
+            testDriver.pipeInput(inputFactory.create(friendsDrinksTopicName,
+                    requesterUserId, event));
+        }
+
+
+        testDriver.pipeInput(inputFactory.create(friendsDrinksTopicName,
+                requestEvent.getCreateFriendsDrinksRequest().getRequesterUserId(), requestEvent));
+
+        Deserializer<String> stringDeserializer = Serdes.String().deserializer();
+        Deserializer<FriendsDrinksEvent> friendsDrinksEventDeserializer = avro.friendsDrinksEventDeserializer();
+        FriendsDrinksEvent output = null;
+        while (true) {
+            ProducerRecord<String, FriendsDrinksEvent> event =
+                    testDriver.readOutput(friendsDrinksTopicName, stringDeserializer, friendsDrinksEventDeserializer);
+            if (event != null) {
+                if (event.value().getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_RESPONSE) &&
+                        event.value().getCreateFriendsDrinksResponse().getRequestId().equals(requestId)) {
+                    output = event.value();
+                }
+            } else {
+                break;
+            }
+        }
+        assertEquals(output.getCreateFriendsDrinksResponse().getResult(), Result.FAIL);
     }
 
     @AfterClass
