@@ -37,10 +37,8 @@ public class Main {
         }
 
         Properties envProps = load(args[0]);
-        UserAvro userAvro = new UserAvro(
-                envProps.getProperty("schema.registry.url"));
-        EmailAvro emailAvro =
-                new EmailAvro(envProps.getProperty("schema.registry.url"));
+        UserAvro userAvro = new UserAvro(envProps.getProperty("schema.registry.url"));
+        EmailAvro emailAvro = new EmailAvro(envProps.getProperty("schema.registry.url"));
 
         String portStr = args[1];
         String streamsUri = "localhost:" + portStr;
@@ -48,10 +46,8 @@ public class Main {
                 userAvro, emailAvro);
         KafkaStreams streams = streamsService.getStreams();
         int port = Integer.parseInt(portStr);
-        KafkaProducer<UserId, UserEvent> userProducer = buildUserProducer(envProps,
-                userAvro);
-        Server jettyServer = Main.buildServer(envProps,
-                streams, userAvro, port);
+        KafkaProducer<UserId, UserEvent> userProducer = buildUserProducer(envProps, userAvro);
+        Server jettyServer = Main.buildServer(envProps, streams, userAvro, port);
         // Attach shutdown handler to catch Control-C.
         Runtime.getRuntime().addShutdownHook(new Thread("streams-shutdown-hook") {
             @Override
@@ -83,18 +79,12 @@ public class Main {
     private static KafkaProducer<UserId, UserEvent> buildUserProducer(Properties envProps,
                                                                       UserAvro userAvro) {
         Properties producerProps = new Properties();
-        producerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
-                envProps.getProperty("bootstrap.servers"));
-        return new KafkaProducer<>(
-                producerProps,
-                userAvro.userIdSerializer(),
-                userAvro.userEventSerializer());
+        producerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, envProps.getProperty("bootstrap.servers"));
+        return new KafkaProducer<>(producerProps, userAvro.userIdSerializer(), userAvro.userEventSerializer());
     }
 
-    private static Server buildServer(Properties envProps,
-                                      KafkaStreams streams,
-                                      UserAvro userAvro,
-                                      int port) {
+    private static Server buildServer(Properties envProps, KafkaStreams streams,
+                                      UserAvro userAvro, int port) {
         // Jetty server context handler.
         final ServletContextHandler context =
                 new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
@@ -108,9 +98,8 @@ public class Main {
         return jettyServer;
     }
 
-    private static ServletHolder buildUsersHolder(Properties envProps,
-                                                 UserAvro userAvro,
-                                                 KafkaStreams streams) {
+    private static ServletHolder buildUsersHolder(Properties envProps, UserAvro userAvro,
+                                                  KafkaStreams streams) {
         KafkaProducer<UserId, UserEvent> userProducer = buildUserProducer(envProps,
                 userAvro);
         andrewgrant.friendsdrinks.frontend.restapi.users.Handler handler =

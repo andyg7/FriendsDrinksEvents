@@ -66,16 +66,12 @@ public class StreamsService {
                 value.getEventType().equals(EventType.CREATE_USER_RESPONSE)))
                 .mapValues(value -> value.getCreateUserResponse())
                 .selectKey((key, value) -> value.getRequestId())
-                .groupByKey(Grouped.with(
-                        Serdes.String(),
-                        userAvro.createUserResponseSerde()))
+                .groupByKey(Grouped.with(Serdes.String(), userAvro.createUserResponseSerde()))
                 .windowedBy(sessionWindows)
                 .reduce((value1, value2) -> value1)
                 .toStream((key, value) -> key.key())
-                .to(privateTopicName, Produced.with(Serdes.String(),
-                        userAvro.createUserResponseSerde()));
-        builder.table(privateTopicName,
-                Consumed.with(Serdes.String(), userAvro.createUserResponseSerde()),
+                .to(privateTopicName, Produced.with(Serdes.String(), userAvro.createUserResponseSerde()));
+        builder.table(privateTopicName, Consumed.with(Serdes.String(), userAvro.createUserResponseSerde()),
                 Materialized.as(CREATE_USER_REQUESTS_STORE));
     }
 
@@ -90,9 +86,7 @@ public class StreamsService {
                 value.getEventType().equals(EventType.DELETE_USER_RESPONSE)))
                 .mapValues(value -> value.getDeleteUserResponse())
                 .selectKey((key, value) -> value.getRequestId())
-                .groupByKey(Grouped.with(
-                        Serdes.String(),
-                        userAvro.deleteUserResponseSerde()))
+                .groupByKey(Grouped.with(Serdes.String(), userAvro.deleteUserResponseSerde()))
                 .windowedBy(sessionWindows)
                 .reduce((value1, value2) -> value1)
                 .toStream((key, value) -> key.key())
