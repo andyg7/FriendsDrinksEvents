@@ -188,6 +188,104 @@ public class ServiceTest {
         assertEquals(Result.SUCCESS, output.getCreateFriendsDrinksResponse().getResult());
     }
 
+    @Test
+    public void testNewFriendsDrinksSuccessAfterDeletion() {
+        String requesterUserId = UUID.randomUUID().toString();
+        String requestId = UUID.randomUUID().toString();
+        CreateFriendsDrinksRequest request = CreateFriendsDrinksRequest.newBuilder()
+                .setFriendsDrinksId("friendsDrinksId")
+                .setRequestId(requestId)
+                .setUserIds(Arrays.asList("b", "c"))
+                .setRequesterUserId(requesterUserId)
+                .setSchedule("blah")
+                .build();
+        FriendsDrinksEvent requestEvent = FriendsDrinksEvent.newBuilder()
+                .setEventType(EventType.CREATE_FRIENDS_DRINKS_REQUEST)
+                .setCreateFriendsDrinksRequest(request)
+                .build();
+
+        ConsumerRecordFactory<UserId, FriendsDrinksEvent> inputFactory =
+                new ConsumerRecordFactory<>(userAvro.userIdSerializer(), friendsDrinksAvro.friendsDrinksEventSerializer());
+
+
+        for (int i = 0; i < 5; i++) {
+            CreateFriendsDrinksResponse response = CreateFriendsDrinksResponse.newBuilder()
+                    .setRequestId(String.valueOf(i))
+                    .setResult(Result.SUCCESS)
+                    .build();
+            FriendsDrinksEvent event = FriendsDrinksEvent.newBuilder()
+                    .setEventType(EventType.CREATE_FRIENDS_DRINKS_RESPONSE)
+                    .setCreateFriendsDrinksResponse(response)
+                    .build();
+            testDriver.pipeInput(inputFactory.create(friendsDrinksTopicName,
+                    new UserId(requesterUserId), event));
+        }
+
+        testDriver.pipeInput(inputFactory.create(friendsDrinksTopicName,
+                new UserId(requestEvent.getCreateFriendsDrinksRequest().getRequesterUserId()), requestEvent));
+
+        Deserializer<String> stringDeserializer = Serdes.String().deserializer();
+        Deserializer<FriendsDrinksEvent> friendsDrinksEventDeserializer = friendsDrinksAvro.friendsDrinksEventDeserializer();
+        FriendsDrinksEvent output = null;
+        while (true) {
+            ProducerRecord<String, FriendsDrinksEvent> event =
+                    testDriver.readOutput(friendsDrinksTopicName, stringDeserializer, friendsDrinksEventDeserializer);
+            if (event != null) {
+                if (event.value().getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_RESPONSE) &&
+                        event.value().getCreateFriendsDrinksResponse().getRequestId().equals(requestId)) {
+                    output = event.value();
+                }
+            } else {
+                break;
+            }
+        }
+        // Test we fail first.
+        assertEquals(Result.FAIL, output.getCreateFriendsDrinksResponse().getResult());
+
+        DeleteFriendsDrinksResponse deleteFriendsDrinksResponse = DeleteFriendsDrinksResponse.newBuilder()
+                .setRequestId(UUID.randomUUID().toString())
+                .setResult(Result.SUCCESS)
+                .build();
+        FriendsDrinksEvent deleteFriendsDrinksEvent = FriendsDrinksEvent.newBuilder()
+                .setEventType(EventType.DELETE_FRIENDS_DRINKS_RESPONSE)
+                .setDeleteFriendsDrinksResponse(deleteFriendsDrinksResponse)
+                .build();
+        testDriver.pipeInput(inputFactory.create(friendsDrinksTopicName,
+                new UserId(requesterUserId),
+                deleteFriendsDrinksEvent));
+
+        // New request id.
+        requestId = UUID.randomUUID().toString();
+        request = CreateFriendsDrinksRequest.newBuilder()
+                .setFriendsDrinksId("friendsDrinksId")
+                .setRequestId(requestId)
+                .setUserIds(Arrays.asList("b", "c"))
+                .setRequesterUserId(requesterUserId)
+                .setSchedule("blah")
+                .build();
+        requestEvent = FriendsDrinksEvent.newBuilder()
+                .setEventType(EventType.CREATE_FRIENDS_DRINKS_REQUEST)
+                .setCreateFriendsDrinksRequest(request)
+                .build();
+
+        testDriver.pipeInput(inputFactory.create(friendsDrinksTopicName,
+                new UserId(requestEvent.getCreateFriendsDrinksRequest().getRequesterUserId()), requestEvent));
+
+        while (true) {
+            ProducerRecord<String, FriendsDrinksEvent> event =
+                    testDriver.readOutput(friendsDrinksTopicName, stringDeserializer, friendsDrinksEventDeserializer);
+            if (event != null) {
+                if (event.value().getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_RESPONSE) &&
+                        event.value().getCreateFriendsDrinksResponse().getRequestId().equals(requestId)) {
+                    output = event.value();
+                }
+            } else {
+                break;
+            }
+        }
+        // Now test we succeed.
+        assertEquals(Result.SUCCESS, output.getCreateFriendsDrinksResponse().getResult());
+    }
     @AfterClass
     public static void cleanup() {
         testDriver.close();

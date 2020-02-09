@@ -29,12 +29,30 @@ public class Service {
         KStream<UserId, FriendsDrinksEvent> friendsDrinks = builder.stream(friendsDrinksTopicName,
                 Consumed.with(userAvro.userIdSerde(), friendsDrinksAvro.createFriendsDrinksEventSerde()));
 
+        Predicate<UserId, FriendsDrinksEvent> isCreateFriendsDrinksResponseSuccess = (userId, friendsDrinksEvent) ->
+                (friendsDrinksEvent.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_RESPONSE) &&
+                        friendsDrinksEvent.getCreateFriendsDrinksResponse().getResult().equals(Result.SUCCESS));
+        Predicate<UserId, FriendsDrinksEvent> isDeleteFriendsDrinksResponseSuccess = (userId, friendsDrinksEvent) ->
+                friendsDrinksEvent.getEventType().equals(EventType.DELETE_FRIENDS_DRINKS_RESPONSE) &&
+                        friendsDrinksEvent.getDeleteFriendsDrinksResponse().getResult().equals(Result.SUCCESS);
+
         KTable<UserId, Long> friendsDrinksCount = friendsDrinks.filter(((s, friendsDrinksEvent) ->
-                friendsDrinksEvent.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_RESPONSE) &&
-                        friendsDrinksEvent.getCreateFriendsDrinksResponse().getResult().equals(Result.SUCCESS)))
-                .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getCreateFriendsDrinksResponse())
-                .groupByKey()
-                .count();
+                isCreateFriendsDrinksResponseSuccess.test(s, friendsDrinksEvent) ||
+                        isDeleteFriendsDrinksResponseSuccess.test(s, friendsDrinksEvent)))
+                .groupByKey(Grouped.with(userAvro.userIdSerde(), friendsDrinksAvro.createFriendsDrinksEventSerde()))
+                .aggregate(
+                        () -> 0L,
+                        (aggKey, newValue, aggValue) -> {
+                            if (newValue.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_RESPONSE)) {
+                                return aggValue + 1;
+                            } else if (newValue.getEventType().equals(EventType.DELETE_FRIENDS_DRINKS_RESPONSE)) {
+                                return aggValue - 1;
+                            } else {
+                                throw new RuntimeException(String.format("Encountered unexpected event type %s",
+                                        newValue.getEventType().toString()));
+                            }
+                        },
+                        Materialized.with(userAvro.userIdSerde(), Serdes.Long()));
 
         KStream<UserId, CreateFriendsDrinksRequest> requests = friendsDrinks
                 .filter(((s, friendsDrinksEvent) -> friendsDrinksEvent.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_REQUEST)))

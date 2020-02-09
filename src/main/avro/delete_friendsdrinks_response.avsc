@@ -1,0 +1,9 @@
+{
+  "namespace": "andrewgrant.friendsdrinks.avro",
+  "type": "record",
+  "name": "DeleteFriendsDrinksResponse",
+  "fields": [
+    {"name": "requestId", "type": "string"},
+    {"name": "result", "type": {"type": "enum", "name": "Result", "symbols": ["SUCCESS", "FAIL"] } }
+  ]
+}

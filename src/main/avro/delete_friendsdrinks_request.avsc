@@ -1,0 +1,10 @@
+{
+  "namespace": "andrewgrant.friendsdrinks.avro",
+  "type": "record",
+  "name": "DeleteFriendsDrinksRequest",
+  "fields": [
+    {"name": "requestId", "type": "string"},
+    {"name": "friendsDrinksId", "type": "string"},
+    {"name": "requesterUserId", "type": "string"}
+  ]
+}
