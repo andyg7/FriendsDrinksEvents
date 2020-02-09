@@ -14,31 +14,33 @@ import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
 import andrewgrant.friendsdrinks.avro.*;
+import andrewgrant.friendsdrinks.user.UserAvro;
+import andrewgrant.friendsdrinks.user.avro.UserId;
 
 /**
  * Main FriendsDrinks service.
  */
 public class Service {
 
-    public Topology buildTopology(Properties envProps, FriendsDrinksAvro avro) {
+    public Topology buildTopology(Properties envProps, FriendsDrinksAvro friendsDrinksAvro, UserAvro userAvro) {
         StreamsBuilder builder = new StreamsBuilder();
         final String friendsDrinksTopicName = envProps.getProperty("friendsdrinks.topic.name");
 
-        KStream<String, FriendsDrinksEvent> friendsDrinks = builder.stream(friendsDrinksTopicName,
-                Consumed.with(Serdes.String(), avro.createFriendsDrinksEventSerde()));
+        KStream<UserId, FriendsDrinksEvent> friendsDrinks = builder.stream(friendsDrinksTopicName,
+                Consumed.with(userAvro.userIdSerde(), friendsDrinksAvro.createFriendsDrinksEventSerde()));
 
-        KTable<String, Long> friendsDrinksCount = friendsDrinks.filter(((s, friendsDrinksEvent) ->
+        KTable<UserId, Long> friendsDrinksCount = friendsDrinks.filter(((s, friendsDrinksEvent) ->
                 friendsDrinksEvent.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_RESPONSE) &&
                         friendsDrinksEvent.getCreateFriendsDrinksResponse().getResult().equals(Result.SUCCESS)))
                 .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getCreateFriendsDrinksResponse())
                 .groupByKey()
                 .count();
 
-        KStream<String, CreateFriendsDrinksRequest> requests = friendsDrinks
+        KStream<UserId, CreateFriendsDrinksRequest> requests = friendsDrinks
                 .filter(((s, friendsDrinksEvent) -> friendsDrinksEvent.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_REQUEST)))
                 .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getCreateFriendsDrinksRequest());
 
-        KStream<String, FriendsDrinksEvent> responses = requests.leftJoin(friendsDrinksCount,
+        KStream<UserId, FriendsDrinksEvent> responses = requests.leftJoin(friendsDrinksCount,
                 (request, count) -> {
                     CreateFriendsDrinksResponse.Builder response = CreateFriendsDrinksResponse.newBuilder();
                     response.setRequestId(request.getRequestId());
@@ -55,24 +57,26 @@ public class Service {
                             .build();
                     return event;
                 },
-                Joined.with(Serdes.String(), avro.createFriendsDrinksRequestSerde(), Serdes.Long()));
+                Joined.with(userAvro.userIdSerde(), friendsDrinksAvro.createFriendsDrinksRequestSerde(), Serdes.Long()));
 
-        responses.to(friendsDrinksTopicName, Produced.with(Serdes.String(), avro.createFriendsDrinksEventSerde()));
+        responses.to(friendsDrinksTopicName,
+                Produced.with(userAvro.userIdSerde(), friendsDrinksAvro.createFriendsDrinksEventSerde()));
         return builder.build();
     }
 
     public Properties buildStreamProperties(Properties envProps) {
         Properties streamProps = new Properties();
-        streamProps.put(StreamsConfig.APPLICATION_ID_CONFIG, envProps.get("friendsdrinks.application.id"));
-        streamProps.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, envProps.get("bootstrap.servers"));
+        streamProps.put(StreamsConfig.APPLICATION_ID_CONFIG, envProps.getProperty("friendsdrinks.application.id"));
+        streamProps.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, envProps.getProperty("bootstrap.servers"));
         return streamProps;
     }
 
     public static void main(String[] args) throws IOException {
         Properties envProps = load(args[0]);
-        FriendsDrinksAvro avro = new FriendsDrinksAvro((String) envProps.get("schema.registry.url"));
         Service service = new Service();
-        Topology topology = service.buildTopology(envProps, avro);
+        Topology topology = service.buildTopology(envProps,
+                new FriendsDrinksAvro(envProps.getProperty("schema.registry.url")),
+                new UserAvro(envProps.getProperty("schema.registry.url")));
         Properties streamProps = service.buildStreamProperties(envProps);
         KafkaStreams streams = new KafkaStreams(topology, streamProps);
 

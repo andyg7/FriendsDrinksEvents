@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static andrewgrant.friendsdrinks.email.Config.TEST_CONFIG_FILE;
 import static andrewgrant.friendsdrinks.env.Properties.load;
 
-import org.apache.avro.Schema;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serdes;
@@ -21,6 +20,8 @@ import java.util.Properties;
 import java.util.UUID;
 
 import andrewgrant.friendsdrinks.avro.*;
+import andrewgrant.friendsdrinks.user.UserAvro;
+import andrewgrant.friendsdrinks.user.avro.UserId;
 
 import io.confluent.kafka.schemaregistry.client.MockSchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
@@ -33,19 +34,21 @@ public class ServiceTest {
     private static Properties envProps;
     private static String friendsDrinksTopicName;
     private static TopologyTestDriver testDriver;
-    private static FriendsDrinksAvro avro;
+    private static FriendsDrinksAvro friendsDrinksAvro;
+    private static UserAvro userAvro;
 
     @BeforeClass
     public static void setup() throws IOException, RestClientException {
         envProps = load(TEST_CONFIG_FILE);
         MockSchemaRegistryClient registryClient = new MockSchemaRegistryClient();
         friendsDrinksTopicName = envProps.getProperty("friendsdrinks.topic.name");
-        registryClient.register(friendsDrinksTopicName + "-key", Schema.create(Schema.Type.STRING));
+        registryClient.register(friendsDrinksTopicName + "-key", UserId.getClassSchema());
         registryClient.register(friendsDrinksTopicName + "-value", FriendsDrinksEvent.getClassSchema());
-        avro = new FriendsDrinksAvro(registryClient, envProps.getProperty("schema.registry.url"));
+        friendsDrinksAvro = new FriendsDrinksAvro(envProps.getProperty("schema.registry.url"), registryClient);
+        userAvro = new UserAvro(envProps.getProperty("schema.registry.url"), registryClient);
 
         Service service = new Service();
-        Topology topology = service.buildTopology(envProps, avro);
+        Topology topology = service.buildTopology(envProps, friendsDrinksAvro);
         Properties streamsProps = service.buildStreamProperties(envProps);
         testDriver = new TopologyTestDriver(topology, streamsProps);
     }
@@ -64,16 +67,16 @@ public class ServiceTest {
                 .setCreateFriendsDrinksRequest(request)
                 .build();
 
-        ConsumerRecordFactory<String, FriendsDrinksEvent> inputFactory =
-                new ConsumerRecordFactory<>(Serdes.String().serializer(), avro.friendsDrinksEventSerializer());
+        ConsumerRecordFactory<UserId, FriendsDrinksEvent> inputFactory =
+                new ConsumerRecordFactory<>(userAvro.userIdSerializer(), friendsDrinksAvro.friendsDrinksEventSerializer());
 
         testDriver.pipeInput(inputFactory.create(friendsDrinksTopicName,
-                requestEvent.getCreateFriendsDrinksRequest().getFriendsDrinksId(), requestEvent));
+                new UserId(requestEvent.getCreateFriendsDrinksRequest().getRequesterUserId()), requestEvent));
 
-        Deserializer<String> stringDeserializer = Serdes.String().deserializer();
-        Deserializer<FriendsDrinksEvent> friendsDrinksEventDeserializer = avro.friendsDrinksEventDeserializer();
-        ProducerRecord<String, FriendsDrinksEvent> output =
-                testDriver.readOutput(friendsDrinksTopicName, stringDeserializer, friendsDrinksEventDeserializer);
+        Deserializer<UserId> userIdDeserializer = userAvro.userIdDeserializer();
+        Deserializer<FriendsDrinksEvent> friendsDrinksEventDeserializer = friendsDrinksAvro.friendsDrinksEventDeserializer();
+        ProducerRecord<UserId, FriendsDrinksEvent> output =
+                testDriver.readOutput(friendsDrinksTopicName, userIdDeserializer, friendsDrinksEventDeserializer);
         assertEquals(EventType.CREATE_FRIENDS_DRINKS_RESPONSE, output.value().getEventType());
         assertEquals(Result.SUCCESS, output.value().getCreateFriendsDrinksResponse().getResult());
     }
@@ -94,8 +97,8 @@ public class ServiceTest {
                 .setCreateFriendsDrinksRequest(request)
                 .build();
 
-        ConsumerRecordFactory<String, FriendsDrinksEvent> inputFactory =
-                new ConsumerRecordFactory<>(Serdes.String().serializer(), avro.friendsDrinksEventSerializer());
+        ConsumerRecordFactory<UserId, FriendsDrinksEvent> inputFactory =
+                new ConsumerRecordFactory<>(userAvro.userIdSerializer(), friendsDrinksAvro.friendsDrinksEventSerializer());
 
         for (int i = 0; i < 5; i++) {
             CreateFriendsDrinksResponse response = CreateFriendsDrinksResponse.newBuilder()
@@ -107,15 +110,15 @@ public class ServiceTest {
                     .setCreateFriendsDrinksResponse(response)
                     .build();
             testDriver.pipeInput(inputFactory.create(friendsDrinksTopicName,
-                    requesterUserId, event));
+                    new UserId(requesterUserId), event));
         }
 
 
         testDriver.pipeInput(inputFactory.create(friendsDrinksTopicName,
-                requestEvent.getCreateFriendsDrinksRequest().getRequesterUserId(), requestEvent));
+                new UserId(requestEvent.getCreateFriendsDrinksRequest().getRequesterUserId()), requestEvent));
 
         Deserializer<String> stringDeserializer = Serdes.String().deserializer();
-        Deserializer<FriendsDrinksEvent> friendsDrinksEventDeserializer = avro.friendsDrinksEventDeserializer();
+        Deserializer<FriendsDrinksEvent> friendsDrinksEventDeserializer = friendsDrinksAvro.friendsDrinksEventDeserializer();
         FriendsDrinksEvent output = null;
         while (true) {
             ProducerRecord<String, FriendsDrinksEvent> event =
@@ -148,8 +151,8 @@ public class ServiceTest {
                 .setCreateFriendsDrinksRequest(request)
                 .build();
 
-        ConsumerRecordFactory<String, FriendsDrinksEvent> inputFactory =
-                new ConsumerRecordFactory<>(Serdes.String().serializer(), avro.friendsDrinksEventSerializer());
+        ConsumerRecordFactory<UserId, FriendsDrinksEvent> inputFactory =
+                new ConsumerRecordFactory<>(userAvro.userIdSerializer(), friendsDrinksAvro.friendsDrinksEventSerializer());
 
         for (int i = 0; i < 4; i++) {
             CreateFriendsDrinksResponse response = CreateFriendsDrinksResponse.newBuilder()
@@ -160,16 +163,15 @@ public class ServiceTest {
                     .setEventType(EventType.CREATE_FRIENDS_DRINKS_RESPONSE)
                     .setCreateFriendsDrinksResponse(response)
                     .build();
-            testDriver.pipeInput(inputFactory.create(friendsDrinksTopicName,
-                    requesterUserId, event));
+            testDriver.pipeInput(inputFactory.create(friendsDrinksTopicName, new UserId(requesterUserId), event));
         }
 
 
         testDriver.pipeInput(inputFactory.create(friendsDrinksTopicName,
-                requestEvent.getCreateFriendsDrinksRequest().getRequesterUserId(), requestEvent));
+                new UserId(requestEvent.getCreateFriendsDrinksRequest().getRequesterUserId()), requestEvent));
 
         Deserializer<String> stringDeserializer = Serdes.String().deserializer();
-        Deserializer<FriendsDrinksEvent> friendsDrinksEventDeserializer = avro.friendsDrinksEventDeserializer();
+        Deserializer<FriendsDrinksEvent> friendsDrinksEventDeserializer = friendsDrinksAvro.friendsDrinksEventDeserializer();
         FriendsDrinksEvent output = null;
         while (true) {
             ProducerRecord<String, FriendsDrinksEvent> event =

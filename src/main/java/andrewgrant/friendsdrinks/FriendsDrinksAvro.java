@@ -27,9 +27,9 @@ public class FriendsDrinksAvro {
         registryClient = null;
     }
 
-    public FriendsDrinksAvro(SchemaRegistryClient registryClient, String registryUrl) {
-        this.registryClient = registryClient;
+    public FriendsDrinksAvro(String registryUrl, SchemaRegistryClient registryClient) {
         this.registryUrl = registryUrl;
+        this.registryClient = registryClient;
     }
 
     public SpecificAvroSerde<CreateFriendsDrinksRequest> createFriendsDrinksRequestSerde() {
