@@ -48,7 +48,7 @@ public class ServiceTest {
         userAvro = new UserAvro(envProps.getProperty("schema.registry.url"), registryClient);
 
         Service service = new Service();
-        Topology topology = service.buildTopology(envProps, friendsDrinksAvro);
+        Topology topology = service.buildTopology(envProps, friendsDrinksAvro, userAvro);
         Properties streamsProps = service.buildStreamProperties(envProps);
         testDriver = new TopologyTestDriver(topology, streamsProps);
     }
