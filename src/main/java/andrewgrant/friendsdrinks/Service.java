@@ -62,9 +62,7 @@ public class Service {
                 (request, count) -> {
                     CreateFriendsDrinksResponse.Builder response = CreateFriendsDrinksResponse.newBuilder();
                     response.setRequestId(request.getRequestId());
-                    if (count == null) {
-                        response.setResult(Result.SUCCESS);
-                    } else if (count < 5) {
+                    if (count == null || count < 5) {
                         response.setResult(Result.SUCCESS);
                     } else {
                         response.setResult(Result.FAIL);
