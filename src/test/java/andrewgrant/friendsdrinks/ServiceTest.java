@@ -60,7 +60,7 @@ public class ServiceTest {
                 .setRequestId("reqId")
                 .setUserIds(Arrays.asList("b", "c"))
                 .setRequesterUserId("a")
-                .setSchedule("blah")
+                .setScheduleType(ScheduleType.OnDemand)
                 .build();
         FriendsDrinksEvent requestEvent = FriendsDrinksEvent.newBuilder()
                 .setEventType(EventType.CREATE_FRIENDS_DRINKS_REQUEST)
@@ -90,7 +90,7 @@ public class ServiceTest {
                 .setRequestId(requestId)
                 .setUserIds(Arrays.asList("b", "c"))
                 .setRequesterUserId(requesterUserId)
-                .setSchedule("blah")
+                .setScheduleType(ScheduleType.OnDemand)
                 .build();
         FriendsDrinksEvent requestEvent = FriendsDrinksEvent.newBuilder()
                 .setEventType(EventType.CREATE_FRIENDS_DRINKS_REQUEST)
@@ -144,7 +144,7 @@ public class ServiceTest {
                 .setRequestId(requestId)
                 .setUserIds(Arrays.asList("b", "c"))
                 .setRequesterUserId(requesterUserId)
-                .setSchedule("blah")
+                .setScheduleType(ScheduleType.OnDemand)
                 .build();
         FriendsDrinksEvent requestEvent = FriendsDrinksEvent.newBuilder()
                 .setEventType(EventType.CREATE_FRIENDS_DRINKS_REQUEST)
@@ -197,7 +197,7 @@ public class ServiceTest {
                 .setRequestId(requestId)
                 .setUserIds(Arrays.asList("b", "c"))
                 .setRequesterUserId(requesterUserId)
-                .setSchedule("blah")
+                .setScheduleType(ScheduleType.OnDemand)
                 .build();
         FriendsDrinksEvent requestEvent = FriendsDrinksEvent.newBuilder()
                 .setEventType(EventType.CREATE_FRIENDS_DRINKS_REQUEST)
@@ -261,7 +261,7 @@ public class ServiceTest {
                 .setRequestId(requestId)
                 .setUserIds(Arrays.asList("b", "c"))
                 .setRequesterUserId(requesterUserId)
-                .setSchedule("blah")
+                .setScheduleType(ScheduleType.OnDemand)
                 .build();
         requestEvent = FriendsDrinksEvent.newBuilder()
                 .setEventType(EventType.CREATE_FRIENDS_DRINKS_REQUEST)
