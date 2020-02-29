@@ -49,7 +49,7 @@ checkstyleTest {
 dependencies {
     compile 'org.apache.avro:avro:1.8.2'
     implementation 'org.slf4j:slf4j-simple:1.7.26'
-    implementation 'org.apache.kafka:kafka-streams:2.2.2'
+    implementation 'org.apache.kafka:kafka-streams:2.4.0'
     implementation 'io.confluent:kafka-streams-avro-serde:5.2.2'
     implementation 'org.eclipse.jetty:jetty-server:9.4.24.v20191120'
     implementation 'org.eclipse.jetty:jetty-servlet:9.4.24.v20191120'
@@ -58,7 +58,7 @@ dependencies {
     implementation 'org.glassfish.jersey.containers:jersey-container-servlet-core:2.29.1'
     implementation 'org.glassfish.jersey.inject:jersey-hk2:2.29.1'
     implementation 'javax.ws.rs:javax.ws.rs-api:2.1.1'
-    testCompile 'org.apache.kafka:kafka-streams-test-utils:2.2.0'
+    testCompile 'org.apache.kafka:kafka-streams-test-utils:2.4.0'
     testCompile 'junit:junit:4.12'
 }
 
