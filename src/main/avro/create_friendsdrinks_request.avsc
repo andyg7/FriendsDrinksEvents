@@ -5,8 +5,9 @@
   "fields": [
     {"name": "requestId", "type": "string"},
     {"name": "friendsDrinksId", "type": "string"},
-    {"name": "requesterUserId", "type": "string"},
+    {"name": "adminUserId", "type": "string"},
     {"name": "userIds", "type": { "type": "array", "items": "string" } },
-    {"name": "scheduleType", "type": {"type": "enum", "name": "ScheduleType", "symbols": ["OnDemand", "Cron"]}}
+    {"name": "scheduleType", "type": {"type": "enum", "name": "ScheduleType", "symbols": ["OnDemand", "Cron"]}},
+    {"name": "cronSchedule", "type": ["null", "string"], "default": null}
   ]
 }

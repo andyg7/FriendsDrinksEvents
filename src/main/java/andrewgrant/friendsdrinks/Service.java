@@ -27,7 +27,7 @@ public class Service {
         final String friendsDrinksTopicName = envProps.getProperty("friendsdrinks.topic.name");
 
         KStream<UserId, FriendsDrinksEvent> friendsDrinks = builder.stream(friendsDrinksTopicName,
-                Consumed.with(userAvro.userIdSerde(), friendsDrinksAvro.createFriendsDrinksEventSerde()));
+                Consumed.with(userAvro.userIdSerde(), friendsDrinksAvro.friendsDrinksEventSerde()));
 
         Predicate<UserId, FriendsDrinksEvent> isCreateFriendsDrinksResponseSuccess = (userId, friendsDrinksEvent) ->
                 (friendsDrinksEvent.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_RESPONSE) &&
@@ -39,7 +39,7 @@ public class Service {
         KTable<UserId, Long> friendsDrinksCount = friendsDrinks.filter(((s, friendsDrinksEvent) ->
                 isCreateFriendsDrinksResponseSuccess.test(s, friendsDrinksEvent) ||
                         isDeleteFriendsDrinksResponseSuccess.test(s, friendsDrinksEvent)))
-                .groupByKey(Grouped.with(userAvro.userIdSerde(), friendsDrinksAvro.createFriendsDrinksEventSerde()))
+                .groupByKey(Grouped.with(userAvro.userIdSerde(), friendsDrinksAvro.friendsDrinksEventSerde()))
                 .aggregate(
                         () -> 0L,
                         (aggKey, newValue, aggValue) -> {
@@ -54,11 +54,11 @@ public class Service {
                         },
                         Materialized.with(userAvro.userIdSerde(), Serdes.Long()));
 
-        KStream<UserId, CreateFriendsDrinksRequest> requests = friendsDrinks
+        KStream<UserId, CreateFriendsDrinksRequest> createRequests = friendsDrinks
                 .filter(((s, friendsDrinksEvent) -> friendsDrinksEvent.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_REQUEST)))
                 .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getCreateFriendsDrinksRequest());
 
-        KStream<UserId, FriendsDrinksEvent> responses = requests.leftJoin(friendsDrinksCount,
+        KStream<UserId, FriendsDrinksEvent> createResponses = createRequests.leftJoin(friendsDrinksCount,
                 (request, count) -> {
                     CreateFriendsDrinksResponse.Builder response = CreateFriendsDrinksResponse.newBuilder();
                     response.setRequestId(request.getRequestId());
@@ -75,8 +75,22 @@ public class Service {
                 },
                 Joined.with(userAvro.userIdSerde(), friendsDrinksAvro.createFriendsDrinksRequestSerde(), Serdes.Long()));
 
-        responses.to(friendsDrinksTopicName,
-                Produced.with(userAvro.userIdSerde(), friendsDrinksAvro.createFriendsDrinksEventSerde()));
+        createResponses.to(friendsDrinksTopicName,
+                Produced.with(userAvro.userIdSerde(), friendsDrinksAvro.friendsDrinksEventSerde()));
+
+        // For now, all delete requests become accepted.
+        friendsDrinks.filter(((s, friendsDrinksEvent) ->
+                friendsDrinksEvent.getEventType().equals(EventType.DELETE_FRIENDS_DRINKS_REQUEST)))
+                .mapValues((friendsDrinksEvent) -> friendsDrinksEvent.getDeleteFriendsDrinksRequest())
+                .mapValues((request) -> FriendsDrinksEvent.newBuilder()
+                        .setEventType(EventType.DELETE_FRIENDS_DRINKS_RESPONSE)
+                        .setDeleteFriendsDrinksResponse(DeleteFriendsDrinksResponse
+                                .newBuilder()
+                                .setResult(Result.SUCCESS)
+                                .setRequestId(request.getRequestId())
+                                .build())
+                        .build())
+                .to(friendsDrinksTopicName, Produced.with(userAvro.userIdSerde(), friendsDrinksAvro.friendsDrinksEventSerde()));
         return builder.build();
     }
 

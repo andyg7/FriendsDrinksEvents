@@ -1,12 +1,15 @@
 package andrewgrant.friendsdrinks;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static andrewgrant.friendsdrinks.email.Config.TEST_CONFIG_FILE;
 import static andrewgrant.friendsdrinks.env.Properties.load;
 
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.TestInputTopic;
+import org.apache.kafka.streams.TestOutputTopic;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.test.ConsumerRecordFactory;
@@ -285,6 +288,37 @@ public class ServiceTest {
         }
         // Now test we succeed.
         assertEquals(Result.SUCCESS, output.getCreateFriendsDrinksResponse().getResult());
+    }
+
+    @Test
+    public void testDelete() {
+        TestInputTopic<UserId, FriendsDrinksEvent> inputTopic =
+                testDriver.createInputTopic(
+                        friendsDrinksTopicName,
+                        userAvro.userIdSerializer(),
+                        friendsDrinksAvro.friendsDrinksEventSerializer());
+
+        FriendsDrinksEvent deleteRequest = FriendsDrinksEvent
+                .newBuilder()
+                .setEventType(EventType.DELETE_FRIENDS_DRINKS_REQUEST)
+                .setDeleteFriendsDrinksRequest(DeleteFriendsDrinksRequest
+                        .newBuilder()
+                        .setRequestId("1")
+                        .setFriendsDrinksId("2")
+                        .build())
+                .build();
+        inputTopic.pipeInput(deleteRequest);
+
+        TestOutputTopic<UserId, FriendsDrinksEvent> outputTopic =
+                testDriver.createOutputTopic(
+                        friendsDrinksTopicName,
+                        userAvro.userIdDeserializer(),
+                        friendsDrinksAvro.friendsDrinksEventDeserializer());
+
+        FriendsDrinksEvent outputValue = outputTopic.readValue();
+        assertNotNull(outputValue.getDeleteFriendsDrinksResponse());
+        assertEquals("1", outputValue.getDeleteFriendsDrinksResponse().getRequestId());
+        assertEquals(Result.SUCCESS, outputValue.getDeleteFriendsDrinksResponse().getResult());
     }
 
     @AfterClass

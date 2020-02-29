@@ -58,7 +58,7 @@ public class FriendsDrinksAvro {
         return serde;
     }
 
-    public SpecificAvroSerde<FriendsDrinksEvent> createFriendsDrinksEventSerde() {
+    public SpecificAvroSerde<FriendsDrinksEvent> friendsDrinksEventSerde() {
         SpecificAvroSerde<FriendsDrinksEvent> serde;
         if (registryClient != null) {
             serde = new SpecificAvroSerde<>(registryClient);
@@ -72,12 +72,12 @@ public class FriendsDrinksAvro {
     }
 
     public Serializer<FriendsDrinksEvent> friendsDrinksEventSerializer() {
-        SpecificAvroSerde<FriendsDrinksEvent> serde = createFriendsDrinksEventSerde();
+        SpecificAvroSerde<FriendsDrinksEvent> serde = friendsDrinksEventSerde();
         return serde.serializer();
     }
 
     public Deserializer<FriendsDrinksEvent> friendsDrinksEventDeserializer() {
-        SpecificAvroSerde<FriendsDrinksEvent> serde = createFriendsDrinksEventSerde();
+        SpecificAvroSerde<FriendsDrinksEvent> serde = friendsDrinksEventSerde();
         return serde.deserializer();
     }
 }
