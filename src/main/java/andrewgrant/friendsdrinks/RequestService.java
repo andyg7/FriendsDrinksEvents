@@ -20,7 +20,7 @@ import andrewgrant.friendsdrinks.user.avro.UserId;
 /**
  * Main FriendsDrinks service.
  */
-public class Service {
+public class RequestService {
 
     public Topology buildTopology(Properties envProps, FriendsDrinksAvro friendsDrinksAvro, UserAvro userAvro) {
         StreamsBuilder builder = new StreamsBuilder();
@@ -91,6 +91,7 @@ public class Service {
                                 .build())
                         .build())
                 .to(friendsDrinksTopicName, Produced.with(userAvro.userIdSerde(), friendsDrinksAvro.friendsDrinksEventSerde()));
+
         return builder.build();
     }
 
@@ -103,7 +104,7 @@ public class Service {
 
     public static void main(String[] args) throws IOException {
         Properties envProps = load(args[0]);
-        Service service = new Service();
+        RequestService service = new RequestService();
         Topology topology = service.buildTopology(envProps,
                 new FriendsDrinksAvro(envProps.getProperty("schema.registry.url")),
                 new UserAvro(envProps.getProperty("schema.registry.url")));

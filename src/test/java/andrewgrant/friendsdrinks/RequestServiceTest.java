@@ -32,7 +32,7 @@ import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientExcept
 /**
  * Tests FriendsDrinks service.
  */
-public class ServiceTest {
+public class RequestServiceTest {
 
     private static Properties envProps;
     private static String friendsDrinksTopicName;
@@ -50,7 +50,7 @@ public class ServiceTest {
         friendsDrinksAvro = new FriendsDrinksAvro(envProps.getProperty("schema.registry.url"), registryClient);
         userAvro = new UserAvro(envProps.getProperty("schema.registry.url"), registryClient);
 
-        Service service = new Service();
+        RequestService service = new RequestService();
         Topology topology = service.buildTopology(envProps, friendsDrinksAvro, userAvro);
         Properties streamsProps = service.buildStreamProperties(envProps);
         testDriver = new TopologyTestDriver(topology, streamsProps);
