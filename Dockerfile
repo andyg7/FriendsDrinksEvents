@@ -12,4 +12,3 @@ RUN mkdir /app
 COPY --from=builder /home/gradle/src/build/libs/*.jar /app
 COPY config/app/dev.properties /app
 
-CMD ["sleep", "10000"]
