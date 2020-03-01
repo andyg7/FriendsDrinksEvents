@@ -8,6 +8,7 @@ import java.util.Map;
 
 import andrewgrant.friendsdrinks.avro.CreateFriendsDrinksRequest;
 import andrewgrant.friendsdrinks.avro.CreateFriendsDrinksResponse;
+import andrewgrant.friendsdrinks.avro.FriendsDrinks;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksEvent;
 
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
@@ -60,6 +61,19 @@ public class FriendsDrinksAvro {
 
     public SpecificAvroSerde<FriendsDrinksEvent> friendsDrinksEventSerde() {
         SpecificAvroSerde<FriendsDrinksEvent> serde;
+        if (registryClient != null) {
+            serde = new SpecificAvroSerde<>(registryClient);
+        } else {
+            serde = new SpecificAvroSerde<>();
+        }
+        Map<String, String> config = new HashMap<>();
+        config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, registryUrl);
+        serde.configure(config, false);
+        return serde;
+    }
+
+    public SpecificAvroSerde<FriendsDrinks> friendsDrinksSerde() {
+        SpecificAvroSerde<FriendsDrinks> serde;
         if (registryClient != null) {
             serde = new SpecificAvroSerde<>(registryClient);
         } else {

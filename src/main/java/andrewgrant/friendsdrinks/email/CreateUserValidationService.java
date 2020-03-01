@@ -70,8 +70,7 @@ public class CreateUserValidationService {
         final String currEmailTopicName = envProps.getProperty("currEmail.topic.name");
         emailKStream.filter(((key, value) -> value.getEventType().equals(
                 andrewgrant.friendsdrinks.email.avro.EventType.RESERVED) ||
-                value.getEventType().equals(andrewgrant.friendsdrinks.email.avro.EventType.RETURNED
-                )))
+                value.getEventType().equals(andrewgrant.friendsdrinks.email.avro.EventType.RETURNED)))
                 .mapValues(value -> {
                     if (value.getEventType().equals(andrewgrant.friendsdrinks.email.avro.EventType.RESERVED)) {
                         return value;
