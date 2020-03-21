@@ -46,14 +46,12 @@ public class Main {
                 userAvro, emailAvro);
         KafkaStreams streams = streamsService.getStreams();
         int port = Integer.parseInt(portStr);
-        KafkaProducer<UserId, UserEvent> userProducer = buildUserProducer(envProps, userAvro);
         Server jettyServer = Main.buildServer(envProps, streams, userAvro, port);
         // Attach shutdown handler to catch Control-C.
         Runtime.getRuntime().addShutdownHook(new Thread("streams-shutdown-hook") {
             @Override
             public void run() {
                 streams.close();
-                userProducer.close();
                 try {
                     jettyServer.stop();
                 } catch (Exception e) {
