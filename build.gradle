@@ -15,6 +15,11 @@ plugins {
     id 'checkstyle'
 }
 
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
 version = '0.0.1'
 
 repositories {
