@@ -25,44 +25,44 @@ public class WriterService {
         StreamsBuilder builder = new StreamsBuilder();
         String friendsDrinksApiTopicName = envProps.getProperty("friendsdrinks_api.topic.name");
 
-        KStream<UserId, FriendsDrinksEvent> friendsDrinksEventKStream = builder.stream(friendsDrinksApiTopicName,
+        KStream<UserId, FriendsDrinksApi> friendsDrinksEventKStream = builder.stream(friendsDrinksApiTopicName,
                 Consumed.with(userAvro.userIdSerde(), friendsDrinksAvro.friendsDrinksEventSerde()));
 
-        KStream<String, FriendsDrinksEvent> responses = friendsDrinksEventKStream
+        KStream<String, FriendsDrinksApi> responses = friendsDrinksEventKStream
                 .filter((userId, friendsDrinksEvent) ->
-                        (friendsDrinksEvent.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_RESPONSE) &&
+                        (friendsDrinksEvent.getApiType().equals(ApiType.CREATE_FRIENDS_DRINKS_RESPONSE) &&
                                 friendsDrinksEvent.getCreateFriendsDrinksResponse().getResult().equals(Result.SUCCESS)) ||
-                                (friendsDrinksEvent.getEventType().equals(EventType.DELETE_FRIENDS_DRINKS_RESPONSE) &&
+                                (friendsDrinksEvent.getApiType().equals(ApiType.DELETE_FRIENDS_DRINKS_RESPONSE) &&
                                         friendsDrinksEvent.getDeleteFriendsDrinksResponse().getResult().equals(Result.SUCCESS))
                 )
                 .selectKey((k, v) -> {
-                    if (v.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_RESPONSE)) {
+                    if (v.getApiType().equals(ApiType.CREATE_FRIENDS_DRINKS_RESPONSE)) {
                         return v.getCreateFriendsDrinksResponse().getRequestId();
-                    } else if (v.getEventType().equals(EventType.DELETE_FRIENDS_DRINKS_RESPONSE)) {
+                    } else if (v.getApiType().equals(ApiType.DELETE_FRIENDS_DRINKS_RESPONSE)) {
                         return v.getDeleteFriendsDrinksResponse().getRequestId();
                     } else {
                         throw new RuntimeException(
-                                String.format("Received unexpected event type %s", v.getEventType().toString()));
+                                String.format("Received unexpected event type %s", v.getApiType().toString()));
                     }
                 });
 
-        KStream<String, FriendsDrinksEvent> requests = friendsDrinksEventKStream
-                .filter((k, v) -> v.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_REQUEST) ||
-                        v.getEventType().equals(EventType.DELETE_FRIENDS_DRINKS_REQUEST))
+        KStream<String, FriendsDrinksApi> requests = friendsDrinksEventKStream
+                .filter((k, v) -> v.getApiType().equals(ApiType.CREATE_FRIENDS_DRINKS_REQUEST) ||
+                        v.getApiType().equals(ApiType.DELETE_FRIENDS_DRINKS_REQUEST))
                 .selectKey(((k, v) -> {
-                    if (v.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_REQUEST)) {
+                    if (v.getApiType().equals(ApiType.CREATE_FRIENDS_DRINKS_REQUEST)) {
                         return v.getCreateFriendsDrinksRequest().getRequestId();
-                    } else if (v.getEventType().equals(EventType.DELETE_FRIENDS_DRINKS_REQUEST)) {
+                    } else if (v.getApiType().equals(ApiType.DELETE_FRIENDS_DRINKS_REQUEST)) {
                         return v.getDeleteFriendsDrinksRequest().getRequestId();
                     } else {
                         throw new RuntimeException(
-                                String.format("Received unexpected event type %s", v.getEventType().toString()));
+                                String.format("Received unexpected event type %s", v.getApiType().toString()));
                     }
                 }));
 
         responses.join(requests,
                 (l, r) -> {
-                    if (r.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_REQUEST)) {
+                    if (r.getApiType().equals(ApiType.CREATE_FRIENDS_DRINKS_REQUEST)) {
                         CreateFriendsDrinksRequest createFriendsDrinksRequest =
                                 r.getCreateFriendsDrinksRequest();
                         return FriendsDrinks.newBuilder()
@@ -71,11 +71,11 @@ public class WriterService {
                                 .setScheduleType(createFriendsDrinksRequest.getScheduleType())
                                 .setCronSchedule(createFriendsDrinksRequest.getCronSchedule())
                                 .build();
-                    } else if (r.getEventType().equals(EventType.DELETE_FRIENDS_DRINKS_REQUEST)) {
+                    } else if (r.getApiType().equals(ApiType.DELETE_FRIENDS_DRINKS_REQUEST)) {
                         return null;
                     } else {
                         throw new RuntimeException(
-                                String.format("Received unexpected event type %s", r.getEventType().toString()));
+                                String.format("Received unexpected event type %s", r.getApiType().toString()));
                     }
                 },
                 JoinWindows.of(Duration.ofSeconds(30)),

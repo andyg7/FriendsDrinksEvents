@@ -9,7 +9,7 @@ import java.util.Map;
 import andrewgrant.friendsdrinks.avro.CreateFriendsDrinksRequest;
 import andrewgrant.friendsdrinks.avro.CreateFriendsDrinksResponse;
 import andrewgrant.friendsdrinks.avro.FriendsDrinks;
-import andrewgrant.friendsdrinks.avro.FriendsDrinksEvent;
+import andrewgrant.friendsdrinks.avro.FriendsDrinksApi;
 
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
@@ -59,8 +59,8 @@ public class FriendsDrinksAvro {
         return serde;
     }
 
-    public SpecificAvroSerde<FriendsDrinksEvent> friendsDrinksEventSerde() {
-        SpecificAvroSerde<FriendsDrinksEvent> serde;
+    public SpecificAvroSerde<FriendsDrinksApi> friendsDrinksEventSerde() {
+        SpecificAvroSerde<FriendsDrinksApi> serde;
         if (registryClient != null) {
             serde = new SpecificAvroSerde<>(registryClient);
         } else {
@@ -85,13 +85,13 @@ public class FriendsDrinksAvro {
         return serde;
     }
 
-    public Serializer<FriendsDrinksEvent> friendsDrinksEventSerializer() {
-        SpecificAvroSerde<FriendsDrinksEvent> serde = friendsDrinksEventSerde();
+    public Serializer<FriendsDrinksApi> friendsDrinksEventSerializer() {
+        SpecificAvroSerde<FriendsDrinksApi> serde = friendsDrinksEventSerde();
         return serde.serializer();
     }
 
-    public Deserializer<FriendsDrinksEvent> friendsDrinksEventDeserializer() {
-        SpecificAvroSerde<FriendsDrinksEvent> serde = friendsDrinksEventSerde();
+    public Deserializer<FriendsDrinksApi> friendsDrinksEventDeserializer() {
+        SpecificAvroSerde<FriendsDrinksApi> serde = friendsDrinksEventSerde();
         return serde.deserializer();
     }
 }

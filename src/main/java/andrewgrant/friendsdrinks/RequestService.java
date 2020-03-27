@@ -26,14 +26,14 @@ public class RequestService {
         StreamsBuilder builder = new StreamsBuilder();
         final String friendsDrinksApiTopicName = envProps.getProperty("friendsdrinks_api.topic.name");
 
-        KStream<UserId, FriendsDrinksEvent> friendsDrinks = builder.stream(friendsDrinksApiTopicName,
+        KStream<UserId, FriendsDrinksApi> friendsDrinks = builder.stream(friendsDrinksApiTopicName,
                 Consumed.with(userAvro.userIdSerde(), friendsDrinksAvro.friendsDrinksEventSerde()));
 
-        Predicate<UserId, FriendsDrinksEvent> isCreateFriendsDrinksResponseSuccess = (userId, friendsDrinksEvent) ->
-                (friendsDrinksEvent.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_RESPONSE) &&
+        Predicate<UserId, FriendsDrinksApi> isCreateFriendsDrinksResponseSuccess = (userId, friendsDrinksEvent) ->
+                (friendsDrinksEvent.getApiType().equals(ApiType.CREATE_FRIENDS_DRINKS_RESPONSE) &&
                         friendsDrinksEvent.getCreateFriendsDrinksResponse().getResult().equals(Result.SUCCESS));
-        Predicate<UserId, FriendsDrinksEvent> isDeleteFriendsDrinksResponseSuccess = (userId, friendsDrinksEvent) ->
-                friendsDrinksEvent.getEventType().equals(EventType.DELETE_FRIENDS_DRINKS_RESPONSE) &&
+        Predicate<UserId, FriendsDrinksApi> isDeleteFriendsDrinksResponseSuccess = (userId, friendsDrinksEvent) ->
+                friendsDrinksEvent.getApiType().equals(ApiType.DELETE_FRIENDS_DRINKS_RESPONSE) &&
                         friendsDrinksEvent.getDeleteFriendsDrinksResponse().getResult().equals(Result.SUCCESS);
 
         KTable<UserId, Long> friendsDrinksCount = friendsDrinks.filter(((s, friendsDrinksEvent) ->
@@ -43,22 +43,22 @@ public class RequestService {
                 .aggregate(
                         () -> 0L,
                         (aggKey, newValue, aggValue) -> {
-                            if (newValue.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_RESPONSE)) {
+                            if (newValue.getApiType().equals(ApiType.CREATE_FRIENDS_DRINKS_RESPONSE)) {
                                 return aggValue + 1;
-                            } else if (newValue.getEventType().equals(EventType.DELETE_FRIENDS_DRINKS_RESPONSE)) {
+                            } else if (newValue.getApiType().equals(ApiType.DELETE_FRIENDS_DRINKS_RESPONSE)) {
                                 return aggValue - 1;
                             } else {
                                 throw new RuntimeException(String.format("Encountered unexpected event type %s",
-                                        newValue.getEventType().toString()));
+                                        newValue.getApiType().toString()));
                             }
                         },
                         Materialized.with(userAvro.userIdSerde(), Serdes.Long()));
 
         KStream<UserId, CreateFriendsDrinksRequest> createRequests = friendsDrinks
-                .filter(((s, friendsDrinksEvent) -> friendsDrinksEvent.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_REQUEST)))
+                .filter(((s, friendsDrinksEvent) -> friendsDrinksEvent.getApiType().equals(ApiType.CREATE_FRIENDS_DRINKS_REQUEST)))
                 .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getCreateFriendsDrinksRequest());
 
-        KStream<UserId, FriendsDrinksEvent> createResponses = createRequests.leftJoin(friendsDrinksCount,
+        KStream<UserId, FriendsDrinksApi> createResponses = createRequests.leftJoin(friendsDrinksCount,
                 (request, count) -> {
                     CreateFriendsDrinksResponse.Builder response = CreateFriendsDrinksResponse.newBuilder();
                     response.setRequestId(request.getRequestId());
@@ -67,8 +67,8 @@ public class RequestService {
                     } else {
                         response.setResult(Result.FAIL);
                     }
-                    FriendsDrinksEvent event = FriendsDrinksEvent.newBuilder()
-                            .setEventType(EventType.CREATE_FRIENDS_DRINKS_RESPONSE)
+                    FriendsDrinksApi event = FriendsDrinksApi.newBuilder()
+                            .setApiType(ApiType.CREATE_FRIENDS_DRINKS_RESPONSE)
                             .setCreateFriendsDrinksResponse(response.build())
                             .build();
                     return event;
@@ -80,10 +80,10 @@ public class RequestService {
 
         // For now, all delete requests become accepted.
         friendsDrinks.filter(((s, friendsDrinksEvent) ->
-                friendsDrinksEvent.getEventType().equals(EventType.DELETE_FRIENDS_DRINKS_REQUEST)))
+                friendsDrinksEvent.getApiType().equals(ApiType.DELETE_FRIENDS_DRINKS_REQUEST)))
                 .mapValues((friendsDrinksEvent) -> friendsDrinksEvent.getDeleteFriendsDrinksRequest())
-                .mapValues((request) -> FriendsDrinksEvent.newBuilder()
-                        .setEventType(EventType.DELETE_FRIENDS_DRINKS_RESPONSE)
+                .mapValues((request) -> FriendsDrinksApi.newBuilder()
+                        .setApiType(ApiType.DELETE_FRIENDS_DRINKS_RESPONSE)
                         .setDeleteFriendsDrinksResponse(DeleteFriendsDrinksResponse
                                 .newBuilder()
                                 .setResult(Result.SUCCESS)
