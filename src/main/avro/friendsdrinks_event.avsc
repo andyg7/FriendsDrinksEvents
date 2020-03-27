@@ -1,12 +1,13 @@
 {
   "namespace": "andrewgrant.friendsdrinks.avro",
   "type": "record",
-  "name": "FriendsDrinksApi",
+  "name": "FriendsDrinksEvent",
   "fields": [
-    {"name": "apiType", "type": {"type": "enum", "name": "ApiType", "symbols" : ["CREATE_FRIENDS_DRINKS_REQUEST", "CREATE_FRIENDS_DRINKS_RESPONSE", "DELETE_FRIENDS_DRINKS_REQUEST", "DELETE_FRIENDS_DRINKS_RESPONSE"] } },
-    {"name": "createFriendsDrinksRequest", "type": ["null", "CreateFriendsDrinksRequest"], "default": null},
-    {"name": "createFriendsDrinksResponse", "type": ["null", "CreateFriendsDrinksResponse"], "default": null},
-    {"name": "deleteFriendsDrinksRequest", "type": ["null", "DeleteFriendsDrinksRequest"], "default": null},
-    {"name": "deleteFriendsDrinksResponse", "type": ["null", "DeleteFriendsDrinksResponse"], "default": null}
+      {"name": "eventType", "type": {"type": "enum", "name": "EventType", "symbols": ["CREATED"]}},
+      {"name": "friendsDrinksId", "type": "string"},
+      {"name": "adminUser", "type": "string"},
+      {"name": "userIds", "type": { "type": "array", "items": "string" } },
+      {"name": "scheduleType", "type": {"type": "enum", "name": "ScheduleType", "symbols": ["OnDemand", "Cron"]}},
+      {"name": "cronSchedule", "type": ["null", "string"], "default": null}
   ]
 }

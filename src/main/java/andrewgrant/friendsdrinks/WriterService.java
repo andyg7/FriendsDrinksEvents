@@ -1,13 +1,18 @@
 package andrewgrant.friendsdrinks;
 
+import static andrewgrant.friendsdrinks.env.Properties.load;
+
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.*;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.util.Properties;
+import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
 import andrewgrant.friendsdrinks.avro.*;
@@ -26,7 +31,7 @@ public class WriterService {
         String friendsDrinksApiTopicName = envProps.getProperty("friendsdrinks_api.topic.name");
 
         KStream<UserId, FriendsDrinksApi> friendsDrinksEventKStream = builder.stream(friendsDrinksApiTopicName,
-                Consumed.with(userAvro.userIdSerde(), friendsDrinksAvro.friendsDrinksEventSerde()));
+                Consumed.with(userAvro.userIdSerde(), friendsDrinksAvro.friendsDrinksApiSerde()));
 
         KStream<String, FriendsDrinksApi> responses = friendsDrinksEventKStream
                 .filter((userId, friendsDrinksEvent) ->
@@ -65,7 +70,8 @@ public class WriterService {
                     if (r.getApiType().equals(ApiType.CREATE_FRIENDS_DRINKS_REQUEST)) {
                         CreateFriendsDrinksRequest createFriendsDrinksRequest =
                                 r.getCreateFriendsDrinksRequest();
-                        return FriendsDrinks.newBuilder()
+                        return FriendsDrinksEvent.newBuilder()
+                                .setEventType(EventType.CREATED)
                                 .setAdminUser(createFriendsDrinksRequest.getAdminUserId())
                                 .setUserIds(createFriendsDrinksRequest.getUserIds().stream().collect(Collectors.toList()))
                                 .setScheduleType(createFriendsDrinksRequest.getScheduleType())
@@ -80,23 +86,47 @@ public class WriterService {
                 },
                 JoinWindows.of(Duration.ofSeconds(30)),
                 StreamJoined.with(Serdes.String(),
-                        friendsDrinksAvro.friendsDrinksEventSerde(),
-                        friendsDrinksAvro.friendsDrinksEventSerde()))
+                        friendsDrinksAvro.friendsDrinksApiSerde(),
+                        friendsDrinksAvro.friendsDrinksApiSerde()))
                 .selectKey((k, v) -> v.getFriendsDrinksId())
-                .to(envProps.getProperty("fkjdljf.topic.name"),
-                        Produced.with(Serdes.String(), friendsDrinksAvro.friendsDrinksSerde()));
+                .to(envProps.getProperty("friendsdrinks.topic.name"),
+                        Produced.with(Serdes.String(), friendsDrinksAvro.friendsDrinksEventSerde()));
 
         return builder.build();
     }
 
     public Properties buildStreamsProperties(Properties envProps) {
         Properties streamProps = new Properties();
-        streamProps.put(StreamsConfig.APPLICATION_ID_CONFIG, envProps.getProperty("fjkldjflkjd.topic.name"));
+        streamProps.put(StreamsConfig.APPLICATION_ID_CONFIG, envProps.getProperty("friendsdrinks_writer.application"));
         streamProps.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, envProps.getProperty("bootstrap.servers"));
         return streamProps;
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
+        Properties envProps = load(args[0]);
+        WriterService writerService = new WriterService();
+        String schemaRegistryUrl = envProps.getProperty("schema.registry.url");
+        UserAvro userAvro = new UserAvro(schemaRegistryUrl);
+        FriendsDrinksAvro friendsDrinksAvro = new FriendsDrinksAvro(schemaRegistryUrl);
+        Topology topology = writerService.buildTopology(envProps, userAvro, friendsDrinksAvro);
+        Properties streamProps = writerService.buildStreamsProperties(envProps);
+        KafkaStreams kafkaStreams = new KafkaStreams(topology, streamProps);
 
+        final CountDownLatch latch = new CountDownLatch(1);
+        Runtime.getRuntime().addShutdownHook(new Thread("streams-shutdown-hook") {
+            @Override
+            public void run() {
+                kafkaStreams.close();
+                latch.countDown();
+            }
+        });
+
+        kafkaStreams.start();;
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
     }
 }

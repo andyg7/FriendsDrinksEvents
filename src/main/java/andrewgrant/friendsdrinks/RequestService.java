@@ -27,7 +27,7 @@ public class RequestService {
         final String friendsDrinksApiTopicName = envProps.getProperty("friendsdrinks_api.topic.name");
 
         KStream<UserId, FriendsDrinksApi> friendsDrinks = builder.stream(friendsDrinksApiTopicName,
-                Consumed.with(userAvro.userIdSerde(), friendsDrinksAvro.friendsDrinksEventSerde()));
+                Consumed.with(userAvro.userIdSerde(), friendsDrinksAvro.friendsDrinksApiSerde()));
 
         Predicate<UserId, FriendsDrinksApi> isCreateFriendsDrinksResponseSuccess = (userId, friendsDrinksEvent) ->
                 (friendsDrinksEvent.getApiType().equals(ApiType.CREATE_FRIENDS_DRINKS_RESPONSE) &&
@@ -39,7 +39,7 @@ public class RequestService {
         KTable<UserId, Long> friendsDrinksCount = friendsDrinks.filter(((s, friendsDrinksEvent) ->
                 isCreateFriendsDrinksResponseSuccess.test(s, friendsDrinksEvent) ||
                         isDeleteFriendsDrinksResponseSuccess.test(s, friendsDrinksEvent)))
-                .groupByKey(Grouped.with(userAvro.userIdSerde(), friendsDrinksAvro.friendsDrinksEventSerde()))
+                .groupByKey(Grouped.with(userAvro.userIdSerde(), friendsDrinksAvro.friendsDrinksApiSerde()))
                 .aggregate(
                         () -> 0L,
                         (aggKey, newValue, aggValue) -> {
@@ -76,7 +76,7 @@ public class RequestService {
                 Joined.with(userAvro.userIdSerde(), friendsDrinksAvro.createFriendsDrinksRequestSerde(), Serdes.Long()));
 
         createResponses.to(friendsDrinksApiTopicName,
-                Produced.with(userAvro.userIdSerde(), friendsDrinksAvro.friendsDrinksEventSerde()));
+                Produced.with(userAvro.userIdSerde(), friendsDrinksAvro.friendsDrinksApiSerde()));
 
         // For now, all delete requests become accepted.
         friendsDrinks.filter(((s, friendsDrinksEvent) ->
@@ -90,7 +90,7 @@ public class RequestService {
                                 .setRequestId(request.getRequestId())
                                 .build())
                         .build())
-                .to(friendsDrinksApiTopicName, Produced.with(userAvro.userIdSerde(), friendsDrinksAvro.friendsDrinksEventSerde()));
+                .to(friendsDrinksApiTopicName, Produced.with(userAvro.userIdSerde(), friendsDrinksAvro.friendsDrinksApiSerde()));
 
         return builder.build();
     }
