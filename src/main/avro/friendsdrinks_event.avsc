@@ -3,11 +3,8 @@
   "type": "record",
   "name": "FriendsDrinksEvent",
   "fields": [
-      {"name": "eventType", "type": {"type": "enum", "name": "EventType", "symbols": ["CREATED"]}},
-      {"name": "friendsDrinksId", "type": "string"},
-      {"name": "adminUser", "type": "string"},
-      {"name": "userIds", "type": { "type": "array", "items": "string" } },
-      {"name": "scheduleType", "type": {"type": "enum", "name": "ScheduleType", "symbols": ["OnDemand", "Cron"]}},
-      {"name": "cronSchedule", "type": ["null", "string"], "default": null}
+      {"name": "eventType", "type": {"type": "enum", "name": "EventType", "symbols": ["CREATED", "DELETED"]}},
+      {"name": "friendsDrinksCreated", "type": ["null", "FriendsDrinksCreated"], "default": null},
+      {"name": "friendsDrinksDeleted", "type": ["null", "FriendsDrinksDeleted"], "default": null}
   ]
 }

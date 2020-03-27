@@ -1,0 +1,12 @@
+{
+  "namespace": "andrewgrant.friendsdrinks.avro",
+  "type": "record",
+  "name": "FriendsDrinksCreated",
+  "fields": [
+      {"name": "friendsDrinksId", "type": "string"},
+      {"name": "adminUser", "type": "string"},
+      {"name": "userIds", "type": { "type": "array", "items": "string" } },
+      {"name": "scheduleType", "type": {"type": "enum", "name": "ScheduleType", "symbols": ["OnDemand", "Cron"]}},
+      {"name": "cronSchedule", "type": ["null", "string"], "default": null}
+  ]
+}

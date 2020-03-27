@@ -56,19 +56,6 @@ public class FriendsDrinksAvro {
         return serde;
     }
 
-    public SpecificAvroSerde<FriendsDrinks> friendsDrinksSerde() {
-        SpecificAvroSerde<FriendsDrinks> serde;
-        if (registryClient != null) {
-            serde = new SpecificAvroSerde<>(registryClient);
-        } else {
-            serde = new SpecificAvroSerde<>();
-        }
-        Map<String, String> config = new HashMap<>();
-        config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, registryUrl);
-        serde.configure(config, false);
-        return serde;
-    }
-
     public Serializer<FriendsDrinksApi> friendsDrinksApiSerializer() {
         SpecificAvroSerde<FriendsDrinksApi> serde = friendsDrinksApiSerde();
         return serde.serializer();

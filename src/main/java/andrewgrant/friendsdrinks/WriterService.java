@@ -70,15 +70,27 @@ public class WriterService {
                     if (r.getApiType().equals(ApiType.CREATE_FRIENDS_DRINKS_REQUEST)) {
                         CreateFriendsDrinksRequest createFriendsDrinksRequest =
                                 r.getCreateFriendsDrinksRequest();
-                        return FriendsDrinksEvent.newBuilder()
-                                .setEventType(EventType.CREATED)
+                        FriendsDrinksCreated friendsDrinksCreated = FriendsDrinksCreated
+                                .newBuilder()
                                 .setAdminUser(createFriendsDrinksRequest.getAdminUserId())
                                 .setUserIds(createFriendsDrinksRequest.getUserIds().stream().collect(Collectors.toList()))
                                 .setScheduleType(createFriendsDrinksRequest.getScheduleType())
                                 .setCronSchedule(createFriendsDrinksRequest.getCronSchedule())
                                 .build();
+                        return FriendsDrinksEvent.newBuilder()
+                                .setEventType(EventType.CREATED)
+                                .setFriendsDrinksCreated(friendsDrinksCreated)
+                                .build();
                     } else if (r.getApiType().equals(ApiType.DELETE_FRIENDS_DRINKS_REQUEST)) {
-                        return null;
+                        FriendsDrinksDeleted friendsDrinksDeleted = FriendsDrinksDeleted
+                                .newBuilder()
+                                .setFriendsDrinksId(r.getDeleteFriendsDrinksRequest().getFriendsDrinksId())
+                                .build();
+                        return FriendsDrinksEvent
+                                .newBuilder()
+                                .setEventType(EventType.DELETED)
+                                .setFriendsDrinksDeleted(friendsDrinksDeleted)
+                                .build();
                     } else {
                         throw new RuntimeException(
                                 String.format("Received unexpected event type %s", r.getApiType().toString()));
@@ -88,7 +100,7 @@ public class WriterService {
                 StreamJoined.with(Serdes.String(),
                         friendsDrinksAvro.friendsDrinksApiSerde(),
                         friendsDrinksAvro.friendsDrinksApiSerde()))
-                .selectKey((k, v) -> v.getFriendsDrinksId())
+                .selectKey((k, v) -> v.getFriendsDrinksCreated().getFriendsDrinksId())
                 .to(envProps.getProperty("friendsdrinks.topic.name"),
                         Produced.with(Serdes.String(), friendsDrinksAvro.friendsDrinksEventSerde()));
 
