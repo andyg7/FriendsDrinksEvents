@@ -15,7 +15,7 @@ import andrewgrant.friendsdrinks.user.UserAvro;
 import andrewgrant.friendsdrinks.user.avro.UserId;
 
 /**
- * Owns writing to currFriendsdrinks.
+ * Owns writing to friendsdrinkfriendsdrinks.
  */
 public class WriterService {
 
@@ -23,9 +23,9 @@ public class WriterService {
                                   UserAvro userAvro,
                                   FriendsDrinksAvro friendsDrinksAvro) {
         StreamsBuilder builder = new StreamsBuilder();
-        String friendsDrinksTopicName = envProps.getProperty("friendsdrinks.topic.name");
+        String friendsDrinksApiTopicName = envProps.getProperty("friendsdrinks_api.topic.name");
 
-        KStream<UserId, FriendsDrinksEvent> friendsDrinksEventKStream = builder.stream(friendsDrinksTopicName,
+        KStream<UserId, FriendsDrinksEvent> friendsDrinksEventKStream = builder.stream(friendsDrinksApiTopicName,
                 Consumed.with(userAvro.userIdSerde(), friendsDrinksAvro.friendsDrinksEventSerde()));
 
         KStream<String, FriendsDrinksEvent> responses = friendsDrinksEventKStream
@@ -83,7 +83,7 @@ public class WriterService {
                         friendsDrinksAvro.friendsDrinksEventSerde(),
                         friendsDrinksAvro.friendsDrinksEventSerde()))
                 .selectKey((k, v) -> v.getFriendsDrinksId())
-                .to(envProps.getProperty("currFriendsdrinks.topic.name"),
+                .to(envProps.getProperty("fkjdljf.topic.name"),
                         Produced.with(Serdes.String(), friendsDrinksAvro.friendsDrinksSerde()));
 
         return builder.build();
@@ -91,7 +91,7 @@ public class WriterService {
 
     public Properties buildStreamsProperties(Properties envProps) {
         Properties streamProps = new Properties();
-        streamProps.put(StreamsConfig.APPLICATION_ID_CONFIG, envProps.getProperty("currFriendsdrinks.topic.name"));
+        streamProps.put(StreamsConfig.APPLICATION_ID_CONFIG, envProps.getProperty("fjkldjflkjd.topic.name"));
         streamProps.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, envProps.getProperty("bootstrap.servers"));
         return streamProps;
     }

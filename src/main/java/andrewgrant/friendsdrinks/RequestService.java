@@ -24,9 +24,9 @@ public class RequestService {
 
     public Topology buildTopology(Properties envProps, FriendsDrinksAvro friendsDrinksAvro, UserAvro userAvro) {
         StreamsBuilder builder = new StreamsBuilder();
-        final String friendsDrinksTopicName = envProps.getProperty("friendsdrinks.topic.name");
+        final String friendsDrinksApiTopicName = envProps.getProperty("friendsdrinks_api.topic.name");
 
-        KStream<UserId, FriendsDrinksEvent> friendsDrinks = builder.stream(friendsDrinksTopicName,
+        KStream<UserId, FriendsDrinksEvent> friendsDrinks = builder.stream(friendsDrinksApiTopicName,
                 Consumed.with(userAvro.userIdSerde(), friendsDrinksAvro.friendsDrinksEventSerde()));
 
         Predicate<UserId, FriendsDrinksEvent> isCreateFriendsDrinksResponseSuccess = (userId, friendsDrinksEvent) ->
@@ -75,7 +75,7 @@ public class RequestService {
                 },
                 Joined.with(userAvro.userIdSerde(), friendsDrinksAvro.createFriendsDrinksRequestSerde(), Serdes.Long()));
 
-        createResponses.to(friendsDrinksTopicName,
+        createResponses.to(friendsDrinksApiTopicName,
                 Produced.with(userAvro.userIdSerde(), friendsDrinksAvro.friendsDrinksEventSerde()));
 
         // For now, all delete requests become accepted.
@@ -90,7 +90,7 @@ public class RequestService {
                                 .setRequestId(request.getRequestId())
                                 .build())
                         .build())
-                .to(friendsDrinksTopicName, Produced.with(userAvro.userIdSerde(), friendsDrinksAvro.friendsDrinksEventSerde()));
+                .to(friendsDrinksApiTopicName, Produced.with(userAvro.userIdSerde(), friendsDrinksAvro.friendsDrinksEventSerde()));
 
         return builder.build();
     }
