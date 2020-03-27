@@ -33,7 +33,7 @@ public class WriterService {
         KStream<UserId, FriendsDrinksApi> friendsDrinksEventKStream = builder.stream(friendsDrinksApiTopicName,
                 Consumed.with(userAvro.userIdSerde(), friendsDrinksAvro.friendsDrinksApiSerde()));
 
-        KStream<String, FriendsDrinksApi> responses = friendsDrinksEventKStream
+        KStream<String, FriendsDrinksApi> successfulResponses = friendsDrinksEventKStream
                 .filter((userId, friendsDrinksEvent) ->
                         (friendsDrinksEvent.getApiType().equals(ApiType.CREATE_FRIENDS_DRINKS_RESPONSE) &&
                                 friendsDrinksEvent.getCreateFriendsDrinksResponse().getResult().equals(Result.SUCCESS)) ||
@@ -65,7 +65,7 @@ public class WriterService {
                     }
                 }));
 
-        responses.join(requests,
+        successfulResponses.join(requests,
                 (l, r) -> {
                     if (r.getApiType().equals(ApiType.CREATE_FRIENDS_DRINKS_REQUEST)) {
                         CreateFriendsDrinksRequest createFriendsDrinksRequest =
