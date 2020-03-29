@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Properties;
 
+import andrewgrant.friendsdrinks.FriendsDrinksAvro;
 import andrewgrant.friendsdrinks.email.EmailAvro;
 import andrewgrant.friendsdrinks.user.UserAvro;
 import andrewgrant.friendsdrinks.user.avro.UserEvent;
@@ -39,11 +40,12 @@ public class Main {
         Properties envProps = load(args[0]);
         UserAvro userAvro = new UserAvro(envProps.getProperty("schema.registry.url"));
         EmailAvro emailAvro = new EmailAvro(envProps.getProperty("schema.registry.url"));
+        FriendsDrinksAvro friendsDrinksAvro = new FriendsDrinksAvro(envProps.getProperty("schema.registry.url"));
 
         String portStr = args[1];
         String streamsUri = "localhost:" + portStr;
         StreamsService streamsService = new StreamsService(envProps, streamsUri,
-                userAvro, emailAvro);
+                userAvro, emailAvro, friendsDrinksAvro);
         KafkaStreams streams = streamsService.getStreams();
         int port = Integer.parseInt(portStr);
         Server jettyServer = Main.buildServer(envProps, streams, userAvro, port);

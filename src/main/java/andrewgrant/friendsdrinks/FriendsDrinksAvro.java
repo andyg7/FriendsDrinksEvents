@@ -43,6 +43,19 @@ public class FriendsDrinksAvro {
         return serde;
     }
 
+    public SpecificAvroSerde<CreateFriendsDrinksResponse> createFriendsDrinksResponseSerde() {
+        SpecificAvroSerde<CreateFriendsDrinksResponse> serde;
+        if (registryClient != null) {
+            serde = new SpecificAvroSerde<>(registryClient);
+        } else {
+            serde = new SpecificAvroSerde<>();
+        }
+        Map<String, String> config = new HashMap<>();
+        config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, registryUrl);
+        serde.configure(config, false);
+        return serde;
+    }
+
     public SpecificAvroSerde<FriendsDrinksApi> friendsDrinksApiSerde() {
         SpecificAvroSerde<FriendsDrinksApi> serde;
         if (registryClient != null) {

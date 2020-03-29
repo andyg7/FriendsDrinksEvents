@@ -7,6 +7,10 @@ import org.apache.kafka.streams.kstream.*;
 import java.time.Duration;
 import java.util.Properties;
 
+import andrewgrant.friendsdrinks.FriendsDrinksAvro;
+import andrewgrant.friendsdrinks.avro.ApiType;
+import andrewgrant.friendsdrinks.avro.FriendsDrinksApi;
+import andrewgrant.friendsdrinks.avro.FriendsDrinksId;
 import andrewgrant.friendsdrinks.email.EmailAvro;
 import andrewgrant.friendsdrinks.user.UserAvro;
 import andrewgrant.friendsdrinks.user.avro.EventType;
@@ -20,23 +24,26 @@ import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
  */
 public class StreamsService {
 
-    public static final String CREATE_USER_REQUESTS_STORE = "create-user-requests-store";
-    public static final String DELETE_USER_REQUESTS_STORE = "delete-user-requests-store";
+    public static final String CREATE_USER_RESPONSES_STORE = "create-user-requests-store";
+    public static final String DELETE_USER_RESPONSES_STORE = "delete-user-requests-store";
+    public static final String CREATE_FRIENDSDRINKS_RESPONSES_STORE = "create-friendsdrinks-requests-store";
     public static final String EMAILS_STORE = "emails-store-1";
     private KafkaStreams streams;
 
     public StreamsService(Properties envProps,
                           String uri,
                           UserAvro userAvro,
-                          EmailAvro emailAvro) {
-        Topology topology = buildTopology(envProps, userAvro, emailAvro);
+                          EmailAvro emailAvro,
+                          FriendsDrinksAvro friendsDrinksAvro) {
+        Topology topology = buildTopology(envProps, userAvro, emailAvro, friendsDrinksAvro);
         Properties streamProps = buildStreamsProperties(envProps, uri);
         streams = new KafkaStreams(topology, streamProps);
     }
 
     private Topology buildTopology(Properties envProps,
                                    UserAvro userAvro,
-                                   EmailAvro emailAvro) {
+                                   EmailAvro emailAvro,
+                                   FriendsDrinksAvro friendsDrinksAvro) {
         final StreamsBuilder builder = new StreamsBuilder();
 
         final String userTopicName = envProps.getProperty("user.topic.name");
@@ -44,10 +51,17 @@ public class StreamsService {
                 Consumed.with(userAvro.userIdSerde(), userAvro.userEventSerde()));
 
         final String frontendPrivate1TopicName = envProps.getProperty("frontendPrivate1.topic.name");
-        buildCreateUserRequestsStore(builder, userEventKStream, userAvro, frontendPrivate1TopicName);
+        buildCreateUserResponsesStore(builder, userEventKStream, userAvro, frontendPrivate1TopicName);
 
         final String frontendPrivate2TopicName = envProps.getProperty("frontendPrivate2.topic.name");
-        buildDeleteUserRequestsStore(builder, userEventKStream, userAvro, frontendPrivate2TopicName);
+        buildDeleteUserResponsesStore(builder, userEventKStream, userAvro, frontendPrivate2TopicName);
+
+        final String friendsDrinksApiTopicName = envProps.getProperty("friendsdrinks_api.topic.name");
+        KStream<FriendsDrinksId, FriendsDrinksApi> friendsDrinksApiKStream =
+                builder.stream(friendsDrinksApiTopicName,
+                        Consumed.with(friendsDrinksAvro.friendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksApiSerde()));
+        final String frontendPrivate3TopicName = envProps.getProperty("frontendPrivate3.topic.name");
+        buildCreateFriendsDrinksResponsesStore(builder, friendsDrinksApiKStream, friendsDrinksAvro, frontendPrivate3TopicName);;
 
         final String currEmailTopicName = envProps.getProperty("currEmail.topic.name");
         builder.table(currEmailTopicName, emailAvro.consumedWith(), Materialized.as(EMAILS_STORE));
@@ -55,10 +69,10 @@ public class StreamsService {
         return builder.build();
     }
 
-    private void buildCreateUserRequestsStore(StreamsBuilder builder,
-                                              KStream<UserId, UserEvent> userEventKStream,
-                                              UserAvro userAvro,
-                                              String privateTopicName) {
+    private void buildCreateUserResponsesStore(StreamsBuilder builder,
+                                               KStream<UserId, UserEvent> userEventKStream,
+                                               UserAvro userAvro,
+                                               String privateTopicName) {
         SessionWindows sessionWindows = SessionWindows.with(Duration.ofSeconds(5));
         final long tenMinutesInMs = 1000 * 60 * 1;
         sessionWindows = sessionWindows.until(tenMinutesInMs);
@@ -72,13 +86,13 @@ public class StreamsService {
                 .toStream((key, value) -> key.key())
                 .to(privateTopicName, Produced.with(Serdes.String(), userAvro.createUserResponseSerde()));
         builder.table(privateTopicName, Consumed.with(Serdes.String(), userAvro.createUserResponseSerde()),
-                Materialized.as(CREATE_USER_REQUESTS_STORE));
+                Materialized.as(CREATE_USER_RESPONSES_STORE));
     }
 
-    private void buildDeleteUserRequestsStore(StreamsBuilder builder,
-                                              KStream<UserId, UserEvent> userEventKStream,
-                                              UserAvro userAvro,
-                                              String privateTopicName) {
+    private void buildDeleteUserResponsesStore(StreamsBuilder builder,
+                                               KStream<UserId, UserEvent> userEventKStream,
+                                               UserAvro userAvro,
+                                               String privateTopicName) {
         SessionWindows sessionWindows = SessionWindows.with(Duration.ofSeconds(5));
         final long tenMinutesInMs = 1000 * 60 * 1;
         sessionWindows = sessionWindows.until(tenMinutesInMs);
@@ -94,7 +108,28 @@ public class StreamsService {
                         userAvro.deleteUserResponseSerde()));
         builder.table(privateTopicName,
                 Consumed.with(Serdes.String(), userAvro.deleteUserResponseSerde()),
-                Materialized.as(DELETE_USER_REQUESTS_STORE));
+                Materialized.as(DELETE_USER_RESPONSES_STORE));
+    }
+
+    private void buildCreateFriendsDrinksResponsesStore(StreamsBuilder builder,
+                                                        KStream<FriendsDrinksId, FriendsDrinksApi> stream,
+                                                        FriendsDrinksAvro avro,
+                                                        String topicName) {
+        SessionWindows sessionWindows = SessionWindows.with(Duration.ofSeconds(5));
+        final long tenMinutesInMs = 1000 * 60 * 1;
+        sessionWindows = sessionWindows.until(tenMinutesInMs);
+        stream.filter(((key, value) -> value.getApiType().equals(ApiType.CREATE_FRIENDS_DRINKS_RESPONSE)))
+                .mapValues(value -> value.getCreateFriendsDrinksResponse())
+                .selectKey((key, value) -> value.getRequestId())
+                .groupByKey(Grouped.with(Serdes.String(), avro.createFriendsDrinksResponseSerde()))
+                .windowedBy(sessionWindows)
+                .reduce((value1, value2) -> value1)
+                .toStream((key, value) -> key.key())
+                .to(topicName, Produced.with(Serdes.String(),
+                        avro.createFriendsDrinksResponseSerde()));
+        builder.table(topicName,
+                Consumed.with(Serdes.String(), avro.createFriendsDrinksResponseSerde()),
+                Materialized.as(CREATE_FRIENDSDRINKS_RESPONSES_STORE));
     }
 
     private static Properties buildStreamsProperties(Properties envProps, String uri) {

@@ -1,7 +1,7 @@
 package andrewgrant.friendsdrinks.frontend.restapi.users;
 
-import static andrewgrant.friendsdrinks.frontend.restapi.StreamsService.CREATE_USER_REQUESTS_STORE;
-import static andrewgrant.friendsdrinks.frontend.restapi.StreamsService.DELETE_USER_REQUESTS_STORE;
+import static andrewgrant.friendsdrinks.frontend.restapi.StreamsService.CREATE_USER_RESPONSES_STORE;
+import static andrewgrant.friendsdrinks.frontend.restapi.StreamsService.DELETE_USER_RESPONSES_STORE;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -68,7 +68,7 @@ public class Handler {
                         userEvent);
         userProducer.send(record).get();
 
-        ReadOnlyKeyValueStore<String, CreateUserResponse> kv = streams.store(CREATE_USER_REQUESTS_STORE,
+        ReadOnlyKeyValueStore<String, CreateUserResponse> kv = streams.store(CREATE_USER_RESPONSES_STORE,
                 QueryableStoreTypes.keyValueStore());
 
         CreateUserResponse createUserResponse = kv.get(requestId);
@@ -123,7 +123,7 @@ public class Handler {
         userProducer.send(record).get();
 
         ReadOnlyKeyValueStore<String, DeleteUserResponse> kv =
-                streams.store(DELETE_USER_REQUESTS_STORE, QueryableStoreTypes.keyValueStore());
+                streams.store(DELETE_USER_RESPONSES_STORE, QueryableStoreTypes.keyValueStore());
 
         DeleteUserResponse deleteUserResponse = kv.get(requestId);
         if (deleteUserResponse == null) {
@@ -151,7 +151,7 @@ public class Handler {
     @Produces(MediaType.APPLICATION_JSON)
     public GetRequestResponseBean getCreateRequest(@PathParam("requestId") final String requestId) {
         ReadOnlyKeyValueStore<String, CreateUserResponse> kv =
-                streams.store(CREATE_USER_REQUESTS_STORE, QueryableStoreTypes.keyValueStore());
+                streams.store(CREATE_USER_RESPONSES_STORE, QueryableStoreTypes.keyValueStore());
         CreateUserResponse createUserResponse = kv.get(requestId);
         String status;
         if (createUserResponse == null) {
@@ -173,7 +173,7 @@ public class Handler {
     @Produces(MediaType.APPLICATION_JSON)
     public GetRequestsResponseBean getCreateRequests() {
         ReadOnlyKeyValueStore<String, CreateUserResponse> kv =
-                streams.store(CREATE_USER_REQUESTS_STORE, QueryableStoreTypes.keyValueStore());
+                streams.store(CREATE_USER_RESPONSES_STORE, QueryableStoreTypes.keyValueStore());
         KeyValueIterator<String, CreateUserResponse> allKvs = kv.all();
         List<String> requests = new ArrayList<>();
         while (allKvs.hasNext()) {
@@ -191,7 +191,7 @@ public class Handler {
     @Produces(MediaType.APPLICATION_JSON)
     public GetRequestResponseBean getDeleteRequest(@PathParam("requestId") final String requestId) {
         ReadOnlyKeyValueStore<String, DeleteUserResponse> kv =
-                streams.store(DELETE_USER_REQUESTS_STORE, QueryableStoreTypes.keyValueStore());
+                streams.store(DELETE_USER_RESPONSES_STORE, QueryableStoreTypes.keyValueStore());
         DeleteUserResponse deleteUserResponse = kv.get(requestId);
         String status;
         if (deleteUserResponse == null) {
@@ -213,7 +213,7 @@ public class Handler {
     @Produces(MediaType.APPLICATION_JSON)
     public GetRequestsResponseBean getDeleteRequests() {
         ReadOnlyKeyValueStore<String, DeleteUserResponse> kv =
-                streams.store(DELETE_USER_REQUESTS_STORE, QueryableStoreTypes.keyValueStore());
+                streams.store(DELETE_USER_RESPONSES_STORE, QueryableStoreTypes.keyValueStore());
         KeyValueIterator<String, DeleteUserResponse> allKvs = kv.all();
         List<String> requests = new ArrayList<>();
         while (allKvs.hasNext()) {

@@ -32,14 +32,16 @@ public class Handler {
     @Consumes(MediaType.APPLICATION_JSON)
     public CreateFriendsDrinksResponseBean createFriendsDrinks(CreateFriendsDrinksRequestBean requestBean) {
         final String topicName = envProps.getProperty("friendsdrinks_api.topic.name");
+        String requestId = UUID.randomUUID().toString();
+        String friendsDrinksId = UUID.randomUUID().toString();
         CreateFriendsDrinksRequest createFriendsDrinksRequest = CreateFriendsDrinksRequest
                 .newBuilder()
-                .setFriendsDrinksId(FriendsDrinksId.newBuilder().setId(requestBean.getFriendsDrinkdsId()).build())
+                .setFriendsDrinksId(FriendsDrinksId.newBuilder().setId(friendsDrinksId).build())
                 .setUserIds(requestBean.getUserIds().stream().collect(Collectors.toList()))
                 .setAdminUserId(requestBean.getAdminUserId())
                 .setScheduleType(ScheduleType.valueOf(requestBean.getScheduleType()))
                 .setCronSchedule(requestBean.getCronSchedule())
-                .setRequestId(UUID.randomUUID().toString())
+                .setRequestId(requestId)
                 .build();
         FriendsDrinksApi friendsDrinksApi = FriendsDrinksApi
                 .newBuilder()
@@ -52,6 +54,7 @@ public class Handler {
                         friendsDrinksApi.getCreateFriendsDrinksRequest().getFriendsDrinksId(),
                         friendsDrinksApi);
         kafkaProducer.send(record);
+
         CreateFriendsDrinksResponseBean responseBean = new CreateFriendsDrinksResponseBean();
         responseBean.setResult("SUCCESS");
         return responseBean;
