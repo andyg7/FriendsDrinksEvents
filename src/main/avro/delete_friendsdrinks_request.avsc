@@ -4,6 +4,6 @@
   "name": "DeleteFriendsDrinksRequest",
   "fields": [
     {"name": "requestId", "type": "string"},
-    {"name": "friendsDrinksId", "type": "string"}
+    {"name": "friendsDrinksId", "type": "FriendsDrinksId"}
   ]
 }

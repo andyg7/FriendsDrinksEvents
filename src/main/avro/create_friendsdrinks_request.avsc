@@ -4,7 +4,7 @@
   "name": "CreateFriendsDrinksRequest",
   "fields": [
     {"name": "requestId", "type": "string"},
-    {"name": "friendsDrinksId", "type": "string"},
+    {"name": "friendsDrinksId", "type": "FriendsDrinksId"},
     {"name": "adminUserId", "type": "string"},
     {"name": "userIds", "type": { "type": "array", "items": "string" } },
     {"name": "scheduleType", "type": {"type": "enum", "name": "ScheduleType", "symbols": ["OnDemand", "Cron"]}},

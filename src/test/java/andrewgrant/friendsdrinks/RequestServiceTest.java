@@ -59,7 +59,7 @@ public class RequestServiceTest {
     @Test
     public void testNewFriendsDrinksSuccess() {
         CreateFriendsDrinksRequest request = CreateFriendsDrinksRequest.newBuilder()
-                .setFriendsDrinksId("friendsDrinksId")
+                .setFriendsDrinksId(FriendsDrinksId.newBuilder().setId("friendsdrinks").build())
                 .setRequestId("reqId")
                 .setUserIds(Arrays.asList("b", "c"))
                 .setAdminUserId("a")
@@ -89,7 +89,7 @@ public class RequestServiceTest {
         String requesterUserId = UUID.randomUUID().toString();
         String requestId = "request123";
         CreateFriendsDrinksRequest request = CreateFriendsDrinksRequest.newBuilder()
-                .setFriendsDrinksId("friendsDrinksId")
+                .setFriendsDrinksId(FriendsDrinksId.newBuilder().setId("friendsdrinks").build())
                 .setRequestId(requestId)
                 .setUserIds(Arrays.asList("b", "c"))
                 .setAdminUserId(requesterUserId)
@@ -143,7 +143,7 @@ public class RequestServiceTest {
         String requesterUserId = UUID.randomUUID().toString();
         String requestId = "request123";
         CreateFriendsDrinksRequest request = CreateFriendsDrinksRequest.newBuilder()
-                .setFriendsDrinksId("friendsDrinksId")
+                .setFriendsDrinksId(FriendsDrinksId.newBuilder().setId("friendsdrinks").build())
                 .setRequestId(requestId)
                 .setUserIds(Arrays.asList("b", "c"))
                 .setAdminUserId(requesterUserId)
@@ -196,7 +196,7 @@ public class RequestServiceTest {
         String requesterUserId = UUID.randomUUID().toString();
         String requestId = UUID.randomUUID().toString();
         CreateFriendsDrinksRequest request = CreateFriendsDrinksRequest.newBuilder()
-                .setFriendsDrinksId("friendsDrinksId")
+                .setFriendsDrinksId(FriendsDrinksId.newBuilder().setId("friendsdrinks").build())
                 .setRequestId(requestId)
                 .setUserIds(Arrays.asList("b", "c"))
                 .setAdminUserId(requesterUserId)
@@ -260,7 +260,7 @@ public class RequestServiceTest {
         // New request id.
         requestId = UUID.randomUUID().toString();
         request = CreateFriendsDrinksRequest.newBuilder()
-                .setFriendsDrinksId("friendsDrinksId")
+                .setFriendsDrinksId(FriendsDrinksId.newBuilder().setId("friendsdrinks").build())
                 .setRequestId(requestId)
                 .setUserIds(Arrays.asList("b", "c"))
                 .setAdminUserId(requesterUserId)
@@ -304,7 +304,7 @@ public class RequestServiceTest {
                 .setDeleteFriendsDrinksRequest(DeleteFriendsDrinksRequest
                         .newBuilder()
                         .setRequestId("1")
-                        .setFriendsDrinksId("2")
+                        .setFriendsDrinksId(FriendsDrinksId.newBuilder().setId("2").build())
                         .build())
                 .build();
         inputTopic.pipeInput(deleteRequest);

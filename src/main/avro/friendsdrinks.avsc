@@ -3,7 +3,7 @@
     "type": "record",
     "name": "FriendsDrinks",
     "fields": [
-        {"name": "friendsDrinksId", "type": "string"},
+        {"name": "friendsDrinksId", "type": "FriendsDrinksId"},
         {"name": "adminUser", "type": "string"},
         {"name": "userIds", "type": { "type": "array", "items": "string" } },
         {"name": "scheduleType", "type": {"type": "enum", "name": "ScheduleType", "symbols": ["OnDemand", "Cron"]}},

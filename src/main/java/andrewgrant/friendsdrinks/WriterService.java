@@ -84,7 +84,11 @@ public class WriterService {
                     } else if (r.getApiType().equals(ApiType.DELETE_FRIENDS_DRINKS_REQUEST)) {
                         FriendsDrinksDeleted friendsDrinksDeleted = FriendsDrinksDeleted
                                 .newBuilder()
-                                .setFriendsDrinksId(r.getDeleteFriendsDrinksRequest().getFriendsDrinksId())
+                                .setFriendsDrinksId(
+                                        FriendsDrinksId
+                                                .newBuilder()
+                                                .setId(r.getDeleteFriendsDrinksRequest().getFriendsDrinksId().getId())
+                                                .build())
                                 .build();
                         return FriendsDrinksEvent
                                 .newBuilder()
@@ -102,7 +106,7 @@ public class WriterService {
                         friendsDrinksAvro.friendsDrinksApiSerde()))
                 .selectKey((k, v) -> v.getFriendsDrinksCreated().getFriendsDrinksId())
                 .to(envProps.getProperty("friendsdrinks.topic.name"),
-                        Produced.with(Serdes.String(), friendsDrinksAvro.friendsDrinksEventSerde()));
+                        Produced.with(friendsDrinksAvro.friendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksEventSerde()));
 
         return builder.build();
     }
@@ -133,7 +137,7 @@ public class WriterService {
             }
         });
 
-        kafkaStreams.start();;
+        kafkaStreams.start();
         try {
             latch.await();
         } catch (InterruptedException e) {
