@@ -61,6 +61,15 @@ public class FriendsDrinksAvro {
         return serde.serializer();
     }
 
+    public Serializer<FriendsDrinksId> friendsDrinksIdSerializer() {
+        SpecificAvroSerde<FriendsDrinksId> serde = friendsDrinksIdSerde();
+        return serde.serializer();
+    }
+
+    public Deserializer<FriendsDrinksId> friendsDrinksIdDeserializer() {
+        return friendsDrinksIdSerde().deserializer();
+    }
+
     public Deserializer<FriendsDrinksApi> friendsDrinksApiDeserializer() {
         SpecificAvroSerde<FriendsDrinksApi> serde = friendsDrinksApiSerde();
         return serde.deserializer();

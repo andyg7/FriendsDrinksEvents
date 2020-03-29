@@ -16,8 +16,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
 import andrewgrant.friendsdrinks.avro.*;
-import andrewgrant.friendsdrinks.user.UserAvro;
-import andrewgrant.friendsdrinks.user.avro.UserId;
 
 /**
  * Owns writing to friendsdrinkfriendsdrinks.
@@ -25,16 +23,15 @@ import andrewgrant.friendsdrinks.user.avro.UserId;
 public class WriterService {
 
     public Topology buildTopology(Properties envProps,
-                                  UserAvro userAvro,
                                   FriendsDrinksAvro friendsDrinksAvro) {
         StreamsBuilder builder = new StreamsBuilder();
         String friendsDrinksApiTopicName = envProps.getProperty("friendsdrinks_api.topic.name");
 
-        KStream<UserId, FriendsDrinksApi> friendsDrinksEventKStream = builder.stream(friendsDrinksApiTopicName,
-                Consumed.with(userAvro.userIdSerde(), friendsDrinksAvro.friendsDrinksApiSerde()));
+        KStream<FriendsDrinksId, FriendsDrinksApi> friendsDrinksEventKStream = builder.stream(friendsDrinksApiTopicName,
+                Consumed.with(friendsDrinksAvro.friendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksApiSerde()));
 
         KStream<String, FriendsDrinksApi> successfulResponses = friendsDrinksEventKStream
-                .filter((userId, friendsDrinksEvent) ->
+                .filter((friendsDrinksId, friendsDrinksEvent) ->
                         (friendsDrinksEvent.getApiType().equals(ApiType.CREATE_FRIENDS_DRINKS_RESPONSE) &&
                                 friendsDrinksEvent.getCreateFriendsDrinksResponse().getResult().equals(Result.SUCCESS)) ||
                                 (friendsDrinksEvent.getApiType().equals(ApiType.DELETE_FRIENDS_DRINKS_RESPONSE) &&
@@ -122,9 +119,8 @@ public class WriterService {
         Properties envProps = load(args[0]);
         WriterService writerService = new WriterService();
         String schemaRegistryUrl = envProps.getProperty("schema.registry.url");
-        UserAvro userAvro = new UserAvro(schemaRegistryUrl);
         FriendsDrinksAvro friendsDrinksAvro = new FriendsDrinksAvro(schemaRegistryUrl);
-        Topology topology = writerService.buildTopology(envProps, userAvro, friendsDrinksAvro);
+        Topology topology = writerService.buildTopology(envProps, friendsDrinksAvro);
         Properties streamProps = writerService.buildStreamsProperties(envProps);
         KafkaStreams kafkaStreams = new KafkaStreams(topology, streamProps);
 
