@@ -24,9 +24,9 @@ import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
  */
 public class StreamsService {
 
-    public static final String CREATE_USER_RESPONSES_STORE = "create-user-requests-store";
-    public static final String DELETE_USER_RESPONSES_STORE = "delete-user-requests-store";
-    public static final String CREATE_FRIENDSDRINKS_RESPONSES_STORE = "create-friendsdrinks-requests-store";
+    public static final String CREATE_USER_RESPONSES_STORE = "create-user-responses-store";
+    public static final String DELETE_USER_RESPONSES_STORE = "delete-user-responses-store";
+    public static final String CREATE_FRIENDSDRINKS_RESPONSES_STORE = "create-friendsdrinks-responses-store";
     public static final String EMAILS_STORE = "emails-store-1";
     private KafkaStreams streams;
 
