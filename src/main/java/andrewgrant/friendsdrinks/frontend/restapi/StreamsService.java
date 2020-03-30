@@ -73,15 +73,12 @@ public class StreamsService {
                                                KStream<UserId, UserEvent> userEventKStream,
                                                UserAvro userAvro,
                                                String privateTopicName) {
-        SessionWindows sessionWindows = SessionWindows.with(Duration.ofSeconds(5));
-        final long tenMinutesInMs = 1000 * 60 * 1;
-        sessionWindows = sessionWindows.until(tenMinutesInMs);
         userEventKStream.filter(((key, value) ->
                 value.getEventType().equals(EventType.CREATE_USER_RESPONSE)))
                 .mapValues(value -> value.getCreateUserResponse())
                 .selectKey((key, value) -> value.getRequestId())
                 .groupByKey(Grouped.with(Serdes.String(), userAvro.createUserResponseSerde()))
-                .windowedBy(sessionWindows)
+                .windowedBy(TimeWindows.of(Duration.ofSeconds(5)).advanceBy(Duration.ofMillis(10)))
                 .reduce((value1, value2) -> value1)
                 .toStream((key, value) -> key.key())
                 .to(privateTopicName, Produced.with(Serdes.String(), userAvro.createUserResponseSerde()));
@@ -93,15 +90,12 @@ public class StreamsService {
                                                KStream<UserId, UserEvent> userEventKStream,
                                                UserAvro userAvro,
                                                String privateTopicName) {
-        SessionWindows sessionWindows = SessionWindows.with(Duration.ofSeconds(5));
-        final long tenMinutesInMs = 1000 * 60 * 1;
-        sessionWindows = sessionWindows.until(tenMinutesInMs);
         userEventKStream.filter(((key, value) ->
                 value.getEventType().equals(EventType.DELETE_USER_RESPONSE)))
                 .mapValues(value -> value.getDeleteUserResponse())
                 .selectKey((key, value) -> value.getRequestId())
                 .groupByKey(Grouped.with(Serdes.String(), userAvro.deleteUserResponseSerde()))
-                .windowedBy(sessionWindows)
+                .windowedBy(TimeWindows.of(Duration.ofSeconds(5)).advanceBy(Duration.ofMillis(10)))
                 .reduce((value1, value2) -> value1)
                 .toStream((key, value) -> key.key())
                 .to(privateTopicName, Produced.with(Serdes.String(),
@@ -115,14 +109,11 @@ public class StreamsService {
                                                         KStream<FriendsDrinksId, FriendsDrinksApi> stream,
                                                         FriendsDrinksAvro avro,
                                                         String topicName) {
-        SessionWindows sessionWindows = SessionWindows.with(Duration.ofSeconds(5));
-        final long tenMinutesInMs = 1000 * 60 * 1;
-        sessionWindows = sessionWindows.until(tenMinutesInMs);
         stream.filter(((key, value) -> value.getApiType().equals(ApiType.CREATE_FRIENDS_DRINKS_RESPONSE)))
                 .mapValues(value -> value.getCreateFriendsDrinksResponse())
                 .selectKey((key, value) -> value.getRequestId())
                 .groupByKey(Grouped.with(Serdes.String(), avro.createFriendsDrinksResponseSerde()))
-                .windowedBy(sessionWindows)
+                .windowedBy(TimeWindows.of(Duration.ofSeconds(5)).advanceBy(Duration.ofMillis(10)))
                 .reduce((value1, value2) -> value1)
                 .toStream((key, value) -> key.key())
                 .to(topicName, Produced.with(Serdes.String(),
