@@ -1,16 +1,21 @@
 package andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks;
 
+import static andrewgrant.friendsdrinks.frontend.restapi.StreamsService.CREATE_FRIENDSDRINKS_RESPONSES_STORE;
+
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.state.QueryableStoreTypes;
+import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 
 import java.util.Properties;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
 import andrewgrant.friendsdrinks.avro.*;
-
 
 /**
  * Implements frontend REST API friendsdrinks path.
@@ -18,10 +23,12 @@ import andrewgrant.friendsdrinks.avro.*;
 @Path("")
 public class Handler {
 
+    private KafkaStreams kafkaStreams;
     private KafkaProducer<FriendsDrinksId, FriendsDrinksApi> kafkaProducer;
     private Properties envProps;
 
-    public Handler(KafkaProducer<FriendsDrinksId, FriendsDrinksApi> kafkaProducer, Properties envProps) {
+    public Handler(KafkaStreams kafkaStreams, KafkaProducer<FriendsDrinksId, FriendsDrinksApi> kafkaProducer, Properties envProps) {
+        this.kafkaStreams = kafkaStreams;
         this.kafkaProducer = kafkaProducer;
         this.envProps = envProps;
     }
@@ -30,7 +37,8 @@ public class Handler {
     @Path("/")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public CreateFriendsDrinksResponseBean createFriendsDrinks(CreateFriendsDrinksRequestBean requestBean) {
+    public CreateFriendsDrinksResponseBean createFriendsDrinks(CreateFriendsDrinksRequestBean requestBean)
+            throws InterruptedException, ExecutionException {
         final String topicName = envProps.getProperty("friendsdrinks_api.topic.name");
         String requestId = UUID.randomUUID().toString();
         String friendsDrinksId = UUID.randomUUID().toString();
@@ -53,10 +61,29 @@ public class Handler {
                         topicName,
                         friendsDrinksApi.getCreateFriendsDrinksRequest().getFriendsDrinksId(),
                         friendsDrinksApi);
-        kafkaProducer.send(record);
+        kafkaProducer.send(record).get();
 
+        ReadOnlyKeyValueStore<String, CreateFriendsDrinksResponse> kv =
+                kafkaStreams.store(CREATE_FRIENDSDRINKS_RESPONSES_STORE, QueryableStoreTypes.keyValueStore());
+
+        CreateFriendsDrinksResponse createFriendsDrinksResponse = kv.get(requestId);
+        if (createFriendsDrinksResponse == null) {
+            for (int i = 0; i < 10; i++) {
+                if (createFriendsDrinksResponse != null) {
+                    break;
+                }
+                // Give the backend some more time.
+                Thread.sleep(500);
+                createFriendsDrinksResponse = kv.get(requestId);
+            }
+        }
+        if (createFriendsDrinksResponse == null) {
+            throw new RuntimeException(String.format(
+                    "Failed to get CreateFriendsDrinksResponse for request id %s", requestId));
+        }
         CreateFriendsDrinksResponseBean responseBean = new CreateFriendsDrinksResponseBean();
-        responseBean.setResult("SUCCESS");
+        Result result = createFriendsDrinksResponse.getResult();
+        responseBean.setResult(result.toString());
         return responseBean;
     }
 }
