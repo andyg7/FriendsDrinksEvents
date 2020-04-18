@@ -110,7 +110,7 @@ public class FriendsDrinksAvro {
         }
         Map<String, String> config = new HashMap<>();
         config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, registryUrl);
-        serde.configure(config, false);
+        serde.configure(config, true);
         return serde;
     }
 }
