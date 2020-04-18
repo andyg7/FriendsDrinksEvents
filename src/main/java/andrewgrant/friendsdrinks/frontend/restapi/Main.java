@@ -52,7 +52,7 @@ public class Main {
         int port = Integer.parseInt(portStr);
         Server jettyServer = Main.buildServer(envProps, streams, userAvro, friendsDrinksAvro, port);
         // Attach shutdown handler to catch Control-C.
-        Runtime.getRuntime().addShutdownHook(new Thread("streams-shutdown-hook") {
+        Runtime.getRuntime().addShutdownHook(new Thread("shutdown-hook") {
             @Override
             public void run() {
                 streams.close();

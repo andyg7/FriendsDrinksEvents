@@ -113,7 +113,7 @@ public class StreamsService {
                 .mapValues(value -> value.getCreateFriendsDrinksResponse())
                 .selectKey((key, value) -> value.getRequestId())
                 .groupByKey(Grouped.with(Serdes.String(), avro.createFriendsDrinksResponseSerde()))
-                .windowedBy(TimeWindows.of(Duration.ofSeconds(5)).advanceBy(Duration.ofMillis(10)))
+                .windowedBy(TimeWindows.of(Duration.ofSeconds(1)).advanceBy(Duration.ofMillis(10)))
                 .reduce((value1, value2) -> value1)
                 .toStream((key, value) -> key.key())
                 .to(topicName, Produced.with(Serdes.String(),

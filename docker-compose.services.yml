@@ -66,6 +66,25 @@ services:
           java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.frontend.restapi.Main /app/dev.properties 8080
           '"
 
+  friendsdrinks-request-servie:
+    image: fdimage:latest
+    networks:
+      - kafka-network
+    command:
+      "bash -c '
+          java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.RequestService /app/dev.properties
+          '"
+
+  friendsdrinks-writer-service:
+    image: fdimage:latest
+    networks:
+      - kafka-network
+    command:
+      "bash -c '
+          java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.WriterService /app/dev.properties
+          '"
+
+
 networks:
   kafka-network:
     external: true
