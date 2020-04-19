@@ -10,6 +10,7 @@ import java.util.Properties;
 import andrewgrant.friendsdrinks.FriendsDrinksAvro;
 import andrewgrant.friendsdrinks.avro.ApiType;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksApi;
+import andrewgrant.friendsdrinks.avro.FriendsDrinksEvent;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksId;
 import andrewgrant.friendsdrinks.email.EmailAvro;
 import andrewgrant.friendsdrinks.user.UserAvro;
@@ -28,6 +29,7 @@ public class StreamsService {
     public static final String DELETE_USER_RESPONSES_STORE = "delete-user-responses-store";
     public static final String CREATE_FRIENDSDRINKS_RESPONSES_STORE = "create-friendsdrinks-responses-store";
     public static final String EMAILS_STORE = "emails-store-1";
+    public static final String FRIENDSDRINKS_STORE = "friendsdrinks-store";
     private KafkaStreams streams;
 
     public StreamsService(Properties envProps,
@@ -62,6 +64,22 @@ public class StreamsService {
                         Consumed.with(friendsDrinksAvro.friendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksApiSerde()));
         final String frontendPrivate3TopicName = envProps.getProperty("frontendPrivate3.topic.name");
         buildCreateFriendsDrinksResponsesStore(builder, friendsDrinksApiKStream, friendsDrinksAvro, frontendPrivate3TopicName);;
+
+        final String friendsDrinksTopicName = envProps.getProperty("friendsdrinks.topic.name");
+        KStream<FriendsDrinksId, FriendsDrinksEvent> friendsDrinksEventStream =
+                builder.stream(friendsDrinksTopicName,
+                        Consumed.with(friendsDrinksAvro.friendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksEventSerde()))
+                .mapValues((value -> {
+                    if (value.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.CREATED)) {
+                        return value;
+                    } else {
+                        return null;
+                    }
+                }));
+        final String currFriendsDrinksTopicName = envProps.getProperty("currFriendsdrinks.topic.name");
+        friendsDrinksEventStream.to(currFriendsDrinksTopicName,
+                Produced.with(friendsDrinksAvro.friendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksEventSerde()));
+        builder.table(currFriendsDrinksTopicName, emailAvro.consumedWith(), Materialized.as(FRIENDSDRINKS_STORE));
 
         final String currEmailTopicName = envProps.getProperty("currEmail.topic.name");
         builder.table(currEmailTopicName, emailAvro.consumedWith(), Materialized.as(EMAILS_STORE));

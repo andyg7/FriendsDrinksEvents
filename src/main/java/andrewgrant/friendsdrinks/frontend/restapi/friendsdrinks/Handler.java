@@ -1,13 +1,18 @@
 package andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks;
 
 import static andrewgrant.friendsdrinks.frontend.restapi.StreamsService.CREATE_FRIENDSDRINKS_RESPONSES_STORE;
+import static andrewgrant.friendsdrinks.frontend.restapi.StreamsService.FRIENDSDRINKS_STORE;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -31,6 +36,24 @@ public class Handler {
         this.kafkaStreams = kafkaStreams;
         this.kafkaProducer = kafkaProducer;
         this.envProps = envProps;
+    }
+
+    @GET
+    @Path("/")
+    @Produces(MediaType.APPLICATION_JSON)
+    public GetFriendsDrinksResponseBean getFriendsDrinksResponseBean() {
+        ReadOnlyKeyValueStore<FriendsDrinksId, FriendsDrinksEvent> kv =
+                kafkaStreams.store(FRIENDSDRINKS_STORE, QueryableStoreTypes.keyValueStore());
+        KeyValueIterator<FriendsDrinksId, FriendsDrinksEvent> allKvs = kv.all();
+        List<String> ids = new ArrayList<>();
+        while (allKvs.hasNext()) {
+            KeyValue<FriendsDrinksId, FriendsDrinksEvent> keyValue = allKvs.next();
+            ids.add(keyValue.value.getFriendsDrinksCreated().getFriendsDrinksId().getId());
+        }
+        allKvs.close();
+        GetFriendsDrinksResponseBean response = new GetFriendsDrinksResponseBean();
+        response.setIds(ids);
+        return response;
     }
 
     @POST
