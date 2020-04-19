@@ -19,8 +19,8 @@ import java.net.URI;
 import java.util.Properties;
 
 import andrewgrant.friendsdrinks.FriendsDrinksAvro;
-import andrewgrant.friendsdrinks.avro.FriendsDrinksApi;
-import andrewgrant.friendsdrinks.avro.FriendsDrinksId;
+import andrewgrant.friendsdrinks.api.avro.FriendsDrinksApi;
+import andrewgrant.friendsdrinks.api.avro.FriendsDrinksId;
 import andrewgrant.friendsdrinks.email.EmailAvro;
 import andrewgrant.friendsdrinks.user.UserAvro;
 import andrewgrant.friendsdrinks.user.api.avro.UserEvent;
@@ -92,7 +92,7 @@ public class Main {
         producerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, envProps.getProperty("bootstrap.servers"));
         return new KafkaProducer<>(
                 producerProps,
-                avro.friendsDrinksIdSerializer(),
+                avro.apiFriendsDrinksIdSerializer(),
                 avro.friendsDrinksApiSerializer());
     }
 

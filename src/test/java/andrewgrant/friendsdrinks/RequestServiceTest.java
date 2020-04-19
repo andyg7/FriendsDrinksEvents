@@ -22,7 +22,7 @@ import java.util.Arrays;
 import java.util.Properties;
 import java.util.UUID;
 
-import andrewgrant.friendsdrinks.avro.*;
+import andrewgrant.friendsdrinks.api.avro.*;
 
 import io.confluent.kafka.schemaregistry.client.MockSchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
@@ -67,7 +67,7 @@ public class RequestServiceTest {
                 .build();
 
         ConsumerRecordFactory<FriendsDrinksId, FriendsDrinksApi> inputFactory =
-                new ConsumerRecordFactory<>(friendsDrinksAvro.friendsDrinksIdSerializer(), friendsDrinksAvro.friendsDrinksApiSerializer());
+                new ConsumerRecordFactory<>(friendsDrinksAvro.apiFriendsDrinksIdSerializer(), friendsDrinksAvro.friendsDrinksApiSerializer());
 
         testDriver.pipeInput(inputFactory.create(friendsDrinksApiTopicName,
                 new FriendsDrinksId(requestEvent.getCreateFriendsDrinksRequest().getAdminUserId()), requestEvent));
@@ -97,7 +97,7 @@ public class RequestServiceTest {
                 .build();
 
         ConsumerRecordFactory<FriendsDrinksId, FriendsDrinksApi> inputFactory =
-                new ConsumerRecordFactory<>(friendsDrinksAvro.friendsDrinksIdSerializer(), friendsDrinksAvro.friendsDrinksApiSerializer());
+                new ConsumerRecordFactory<>(friendsDrinksAvro.apiFriendsDrinksIdSerializer(), friendsDrinksAvro.friendsDrinksApiSerializer());
 
         for (int i = 0; i < 5; i++) {
             CreateFriendsDrinksResponse response = CreateFriendsDrinksResponse.newBuilder()
@@ -151,7 +151,7 @@ public class RequestServiceTest {
                 .build();
 
         ConsumerRecordFactory<FriendsDrinksId, FriendsDrinksApi> inputFactory =
-                new ConsumerRecordFactory<>(friendsDrinksAvro.friendsDrinksIdSerializer(), friendsDrinksAvro.friendsDrinksApiSerializer());
+                new ConsumerRecordFactory<>(friendsDrinksAvro.apiFriendsDrinksIdSerializer(), friendsDrinksAvro.friendsDrinksApiSerializer());
 
         for (int i = 0; i < 4; i++) {
             CreateFriendsDrinksResponse response = CreateFriendsDrinksResponse.newBuilder()
@@ -204,7 +204,7 @@ public class RequestServiceTest {
                 .build();
 
         ConsumerRecordFactory<FriendsDrinksId, FriendsDrinksApi> inputFactory =
-                new ConsumerRecordFactory<>(friendsDrinksAvro.friendsDrinksIdSerializer(), friendsDrinksAvro.friendsDrinksApiSerializer());
+                new ConsumerRecordFactory<>(friendsDrinksAvro.apiFriendsDrinksIdSerializer(), friendsDrinksAvro.friendsDrinksApiSerializer());
 
 
         for (int i = 0; i < 5; i++) {
@@ -291,7 +291,7 @@ public class RequestServiceTest {
         TestInputTopic<FriendsDrinksId, FriendsDrinksApi> inputTopic =
                 testDriver.createInputTopic(
                         friendsDrinksApiTopicName,
-                        friendsDrinksAvro.friendsDrinksIdSerializer(),
+                        friendsDrinksAvro.apiFriendsDrinksIdSerializer(),
                         friendsDrinksAvro.friendsDrinksApiSerializer());
 
         FriendsDrinksApi deleteRequest = FriendsDrinksApi

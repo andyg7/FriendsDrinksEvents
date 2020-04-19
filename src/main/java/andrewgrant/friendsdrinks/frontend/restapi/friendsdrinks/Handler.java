@@ -20,7 +20,8 @@ import java.util.stream.Collectors;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
-import andrewgrant.friendsdrinks.avro.*;
+import andrewgrant.friendsdrinks.api.avro.*;
+import andrewgrant.friendsdrinks.avro.FriendsDrinksEvent;
 
 /**
  * Implements frontend REST API friendsdrinks path.

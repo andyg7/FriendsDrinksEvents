@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
-import andrewgrant.friendsdrinks.avro.*;
+import andrewgrant.friendsdrinks.api.avro.*;
 
 /**
  * Main FriendsDrinks service.
@@ -25,7 +25,7 @@ public class RequestService {
         final String friendsDrinksApiTopicName = envProps.getProperty("friendsdrinks_api.topic.name");
 
         KStream<FriendsDrinksId, FriendsDrinksApi> friendsDrinks = builder.stream(friendsDrinksApiTopicName,
-                Consumed.with(friendsDrinksAvro.friendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksApiSerde()));
+                Consumed.with(friendsDrinksAvro.apiFriendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksApiSerde()));
 
         Predicate<FriendsDrinksId, FriendsDrinksApi> isCreateFriendsDrinksResponseSuccess = (friendsDrinksId, friendsDrinksEvent) ->
                 (friendsDrinksEvent.getApiType().equals(ApiType.CREATE_FRIENDS_DRINKS_RESPONSE) &&
@@ -37,7 +37,7 @@ public class RequestService {
         KTable<FriendsDrinksId, Long> friendsDrinksCount = friendsDrinks.filter(((s, friendsDrinksEvent) ->
                 isCreateFriendsDrinksResponseSuccess.test(s, friendsDrinksEvent) ||
                         isDeleteFriendsDrinksResponseSuccess.test(s, friendsDrinksEvent)))
-                .groupByKey(Grouped.with(friendsDrinksAvro.friendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksApiSerde()))
+                .groupByKey(Grouped.with(friendsDrinksAvro.apiFriendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksApiSerde()))
                 .aggregate(
                         () -> 0L,
                         (aggKey, newValue, aggValue) -> {
@@ -50,7 +50,7 @@ public class RequestService {
                                         newValue.getApiType().toString()));
                             }
                         },
-                        Materialized.with(friendsDrinksAvro.friendsDrinksIdSerde(), Serdes.Long()));
+                        Materialized.with(friendsDrinksAvro.apiFriendsDrinksIdSerde(), Serdes.Long()));
 
         KStream<FriendsDrinksId, CreateFriendsDrinksRequest> createRequests = friendsDrinks
                 .filter(((s, friendsDrinksEvent) -> friendsDrinksEvent.getApiType().equals(ApiType.CREATE_FRIENDS_DRINKS_REQUEST)))
@@ -71,10 +71,10 @@ public class RequestService {
                             .build();
                     return event;
                 },
-                Joined.with(friendsDrinksAvro.friendsDrinksIdSerde(), friendsDrinksAvro.createFriendsDrinksRequestSerde(), Serdes.Long()));
+                Joined.with(friendsDrinksAvro.apiFriendsDrinksIdSerde(), friendsDrinksAvro.createFriendsDrinksRequestSerde(), Serdes.Long()));
 
         createResponses.to(friendsDrinksApiTopicName,
-                Produced.with(friendsDrinksAvro.friendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksApiSerde()));
+                Produced.with(friendsDrinksAvro.apiFriendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksApiSerde()));
 
         // For now, all delete requests become accepted.
         friendsDrinks.filter(((s, friendsDrinksEvent) ->
@@ -89,7 +89,7 @@ public class RequestService {
                                 .build())
                         .build())
                 .to(friendsDrinksApiTopicName,
-                        Produced.with(friendsDrinksAvro.friendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksApiSerde()));
+                        Produced.with(friendsDrinksAvro.apiFriendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksApiSerde()));
 
         return builder.build();
     }

@@ -8,8 +8,8 @@ import java.time.Duration;
 import java.util.Properties;
 
 import andrewgrant.friendsdrinks.FriendsDrinksAvro;
-import andrewgrant.friendsdrinks.avro.ApiType;
-import andrewgrant.friendsdrinks.avro.FriendsDrinksApi;
+import andrewgrant.friendsdrinks.api.avro.ApiType;
+import andrewgrant.friendsdrinks.api.avro.FriendsDrinksApi;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksEvent;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksId;
 import andrewgrant.friendsdrinks.email.EmailAvro;
@@ -59,9 +59,9 @@ public class StreamsService {
         buildDeleteUserResponsesStore(builder, userEventKStream, userAvro, frontendPrivate2TopicName);
 
         final String friendsDrinksApiTopicName = envProps.getProperty("friendsdrinks_api.topic.name");
-        KStream<FriendsDrinksId, FriendsDrinksApi> friendsDrinksApiKStream =
+        KStream<andrewgrant.friendsdrinks.api.avro.FriendsDrinksId, FriendsDrinksApi> friendsDrinksApiKStream =
                 builder.stream(friendsDrinksApiTopicName,
-                        Consumed.with(friendsDrinksAvro.friendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksApiSerde()));
+                        Consumed.with(friendsDrinksAvro.apiFriendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksApiSerde()));
         final String frontendPrivate3TopicName = envProps.getProperty("frontendPrivate3.topic.name");
         buildCreateFriendsDrinksResponsesStore(builder, friendsDrinksApiKStream, friendsDrinksAvro, frontendPrivate3TopicName);;
 
@@ -124,7 +124,7 @@ public class StreamsService {
     }
 
     private void buildCreateFriendsDrinksResponsesStore(StreamsBuilder builder,
-                                                        KStream<FriendsDrinksId, FriendsDrinksApi> stream,
+                                                        KStream<andrewgrant.friendsdrinks.api.avro.FriendsDrinksId, FriendsDrinksApi> stream,
                                                         FriendsDrinksAvro avro,
                                                         String topicName) {
         stream.filter(((key, value) -> value.getApiType().equals(ApiType.CREATE_FRIENDS_DRINKS_RESPONSE)))

@@ -15,7 +15,11 @@ import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
-import andrewgrant.friendsdrinks.avro.*;
+import andrewgrant.friendsdrinks.api.avro.*;
+import andrewgrant.friendsdrinks.avro.EventType;
+import andrewgrant.friendsdrinks.avro.FriendsDrinksCreated;
+import andrewgrant.friendsdrinks.avro.FriendsDrinksDeleted;
+import andrewgrant.friendsdrinks.avro.FriendsDrinksEvent;
 
 /**
  * Owns writing to friendsdrinkfriendsdrinks.
@@ -28,7 +32,7 @@ public class WriterService {
         String friendsDrinksApiTopicName = envProps.getProperty("friendsdrinks_api.topic.name");
 
         KStream<FriendsDrinksId, FriendsDrinksApi> friendsDrinksEventKStream = builder.stream(friendsDrinksApiTopicName,
-                Consumed.with(friendsDrinksAvro.friendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksApiSerde()));
+                Consumed.with(friendsDrinksAvro.apiFriendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksApiSerde()));
 
         KStream<String, FriendsDrinksApi> successfulResponses = friendsDrinksEventKStream
                 .filter((friendsDrinksId, friendsDrinksEvent) ->
@@ -71,8 +75,14 @@ public class WriterService {
                                 .newBuilder()
                                 .setAdminUser(createFriendsDrinksRequest.getAdminUserId())
                                 .setUserIds(createFriendsDrinksRequest.getUserIds().stream().collect(Collectors.toList()))
-                                .setScheduleType(createFriendsDrinksRequest.getScheduleType())
+                                .setScheduleType(andrewgrant.friendsdrinks.avro.ScheduleType.valueOf(
+                                        createFriendsDrinksRequest.getScheduleType().toString()))
                                 .setCronSchedule(createFriendsDrinksRequest.getCronSchedule())
+                                .setFriendsDrinksId(
+                                        andrewgrant.friendsdrinks.avro.FriendsDrinksId
+                                                .newBuilder()
+                                                .setId(r.getDeleteFriendsDrinksRequest().getFriendsDrinksId().getId())
+                                                .build())
                                 .build();
                         return FriendsDrinksEvent.newBuilder()
                                 .setEventType(EventType.CREATED)
@@ -82,7 +92,7 @@ public class WriterService {
                         FriendsDrinksDeleted friendsDrinksDeleted = FriendsDrinksDeleted
                                 .newBuilder()
                                 .setFriendsDrinksId(
-                                        FriendsDrinksId
+                                        andrewgrant.friendsdrinks.avro.FriendsDrinksId
                                                 .newBuilder()
                                                 .setId(r.getDeleteFriendsDrinksRequest().getFriendsDrinksId().getId())
                                                 .build())
