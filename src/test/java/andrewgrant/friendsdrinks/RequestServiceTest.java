@@ -2,6 +2,7 @@ package andrewgrant.friendsdrinks;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+
 import static andrewgrant.friendsdrinks.email.Config.TEST_CONFIG_FILE;
 import static andrewgrant.friendsdrinks.env.Properties.load;
 
@@ -43,7 +44,7 @@ public class RequestServiceTest {
         MockSchemaRegistryClient registryClient = new MockSchemaRegistryClient();
         friendsDrinksApiTopicName = envProps.getProperty("friendsdrinks_api.topic.name");
         registryClient.register(friendsDrinksApiTopicName + "-key", FriendsDrinksId.getClassSchema());
-        registryClient.register(friendsDrinksApiTopicName + "-value", FriendsDrinksApi.getClassSchema());
+        registryClient.register(friendsDrinksApiTopicName + "-value", FriendsDrinksEvent.getClassSchema());
         friendsDrinksAvro = new FriendsDrinksAvro(envProps.getProperty("schema.registry.url"), registryClient);
 
         RequestService service = new RequestService();
@@ -61,22 +62,22 @@ public class RequestServiceTest {
                 .setAdminUserId("a")
                 .setScheduleType(ScheduleType.OnDemand)
                 .build();
-        FriendsDrinksApi requestEvent = FriendsDrinksApi.newBuilder()
-                .setApiType(ApiType.CREATE_FRIENDS_DRINKS_REQUEST)
+        FriendsDrinksEvent requestEvent = FriendsDrinksEvent.newBuilder()
+                .setEventType(EventType.CREATE_FRIENDS_DRINKS_REQUEST)
                 .setCreateFriendsDrinksRequest(request)
                 .build();
 
-        ConsumerRecordFactory<FriendsDrinksId, FriendsDrinksApi> inputFactory =
+        ConsumerRecordFactory<FriendsDrinksId, FriendsDrinksEvent> inputFactory =
                 new ConsumerRecordFactory<>(friendsDrinksAvro.apiFriendsDrinksIdSerializer(), friendsDrinksAvro.friendsDrinksApiSerializer());
 
         testDriver.pipeInput(inputFactory.create(friendsDrinksApiTopicName,
                 new FriendsDrinksId(requestEvent.getCreateFriendsDrinksRequest().getAdminUserId()), requestEvent));
 
         Deserializer<FriendsDrinksId> friendsDrinksIdDeserializer = friendsDrinksAvro.friendsDrinksIdDeserializer();
-        Deserializer<FriendsDrinksApi> friendsDrinksEventDeserializer = friendsDrinksAvro.friendsDrinksApiDeserializer();
-        ProducerRecord<FriendsDrinksId, FriendsDrinksApi> output =
+        Deserializer<FriendsDrinksEvent> friendsDrinksEventDeserializer = friendsDrinksAvro.friendsDrinksApiDeserializer();
+        ProducerRecord<FriendsDrinksId, FriendsDrinksEvent> output =
                 testDriver.readOutput(friendsDrinksApiTopicName, friendsDrinksIdDeserializer, friendsDrinksEventDeserializer);
-        assertEquals(ApiType.CREATE_FRIENDS_DRINKS_RESPONSE, output.value().getApiType());
+        assertEquals(EventType.CREATE_FRIENDS_DRINKS_RESPONSE, output.value().getEventType());
         assertEquals(Result.SUCCESS, output.value().getCreateFriendsDrinksResponse().getResult());
     }
 
@@ -91,12 +92,12 @@ public class RequestServiceTest {
                 .setAdminUserId(requesterUserId)
                 .setScheduleType(ScheduleType.OnDemand)
                 .build();
-        FriendsDrinksApi requestEvent = FriendsDrinksApi.newBuilder()
-                .setApiType(ApiType.CREATE_FRIENDS_DRINKS_REQUEST)
+        FriendsDrinksEvent requestEvent = FriendsDrinksEvent.newBuilder()
+                .setEventType(EventType.CREATE_FRIENDS_DRINKS_REQUEST)
                 .setCreateFriendsDrinksRequest(request)
                 .build();
 
-        ConsumerRecordFactory<FriendsDrinksId, FriendsDrinksApi> inputFactory =
+        ConsumerRecordFactory<FriendsDrinksId, FriendsDrinksEvent> inputFactory =
                 new ConsumerRecordFactory<>(friendsDrinksAvro.apiFriendsDrinksIdSerializer(), friendsDrinksAvro.friendsDrinksApiSerializer());
 
         for (int i = 0; i < 5; i++) {
@@ -104,8 +105,8 @@ public class RequestServiceTest {
                     .setRequestId(String.valueOf(i))
                     .setResult(Result.SUCCESS)
                     .build();
-            FriendsDrinksApi event = FriendsDrinksApi.newBuilder()
-                    .setApiType(ApiType.CREATE_FRIENDS_DRINKS_RESPONSE)
+            FriendsDrinksEvent event = FriendsDrinksEvent.newBuilder()
+                    .setEventType(EventType.CREATE_FRIENDS_DRINKS_RESPONSE)
                     .setCreateFriendsDrinksResponse(response)
                     .build();
             testDriver.pipeInput(inputFactory.create(friendsDrinksApiTopicName,
@@ -117,13 +118,13 @@ public class RequestServiceTest {
                 new FriendsDrinksId(requestEvent.getCreateFriendsDrinksRequest().getAdminUserId()), requestEvent));
 
         Deserializer<String> stringDeserializer = Serdes.String().deserializer();
-        Deserializer<FriendsDrinksApi> friendsDrinksEventDeserializer = friendsDrinksAvro.friendsDrinksApiDeserializer();
-        FriendsDrinksApi output = null;
+        Deserializer<FriendsDrinksEvent> friendsDrinksEventDeserializer = friendsDrinksAvro.friendsDrinksApiDeserializer();
+        FriendsDrinksEvent output = null;
         while (true) {
-            ProducerRecord<String, FriendsDrinksApi> event =
+            ProducerRecord<String, FriendsDrinksEvent> event =
                     testDriver.readOutput(friendsDrinksApiTopicName, stringDeserializer, friendsDrinksEventDeserializer);
             if (event != null) {
-                if (event.value().getApiType().equals(ApiType.CREATE_FRIENDS_DRINKS_RESPONSE) &&
+                if (event.value().getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_RESPONSE) &&
                         event.value().getCreateFriendsDrinksResponse().getRequestId().equals(requestId)) {
                     output = event.value();
                 }
@@ -145,12 +146,12 @@ public class RequestServiceTest {
                 .setAdminUserId(requesterUserId)
                 .setScheduleType(ScheduleType.OnDemand)
                 .build();
-        FriendsDrinksApi requestEvent = FriendsDrinksApi.newBuilder()
-                .setApiType(ApiType.CREATE_FRIENDS_DRINKS_REQUEST)
+        FriendsDrinksEvent requestEvent = FriendsDrinksEvent.newBuilder()
+                .setEventType(EventType.CREATE_FRIENDS_DRINKS_REQUEST)
                 .setCreateFriendsDrinksRequest(request)
                 .build();
 
-        ConsumerRecordFactory<FriendsDrinksId, FriendsDrinksApi> inputFactory =
+        ConsumerRecordFactory<FriendsDrinksId, FriendsDrinksEvent> inputFactory =
                 new ConsumerRecordFactory<>(friendsDrinksAvro.apiFriendsDrinksIdSerializer(), friendsDrinksAvro.friendsDrinksApiSerializer());
 
         for (int i = 0; i < 4; i++) {
@@ -158,8 +159,8 @@ public class RequestServiceTest {
                     .setRequestId(String.valueOf(i))
                     .setResult(Result.SUCCESS)
                     .build();
-            FriendsDrinksApi event = FriendsDrinksApi.newBuilder()
-                    .setApiType(ApiType.CREATE_FRIENDS_DRINKS_RESPONSE)
+            FriendsDrinksEvent event = FriendsDrinksEvent.newBuilder()
+                    .setEventType(EventType.CREATE_FRIENDS_DRINKS_RESPONSE)
                     .setCreateFriendsDrinksResponse(response)
                     .build();
             testDriver.pipeInput(inputFactory.create(friendsDrinksApiTopicName, new FriendsDrinksId(requesterUserId), event));
@@ -170,13 +171,13 @@ public class RequestServiceTest {
                 new FriendsDrinksId(requestEvent.getCreateFriendsDrinksRequest().getAdminUserId()), requestEvent));
 
         Deserializer<String> stringDeserializer = Serdes.String().deserializer();
-        Deserializer<FriendsDrinksApi> friendsDrinksEventDeserializer = friendsDrinksAvro.friendsDrinksApiDeserializer();
-        FriendsDrinksApi output = null;
+        Deserializer<FriendsDrinksEvent> friendsDrinksEventDeserializer = friendsDrinksAvro.friendsDrinksApiDeserializer();
+        FriendsDrinksEvent output = null;
         while (true) {
-            ProducerRecord<String, FriendsDrinksApi> event =
+            ProducerRecord<String, FriendsDrinksEvent> event =
                     testDriver.readOutput(friendsDrinksApiTopicName, stringDeserializer, friendsDrinksEventDeserializer);
             if (event != null) {
-                if (event.value().getApiType().equals(ApiType.CREATE_FRIENDS_DRINKS_RESPONSE) &&
+                if (event.value().getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_RESPONSE) &&
                         event.value().getCreateFriendsDrinksResponse().getRequestId().equals(requestId)) {
                     output = event.value();
                 }
@@ -198,12 +199,12 @@ public class RequestServiceTest {
                 .setAdminUserId(requesterUserId)
                 .setScheduleType(ScheduleType.OnDemand)
                 .build();
-        FriendsDrinksApi requestEvent = FriendsDrinksApi.newBuilder()
-                .setApiType(ApiType.CREATE_FRIENDS_DRINKS_REQUEST)
+        FriendsDrinksEvent requestEvent = FriendsDrinksEvent.newBuilder()
+                .setEventType(EventType.CREATE_FRIENDS_DRINKS_REQUEST)
                 .setCreateFriendsDrinksRequest(request)
                 .build();
 
-        ConsumerRecordFactory<FriendsDrinksId, FriendsDrinksApi> inputFactory =
+        ConsumerRecordFactory<FriendsDrinksId, FriendsDrinksEvent> inputFactory =
                 new ConsumerRecordFactory<>(friendsDrinksAvro.apiFriendsDrinksIdSerializer(), friendsDrinksAvro.friendsDrinksApiSerializer());
 
 
@@ -212,8 +213,8 @@ public class RequestServiceTest {
                     .setRequestId(String.valueOf(i))
                     .setResult(Result.SUCCESS)
                     .build();
-            FriendsDrinksApi event = FriendsDrinksApi.newBuilder()
-                    .setApiType(ApiType.CREATE_FRIENDS_DRINKS_RESPONSE)
+            FriendsDrinksEvent event = FriendsDrinksEvent.newBuilder()
+                    .setEventType(EventType.CREATE_FRIENDS_DRINKS_RESPONSE)
                     .setCreateFriendsDrinksResponse(response)
                     .build();
             testDriver.pipeInput(inputFactory.create(friendsDrinksApiTopicName,
@@ -224,13 +225,13 @@ public class RequestServiceTest {
                 new FriendsDrinksId(requestEvent.getCreateFriendsDrinksRequest().getAdminUserId()), requestEvent));
 
         Deserializer<FriendsDrinksId> friendsDrinksIdDeserializer = friendsDrinksAvro.friendsDrinksIdDeserializer();
-        Deserializer<FriendsDrinksApi> friendsDrinksEventDeserializer = friendsDrinksAvro.friendsDrinksApiDeserializer();
-        FriendsDrinksApi output = null;
+        Deserializer<FriendsDrinksEvent> friendsDrinksEventDeserializer = friendsDrinksAvro.friendsDrinksApiDeserializer();
+        FriendsDrinksEvent output = null;
         while (true) {
-            ProducerRecord<FriendsDrinksId, FriendsDrinksApi> event =
+            ProducerRecord<FriendsDrinksId, FriendsDrinksEvent> event =
                     testDriver.readOutput(friendsDrinksApiTopicName, friendsDrinksIdDeserializer, friendsDrinksEventDeserializer);
             if (event != null) {
-                if (event.value().getApiType().equals(ApiType.CREATE_FRIENDS_DRINKS_RESPONSE) &&
+                if (event.value().getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_RESPONSE) &&
                         event.value().getCreateFriendsDrinksResponse().getRequestId().equals(requestId)) {
                     output = event.value();
                 }
@@ -245,13 +246,13 @@ public class RequestServiceTest {
                 .setRequestId(UUID.randomUUID().toString())
                 .setResult(Result.SUCCESS)
                 .build();
-        FriendsDrinksApi deleteFriendsDrinksApi = FriendsDrinksApi.newBuilder()
-                .setApiType(ApiType.DELETE_FRIENDS_DRINKS_RESPONSE)
+        FriendsDrinksEvent deleteFriendsDrinksEvent = FriendsDrinksEvent.newBuilder()
+                .setEventType(EventType.DELETE_FRIENDS_DRINKS_RESPONSE)
                 .setDeleteFriendsDrinksResponse(deleteFriendsDrinksResponse)
                 .build();
         testDriver.pipeInput(inputFactory.create(friendsDrinksApiTopicName,
                 new FriendsDrinksId(requesterUserId),
-                deleteFriendsDrinksApi));
+                deleteFriendsDrinksEvent));
 
         // New request id.
         requestId = UUID.randomUUID().toString();
@@ -262,8 +263,8 @@ public class RequestServiceTest {
                 .setAdminUserId(requesterUserId)
                 .setScheduleType(ScheduleType.OnDemand)
                 .build();
-        requestEvent = FriendsDrinksApi.newBuilder()
-                .setApiType(ApiType.CREATE_FRIENDS_DRINKS_REQUEST)
+        requestEvent = FriendsDrinksEvent.newBuilder()
+                .setEventType(EventType.CREATE_FRIENDS_DRINKS_REQUEST)
                 .setCreateFriendsDrinksRequest(request)
                 .build();
 
@@ -271,10 +272,10 @@ public class RequestServiceTest {
                 new FriendsDrinksId(requestEvent.getCreateFriendsDrinksRequest().getAdminUserId()), requestEvent));
 
         while (true) {
-            ProducerRecord<FriendsDrinksId, FriendsDrinksApi> event =
+            ProducerRecord<FriendsDrinksId, FriendsDrinksEvent> event =
                     testDriver.readOutput(friendsDrinksApiTopicName, friendsDrinksIdDeserializer, friendsDrinksEventDeserializer);
             if (event != null) {
-                if (event.value().getApiType().equals(ApiType.CREATE_FRIENDS_DRINKS_RESPONSE) &&
+                if (event.value().getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_RESPONSE) &&
                         event.value().getCreateFriendsDrinksResponse().getRequestId().equals(requestId)) {
                     output = event.value();
                 }
@@ -288,15 +289,15 @@ public class RequestServiceTest {
 
     @Test
     public void testDelete() {
-        TestInputTopic<FriendsDrinksId, FriendsDrinksApi> inputTopic =
+        TestInputTopic<FriendsDrinksId, FriendsDrinksEvent> inputTopic =
                 testDriver.createInputTopic(
                         friendsDrinksApiTopicName,
                         friendsDrinksAvro.apiFriendsDrinksIdSerializer(),
                         friendsDrinksAvro.friendsDrinksApiSerializer());
 
-        FriendsDrinksApi deleteRequest = FriendsDrinksApi
+        FriendsDrinksEvent deleteRequest = FriendsDrinksEvent
                 .newBuilder()
-                .setApiType(ApiType.DELETE_FRIENDS_DRINKS_REQUEST)
+                .setEventType(EventType.DELETE_FRIENDS_DRINKS_REQUEST)
                 .setDeleteFriendsDrinksRequest(DeleteFriendsDrinksRequest
                         .newBuilder()
                         .setRequestId("1")
@@ -305,13 +306,13 @@ public class RequestServiceTest {
                 .build();
         inputTopic.pipeInput(deleteRequest);
 
-        TestOutputTopic<FriendsDrinksId, FriendsDrinksApi> outputTopic =
+        TestOutputTopic<FriendsDrinksId, FriendsDrinksEvent> outputTopic =
                 testDriver.createOutputTopic(
                         friendsDrinksApiTopicName,
                         friendsDrinksAvro.friendsDrinksIdDeserializer(),
                         friendsDrinksAvro.friendsDrinksApiDeserializer());
 
-        FriendsDrinksApi outputValue = outputTopic.readValue();
+        FriendsDrinksEvent outputValue = outputTopic.readValue();
         assertNotNull(outputValue.getDeleteFriendsDrinksResponse());
         assertEquals("1", outputValue.getDeleteFriendsDrinksResponse().getRequestId());
         assertEquals(Result.SUCCESS, outputValue.getDeleteFriendsDrinksResponse().getResult());

@@ -21,7 +21,6 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
 import andrewgrant.friendsdrinks.api.avro.*;
-import andrewgrant.friendsdrinks.avro.FriendsDrinksEvent;
 
 /**
  * Implements frontend REST API friendsdrinks path.
@@ -30,10 +29,10 @@ import andrewgrant.friendsdrinks.avro.FriendsDrinksEvent;
 public class Handler {
 
     private KafkaStreams kafkaStreams;
-    private KafkaProducer<FriendsDrinksId, FriendsDrinksApi> kafkaProducer;
+    private KafkaProducer<FriendsDrinksId, FriendsDrinksEvent> kafkaProducer;
     private Properties envProps;
 
-    public Handler(KafkaStreams kafkaStreams, KafkaProducer<FriendsDrinksId, FriendsDrinksApi> kafkaProducer, Properties envProps) {
+    public Handler(KafkaStreams kafkaStreams, KafkaProducer<FriendsDrinksId, FriendsDrinksEvent> kafkaProducer, Properties envProps) {
         this.kafkaStreams = kafkaStreams;
         this.kafkaProducer = kafkaProducer;
         this.envProps = envProps;
@@ -43,12 +42,12 @@ public class Handler {
     @Path("/")
     @Produces(MediaType.APPLICATION_JSON)
     public GetFriendsDrinksResponseBean getFriendsDrinksResponseBean() {
-        ReadOnlyKeyValueStore<FriendsDrinksId, FriendsDrinksEvent> kv =
+        ReadOnlyKeyValueStore<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> kv =
                 kafkaStreams.store(FRIENDSDRINKS_STORE, QueryableStoreTypes.keyValueStore());
-        KeyValueIterator<FriendsDrinksId, FriendsDrinksEvent> allKvs = kv.all();
+        KeyValueIterator<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> allKvs = kv.all();
         List<String> ids = new ArrayList<>();
         while (allKvs.hasNext()) {
-            KeyValue<FriendsDrinksId, FriendsDrinksEvent> keyValue = allKvs.next();
+            KeyValue<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> keyValue = allKvs.next();
             ids.add(keyValue.value.getFriendsDrinksCreated().getFriendsDrinksId().getId());
         }
         allKvs.close();
@@ -75,16 +74,16 @@ public class Handler {
                 .setCronSchedule(requestBean.getCronSchedule())
                 .setRequestId(requestId)
                 .build();
-        FriendsDrinksApi friendsDrinksApi = FriendsDrinksApi
+        FriendsDrinksEvent friendsDrinksEvent = FriendsDrinksEvent
                 .newBuilder()
-                .setApiType(ApiType.CREATE_FRIENDS_DRINKS_REQUEST)
+                .setEventType(EventType.CREATE_FRIENDS_DRINKS_REQUEST)
                 .setCreateFriendsDrinksRequest(createFriendsDrinksRequest)
                 .build();
-        ProducerRecord<FriendsDrinksId, FriendsDrinksApi> record =
+        ProducerRecord<FriendsDrinksId, FriendsDrinksEvent> record =
                 new ProducerRecord<>(
                         topicName,
-                        friendsDrinksApi.getCreateFriendsDrinksRequest().getFriendsDrinksId(),
-                        friendsDrinksApi);
+                        friendsDrinksEvent.getCreateFriendsDrinksRequest().getFriendsDrinksId(),
+                        friendsDrinksEvent);
         kafkaProducer.send(record).get();
 
         ReadOnlyKeyValueStore<String, CreateFriendsDrinksResponse> kv =

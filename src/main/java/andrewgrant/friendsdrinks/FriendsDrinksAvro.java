@@ -8,8 +8,6 @@ import java.util.Map;
 
 import andrewgrant.friendsdrinks.api.avro.CreateFriendsDrinksRequest;
 import andrewgrant.friendsdrinks.api.avro.CreateFriendsDrinksResponse;
-import andrewgrant.friendsdrinks.api.avro.FriendsDrinksApi;
-import andrewgrant.friendsdrinks.avro.FriendsDrinksEvent;
 
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
@@ -59,8 +57,8 @@ public class FriendsDrinksAvro {
         return serde;
     }
 
-    public SpecificAvroSerde<FriendsDrinksApi> friendsDrinksApiSerde() {
-        SpecificAvroSerde<FriendsDrinksApi> serde;
+    public SpecificAvroSerde<andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent> friendsDrinksApiSerde() {
+        SpecificAvroSerde<andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent> serde;
         if (registryClient != null) {
             serde = new SpecificAvroSerde<>(registryClient);
         } else {
@@ -72,8 +70,8 @@ public class FriendsDrinksAvro {
         return serde;
     }
 
-    public Serializer<FriendsDrinksApi> friendsDrinksApiSerializer() {
-        SpecificAvroSerde<FriendsDrinksApi> serde = friendsDrinksApiSerde();
+    public Serializer<andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent> friendsDrinksApiSerializer() {
+        SpecificAvroSerde<andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent> serde = friendsDrinksApiSerde();
         return serde.serializer();
     }
 
@@ -86,13 +84,13 @@ public class FriendsDrinksAvro {
         return apiFriendsDrinksIdSerde().deserializer();
     }
 
-    public Deserializer<FriendsDrinksApi> friendsDrinksApiDeserializer() {
-        SpecificAvroSerde<FriendsDrinksApi> serde = friendsDrinksApiSerde();
+    public Deserializer<andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent> friendsDrinksApiDeserializer() {
+        SpecificAvroSerde<andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent> serde = friendsDrinksApiSerde();
         return serde.deserializer();
     }
 
-    public SpecificAvroSerde<FriendsDrinksEvent> friendsDrinksEventSerde() {
-        SpecificAvroSerde<FriendsDrinksEvent> serde;
+    public SpecificAvroSerde<andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> friendsDrinksEventSerde() {
+        SpecificAvroSerde<andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> serde;
         if (registryClient != null) {
             serde = new SpecificAvroSerde<>(registryClient);
         } else {

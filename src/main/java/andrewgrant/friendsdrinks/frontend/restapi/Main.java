@@ -19,7 +19,7 @@ import java.net.URI;
 import java.util.Properties;
 
 import andrewgrant.friendsdrinks.FriendsDrinksAvro;
-import andrewgrant.friendsdrinks.api.avro.FriendsDrinksApi;
+import andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent;
 import andrewgrant.friendsdrinks.api.avro.FriendsDrinksId;
 import andrewgrant.friendsdrinks.email.EmailAvro;
 import andrewgrant.friendsdrinks.user.UserAvro;
@@ -85,7 +85,7 @@ public class Main {
         return new KafkaProducer<>(producerProps, userAvro.userIdSerializer(), userAvro.userEventSerializer());
     }
 
-    private static KafkaProducer<FriendsDrinksId, FriendsDrinksApi> buildFriendsDrinksProducer(
+    private static KafkaProducer<FriendsDrinksId, FriendsDrinksEvent> buildFriendsDrinksProducer(
             Properties envProps,
             FriendsDrinksAvro avro) {
         Properties producerProps = new Properties();
@@ -146,7 +146,7 @@ public class Main {
     private static ServletHolder buildFriendsDrinksHolder(KafkaStreams streams,
                                                           FriendsDrinksAvro avro,
                                                           Properties envProps) {
-        KafkaProducer<FriendsDrinksId, FriendsDrinksApi> producer =
+        KafkaProducer<FriendsDrinksId, FriendsDrinksEvent> producer =
                 buildFriendsDrinksProducer(envProps, avro);
         andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.Handler handler =
                 new andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.Handler(
