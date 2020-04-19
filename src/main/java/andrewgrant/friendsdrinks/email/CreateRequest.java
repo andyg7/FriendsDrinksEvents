@@ -1,7 +1,7 @@
 package andrewgrant.friendsdrinks.email;
 
 import andrewgrant.friendsdrinks.email.avro.EmailEvent;
-import andrewgrant.friendsdrinks.user.avro.CreateUserRequest;
+import andrewgrant.friendsdrinks.user.api.avro.CreateUserRequest;
 
 /**
  * Class to represent a request from a user for an email address.

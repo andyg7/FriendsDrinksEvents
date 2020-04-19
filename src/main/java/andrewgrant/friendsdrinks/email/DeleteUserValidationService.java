@@ -16,7 +16,7 @@ import java.util.concurrent.CountDownLatch;
 import andrewgrant.friendsdrinks.email.avro.EmailEvent;
 import andrewgrant.friendsdrinks.email.avro.EmailId;
 import andrewgrant.friendsdrinks.user.UserAvro;
-import andrewgrant.friendsdrinks.user.avro.*;
+import andrewgrant.friendsdrinks.user.api.avro.*;
 
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 

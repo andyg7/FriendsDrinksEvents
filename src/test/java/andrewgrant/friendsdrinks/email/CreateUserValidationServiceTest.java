@@ -24,7 +24,7 @@ import java.util.UUID;
 import andrewgrant.friendsdrinks.email.avro.EmailEvent;
 import andrewgrant.friendsdrinks.email.avro.EmailId;
 import andrewgrant.friendsdrinks.user.UserAvro;
-import andrewgrant.friendsdrinks.user.avro.*;
+import andrewgrant.friendsdrinks.user.api.avro.*;
 
 import io.confluent.kafka.schemaregistry.client.MockSchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;

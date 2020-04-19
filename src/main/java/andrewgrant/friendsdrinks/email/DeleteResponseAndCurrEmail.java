@@ -1,7 +1,7 @@
 package andrewgrant.friendsdrinks.email;
 
 import andrewgrant.friendsdrinks.email.avro.EmailEvent;
-import andrewgrant.friendsdrinks.user.avro.DeleteUserResponse;
+import andrewgrant.friendsdrinks.user.api.avro.DeleteUserResponse;
 
 /**
  * Simple DTO.

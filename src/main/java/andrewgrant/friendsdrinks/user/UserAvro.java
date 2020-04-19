@@ -8,7 +8,7 @@ import org.apache.kafka.streams.kstream.Produced;
 import java.util.HashMap;
 import java.util.Map;
 
-import andrewgrant.friendsdrinks.user.avro.*;
+import andrewgrant.friendsdrinks.user.api.avro.*;
 
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;

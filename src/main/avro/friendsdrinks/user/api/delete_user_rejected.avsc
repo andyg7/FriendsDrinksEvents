@@ -1,11 +1,10 @@
 {
-  "namespace": "andrewgrant.friendsdrinks.user.avro",
+  "namespace": "andrewgrant.friendsdrinks.user.api.avro",
   "type": "record",
-  "name": "CreateUserRejected",
+  "name": "DeleteUserRejected",
   "fields": [
     {"name": "requestId", "type": "string"},
     {"name": "userId", "type": "UserId"},
-    {"name": "email", "type": "string"},
     {"name": "errorCode", "type": "string" }
   ]
 }

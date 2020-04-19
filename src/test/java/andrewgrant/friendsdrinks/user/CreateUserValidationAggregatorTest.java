@@ -22,7 +22,7 @@ import java.util.Properties;
 import java.util.UUID;
 
 import andrewgrant.friendsdrinks.email.ErrorCode;
-import andrewgrant.friendsdrinks.user.avro.*;
+import andrewgrant.friendsdrinks.user.api.avro.*;
 
 import io.confluent.kafka.schemaregistry.client.MockSchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;

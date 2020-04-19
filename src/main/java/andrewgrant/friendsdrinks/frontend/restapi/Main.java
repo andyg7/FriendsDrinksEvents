@@ -23,8 +23,8 @@ import andrewgrant.friendsdrinks.avro.FriendsDrinksApi;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksId;
 import andrewgrant.friendsdrinks.email.EmailAvro;
 import andrewgrant.friendsdrinks.user.UserAvro;
-import andrewgrant.friendsdrinks.user.avro.UserEvent;
-import andrewgrant.friendsdrinks.user.avro.UserId;
+import andrewgrant.friendsdrinks.user.api.avro.UserEvent;
+import andrewgrant.friendsdrinks.user.api.avro.UserId;
 
 /**
  * Hooks up dependencies for the Frontend REST API.

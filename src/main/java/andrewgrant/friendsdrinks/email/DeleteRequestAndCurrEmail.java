@@ -1,7 +1,7 @@
 package andrewgrant.friendsdrinks.email;
 
 import andrewgrant.friendsdrinks.email.avro.EmailEvent;
-import andrewgrant.friendsdrinks.user.avro.DeleteUserRequest;
+import andrewgrant.friendsdrinks.user.api.avro.DeleteUserRequest;
 
 /**
  * Class to represent a delete request from a user.

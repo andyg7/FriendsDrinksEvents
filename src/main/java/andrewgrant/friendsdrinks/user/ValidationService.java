@@ -14,7 +14,7 @@ import java.io.IOException;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
-import andrewgrant.friendsdrinks.user.avro.*;
+import andrewgrant.friendsdrinks.user.api.avro.*;
 
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;

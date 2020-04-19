@@ -20,7 +20,7 @@ import java.util.concurrent.ExecutionException;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
-import andrewgrant.friendsdrinks.user.avro.*;
+import andrewgrant.friendsdrinks.user.api.avro.*;
 
 /**
  * Implements frontend REST API users path.
