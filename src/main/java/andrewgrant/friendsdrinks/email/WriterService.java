@@ -47,7 +47,7 @@ public class WriterService {
                                   EmailAvro emailAvro) {
         final StreamsBuilder builder = new StreamsBuilder();
 
-        final String userTopicName = envProps.getProperty("user.topic.name");
+        final String userTopicName = envProps.getProperty("user_api.topic.name");
         KStream<UserId, UserEvent> userEventKStream = builder.stream(userTopicName,
                 userAvro.consumedWith());
 

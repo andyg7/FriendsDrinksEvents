@@ -40,7 +40,7 @@ public class ValidationMainTest {
         envProps = load(TEST_CONFIG_FILE);
         MockSchemaRegistryClient registryClient = new MockSchemaRegistryClient();
         // user topic
-        final String userTopicName = envProps.getProperty("user.topic.name");
+        final String userTopicName = envProps.getProperty("user_api.topic.name");
         registryClient.register(userTopicName + "-key", UserId.getClassSchema());
         registryClient.register(userTopicName + "-value", UserEvent.getClassSchema());
         final String userPrivateTopic = envProps.getProperty("userPrivate.topic.name");
@@ -88,7 +88,7 @@ public class ValidationMainTest {
 
         ConsumerRecordFactory<UserId, UserEvent> inputFactory =
                 new ConsumerRecordFactory<>(userIdSerializer, userEventSerializer);
-        final String userTopicName = envProps.getProperty("user.topic.name");
+        final String userTopicName = envProps.getProperty("user_api.topic.name");
         // Pipe initial request to user topic.
         testDriver.pipeInput(inputFactory.create(userTopicName,
                 userEventResponse.getCreateUserResponse().getUserId(),

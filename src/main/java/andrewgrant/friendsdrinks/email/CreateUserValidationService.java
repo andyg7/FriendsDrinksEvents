@@ -92,7 +92,7 @@ public class CreateUserValidationService {
                 value.getEventType().equals(andrewgrant.friendsdrinks.email.avro.EventType.RESERVED)))
                 .process(PendingEmailsStateStoreCleaner::new, PENDING_EMAILS_STORE_NAME);
 
-        final String userTopicName = envProps.getProperty("user.topic.name");
+        final String userTopicName = envProps.getProperty("user_api.topic.name");
         KStream<UserId, UserEvent> userIdKStream = builder.stream(userTopicName,
                 userAvro.consumedWith());
 

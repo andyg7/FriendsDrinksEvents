@@ -48,7 +48,7 @@ public class DeleteUserValidationServiceTest {
 
         MockSchemaRegistryClient registryClient = new MockSchemaRegistryClient();
         // user topic
-        final String userTopicName = envProps.getProperty("user.topic.name");
+        final String userTopicName = envProps.getProperty("user_api.topic.name");
         registryClient.register(userTopicName + "-key", UserId.getClassSchema());
         registryClient.register(userTopicName + "-value", UserEvent.getClassSchema());
         // user validation topic
@@ -134,7 +134,7 @@ public class DeleteUserValidationServiceTest {
 
         ConsumerRecordFactory<UserId, UserEvent> userInputFactory =
                 new ConsumerRecordFactory<>(userIdSerializer, userSerializer);
-        final String userTopic = envProps.getProperty("user.topic.name");
+        final String userTopic = envProps.getProperty("user_api.topic.name");
         for (UserEvent user : userInput) {
             testDriver.pipeInput(
                     userInputFactory.create(userTopic,

@@ -51,7 +51,7 @@ public class DeleteUserValidationService {
                 Consumed.with(
                         emailAvro.emailIdSerde(), emailAvro.emailEventSerde()));
 
-        final String userTopicName = envProps.getProperty("user.topic.name");
+        final String userTopicName = envProps.getProperty("user_api.topic.name");
         KStream<UserId, UserEvent> userIdKStream = builder.stream(userTopicName,
                 userAvro.consumedWith());
 

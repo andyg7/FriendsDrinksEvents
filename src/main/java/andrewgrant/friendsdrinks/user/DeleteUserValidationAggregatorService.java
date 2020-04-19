@@ -74,7 +74,7 @@ public class DeleteUserValidationAggregatorService {
                 .filter(((key, value) -> value != null))
                 .filter(((key, value) -> value >= 2L));
 
-        final String userTopicName = envProps.getProperty("user.topic.name");
+        final String userTopicName = envProps.getProperty("user_api.topic.name");
         KStream<UserId, UserEvent> userEvents = builder.stream(
                 userTopicName, userAvro.consumedWith());
 

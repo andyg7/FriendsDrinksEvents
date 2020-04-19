@@ -60,7 +60,7 @@ public class Handler {
                 .setEventType(EventType.CREATE_USER_REQUEST)
                 .setCreateUserRequest(request)
                 .build();
-        final String userTopicName = envProps.getProperty("user.topic.name");
+        final String userTopicName = envProps.getProperty("user_api.topic.name");
         ProducerRecord<UserId, UserEvent> record =
                 new ProducerRecord<>(
                         userTopicName,
@@ -115,7 +115,7 @@ public class Handler {
                 .setEventType(EventType.DELETE_USER_REQUEST)
                 .setDeleteUserRequest(request)
                 .build();
-        final String userTopicName = envProps.getProperty("user.topic.name");
+        final String userTopicName = envProps.getProperty("user_api.topic.name");
         ProducerRecord<UserId, UserEvent> record = new ProducerRecord<>(
                 userTopicName,
                 userEvent.getDeleteUserRequest().getUserId(),

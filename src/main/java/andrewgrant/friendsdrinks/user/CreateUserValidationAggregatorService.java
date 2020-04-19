@@ -74,9 +74,9 @@ public class CreateUserValidationAggregatorService {
                 .filter(((key, value) -> value != null))
                 .filter(((key, value) -> value >= 1L));
 
-        final String userTopicName = envProps.getProperty("user.topic.name");
+        final String userAPITopicName = envProps.getProperty("user_api.topic.name");
         KStream<UserId, UserEvent> userEvents = builder.stream(
-                userTopicName, userAvro.consumedWith());
+                userAPITopicName, userAvro.consumedWith());
 
         KStream<String, CreateUserRequest> createUserRequestsKeyedByRequestId = userEvents
                 .filter(((key, value) ->
@@ -102,7 +102,7 @@ public class CreateUserValidationAggregatorService {
                 JoinWindows.of(Duration.ofSeconds(10)),
                 Joined.with(Serdes.String(), Serdes.Long(), createUserRequestSerde))
                 .selectKey(((key, value) -> value.getCreateUserResponse().getUserId()))
-                .to(userTopicName, userAvro.producedWith());
+                .to(userAPITopicName, userAvro.producedWith());
 
 
         // Rejected create user requests
@@ -126,7 +126,7 @@ public class CreateUserValidationAggregatorService {
                 .reduce((key, value) -> value)
                 .toStream()
                 .selectKey(((key, value) -> value.getCreateUserResponse().getUserId()))
-                .to(userTopicName, userAvro.producedWith());
+                .to(userAPITopicName, userAvro.producedWith());
 
         return builder.build();
     }
