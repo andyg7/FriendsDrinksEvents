@@ -59,7 +59,7 @@ public class StreamsService {
         final String friendsDrinksApiTopicName = envProps.getProperty("friendsdrinks_api.topic.name");
         KStream<andrewgrant.friendsdrinks.api.avro.FriendsDrinksId, andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent> friendsDrinksApiKStream =
                 builder.stream(friendsDrinksApiTopicName,
-                        Consumed.with(friendsDrinksAvro.apiFriendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksApiSerde()));
+                        Consumed.with(friendsDrinksAvro.apiFriendsDrinksIdSerde(), friendsDrinksAvro.apiFriendsDrinksSerde()));
         final String frontendPrivate3TopicName = envProps.getProperty("frontendPrivate3.topic.name");
         buildCreateFriendsDrinksResponsesStore(builder, friendsDrinksApiKStream, friendsDrinksAvro, frontendPrivate3TopicName);;
 

@@ -93,7 +93,7 @@ public class Main {
         return new KafkaProducer<>(
                 producerProps,
                 avro.apiFriendsDrinksIdSerializer(),
-                avro.friendsDrinksApiSerializer());
+                avro.apiFriendsDrinksSerializer());
     }
 
     private static Server buildServer(Properties envProps, KafkaStreams streams,

@@ -30,7 +30,7 @@ public class WriterService {
         String friendsDrinksApiTopicName = envProps.getProperty("friendsdrinks_api.topic.name");
 
         KStream<FriendsDrinksId, FriendsDrinksEvent> friendsDrinksEventKStream = builder.stream(friendsDrinksApiTopicName,
-                Consumed.with(friendsDrinksAvro.apiFriendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksApiSerde()));
+                Consumed.with(friendsDrinksAvro.apiFriendsDrinksIdSerde(), friendsDrinksAvro.apiFriendsDrinksSerde()));
 
         KStream<String, FriendsDrinksEvent> successfulResponses = friendsDrinksEventKStream
                 .filter((friendsDrinksId, friendsDrinksEvent) ->
@@ -107,8 +107,8 @@ public class WriterService {
                 },
                 JoinWindows.of(Duration.ofSeconds(30)),
                 StreamJoined.with(Serdes.String(),
-                        friendsDrinksAvro.friendsDrinksApiSerde(),
-                        friendsDrinksAvro.friendsDrinksApiSerde()))
+                        friendsDrinksAvro.apiFriendsDrinksSerde(),
+                        friendsDrinksAvro.apiFriendsDrinksSerde()))
                 .selectKey((k, v) -> v.getFriendsDrinksCreated().getFriendsDrinksId())
                 .to(envProps.getProperty("friendsdrinks.topic.name"),
                         Produced.with(friendsDrinksAvro.friendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksEventSerde()));

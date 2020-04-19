@@ -57,7 +57,7 @@ public class FriendsDrinksAvro {
         return serde;
     }
 
-    public SpecificAvroSerde<andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent> friendsDrinksApiSerde() {
+    public SpecificAvroSerde<andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent> apiFriendsDrinksSerde() {
         SpecificAvroSerde<andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent> serde;
         if (registryClient != null) {
             serde = new SpecificAvroSerde<>(registryClient);
@@ -70,8 +70,8 @@ public class FriendsDrinksAvro {
         return serde;
     }
 
-    public Serializer<andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent> friendsDrinksApiSerializer() {
-        SpecificAvroSerde<andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent> serde = friendsDrinksApiSerde();
+    public Serializer<andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent> apiFriendsDrinksSerializer() {
+        SpecificAvroSerde<andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent> serde = apiFriendsDrinksSerde();
         return serde.serializer();
     }
 
@@ -80,12 +80,12 @@ public class FriendsDrinksAvro {
         return serde.serializer();
     }
 
-    public Deserializer<andrewgrant.friendsdrinks.api.avro.FriendsDrinksId> friendsDrinksIdDeserializer() {
+    public Deserializer<andrewgrant.friendsdrinks.api.avro.FriendsDrinksId> apiFriendsDrinksIdDeserializer() {
         return apiFriendsDrinksIdSerde().deserializer();
     }
 
-    public Deserializer<andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent> friendsDrinksApiDeserializer() {
-        SpecificAvroSerde<andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent> serde = friendsDrinksApiSerde();
+    public Deserializer<andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent> apiFriendsDrinksDeserializer() {
+        SpecificAvroSerde<andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent> serde = apiFriendsDrinksSerde();
         return serde.deserializer();
     }
 

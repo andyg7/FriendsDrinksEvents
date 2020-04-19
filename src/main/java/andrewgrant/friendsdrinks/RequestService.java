@@ -25,7 +25,7 @@ public class RequestService {
         final String friendsDrinksApiTopicName = envProps.getProperty("friendsdrinks_api.topic.name");
 
         KStream<FriendsDrinksId, FriendsDrinksEvent> friendsDrinks = builder.stream(friendsDrinksApiTopicName,
-                Consumed.with(friendsDrinksAvro.apiFriendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksApiSerde()));
+                Consumed.with(friendsDrinksAvro.apiFriendsDrinksIdSerde(), friendsDrinksAvro.apiFriendsDrinksSerde()));
 
         Predicate<FriendsDrinksId, FriendsDrinksEvent> isCreateFriendsDrinksResponseSuccess = (friendsDrinksId, friendsDrinksEvent) ->
                 (friendsDrinksEvent.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_RESPONSE) &&
@@ -37,7 +37,7 @@ public class RequestService {
         KTable<FriendsDrinksId, Long> friendsDrinksCount = friendsDrinks.filter(((s, friendsDrinksEvent) ->
                 isCreateFriendsDrinksResponseSuccess.test(s, friendsDrinksEvent) ||
                         isDeleteFriendsDrinksResponseSuccess.test(s, friendsDrinksEvent)))
-                .groupByKey(Grouped.with(friendsDrinksAvro.apiFriendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksApiSerde()))
+                .groupByKey(Grouped.with(friendsDrinksAvro.apiFriendsDrinksIdSerde(), friendsDrinksAvro.apiFriendsDrinksSerde()))
                 .aggregate(
                         () -> 0L,
                         (aggKey, newValue, aggValue) -> {
@@ -74,7 +74,7 @@ public class RequestService {
                 Joined.with(friendsDrinksAvro.apiFriendsDrinksIdSerde(), friendsDrinksAvro.createFriendsDrinksRequestSerde(), Serdes.Long()));
 
         createResponses.to(friendsDrinksApiTopicName,
-                Produced.with(friendsDrinksAvro.apiFriendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksApiSerde()));
+                Produced.with(friendsDrinksAvro.apiFriendsDrinksIdSerde(), friendsDrinksAvro.apiFriendsDrinksSerde()));
 
         // For now, all delete requests become accepted.
         friendsDrinks.filter(((s, friendsDrinksEvent) ->
@@ -89,7 +89,7 @@ public class RequestService {
                                 .build())
                         .build())
                 .to(friendsDrinksApiTopicName,
-                        Produced.with(friendsDrinksAvro.apiFriendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksApiSerde()));
+                        Produced.with(friendsDrinksAvro.apiFriendsDrinksIdSerde(), friendsDrinksAvro.apiFriendsDrinksSerde()));
 
         return builder.build();
     }
