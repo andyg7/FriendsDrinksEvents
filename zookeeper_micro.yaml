@@ -46,7 +46,7 @@ spec:
     matchLabels:
       app: zk
   serviceName: zk-hs
-  replicas: 1
+  replicas: 3
   updateStrategy:
     type: RollingUpdate
   podManagementPolicy: OrderedReady
