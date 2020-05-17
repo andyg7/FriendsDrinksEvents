@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: schema-registry
+spec:
+  containers:
+    - name: schema-registry
+      image: confluentinc/cp-schema-registry:5.3.0
+      env:
+        - name: SCHEMA_REGISTRY_HOST_NAME
+          value: "schema-registry"
+        - name: SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL
+          value: "zk-0:2181"
+        - name: SCHEMA_REGISTRY_LOG4J_ROOT_LOGLEVEL
+          value: "WARN"
