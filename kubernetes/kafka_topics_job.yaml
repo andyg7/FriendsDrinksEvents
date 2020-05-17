@@ -1,0 +1,33 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kafka-topics-job
+spec:
+  template:
+    spec:
+      containers:
+        - name: kafka-topics-job
+          image: confluentinc/cp-kafka:5.2.2
+          command:
+            - sh
+            - -c
+            - "echo About to create topics... && \
+               kafka-topics --create --if-not-exists --zookeeper zk-cs:2181 --partitions 2 --replication-factor 1 --topic user_api && \
+               kafka-topics --create --if-not-exists --zookeeper zk-cs:2181 --partitions 2 --replication-factor 1 --topic userPrivate && \
+               kafka-topics --create --if-not-exists --zookeeper zk-cs:2181 --partitions 2 --replication-factor 1 --topic userAggregationPrivate && \
+               kafka-topics --create --if-not-exists --zookeeper zk-cs:2181 --partitions 2 --replication-factor 1 --topic userValidation && \
+               kafka-topics --create --if-not-exists --zookeeper zk-cs:2181 --partitions 2 --replication-factor 1 --topic emailPrivate2 && \
+               kafka-topics --create --if-not-exists --zookeeper zk-cs:2181 --partitions 2 --replication-factor 1 --topic emailPrivate3 && \
+               kafka-topics --create --if-not-exists --zookeeper zk-cs:2181 --partitions 2 --replication-factor 1 --topic emailPrivate4 && \
+               kafka-topics --create --if-not-exists --zookeeper zk-cs:2181 --partitions 2 --replication-factor 1 --topic email && \
+               kafka-topics --create --if-not-exists --zookeeper zk-cs:2181 --partitions 2 --replication-factor 1 --topic currEmail && \
+               kafka-topics --create --if-not-exists --zookeeper zk-cs:2181 --partitions 2 --replication-factor 1 --topic frontendPrivate1 && \
+               kafka-topics --create --if-not-exists --zookeeper zk-cs:2181 --partitions 2 --replication-factor 1 --topic frontendPrivate2 && \
+               kafka-topics --create --if-not-exists --zookeeper zk-cs:2181 --partitions 2 --replication-factor 1 --topic frontendPrivate3 && \
+               kafka-topics --create --if-not-exists --zookeeper zk-cs:2181 --partitions 2 --replication-factor 1 --topic friendsdrinks && \
+               kafka-topics --create --if-not-exists --zookeeper zk-cs:2181 --partitions 2 --replication-factor 1 --topic currFriendsdrinks && \
+               kafka-topics --create --if-not-exists --zookeeper zk-cs:2181 --partitions 2 --replication-factor 1 --topic friendsdrinks_api && \
+               echo Done creating topics...  \
+                       "
+      restartPolicy: Never
+  backoffLimit: 4

@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontendapi-deployment
+  labels:
+    app: frontendapi
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontendapi
+  template:
+    metadata:
+      labels:
+        app: frontendapi
+    spec:
+      containers:
+        - name: frontendapi
+          image: fdimage:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          command:
+            - sh
+            - -c
+            - "java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.frontend.restapi.Main /app/dev.properties 8080"
