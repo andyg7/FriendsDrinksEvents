@@ -21,53 +21,53 @@ spec:
           command:
             - sh
             - -c
-            - "java -Dlogpath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.email.WriterService /app/dev-kubernetes.properties"
+            - "java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.email.WriterService /app/dev-kubernetes.properties"
         - name: email-create-user-validation-service
           image: fdimage:latest
           imagePullPolicy: IfNotPresent
           command:
             - sh
             - -c
-            - "java -Dlogpath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.email.CreateUserValidationService /app/dev-kubernetes.properties"
+            - "java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.email.CreateUserValidationService /app/dev-kubernetes.properties"
         - name: email-delete-user-validation-service
           image: fdimage:latest
           imagePullPolicy: IfNotPresent
           command:
             - sh
             - -c
-            - "java -Dlogpath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.email.DeleteUserValidationService /app/dev-kubernetes.properties"
+            - "java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.email.DeleteUserValidationService /app/dev-kubernetes.properties"
         - name: user-validation-service
           image: fdimage:latest
           imagePullPolicy: IfNotPresent
           command:
             - sh
             - -c
-            - "java -Dlogpath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.user.ValidationService /app/dev-kubernetes.properties"
+            - "java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.user.ValidationService /app/dev-kubernetes.properties"
         - name: create-user-validation-aggregator-service
           image: fdimage:latest
           imagePullPolicy: IfNotPresent
           command:
             - sh
             - -c
-            - "java -Dlogpath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.user.CreateUserValidationAggregatorService /app/dev-kubernetes.properties"
+            - "java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.user.CreateUserValidationAggregatorService /app/dev-kubernetes.properties"
         - name: delete-user-validation-aggregator-service
           image: fdimage:latest
           imagePullPolicy: IfNotPresent
           command:
             - sh
             - -c
-            - "java -Dlogpath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.user.DeleteUserValidationAggregatorService /app/dev-kubernetes.properties"
+            - "java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.user.DeleteUserValidationAggregatorService /app/dev-kubernetes.properties"
         - name: friendsdrinks-request-service
           image: fdimage:latest
           imagePullPolicy: IfNotPresent
           command:
             - sh
             - -c
-            - "java -Dlogpath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.RequestService /app/dev-kubernetes.properties"
+            - "java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.RequestService /app/dev-kubernetes.properties"
         - name: friendsdrinks-writer-service
           image: fdimage:latest
           imagePullPolicy: IfNotPresent
           command:
             - sh
             - -c
-            - "java -Dlogpath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.WriterService /app/dev-kubernetes.properties"
+            - "java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.WriterService /app/dev-kubernetes.properties"

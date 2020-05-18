@@ -8,7 +8,7 @@ services:
      - kafka-network
    command:
      "bash -c '
-          java -Dlogpath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.email.WriterService /app/dev.properties \
+          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.email.WriterService /app/dev.properties \
           -DlogPath=/app/
           '"
 
@@ -18,7 +18,7 @@ services:
       - kafka-network
     command:
       "bash -c '
-          java -Dlogpath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.email.CreateUserValidationService /app/dev.properties \
+          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.email.CreateUserValidationService /app/dev.properties \
           -DlogPath=/app/
           '"
   email-delete-user-validation-service:
@@ -27,7 +27,7 @@ services:
       - kafka-network
     command:
       "bash -c '
-          java -Dlogpath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.email.DeleteUserValidationService /app/dev.properties \
+          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.email.DeleteUserValidationService /app/dev.properties \
           -DlogPath=/app/
           '"
 
@@ -37,7 +37,7 @@ services:
       - kafka-network
     command:
       "bash -c '
-          java -Dlogpath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.user.ValidationService /app/dev.properties \
+          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.user.ValidationService /app/dev.properties \
           -DlogPath=/app/
           '"
 
@@ -47,7 +47,7 @@ services:
       - kafka-network
     command:
       "bash -c '
-          java -Dlogpath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.user.CreateUserValidationAggregatorService /app/dev.properties \
+          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.user.CreateUserValidationAggregatorService /app/dev.properties \
           -DlogPath=/app/
           '"
 
@@ -57,7 +57,7 @@ services:
       - kafka-network
     command:
       "bash -c '
-          java -Dlogpath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.user.DeleteUserValidationAggregatorService /app/dev.properties \
+          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.user.DeleteUserValidationAggregatorService /app/dev.properties \
           -DlogPath=/app/
           '"
 
@@ -67,7 +67,7 @@ services:
       - kafka-network
     command:
       "bash -c '
-          java -Dlogpath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.RequestService /app/dev.properties \
+          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.RequestService /app/dev.properties \
           -DlogPath=/app/
           '"
 
