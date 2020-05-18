@@ -10,6 +10,8 @@ import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +29,8 @@ import andrewgrant.friendsdrinks.user.api.avro.*;
  */
 @Path("")
 public class Handler {
+
+    private static final Logger log = LoggerFactory.getLogger(Handler.class);
 
     private KafkaProducer<UserId, UserEvent> userProducer;
     private Properties envProps;
@@ -46,6 +50,7 @@ public class Handler {
     @Consumes(MediaType.APPLICATION_JSON)
     public CreateUserResponseBean createUser(final CreateUserRequestBean createUserRequest)
             throws ExecutionException, InterruptedException {
+        log.info("Received request to create user: " + createUserRequest.toString());
         String userIdStr = UUID.randomUUID().toString();
         UserId userId = UserId.newBuilder()
                 .setId(userIdStr)
