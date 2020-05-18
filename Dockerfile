@@ -12,4 +12,5 @@ RUN mkdir -p /app/var/output
 
 COPY --from=builder /home/gradle/src/build/libs/*.jar /app
 COPY config/app/dev.properties /app
+COPY config/app/dev-kubernetes.properties /app
 
