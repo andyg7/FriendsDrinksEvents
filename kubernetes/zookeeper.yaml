@@ -34,7 +34,6 @@ metadata:
   labels:
     app: zk
 spec:
-  hostname: zoo1
   containers:
     - name: zookeeper-container
       image: confluentinc/cp-zookeeper:5.3.0
@@ -46,7 +45,7 @@ spec:
         - name: ZOOKEEPER_SERVER_ID
           value: "1"
         - name: ZOO_SERVERS
-          value: "server.1=zoo1:2888:3888;2181 server.2=zoo2:2888:3888;2181 server.3=0.0.0.0:2888:3888;2181"
+          value: "server.1=zk1:2888:3888;2181 server.2=zk2:2888:3888;2181 server.3=0.0.0.0:2888:3888;2181"
       ports:
         - containerPort: 2181
           name: client
@@ -63,7 +62,6 @@ metadata:
   labels:
     app: zk
 spec:
-  hostname: zoo2
   containers:
     - name: zookeeper-container
       image: confluentinc/cp-zookeeper:5.3.0
@@ -75,7 +73,7 @@ spec:
         - name: ZOOKEEPER_SERVER_ID
           value: "2"
         - name: ZOO_SERVERS
-          value: "server.1=zoo1:2888:3888;2181 server.2=zoo2:2888:3888;2181 server.3=0.0.0.0:2888:3888;2181"
+          value: "server.1=zk1:2888:3888;2181 server.2=zk2:2888:3888;2181 server.3=0.0.0.0:2888:3888;2181"
       ports:
         - containerPort: 2181
           name: client
@@ -91,7 +89,6 @@ metadata:
   labels:
     app: zk
 spec:
-  hostname: zoo3
   containers:
     - name: zookeeper-container
       image: confluentinc/cp-zookeeper:5.3.0
@@ -103,7 +100,7 @@ spec:
         - name: ZOOKEEPER_SERVER_ID
           value: "3"
         - name: ZOO_SERVERS
-          value: "server.1=zoo1:2888:3888;2181 server.2=zoo2:2888:3888;2181 server.3=0.0.0.0:2888:3888;2181"
+          value: "server.1=zk1:2888:3888;2181 server.2=zk2:2888:3888;2181 server.3=0.0.0.0:2888:3888;2181"
       ports:
         - containerPort: 2181
           name: client
