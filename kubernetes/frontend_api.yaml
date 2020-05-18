@@ -1,9 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontendapi-cs
+  labels:
+    app: frontendapi-service
+spec:
+  type: NodePort
+  ports:
+    - port: 8080
+      name: client
+  selector:
+    app: frontendapi
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontendapi-deployment
   labels:
-    app: frontendapi
+    app: frontendapi-deployment
 spec:
   replicas: 1
   selector:
@@ -15,7 +29,7 @@ spec:
         app: frontendapi
     spec:
       containers:
-        - name: frontendapi
+        - name: frontendapi-container
           image: fdimage:latest
           imagePullPolicy: IfNotPresent
           ports:
