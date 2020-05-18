@@ -1,21 +1,73 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nginx-deployment
+  name: backend-streams
   labels:
-    app: nginx
+    app: backend-streams
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
-      app: nginx
+      app: backend-streams
   template:
     metadata:
       labels:
-        app: nginx
+        app: backend-streams
     spec:
       containers:
-        - name: nginx
-          image: nginx:1.14.2
-          ports:
-            - containerPort: 80
+        - name: email-writer
+          image: fdimage:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - "java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.email.WriterService /app/dev.properties"
+        - name: email-create-user-validation-service
+          image: fdimage:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - "java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.email.CreateUserValidationService /app/dev.properties"
+        - name: email-delete-user-validation-service
+          image: fdimage:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - "java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.email.DeleteUserValidationService /app/dev.properties"
+        - name: user-validation-service
+          image: fdimage:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - "java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.user.ValidationService /app/dev.properties"
+        - name: create-user-validation-aggregator-service
+          image: fdimage:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - "java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.user.CreateUserValidationAggregatorService /app/dev.properties"
+        - name: delete-user-validation-aggregator-service
+          image: fdimage:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - "java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.user.DeleteUserValidationAggregatorService /app/dev.properties"
+        - name: friendsdrinks-request-service
+          image: fdimage:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - "java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.RequestService /app/dev.properties"
+        - name: friendsdrinks-writer-service
+          image: fdimage:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - "java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.WriterService /app/dev.properties"
