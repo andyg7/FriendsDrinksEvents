@@ -39,6 +39,8 @@ public class Main {
                     "1) path to config 2) app port");
         }
 
+        log.info("Starting Frontend API application");
+
         Properties envProps = load(args[0]);
         UserAvro userAvro = new UserAvro(envProps.getProperty("schema.registry.url"));
         EmailAvro emailAvro = new EmailAvro(envProps.getProperty("schema.registry.url"));

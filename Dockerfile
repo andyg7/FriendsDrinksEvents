@@ -8,6 +8,7 @@ RUN gradle shadowJar
 FROM openjdk:8-jre-slim
 
 RUN mkdir /app
+RUN mkdir -p /app/var/output
 
 COPY --from=builder /home/gradle/src/build/libs/*.jar /app
 COPY config/app/dev.properties /app
