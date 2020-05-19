@@ -13,6 +13,19 @@ spec:
     app: kafka
 ---
 apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-cs
+  labels:
+    app: kafka
+spec:
+  ports:
+    - port: 9092
+      name: server
+  selector:
+    app: kafka
+---
+apiVersion: v1
 kind: Pod
 metadata:
   name: kafka1
