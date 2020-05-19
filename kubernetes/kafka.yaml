@@ -51,9 +51,9 @@ spec:
         - name: CONFLUENT_SUPPORT_CUSTOMER_ID
           value: "anonymous"
         - name: KAFKA_LISTENERS
-          value: "PLAINTEXT://kafka1:9092"
+          value: "PLAINTEXT://kafka1.kafka-hs.default.svc.cluster.local:9092"
         - name: KAFKA_ADVERTISED_LISTENERS
-          value: "PLAINTEXT://kafka1:9092"
+          value: "PLAINTEXT://kafka1.kafka-hs.default.svc.cluster.local:9092"
         - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
           value: "PLAINTEXT:PLAINTEXT"
         - name: KAFKA_INTER_BROKER_LISTENER_NAME
