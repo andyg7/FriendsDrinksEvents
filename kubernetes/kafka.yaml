@@ -19,6 +19,8 @@ metadata:
   labels:
     app: kafka
 spec:
+  hostname: kafka1
+  subdomain: kafka-hs
   containers:
     - name: kafka-container
       image: confluentinc/cp-kafka:5.2.2
