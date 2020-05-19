@@ -118,7 +118,7 @@ public class WriterService {
 
     public Properties buildStreamsProperties(Properties envProps) {
         Properties streamProps = new Properties();
-        streamProps.put(StreamsConfig.APPLICATION_ID_CONFIG, envProps.getProperty("friendsdrinks_writer.application"));
+        streamProps.put(StreamsConfig.APPLICATION_ID_CONFIG, envProps.getProperty("friendsdrinks_writer.application.id"));
         streamProps.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, envProps.getProperty("bootstrap.servers"));
         return streamProps;
     }
