@@ -1,18 +1,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: backend-streams
+  name: email-writer
   labels:
-    app: backend-streams
+    app: email-writer
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: backend-streams
+      app: email-writer
   template:
     metadata:
       labels:
-        app: backend-streams
+        app: email-writer
     spec:
       containers:
         - name: email-writer
@@ -22,6 +22,24 @@ spec:
             - sh
             - -c
             - "java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.email.WriterService /app/dev-kubernetes.properties"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: email-create-user-validation-service
+  labels:
+    app: email-create-user-validation-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: email-create-user-validation-service
+  template:
+    metadata:
+      labels:
+        app: email-create-user-validation-service
+    spec:
+      containers:
         - name: email-create-user-validation-service
           image: fdimage:latest
           imagePullPolicy: IfNotPresent
@@ -29,6 +47,24 @@ spec:
             - sh
             - -c
             - "java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.email.CreateUserValidationService /app/dev-kubernetes.properties"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: email-delete-user-validation-service
+  labels:
+    app: email-delete-user-validation-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: email-delete-user-validation-service
+  template:
+    metadata:
+      labels:
+        app: email-delete-user-validation-service
+    spec:
+      containers:
         - name: email-delete-user-validation-service
           image: fdimage:latest
           imagePullPolicy: IfNotPresent
@@ -36,6 +72,24 @@ spec:
             - sh
             - -c
             - "java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.email.DeleteUserValidationService /app/dev-kubernetes.properties"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-validation-service
+  labels:
+    app: user-validation-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user-validation-service
+  template:
+    metadata:
+      labels:
+        app: user-validation-service
+    spec:
+      containers:
         - name: user-validation-service
           image: fdimage:latest
           imagePullPolicy: IfNotPresent
@@ -43,6 +97,24 @@ spec:
             - sh
             - -c
             - "java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.user.ValidationService /app/dev-kubernetes.properties"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: create-user-validation-aggregator-service
+  labels:
+    app: create-user-validation-aggregator-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: create-user-validation-aggregator-service
+  template:
+    metadata:
+      labels:
+        app: create-user-validation-aggregator-service
+    spec:
+      containers:
         - name: create-user-validation-aggregator-service
           image: fdimage:latest
           imagePullPolicy: IfNotPresent
@@ -50,6 +122,24 @@ spec:
             - sh
             - -c
             - "java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.user.CreateUserValidationAggregatorService /app/dev-kubernetes.properties"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: delete-user-validation-aggregator-service
+  labels:
+    app: delete-user-validation-aggregator-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: delete-user-validation-aggregator-service
+  template:
+    metadata:
+      labels:
+        app: delete-user-validation-aggregator-service
+    spec:
+      containers:
         - name: delete-user-validation-aggregator-service
           image: fdimage:latest
           imagePullPolicy: IfNotPresent
@@ -57,6 +147,24 @@ spec:
             - sh
             - -c
             - "java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.user.DeleteUserValidationAggregatorService /app/dev-kubernetes.properties"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: friendsdrinks-request-service
+  labels:
+    app: friendsdrinks-request-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: friendsdrinks-request-service
+  template:
+    metadata:
+      labels:
+        app: friendsdrinks-request-service
+    spec:
+      containers:
         - name: friendsdrinks-request-service
           image: fdimage:latest
           imagePullPolicy: IfNotPresent
@@ -64,6 +172,24 @@ spec:
             - sh
             - -c
             - "java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.RequestService /app/dev-kubernetes.properties"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: friendsdrinks-writer-service
+  labels:
+    app: friendsdrinks-writer-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: friendsdrinks-writer-service
+  template:
+    metadata:
+      labels:
+        app: friendsdrinks-writer-service
+    spec:
+      containers:
         - name: friendsdrinks-writer-service
           image: fdimage:latest
           imagePullPolicy: IfNotPresent
