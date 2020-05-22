@@ -31,6 +31,19 @@ public class Validator implements
                                                   final CreateRequest createRequest) {
         CreateUserRequest userRequest = createRequest.getCreateUserRequest();
         String requestedEmail = userRequest.getEmail();
+        if (requestedEmail.split("@").length != 2) {
+            CreateUserRejected userRejected = CreateUserRejected.newBuilder()
+                    .setErrorCode(ErrorCode.InvalidEmailAddress.name())
+                    .setUserId(userRequest.getUserId())
+                    .setEmail(userRequest.getEmail())
+                    .setRequestId(userRequest.getRequestId())
+                    .build();
+            UserEvent user = UserEvent.newBuilder()
+                    .setEventType(EventType.CREATE_USER_REJECTED)
+                    .setCreateUserRejected(userRejected)
+                    .build();
+            return new KeyValue<>(emailId, user);
+        }
         if (pendingEmailsStore.get(requestedEmail) != null) {
             CreateUserRejected userRejected = CreateUserRejected.newBuilder()
                     .setErrorCode(ErrorCode.Pending.name())
