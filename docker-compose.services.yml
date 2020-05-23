@@ -3,7 +3,7 @@ version: '3.7'
 
 services:
   email-writer:
-   image: fdimage:latest
+   image: friendsdrinks:latest
    networks:
      - kafka-network
    command:
@@ -13,7 +13,7 @@ services:
           '"
 
   email-create-user-validation-service:
-    image: fdimage:latest
+    image: friendsdrinks:latest
     networks:
       - kafka-network
     command:
@@ -22,7 +22,7 @@ services:
           -DlogPath=/app/
           '"
   email-delete-user-validation-service:
-    image: fdimage:latest
+    image: friendsdrinks:latest
     networks:
       - kafka-network
     command:
@@ -32,7 +32,7 @@ services:
           '"
 
   user-validation-service:
-    image: fdimage:latest
+    image: friendsdrinks:latest
     networks:
       - kafka-network
     command:
@@ -42,7 +42,7 @@ services:
           '"
 
   create-user-validation-aggregator-service:
-    image: fdimage:latest
+    image: friendsdrinks:latest
     networks:
       - kafka-network
     command:
@@ -52,7 +52,7 @@ services:
           '"
 
   delete-user-validation-aggregator-service:
-    image: fdimage:latest
+    image: friendsdrinks:latest
     networks:
       - kafka-network
     command:
@@ -62,7 +62,7 @@ services:
           '"
 
   friendsdrinks-request-servie:
-    image: fdimage:latest
+    image: friendsdrinks:latest
     networks:
       - kafka-network
     command:
@@ -72,7 +72,7 @@ services:
           '"
 
   friendsdrinks-writer-service:
-    image: fdimage:latest
+    image: friendsdrinks:latest
     networks:
       - kafka-network
     command:
@@ -81,7 +81,7 @@ services:
           '"
 
   frontend-api:
-    image: fdimage:latest
+    image: friendsdrinks:latest
     networks:
       - kafka-network
     ports:

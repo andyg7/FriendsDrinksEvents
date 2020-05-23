@@ -30,7 +30,7 @@ spec:
     spec:
       containers:
         - name: frontendapi-container
-          image: fdimage:latest
+          image: friendsdrinks:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
