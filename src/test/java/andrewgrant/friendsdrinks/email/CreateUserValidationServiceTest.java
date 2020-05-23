@@ -120,7 +120,7 @@ public class CreateUserValidationServiceTest {
         List<UserEvent> userInput = new ArrayList<>();
         String newRequestId = UUID.randomUUID().toString();
         String newUserId = UUID.randomUUID().toString();
-        String newEmail = UUID.randomUUID().toString();
+        String newEmail = "new@email";
         // Valid request.
         CreateUserRequest userRequest = CreateUserRequest.newBuilder()
                 .setRequestId(newRequestId)
