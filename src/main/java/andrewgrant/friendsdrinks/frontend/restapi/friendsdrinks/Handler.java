@@ -21,6 +21,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
 import andrewgrant.friendsdrinks.api.avro.*;
+import andrewgrant.friendsdrinks.avro.FriendsDrinksCreated;
 
 /**
  * Implements frontend REST API friendsdrinks path.
@@ -41,18 +42,26 @@ public class Handler {
     @GET
     @Path("/")
     @Produces(MediaType.APPLICATION_JSON)
-    public GetFriendsDrinksResponseBean getAllFriendsDrinks() {
+    public GetAllFriendsDrinksResponseBean getAllFriendsDrinks() {
         ReadOnlyKeyValueStore<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> kv =
                 kafkaStreams.store(FRIENDSDRINKS_STORE, QueryableStoreTypes.keyValueStore());
         KeyValueIterator<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> allKvs = kv.all();
-        List<String> ids = new ArrayList<>();
+        List<FriendsDrinksBean> friendsDrinksList = new ArrayList<>();
         while (allKvs.hasNext()) {
             KeyValue<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> keyValue = allKvs.next();
-            ids.add(keyValue.value.getFriendsDrinksCreated().getFriendsDrinksId().getId());
+            FriendsDrinksCreated friendsDrinksCreated = keyValue.value.getFriendsDrinksCreated();
+            FriendsDrinksBean friendsDrinksBean = new FriendsDrinksBean();
+            friendsDrinksBean.setAdminUserId(friendsDrinksCreated.getAdminUserId());
+            friendsDrinksBean.setId(friendsDrinksCreated.getFriendsDrinksId().getId());
+            friendsDrinksBean.setName(friendsDrinksCreated.getName());
+            if (friendsDrinksCreated.getUserIds() != null) {
+                friendsDrinksBean.setUserIds(friendsDrinksCreated.getUserIds().stream().collect(Collectors.toList()));
+            }
+            friendsDrinksList.add(friendsDrinksBean);
         }
         allKvs.close();
-        GetFriendsDrinksResponseBean response = new GetFriendsDrinksResponseBean();
-        response.setIds(ids);
+        GetAllFriendsDrinksResponseBean response = new GetAllFriendsDrinksResponseBean();
+        response.setFriendsDrinkList(friendsDrinksList);
         return response;
     }
 
@@ -63,16 +72,24 @@ public class Handler {
         ReadOnlyKeyValueStore<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> kv =
                 kafkaStreams.store(FRIENDSDRINKS_STORE, QueryableStoreTypes.keyValueStore());
         KeyValueIterator<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> allKvs = kv.all();
-        List<String> friendsDrinkIds = new ArrayList<>();
+        List<FriendsDrinksBean> adminFriendsDrinks = new ArrayList<>();
         while (allKvs.hasNext()) {
             KeyValue<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> keyValue = allKvs.next();
-            if (keyValue.value.getFriendsDrinksCreated().getAdminUser().equals(userId)) {
-                friendsDrinkIds.add(keyValue.value.getFriendsDrinksCreated().getFriendsDrinksId().getId());
+            FriendsDrinksCreated friendsDrinksCreated = keyValue.value.getFriendsDrinksCreated();
+            if (friendsDrinksCreated.getAdminUserId().equals(userId)) {
+                FriendsDrinksBean friendsDrinksBean = new FriendsDrinksBean();
+                friendsDrinksBean.setAdminUserId(friendsDrinksCreated.getAdminUserId());
+                friendsDrinksBean.setId(friendsDrinksCreated.getFriendsDrinksId().getId());
+                friendsDrinksBean.setName(friendsDrinksCreated.getName());
+                if (friendsDrinksCreated.getUserIds() != null) {
+                    friendsDrinksBean.setUserIds(friendsDrinksCreated.getUserIds().stream().collect(Collectors.toList()));
+                }
+                adminFriendsDrinks.add(friendsDrinksBean);
             }
         }
         allKvs.close();
         GetFriendsDrinksResponseBean response = new GetFriendsDrinksResponseBean();
-        response.setIds(friendsDrinkIds);
+        response.setAdminFriendsDrinks(adminFriendsDrinks);
         return response;
     }
 
@@ -93,6 +110,7 @@ public class Handler {
                 .setScheduleType(ScheduleType.valueOf(requestBean.getScheduleType()))
                 .setCronSchedule(requestBean.getCronSchedule())
                 .setRequestId(requestId)
+                .setName(requestBean.getName())
                 .build();
         FriendsDrinksEvent friendsDrinksEvent = FriendsDrinksEvent
                 .newBuilder()

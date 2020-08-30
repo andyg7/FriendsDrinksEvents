@@ -71,7 +71,7 @@ public class WriterService {
                                 r.getCreateFriendsDrinksRequest();
                         FriendsDrinksCreated friendsDrinksCreated = FriendsDrinksCreated
                                 .newBuilder()
-                                .setAdminUser(createFriendsDrinksRequest.getAdminUserId())
+                                .setAdminUserId(createFriendsDrinksRequest.getAdminUserId())
                                 .setUserIds(createFriendsDrinksRequest.getUserIds().stream().collect(Collectors.toList()))
                                 .setScheduleType(andrewgrant.friendsdrinks.avro.ScheduleType.valueOf(
                                         createFriendsDrinksRequest.getScheduleType().toString()))

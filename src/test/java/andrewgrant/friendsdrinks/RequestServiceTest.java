@@ -61,6 +61,7 @@ public class RequestServiceTest {
                 .setUserIds(Arrays.asList("b", "c"))
                 .setAdminUserId("a")
                 .setScheduleType(ScheduleType.OnDemand)
+                .setName("name")
                 .build();
         FriendsDrinksEvent requestEvent = FriendsDrinksEvent.newBuilder()
                 .setEventType(EventType.CREATE_FRIENDS_DRINKS_REQUEST)
@@ -91,6 +92,7 @@ public class RequestServiceTest {
                 .setUserIds(Arrays.asList("b", "c"))
                 .setAdminUserId(requesterUserId)
                 .setScheduleType(ScheduleType.OnDemand)
+                .setName("name")
                 .build();
         FriendsDrinksEvent requestEvent = FriendsDrinksEvent.newBuilder()
                 .setEventType(EventType.CREATE_FRIENDS_DRINKS_REQUEST)
@@ -145,6 +147,7 @@ public class RequestServiceTest {
                 .setUserIds(Arrays.asList("b", "c"))
                 .setAdminUserId(requesterUserId)
                 .setScheduleType(ScheduleType.OnDemand)
+                .setName("name")
                 .build();
         FriendsDrinksEvent requestEvent = FriendsDrinksEvent.newBuilder()
                 .setEventType(EventType.CREATE_FRIENDS_DRINKS_REQUEST)
@@ -198,6 +201,7 @@ public class RequestServiceTest {
                 .setUserIds(Arrays.asList("b", "c"))
                 .setAdminUserId(requesterUserId)
                 .setScheduleType(ScheduleType.OnDemand)
+                .setName("name")
                 .build();
         FriendsDrinksEvent requestEvent = FriendsDrinksEvent.newBuilder()
                 .setEventType(EventType.CREATE_FRIENDS_DRINKS_REQUEST)
@@ -262,6 +266,7 @@ public class RequestServiceTest {
                 .setUserIds(Arrays.asList("b", "c"))
                 .setAdminUserId(requesterUserId)
                 .setScheduleType(ScheduleType.OnDemand)
+                .setName("name")
                 .build();
         requestEvent = FriendsDrinksEvent.newBuilder()
                 .setEventType(EventType.CREATE_FRIENDS_DRINKS_REQUEST)

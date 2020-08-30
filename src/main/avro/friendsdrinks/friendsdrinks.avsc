@@ -1,0 +1,8 @@
+{
+  "namespace": "andrewgrant.friendsdrinks.avro",
+  "type": "record",
+  "name": "FriendsDrinks",
+  "fields": [
+    {"name": "id", "type": "string"}
+  ]
+}

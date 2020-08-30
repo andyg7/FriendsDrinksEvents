@@ -10,6 +10,7 @@ public class CreateFriendsDrinksRequestBean {
     private List<String> userIds;
     private String scheduleType;
     private String cronSchedule;
+    private String name;
 
     public CreateFriendsDrinksRequestBean() {
 
@@ -46,4 +47,13 @@ public class CreateFriendsDrinksRequestBean {
     public void setCronSchedule(String cronSchedule) {
         this.cronSchedule = cronSchedule;
     }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
 }

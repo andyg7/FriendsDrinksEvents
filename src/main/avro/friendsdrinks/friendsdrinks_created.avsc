@@ -4,7 +4,8 @@
   "name": "FriendsDrinksCreated",
   "fields": [
       {"name": "friendsDrinksId", "type": "FriendsDrinksId"},
-      {"name": "adminUser", "type": "string"},
+      {"name": "adminUserId", "type": "string"},
+      {"name": "name", "type": "string"},
       {"name": "userIds", "type": { "type": "array", "items": "string" } },
       {"name": "scheduleType", "type": {"type": "enum", "name": "ScheduleType", "symbols": ["OnDemand", "Cron"]}},
       {"name": "cronSchedule", "type": ["null", "string"], "default": null}
