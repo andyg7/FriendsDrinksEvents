@@ -80,7 +80,3 @@ services:
       KAFKA_BROKER_ID: ignored
       KAFKA_ZOOKEEPER_CONNECT: ignored
 
-networks:
-  default:
-    name: friendsdrinks_network
-
