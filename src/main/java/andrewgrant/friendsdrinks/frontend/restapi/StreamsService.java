@@ -79,7 +79,10 @@ public class StreamsService {
         final String currFriendsDrinksTopicName = envProps.getProperty("currFriendsdrinks.topic.name");
         friendsDrinksEventStream.to(currFriendsDrinksTopicName,
                 Produced.with(friendsDrinksAvro.friendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksEventSerde()));
-        builder.table(currFriendsDrinksTopicName, emailAvro.consumedWith(), Materialized.as(FRIENDSDRINKS_STORE));
+        builder.table(
+                currFriendsDrinksTopicName,
+                Consumed.with(friendsDrinksAvro.friendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksEventSerde()),
+                Materialized.as(FRIENDSDRINKS_STORE));
 
         final String currEmailTopicName = envProps.getProperty("currEmail.topic.name");
         builder.table(currEmailTopicName, emailAvro.consumedWith(), Materialized.as(EMAILS_STORE));

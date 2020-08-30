@@ -41,7 +41,7 @@ public class Handler {
     @GET
     @Path("/")
     @Produces(MediaType.APPLICATION_JSON)
-    public GetFriendsDrinksResponseBean getFriendsDrinksResponseBean() {
+    public GetFriendsDrinksResponseBean getAllFriendsDrinks() {
         ReadOnlyKeyValueStore<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> kv =
                 kafkaStreams.store(FRIENDSDRINKS_STORE, QueryableStoreTypes.keyValueStore());
         KeyValueIterator<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> allKvs = kv.all();
@@ -53,6 +53,26 @@ public class Handler {
         allKvs.close();
         GetFriendsDrinksResponseBean response = new GetFriendsDrinksResponseBean();
         response.setIds(ids);
+        return response;
+    }
+
+    @GET
+    @Path("/{userId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public GetFriendsDrinksResponseBean getFriendsDrink(@PathParam("userId") final String userId) {
+        ReadOnlyKeyValueStore<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> kv =
+                kafkaStreams.store(FRIENDSDRINKS_STORE, QueryableStoreTypes.keyValueStore());
+        KeyValueIterator<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> allKvs = kv.all();
+        List<String> friendsDrinkIds = new ArrayList<>();
+        while (allKvs.hasNext()) {
+            KeyValue<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> keyValue = allKvs.next();
+            if (keyValue.value.getFriendsDrinksCreated().getAdminUser().equals(userId)) {
+                friendsDrinkIds.add(keyValue.value.getFriendsDrinksCreated().getFriendsDrinksId().getId());
+            }
+        }
+        allKvs.close();
+        GetFriendsDrinksResponseBean response = new GetFriendsDrinksResponseBean();
+        response.setIds(friendsDrinkIds);
         return response;
     }
 
