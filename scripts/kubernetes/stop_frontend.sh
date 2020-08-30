@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-kb delete -f kubernetes/frontend_api.yaml
+kubectl delete -f kubernetes/frontend_api.yaml

@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-kb delete -f kubernetes/backend_streams.yaml
+kubectl delete -f kubernetes/backend_streams.yaml

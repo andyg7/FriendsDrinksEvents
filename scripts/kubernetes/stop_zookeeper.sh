@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-kb delete -f kubernetes/zookeeper.yaml
+kubectl delete -f kubernetes/zookeeper.yaml
