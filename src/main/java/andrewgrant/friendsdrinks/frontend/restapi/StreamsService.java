@@ -70,8 +70,10 @@ public class StreamsService {
                 .mapValues((value -> {
                     if (value.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.CREATED)) {
                         return value;
-                    } else {
+                    } else if (value.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.DELETED)) {
                         return null;
+                    } else {
+                        throw new RuntimeException(String.format("Unknown event type %s", value.getEventType().toString()));
                     }
                 }));
         final String currFriendsDrinksTopicName = envProps.getProperty("currFriendsdrinks.topic.name");
