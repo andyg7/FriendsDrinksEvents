@@ -79,7 +79,7 @@ public class WriterService {
                                 .setFriendsDrinksId(
                                         andrewgrant.friendsdrinks.avro.FriendsDrinksId
                                                 .newBuilder()
-                                                .setId(r.getDeleteFriendsDrinksRequest().getFriendsDrinksId().getId())
+                                                .setId(r.getCreateFriendsDrinksRequest().getFriendsDrinksId().getId())
                                                 .build())
                                 .build();
                         return andrewgrant.friendsdrinks.avro.FriendsDrinksEvent.newBuilder()
