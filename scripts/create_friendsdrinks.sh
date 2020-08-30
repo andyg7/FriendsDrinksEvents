@@ -2,7 +2,7 @@
 
 PORT=$1
 ADMIN_USER_ID=$2
-USER_ID=$2
+USER_ID=$3
 
 curl -d "{\"adminUserId\":\"${ADMIN_USER_ID}\", \"scheduleType\": \"OnDemand\", \"userIds\": [\"${USER_ID}\"] }" \
 -H "Content-Type: application/json"  \
