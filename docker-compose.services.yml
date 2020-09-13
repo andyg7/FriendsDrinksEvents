@@ -61,7 +61,7 @@ services:
           -DlogPath=/app/
           '"
 
-  friendsdrinks-request-servie:
+  friendsdrinks-request-service:
     image: friendsdrinks:latest
     networks:
       - kafka-network
