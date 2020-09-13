@@ -71,7 +71,7 @@ public class Handler {
     public GetFriendsDrinksResponseBean getFriendsDrink(@PathParam("userId") final String userId) {
         ReadOnlyKeyValueStore<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> kv =
                 kafkaStreams.store(FRIENDSDRINKS_STORE, QueryableStoreTypes.keyValueStore());
-        // TODO: this is not efficient! We should have a state store that
+        // TODO(andyg7): this is not efficient! We should have a state store that
         // removes the need for a full scan but for now this is OK.
         KeyValueIterator<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> allKvs = kv.all();
         List<FriendsDrinksBean> adminFriendsDrinks = new ArrayList<>();
