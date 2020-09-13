@@ -103,6 +103,7 @@ public class Handler {
         allKvs.close();
         GetFriendsDrinksResponseBean response = new GetFriendsDrinksResponseBean();
         response.setAdminFriendsDrinks(adminFriendsDrinks);
+        response.setMemberFriendsDrinks(memberFriendsDrinks);
         return response;
     }
 
