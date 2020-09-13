@@ -71,6 +71,7 @@ public class StreamsService {
                     if (value.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.CREATED)) {
                         return value;
                     } else if (value.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.DELETED)) {
+                        // Tombstone deleted friends drinks.
                         return null;
                     } else {
                         throw new RuntimeException(String.format("Unknown event type %s", value.getEventType().toString()));

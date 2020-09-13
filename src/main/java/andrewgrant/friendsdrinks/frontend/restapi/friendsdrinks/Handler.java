@@ -71,8 +71,11 @@ public class Handler {
     public GetFriendsDrinksResponseBean getFriendsDrink(@PathParam("userId") final String userId) {
         ReadOnlyKeyValueStore<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> kv =
                 kafkaStreams.store(FRIENDSDRINKS_STORE, QueryableStoreTypes.keyValueStore());
+        // TODO: this is not efficient! We should have a state store that
+        // removes the need for a full scan but for now this is OK.
         KeyValueIterator<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> allKvs = kv.all();
         List<FriendsDrinksBean> adminFriendsDrinks = new ArrayList<>();
+        List<FriendsDrinksBean> memberFriendsDrinks = new ArrayList<>();
         while (allKvs.hasNext()) {
             KeyValue<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> keyValue = allKvs.next();
             FriendsDrinksCreated friendsDrinksCreated = keyValue.value.getFriendsDrinksCreated();
@@ -85,6 +88,16 @@ public class Handler {
                     friendsDrinksBean.setUserIds(friendsDrinksCreated.getUserIds().stream().collect(Collectors.toList()));
                 }
                 adminFriendsDrinks.add(friendsDrinksBean);
+            } else {
+                List<String> userIds = friendsDrinksCreated.getUserIds();
+                if (userIds.contains(userId)) {
+                    FriendsDrinksBean friendsDrinksBean = new FriendsDrinksBean();
+                    friendsDrinksBean.setAdminUserId(friendsDrinksCreated.getAdminUserId());
+                    friendsDrinksBean.setId(friendsDrinksCreated.getFriendsDrinksId().getId());
+                    friendsDrinksBean.setName(friendsDrinksCreated.getName());
+                    friendsDrinksBean.setUserIds(friendsDrinksCreated.getUserIds().stream().collect(Collectors.toList()));
+                    memberFriendsDrinks.add(friendsDrinksBean);
+                }
             }
         }
         allKvs.close();
