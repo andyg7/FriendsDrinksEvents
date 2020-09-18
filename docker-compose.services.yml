@@ -85,7 +85,7 @@ services:
     networks:
       - kafka-network
     ports:
-      - "8080"
+      - "32778:8080"
     command:
       "bash -c '
           java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.frontend.restapi.Main /app/dev.properties 8080 \
