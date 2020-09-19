@@ -116,12 +116,18 @@ public class Handler {
         final String topicName = envProps.getProperty("friendsdrinks_api.topic.name");
         String requestId = UUID.randomUUID().toString();
         String friendsDrinksId = UUID.randomUUID().toString();
+        String scheduleType;
+        if (requestBean.getScheduleType() != null) {
+            scheduleType = requestBean.getScheduleType();
+        } else {
+            scheduleType = ScheduleType.OnDemand.name();
+        }
         CreateFriendsDrinksRequest createFriendsDrinksRequest = CreateFriendsDrinksRequest
                 .newBuilder()
                 .setFriendsDrinksId(FriendsDrinksId.newBuilder().setId(friendsDrinksId).build())
                 .setUserIds(requestBean.getUserIds().stream().collect(Collectors.toList()))
                 .setAdminUserId(requestBean.getAdminUserId())
-                .setScheduleType(ScheduleType.valueOf(requestBean.getScheduleType()))
+                .setScheduleType(ScheduleType.valueOf(scheduleType))
                 .setCronSchedule(requestBean.getCronSchedule())
                 .setRequestId(requestId)
                 .setName(requestBean.getName())
