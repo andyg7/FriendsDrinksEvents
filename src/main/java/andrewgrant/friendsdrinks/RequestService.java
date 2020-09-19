@@ -63,7 +63,7 @@ public class RequestService {
                 (request, count) -> {
                     CreateFriendsDrinksResponse.Builder response = CreateFriendsDrinksResponse.newBuilder();
                     response.setRequestId(request.getRequestId());
-                    response.setFriendsDrinksId(request.getAdminUserId());
+                    response.setFriendsDrinksId(request.getFriendsDrinksId());
                     if (count == null || count < 5) {
                         response.setResult(Result.SUCCESS);
                     } else {
