@@ -32,8 +32,6 @@ services:
           java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.frontend.restapi.Main /app/dev.properties 8080 \
           '"
 
-
-
 networks:
   kafka-network:
     external: true
