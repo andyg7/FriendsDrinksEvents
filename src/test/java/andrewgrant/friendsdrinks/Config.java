@@ -1,10 +1,8 @@
-package andrewgrant.friendsdrinks.email;
+package andrewgrant.friendsdrinks;
 
 /**
- * Class for holding configuration.
+ * Class for holding test config.
  */
 public class Config {
-
     public static final String TEST_CONFIG_FILE = "config/app/test.properties";
 }
-

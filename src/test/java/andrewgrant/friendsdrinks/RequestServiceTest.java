@@ -3,7 +3,7 @@ package andrewgrant.friendsdrinks;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import static andrewgrant.friendsdrinks.email.Config.TEST_CONFIG_FILE;
+import static andrewgrant.friendsdrinks.Config.TEST_CONFIG_FILE;
 import static andrewgrant.friendsdrinks.env.Properties.load;
 
 import org.apache.kafka.clients.producer.ProducerRecord;

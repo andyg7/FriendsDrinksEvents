@@ -1,9 +1,0 @@
-{
-  "namespace": "andrewgrant.friendsdrinks.user.api.avro",
-  "type": "record",
-  "name": "DeleteUserRequest",
-  "fields": [
-    {"name": "requestId", "type": "string"},
-    {"name": "userId", "type": "UserId"}
-  ]
-}

@@ -2,65 +2,6 @@
 version: '3.7'
 
 services:
-  email-writer:
-   image: friendsdrinks:latest
-   networks:
-     - kafka-network
-   command:
-     "bash -c '
-          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.email.WriterService /app/dev.properties \
-          -DlogPath=/app/
-          '"
-
-  email-create-user-validation-service:
-    image: friendsdrinks:latest
-    networks:
-      - kafka-network
-    command:
-      "bash -c '
-          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.email.CreateUserValidationService /app/dev.properties \
-          -DlogPath=/app/
-          '"
-  email-delete-user-validation-service:
-    image: friendsdrinks:latest
-    networks:
-      - kafka-network
-    command:
-      "bash -c '
-          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.email.DeleteUserValidationService /app/dev.properties \
-          -DlogPath=/app/
-          '"
-
-  user-validation-service:
-    image: friendsdrinks:latest
-    networks:
-      - kafka-network
-    command:
-      "bash -c '
-          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.user.ValidationService /app/dev.properties \
-          -DlogPath=/app/
-          '"
-
-  create-user-validation-aggregator-service:
-    image: friendsdrinks:latest
-    networks:
-      - kafka-network
-    command:
-      "bash -c '
-          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.user.CreateUserValidationAggregatorService /app/dev.properties \
-          -DlogPath=/app/
-          '"
-
-  delete-user-validation-aggregator-service:
-    image: friendsdrinks:latest
-    networks:
-      - kafka-network
-    command:
-      "bash -c '
-          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.user.DeleteUserValidationAggregatorService /app/dev.properties \
-          -DlogPath=/app/
-          '"
-
   friendsdrinks-request-service:
     image: friendsdrinks:latest
     networks:
