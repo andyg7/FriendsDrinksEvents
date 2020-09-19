@@ -28,18 +28,16 @@ public class RequestService {
         KStream<FriendsDrinksId, FriendsDrinksEvent> apiEvents = builder.stream(friendsDrinksApiTopicName,
                 Consumed.with(avro.apiFriendsDrinksIdSerde(), avro.apiFriendsDrinksSerde()));
 
-        final String friendsDrinksTopicName = envProps.getProperty("friendsdrinks.topic.name");
-        KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksCreated> currentFriendsDrinks = builder.stream(
-                friendsDrinksTopicName,
-                Consumed.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksEventSerde()))
+        KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksCreated> currentFriendsDrinks =
+                builder.stream(
+                        envProps.getProperty("currFriendsdrinks.topic.name"),
+                        Consumed.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksEventSerde()))
                 .mapValues((value -> {
-                    if (value.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.CREATED)) {
-                        return value.getFriendsDrinksCreated();
-                    } else if (value.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.DELETED)) {
-                        return null;
-                    } else {
-                        throw new RuntimeException(String.format("Unknown event type %s", value.getEventType().toString()));
-                    }
+                   if (value.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.CREATED)) {
+                       return value.getFriendsDrinksCreated();
+                   } else {
+                       throw new RuntimeException(String.format("Unexpected event type %s", value.getEventType().toString()));
+                   }
                 }));
 
         KTable<String, Long> friendsDrinksCount = currentFriendsDrinks

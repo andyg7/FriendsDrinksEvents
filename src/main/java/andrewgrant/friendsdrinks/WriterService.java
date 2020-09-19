@@ -114,6 +114,24 @@ public class WriterService {
                 .to(envProps.getProperty("friendsdrinks.topic.name"),
                         Produced.with(friendsDrinksAvro.friendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksEventSerde()));
 
+
+        KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> friendsDrinksEventStream =
+                builder.stream(envProps.getProperty("friendsdrinks.topic.name"),
+                        Consumed.with(friendsDrinksAvro.friendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksEventSerde()))
+                        .mapValues((value -> {
+                            if (value.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.CREATED)) {
+                                return value;
+                            } else if (value.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.DELETED)) {
+                                // Tombstone deleted friends drinks.
+                                return null;
+                            } else {
+                                throw new RuntimeException(String.format("Unknown event type %s", value.getEventType().toString()));
+                            }
+                        }));
+
+        friendsDrinksEventStream.to(envProps.getProperty("currFriendsdrinks.topic.name"),
+                Produced.with(friendsDrinksAvro.friendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksEventSerde()));
+
         return builder.build();
     }
 

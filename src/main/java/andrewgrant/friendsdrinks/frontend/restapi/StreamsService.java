@@ -8,8 +8,6 @@ import java.time.Duration;
 import java.util.Properties;
 
 import andrewgrant.friendsdrinks.FriendsDrinksAvro;
-import andrewgrant.friendsdrinks.avro.FriendsDrinksEvent;
-import andrewgrant.friendsdrinks.avro.FriendsDrinksId;
 
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 
@@ -42,23 +40,7 @@ public class StreamsService {
         final String frontendPrivate3TopicName = envProps.getProperty("frontendPrivate3.topic.name");
         buildCreateFriendsDrinksResponsesStore(builder, friendsDrinksApiKStream, friendsDrinksAvro, frontendPrivate3TopicName);;
 
-        final String friendsDrinksTopicName = envProps.getProperty("friendsdrinks.topic.name");
-        KStream<FriendsDrinksId, FriendsDrinksEvent> friendsDrinksEventStream =
-                builder.stream(friendsDrinksTopicName,
-                        Consumed.with(friendsDrinksAvro.friendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksEventSerde()))
-                .mapValues((value -> {
-                    if (value.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.CREATED)) {
-                        return value;
-                    } else if (value.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.DELETED)) {
-                        // Tombstone deleted friends drinks.
-                        return null;
-                    } else {
-                        throw new RuntimeException(String.format("Unknown event type %s", value.getEventType().toString()));
-                    }
-                }));
         final String currFriendsDrinksTopicName = envProps.getProperty("currFriendsdrinks.topic.name");
-        friendsDrinksEventStream.to(currFriendsDrinksTopicName,
-                Produced.with(friendsDrinksAvro.friendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksEventSerde()));
         builder.table(
                 currFriendsDrinksTopicName,
                 Consumed.with(friendsDrinksAvro.friendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksEventSerde()),
