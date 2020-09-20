@@ -8,6 +8,8 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -20,9 +22,12 @@ import andrewgrant.friendsdrinks.avro.FriendsDrinksCreated;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksDeleted;
 
 /**
- * Owns writing to friendsdrinkfriendsdrinks.
+ * Owns writing to non-API topics.
  */
 public class WriterService {
+
+    private static final Logger log = LoggerFactory.getLogger(WriterService.class);
+
 
     public Topology buildTopology(Properties envProps,
                                   FriendsDrinksAvro friendsDrinksAvro) {
@@ -41,8 +46,10 @@ public class WriterService {
                 )
                 .selectKey((k, v) -> {
                     if (v.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_RESPONSE)) {
+                        log.info("Got create response {}", v.getCreateFriendsDrinksResponse().getRequestId());
                         return v.getCreateFriendsDrinksResponse().getRequestId();
                     } else if (v.getEventType().equals(EventType.DELETE_FRIENDS_DRINKS_RESPONSE)) {
+                        log.info("Got delete response {}", v.getDeleteFriendsDrinksResponse().getRequestId());
                         return v.getDeleteFriendsDrinksResponse().getRequestId();
                     } else {
                         throw new RuntimeException(
@@ -55,8 +62,10 @@ public class WriterService {
                         v.getEventType().equals(EventType.DELETE_FRIENDS_DRINKS_REQUEST))
                 .selectKey(((k, v) -> {
                     if (v.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_REQUEST)) {
+                        log.info("Got create request {}", v.getCreateFriendsDrinksResponse().getRequestId());
                         return v.getCreateFriendsDrinksRequest().getRequestId();
                     } else if (v.getEventType().equals(EventType.DELETE_FRIENDS_DRINKS_REQUEST)) {
+                        log.info("Got delete request {}", v.getDeleteFriendsDrinksRequest().getRequestId());
                         return v.getDeleteFriendsDrinksRequest().getRequestId();
                     } else {
                         throw new RuntimeException(
@@ -67,6 +76,7 @@ public class WriterService {
         successfulResponses.join(requests,
                 (l, r) -> {
                     if (r.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_REQUEST)) {
+                        log.info("Got create join {}", r.getCreateFriendsDrinksResponse().getRequestId());
                         CreateFriendsDrinksRequest createFriendsDrinksRequest =
                                 r.getCreateFriendsDrinksRequest();
                         FriendsDrinksCreated friendsDrinksCreated = FriendsDrinksCreated
@@ -88,6 +98,7 @@ public class WriterService {
                                 .setFriendsDrinksCreated(friendsDrinksCreated)
                                 .build();
                     } else if (r.getEventType().equals(EventType.DELETE_FRIENDS_DRINKS_REQUEST)) {
+                        log.info("Got delete join {}", r.getDeleteFriendsDrinksRequest().getRequestId());
                         FriendsDrinksDeleted friendsDrinksDeleted = FriendsDrinksDeleted
                                 .newBuilder()
                                 .setFriendsDrinksId(
@@ -110,7 +121,15 @@ public class WriterService {
                 StreamJoined.with(Serdes.String(),
                         friendsDrinksAvro.apiFriendsDrinksSerde(),
                         friendsDrinksAvro.apiFriendsDrinksSerde()))
-                .selectKey((k, v) -> v.getFriendsDrinksCreated().getFriendsDrinksId())
+                .selectKey((k, v) -> {
+                    if (v.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.CREATED)) {
+                       return v.getFriendsDrinksCreated().getFriendsDrinksId();
+                    } else if (v.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.DELETED)) {
+                        return v.getFriendsDrinksDeleted().getFriendsDrinksId();
+                    } else {
+                        throw new RuntimeException(String.format("Unexpected event type %s", v.getEventType().toString()));
+                    }
+                })
                 .to(envProps.getProperty("friendsdrinks.topic.name"),
                         Produced.with(friendsDrinksAvro.friendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksEventSerde()));
 
@@ -150,6 +169,7 @@ public class WriterService {
         Topology topology = writerService.buildTopology(envProps, friendsDrinksAvro);
         Properties streamProps = writerService.buildStreamsProperties(envProps);
         KafkaStreams kafkaStreams = new KafkaStreams(topology, streamProps);
+        log.info("Starting WriterService application...");
 
         final CountDownLatch latch = new CountDownLatch(1);
         Runtime.getRuntime().addShutdownHook(new Thread("streams-shutdown-hook") {
