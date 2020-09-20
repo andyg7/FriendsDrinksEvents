@@ -39,7 +39,9 @@ public class RequestService {
         KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> decoratedFriendsDrinksEvents =
                 friendsDrinksEvents.leftJoin(currentFriendsDrinks,
                         (l, r) -> {
-                            if (l.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.DELETED)) {
+                            if (l.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.CREATED)) {
+                               return l;
+                            } else if (l.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.DELETED)) {
                                 return andrewgrant.friendsdrinks.avro.FriendsDrinksEvent
                                         .newBuilder(r)
                                         .setFriendsDrinks(FriendsDrinks
@@ -47,7 +49,7 @@ public class RequestService {
                                                 .build())
                                         .build();
                             } else {
-                                return l;
+                                throw new RuntimeException(String.format("Unknown event type %s", l.getEventType().toString()));
                             }
                         },
                         Joined.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksEventSerde(), avro.friendsDrinksEventSerde()));

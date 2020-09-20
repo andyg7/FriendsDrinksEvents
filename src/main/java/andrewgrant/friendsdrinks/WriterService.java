@@ -102,18 +102,9 @@ public class WriterService {
                                 .build();
                     } else if (r.getEventType().equals(EventType.DELETE_FRIENDS_DRINKS_REQUEST)) {
                         log.info("Got delete join {}", r.getDeleteFriendsDrinksRequest().getRequestId());
-                        FriendsDrinks friendsDrinks = FriendsDrinks
-                                .newBuilder()
-                                .setFriendsDrinksId(
-                                        andrewgrant.friendsdrinks.avro.FriendsDrinksId
-                                                .newBuilder()
-                                                .setId(r.getDeleteFriendsDrinksRequest().getFriendsDrinksId().getId())
-                                                .build())
-                                .build();
                         return andrewgrant.friendsdrinks.avro.FriendsDrinksEvent
                                 .newBuilder()
                                 .setEventType(andrewgrant.friendsdrinks.avro.EventType.DELETED)
-                                .setFriendsDrinks(friendsDrinks)
                                 .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
                                         .newBuilder()
                                         .setId(r.getCreateFriendsDrinksRequest().getFriendsDrinksId().getId())
