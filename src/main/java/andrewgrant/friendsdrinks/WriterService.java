@@ -102,7 +102,7 @@ public class WriterService {
                                 .setEventType(andrewgrant.friendsdrinks.avro.EventType.DELETED)
                                 .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
                                         .newBuilder()
-                                        .setId(r.getCreateFriendsDrinksRequest().getFriendsDrinksId().getId())
+                                        .setId(r.getDeleteFriendsDrinksRequest().getFriendsDrinksId().getId())
                                         .build())
                                 .build();
                     } else {
