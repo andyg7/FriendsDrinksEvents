@@ -2,6 +2,7 @@ package andrewgrant.friendsdrinks;
 
 import static andrewgrant.friendsdrinks.env.Properties.load;
 
+import javafx.util.Pair;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -14,7 +15,7 @@ import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
 import andrewgrant.friendsdrinks.api.avro.*;
-import andrewgrant.friendsdrinks.avro.CreatedFriendsDrinks;
+import andrewgrant.friendsdrinks.avro.FriendsDrinksAdmin;
 
 /**
  * Main FriendsDrinks service.
@@ -36,37 +37,33 @@ public class RequestService {
                 builder.table(envProps.getProperty("currFriendsdrinks.topic.name"),
                         Consumed.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksEventSerde()));
 
-        KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> decoratedFriendsDrinksEvents =
+        KStream<String, andrewgrant.friendsdrinks.avro.EventType> decoratedFriendsDrinksEvents =
                 friendsDrinksEvents.leftJoin(currentFriendsDrinks,
                         (l, r) -> {
                             if (l.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.CREATED)) {
-                               return l;
+                                return new AdminAndEventType(l.getCreatedFriendsDrinks().getAdminUserId(), andrewgrant.friendsdrinks.avro.EventType.CREATED);
                             } else if (l.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.DELETED)) {
-                                return andrewgrant.friendsdrinks.avro.FriendsDrinksEvent
-                                        .newBuilder(r)
-                                        .setCreatedFriendsDrinks(CreatedFriendsDrinks
-                                                .newBuilder(r.getCreatedFriendsDrinks())
-                                                .build())
-                                        .build();
+                                return new AdminAndEventType(l.getCreatedFriendsDrinks().getAdminUserId(), andrewgrant.friendsdrinks.avro.EventType.CREATED);
                             } else {
                                 throw new RuntimeException(String.format("Unknown event type %s", l.getEventType().toString()));
                             }
                         },
-                        Joined.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksEventSerde(), avro.friendsDrinksEventSerde()));
+                        Joined.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksEventSerde(), avro.friendsDrinksEventSerde()))
+                        .selectKey(((key, value) -> value.getAdminUserId()))
+                        .mapValues(value -> value.getEventType());
 
 
         KTable<String, Long> friendsDrinksCount = decoratedFriendsDrinksEvents
-                .selectKey((key, value) -> value.getCreatedFriendsDrinks().getAdminUserId())
                 .groupByKey(Grouped.with(Serdes.String(), avro.friendsDrinksEventSerde()))
                 .aggregate(
                         () -> 0L,
                         (aggKey, newValue, aggValue) -> {
-                            if (newValue.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.DELETED)) {
+                            if (newValue.equals(andrewgrant.friendsdrinks.avro.EventType.DELETED)) {
                                 return aggValue - 1;
-                            } else if (newValue.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.CREATED)) {
+                            } else if (newValue.equals(andrewgrant.friendsdrinks.avro.EventType.CREATED)) {
                                 return aggValue + 1;
                             } else {
-                                throw new RuntimeException(String.format("Unknown event type %s", newValue.getEventType().toString()));
+                                throw new RuntimeException(String.format("Unknown event type %s", newValue.toString()));
                             }
                         },
                         Materialized.with(Serdes.String(), Serdes.Long())
