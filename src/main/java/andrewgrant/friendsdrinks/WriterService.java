@@ -18,8 +18,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
 import andrewgrant.friendsdrinks.api.avro.*;
-import andrewgrant.friendsdrinks.avro.FriendsDrinksCreated;
-import andrewgrant.friendsdrinks.avro.FriendsDrinksDeleted;
+import andrewgrant.friendsdrinks.avro.FriendsDrinks;
 
 /**
  * Owns writing to non-API topics.
@@ -79,7 +78,7 @@ public class WriterService {
                         log.info("Got create join {}", r.getCreateFriendsDrinksRequest().getRequestId());
                         CreateFriendsDrinksRequest createFriendsDrinksRequest =
                                 r.getCreateFriendsDrinksRequest();
-                        FriendsDrinksCreated friendsDrinksCreated = FriendsDrinksCreated
+                        FriendsDrinks friendsDrinks = FriendsDrinks
                                 .newBuilder()
                                 .setAdminUserId(createFriendsDrinksRequest.getAdminUserId())
                                 .setName(createFriendsDrinksRequest.getName())
@@ -95,11 +94,15 @@ public class WriterService {
                                 .build();
                         return andrewgrant.friendsdrinks.avro.FriendsDrinksEvent.newBuilder()
                                 .setEventType(andrewgrant.friendsdrinks.avro.EventType.CREATED)
-                                .setFriendsDrinksCreated(friendsDrinksCreated)
+                                .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
+                                        .newBuilder()
+                                        .setId(r.getCreateFriendsDrinksRequest().getFriendsDrinksId().getId())
+                                        .build())
+                                .setFriendsDrinks(friendsDrinks)
                                 .build();
                     } else if (r.getEventType().equals(EventType.DELETE_FRIENDS_DRINKS_REQUEST)) {
                         log.info("Got delete join {}", r.getDeleteFriendsDrinksRequest().getRequestId());
-                        FriendsDrinksDeleted friendsDrinksDeleted = FriendsDrinksDeleted
+                        FriendsDrinks friendsDrinks = FriendsDrinks
                                 .newBuilder()
                                 .setFriendsDrinksId(
                                         andrewgrant.friendsdrinks.avro.FriendsDrinksId
@@ -110,7 +113,11 @@ public class WriterService {
                         return andrewgrant.friendsdrinks.avro.FriendsDrinksEvent
                                 .newBuilder()
                                 .setEventType(andrewgrant.friendsdrinks.avro.EventType.DELETED)
-                                .setFriendsDrinksDeleted(friendsDrinksDeleted)
+                                .setFriendsDrinks(friendsDrinks)
+                                .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
+                                        .newBuilder()
+                                        .setId(r.getCreateFriendsDrinksRequest().getFriendsDrinksId().getId())
+                                        .build())
                                 .build();
                     } else {
                         throw new RuntimeException(
@@ -121,15 +128,7 @@ public class WriterService {
                 StreamJoined.with(Serdes.String(),
                         friendsDrinksAvro.apiFriendsDrinksSerde(),
                         friendsDrinksAvro.apiFriendsDrinksSerde()))
-                .selectKey((k, v) -> {
-                    if (v.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.CREATED)) {
-                       return v.getFriendsDrinksCreated().getFriendsDrinksId();
-                    } else if (v.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.DELETED)) {
-                        return v.getFriendsDrinksDeleted().getFriendsDrinksId();
-                    } else {
-                        throw new RuntimeException(String.format("Unexpected event type %s", v.getEventType().toString()));
-                    }
-                })
+                .selectKey((k, v) -> v.getFriendsDrinksId())
                 .to(envProps.getProperty("friendsdrinks.topic.name"),
                         Produced.with(friendsDrinksAvro.friendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksEventSerde()));
 

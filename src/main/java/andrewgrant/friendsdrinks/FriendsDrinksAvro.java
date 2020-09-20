@@ -1,6 +1,5 @@
 package andrewgrant.friendsdrinks;
 
-import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serializer;
 
 import java.util.HashMap;
@@ -94,30 +93,8 @@ public class FriendsDrinksAvro {
         return serde.serializer();
     }
 
-    public Deserializer<andrewgrant.friendsdrinks.api.avro.FriendsDrinksId> apiFriendsDrinksIdDeserializer() {
-        return apiFriendsDrinksIdSerde().deserializer();
-    }
-
-    public Deserializer<andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent> apiFriendsDrinksDeserializer() {
-        SpecificAvroSerde<andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent> serde = apiFriendsDrinksSerde();
-        return serde.deserializer();
-    }
-
     public SpecificAvroSerde<andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> friendsDrinksEventSerde() {
         SpecificAvroSerde<andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> serde;
-        if (registryClient != null) {
-            serde = new SpecificAvroSerde<>(registryClient);
-        } else {
-            serde = new SpecificAvroSerde<>();
-        }
-        Map<String, String> config = new HashMap<>();
-        config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, registryUrl);
-        serde.configure(config, false);
-        return serde;
-    }
-
-    public SpecificAvroSerde<andrewgrant.friendsdrinks.avro.FriendsDrinksCreated> friendsDrinksCreatedSerde() {
-        SpecificAvroSerde<andrewgrant.friendsdrinks.avro.FriendsDrinksCreated> serde;
         if (registryClient != null) {
             serde = new SpecificAvroSerde<>(registryClient);
         } else {

@@ -14,7 +14,7 @@ import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
 import andrewgrant.friendsdrinks.api.avro.*;
-import andrewgrant.friendsdrinks.avro.FriendsDrinksCreated;
+import andrewgrant.friendsdrinks.avro.FriendsDrinks;
 
 /**
  * Main FriendsDrinks service.
@@ -23,29 +23,39 @@ public class RequestService {
 
     public Topology buildTopology(Properties envProps, FriendsDrinksAvro avro) {
         StreamsBuilder builder = new StreamsBuilder();
-        final String friendsDrinksApiTopicName = envProps.getProperty("friendsdrinks_api.topic.name");
 
+        final String friendsDrinksApiTopicName = envProps.getProperty("friendsdrinks_api.topic.name");
         KStream<FriendsDrinksId, FriendsDrinksEvent> apiEvents = builder.stream(friendsDrinksApiTopicName,
                 Consumed.with(avro.apiFriendsDrinksIdSerde(), avro.apiFriendsDrinksSerde()));
 
-        KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksCreated> currentFriendsDrinks =
-                builder.stream(
-                        envProps.getProperty("currFriendsdrinks.topic.name"),
-                        Consumed.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksEventSerde()))
-                        .mapValues((value -> {
-                            // Handle tombstones.
-                            if (value == null) {
-                                return null;
-                            } else if (value.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.CREATED)) {
-                                return value.getFriendsDrinksCreated();
-                            } else {
-                                throw new RuntimeException(String.format("Unexpected event type %s", value.getEventType().toString()));
-                            }
-                        }));
+        KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent>
+                friendsDrinksEvents = builder.stream(envProps.getProperty("friendsdrinks.topic.name"),
+                Consumed.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksEventSerde()));
 
-        KTable<String, Long> friendsDrinksCount = currentFriendsDrinks
-                .selectKey((key, value) -> value.getAdminUserId())
-                .groupByKey(Grouped.with(Serdes.String(), avro.friendsDrinksCreatedSerde()))
+        KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> currentFriendsDrinks =
+                builder.table(envProps.getProperty("currFriendsdrinks.topic.name"),
+                        Consumed.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksEventSerde()));
+
+        KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> decoratedFriendsDrinksEvents =
+                friendsDrinksEvents.leftJoin(currentFriendsDrinks,
+                        (l, r) -> {
+                            if (l.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.DELETED)) {
+                                return andrewgrant.friendsdrinks.avro.FriendsDrinksEvent
+                                        .newBuilder(r)
+                                        .setFriendsDrinks(FriendsDrinks
+                                                .newBuilder(r.getFriendsDrinks())
+                                                .build())
+                                        .build();
+                            } else {
+                                return l;
+                            }
+                        },
+                        Joined.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksEventSerde(), avro.friendsDrinksEventSerde()));
+
+
+        KTable<String, Long> friendsDrinksCount = decoratedFriendsDrinksEvents
+                .selectKey((key, value) -> value.getFriendsDrinks().getAdminUserId())
+                .groupByKey(Grouped.with(Serdes.String(), avro.friendsDrinksEventSerde()))
                 .aggregate(
                         () -> 0L,
                         (aggKey, newValue, aggValue) -> {
