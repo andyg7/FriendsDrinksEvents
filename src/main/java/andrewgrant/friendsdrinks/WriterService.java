@@ -62,7 +62,7 @@ public class WriterService {
                         v.getEventType().equals(EventType.DELETE_FRIENDS_DRINKS_REQUEST))
                 .selectKey(((k, v) -> {
                     if (v.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_REQUEST)) {
-                        log.info("Got create request {}", v.getCreateFriendsDrinksResponse().getRequestId());
+                        log.info("Got create request {}", v.getCreateFriendsDrinksRequest().getRequestId());
                         return v.getCreateFriendsDrinksRequest().getRequestId();
                     } else if (v.getEventType().equals(EventType.DELETE_FRIENDS_DRINKS_REQUEST)) {
                         log.info("Got delete request {}", v.getDeleteFriendsDrinksRequest().getRequestId());
@@ -76,7 +76,7 @@ public class WriterService {
         successfulResponses.join(requests,
                 (l, r) -> {
                     if (r.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_REQUEST)) {
-                        log.info("Got create join {}", r.getCreateFriendsDrinksResponse().getRequestId());
+                        log.info("Got create join {}", r.getCreateFriendsDrinksRequest().getRequestId());
                         CreateFriendsDrinksRequest createFriendsDrinksRequest =
                                 r.getCreateFriendsDrinksRequest();
                         FriendsDrinksCreated friendsDrinksCreated = FriendsDrinksCreated
