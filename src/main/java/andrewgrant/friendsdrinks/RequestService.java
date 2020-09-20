@@ -43,20 +43,23 @@ public class RequestService {
                                         l.getCreatedFriendsDrinks().getAdminUserId(),
                                         andrewgrant.friendsdrinks.avro.EventType.CREATED);
                             } else if (l.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.DELETED)) {
-                                return new AdminAndEventType(
-                                        r.getCreatedFriendsDrinks().getAdminUserId(),
-                                        andrewgrant.friendsdrinks.avro.EventType.DELETED);
+                                if (r != null) {
+                                    return new AdminAndEventType(
+                                            r.getCreatedFriendsDrinks().getAdminUserId(),
+                                            andrewgrant.friendsdrinks.avro.EventType.DELETED);
+                                } else {
+                                    return null;
+                                }
                             } else {
                                 throw new RuntimeException(String.format("Unknown event type %s", l.getEventType().toString()));
                             }
                         },
                         Joined.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksEventSerde(), avro.friendsDrinksEventSerde()))
+                        .filter(((key, value) -> value != null))
                         .selectKey(((key, value) -> value.getAdminUserId()))
                         .mapValues(value -> value.getEventType().name());
 
-
-        KTable<String, Long> friendsDrinksCount = adminAndEventType
-                .groupByKey(Grouped.with(Serdes.String(), Serdes.String()))
+        KTable<String, Long> friendsDrinksCount = adminAndEventType.groupByKey(Grouped.with(Serdes.String(), Serdes.String()))
                 .aggregate(
                         () -> 0L,
                         (aggKey, newValue, aggValue) -> {
