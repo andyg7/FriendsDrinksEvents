@@ -32,13 +32,15 @@ public class RequestService {
                 builder.stream(
                         envProps.getProperty("currFriendsdrinks.topic.name"),
                         Consumed.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksEventSerde()))
-                .mapValues((value -> {
-                   if (value.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.CREATED)) {
-                       return value.getFriendsDrinksCreated();
-                   } else {
-                       throw new RuntimeException(String.format("Unexpected event type %s", value.getEventType().toString()));
-                   }
-                }));
+                        .mapValues((value -> {
+                            if (value == null) {
+                                return null;
+                            } else if (value.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.CREATED)) {
+                                return value.getFriendsDrinksCreated();
+                            } else {
+                                throw new RuntimeException(String.format("Unexpected event type %s", value.getEventType().toString()));
+                            }
+                        }));
 
         KTable<String, Long> friendsDrinksCount = currentFriendsDrinks
                 .selectKey((key, value) -> value.getAdminUserId())
