@@ -44,8 +44,8 @@ public class RequestService {
                                         andrewgrant.friendsdrinks.avro.EventType.CREATED);
                             } else if (l.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.DELETED)) {
                                 return new AdminAndEventType(
-                                        l.getCreatedFriendsDrinks().getAdminUserId(),
-                                        andrewgrant.friendsdrinks.avro.EventType.CREATED);
+                                        r.getCreatedFriendsDrinks().getAdminUserId(),
+                                        andrewgrant.friendsdrinks.avro.EventType.DELETED);
                             } else {
                                 throw new RuntimeException(String.format("Unknown event type %s", l.getEventType().toString()));
                             }
