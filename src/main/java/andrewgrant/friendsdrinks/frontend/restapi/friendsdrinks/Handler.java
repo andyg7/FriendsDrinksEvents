@@ -107,7 +107,7 @@ public class Handler {
     }
 
     @DELETE
-    @Path("/{friendsDrinkdsId}")
+    @Path("/{friendsDrinksId}")
     @Produces(MediaType.APPLICATION_JSON)
     public DeleteFriendsDrinksResponseBean deleteFriendsDrinks(@PathParam("friendsDrinksId") String friendsDrinksId) throws InterruptedException {
         final String topicName = envProps.getProperty("friendsdrinks_api.topic.name");
@@ -153,7 +153,7 @@ public class Handler {
     }
 
     @PUT
-    @Path("/{friendsDrinkdsId}")
+    @Path("/{friendsDrinksId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public CreateFriendsDrinksResponseBean createFriendsDrinks(@PathParam("friendsDrinksId") String friendsDrinksId,
