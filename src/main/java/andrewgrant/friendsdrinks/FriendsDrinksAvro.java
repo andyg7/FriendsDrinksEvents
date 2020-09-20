@@ -132,30 +132,4 @@ public class FriendsDrinksAvro {
         return serde;
     }
 
-
-    public SpecificAvroSerde<andrewgrant.friendsdrinks.avro.EventType> friendsDrinksEventTypeSerde() {
-        SpecificAvroSerde<andrewgrant.friendsdrinks.avro.EventType> serde;
-        if (registryClient != null) {
-            serde = new SpecificAvroSerde<>(registryClient);
-        } else {
-            serde = new SpecificAvroSerde<>();
-        }
-        Map<String, String> config = new HashMap<>();
-        config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, registryUrl);
-        serde.configure(config, true);
-        return serde;
-    }
-
-    public SpecificAvroSerde<andrewgrant.friendsdrinks.avro.FriendsDrinksAdmin> friendsDrinksAdminSerde() {
-        SpecificAvroSerde<andrewgrant.friendsdrinks.avro.FriendsDrinksAdmin> serde;
-        if (registryClient != null) {
-            serde = new SpecificAvroSerde<>(registryClient);
-        } else {
-            serde = new SpecificAvroSerde<>();
-        }
-        Map<String, String> config = new HashMap<>();
-        config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, registryUrl);
-        serde.configure(config, true);
-        return serde;
-    }
 }

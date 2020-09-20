@@ -2,7 +2,6 @@ package andrewgrant.friendsdrinks;
 
 import static andrewgrant.friendsdrinks.env.Properties.load;
 
-import javafx.util.Pair;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -15,7 +14,6 @@ import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
 import andrewgrant.friendsdrinks.api.avro.*;
-import andrewgrant.friendsdrinks.avro.FriendsDrinksAdmin;
 
 /**
  * Main FriendsDrinks service.
@@ -37,33 +35,37 @@ public class RequestService {
                 builder.table(envProps.getProperty("currFriendsdrinks.topic.name"),
                         Consumed.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksEventSerde()));
 
-        KStream<String, andrewgrant.friendsdrinks.avro.EventType> decoratedFriendsDrinksEvents =
+        KStream<String, String> adminAndEventType =
                 friendsDrinksEvents.leftJoin(currentFriendsDrinks,
                         (l, r) -> {
                             if (l.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.CREATED)) {
-                                return new AdminAndEventType(l.getCreatedFriendsDrinks().getAdminUserId(), andrewgrant.friendsdrinks.avro.EventType.CREATED);
+                                return new AdminAndEventType(
+                                        l.getCreatedFriendsDrinks().getAdminUserId(),
+                                        andrewgrant.friendsdrinks.avro.EventType.CREATED);
                             } else if (l.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.DELETED)) {
-                                return new AdminAndEventType(l.getCreatedFriendsDrinks().getAdminUserId(), andrewgrant.friendsdrinks.avro.EventType.CREATED);
+                                return new AdminAndEventType(
+                                        l.getCreatedFriendsDrinks().getAdminUserId(),
+                                        andrewgrant.friendsdrinks.avro.EventType.CREATED);
                             } else {
                                 throw new RuntimeException(String.format("Unknown event type %s", l.getEventType().toString()));
                             }
                         },
                         Joined.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksEventSerde(), avro.friendsDrinksEventSerde()))
                         .selectKey(((key, value) -> value.getAdminUserId()))
-                        .mapValues(value -> value.getEventType());
+                        .mapValues(value -> value.getEventType().name());
 
 
-        KTable<String, Long> friendsDrinksCount = decoratedFriendsDrinksEvents
-                .groupByKey(Grouped.with(Serdes.String(), avro.friendsDrinksEventSerde()))
+        KTable<String, Long> friendsDrinksCount = adminAndEventType
+                .groupByKey(Grouped.with(Serdes.String(), Serdes.String()))
                 .aggregate(
                         () -> 0L,
                         (aggKey, newValue, aggValue) -> {
-                            if (newValue.equals(andrewgrant.friendsdrinks.avro.EventType.DELETED)) {
+                            if (newValue.equals("DELETED")) {
                                 return aggValue - 1;
-                            } else if (newValue.equals(andrewgrant.friendsdrinks.avro.EventType.CREATED)) {
+                            } else if (newValue.equals("CREATED")) {
                                 return aggValue + 1;
                             } else {
-                                throw new RuntimeException(String.format("Unknown event type %s", newValue.toString()));
+                                throw new RuntimeException(String.format("Unknown event type %s", newValue));
                             }
                         },
                         Materialized.with(Serdes.String(), Serdes.Long())
