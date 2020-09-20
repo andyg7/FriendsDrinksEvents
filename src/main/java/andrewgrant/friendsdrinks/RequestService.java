@@ -10,10 +10,12 @@ import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.*;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
 import andrewgrant.friendsdrinks.api.avro.*;
+import andrewgrant.friendsdrinks.avro.FriendsDrinksList;
 
 /**
  * Main FriendsDrinks service.
@@ -35,43 +37,52 @@ public class RequestService {
                 builder.table(envProps.getProperty("currFriendsdrinks.topic.name"),
                         Consumed.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksEventSerde()));
 
-        KStream<String, String> adminAndEventType =
-                friendsDrinksEvents.leftJoin(currentFriendsDrinks,
-                        (l, r) -> {
-                            if (l.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.CREATED)) {
-                                return new AdminAndEventType(
-                                        l.getCreatedFriendsDrinks().getAdminUserId(),
-                                        andrewgrant.friendsdrinks.avro.EventType.CREATED);
-                            } else if (l.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.DELETED)) {
-                                if (r != null) {
-                                    return new AdminAndEventType(
-                                            r.getCreatedFriendsDrinks().getAdminUserId(),
-                                            andrewgrant.friendsdrinks.avro.EventType.DELETED);
-                                } else {
-                                    return null;
-                                }
-                            } else {
-                                throw new RuntimeException(String.format("Unknown event type %s", l.getEventType().toString()));
-                            }
-                        },
-                        Joined.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksEventSerde(), avro.friendsDrinksEventSerde()))
-                        .filter(((key, value) -> value != null))
-                        .selectKey(((key, value) -> value.getAdminUserId()))
-                        .mapValues(value -> value.getEventType().name());
+        KStream<String, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> adminAndEventType = friendsDrinksEvents.leftJoin(currentFriendsDrinks,
+                (l, r) -> {
+                    if (l.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.CREATED)) {
+                        return new AdminAndEvent(
+                                l.getCreatedFriendsDrinks().getAdminUserId(), l);
+                    } else if (l.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.DELETED)) {
+                        if (r != null) {
+                            return new AdminAndEvent(r.getCreatedFriendsDrinks().getAdminUserId(), l);
+                        } else {
+                            return null;
+                        }
+                    } else {
+                        throw new RuntimeException(String.format("Unknown event type %s", l.getEventType().toString()));
+                    }
+                },
+                Joined.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksEventSerde(), avro.friendsDrinksEventSerde()))
+                .filter(((key, value) -> value != null))
+                .selectKey(((key, value) -> value.getAdminUserId()))
+                .mapValues(value -> value.getFriendsDrinksEvent());
 
-        KTable<String, Long> friendsDrinksCount = adminAndEventType.groupByKey(Grouped.with(Serdes.String(), Serdes.String()))
+        KTable<String, FriendsDrinksList> friendsDrinksCount = adminAndEventType
+                .groupByKey(Grouped.with(Serdes.String(), avro.friendsDrinksEventSerde()))
                 .aggregate(
-                        () -> 0L,
+                        () -> FriendsDrinksList.newBuilder().build(),
                         (aggKey, newValue, aggValue) -> {
-                            if (newValue.equals("DELETED")) {
-                                return aggValue - 1;
-                            } else if (newValue.equals("CREATED")) {
-                                return aggValue + 1;
+                            if (newValue.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.CREATED)) {
+                                List<String> ids = aggValue.getIds();
+                                if (!ids.contains(newValue.getFriendsDrinksId().getId())) {
+                                    ids.add(newValue.getFriendsDrinksId().getId());
+                                }
+                                return FriendsDrinksList
+                                        .newBuilder()
+                                        .setIds(ids)
+                                        .build();
+                            } else if (newValue.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.DELETED)) {
+                                List<String> ids = aggValue.getIds();
+                                ids.remove(newValue.getFriendsDrinksId().getId());
+                                return FriendsDrinksList
+                                        .newBuilder()
+                                        .setIds(ids)
+                                        .build();
                             } else {
                                 throw new RuntimeException(String.format("Unknown event type %s", newValue));
                             }
                         },
-                        Materialized.with(Serdes.String(), Serdes.Long())
+                        Materialized.with(Serdes.String(), avro.friendsDrinksListSerde())
                 );
 
         KStream<String, CreateFriendsDrinksRequest> createRequests = apiEvents
@@ -80,11 +91,11 @@ public class RequestService {
                 .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getCreateFriendsDrinksRequest());
 
         KStream<FriendsDrinksId, FriendsDrinksEvent> createResponses = createRequests.leftJoin(friendsDrinksCount,
-                (request, count) -> {
+                (request, friendsDrinksList) -> {
                     CreateFriendsDrinksResponse.Builder response = CreateFriendsDrinksResponse.newBuilder();
                     response.setRequestId(request.getRequestId());
                     response.setFriendsDrinksId(request.getFriendsDrinksId());
-                    if (count == null || count < 5) {
+                    if (friendsDrinksList == null || friendsDrinksList.getIds().size() < 5) {
                         response.setResult(Result.SUCCESS);
                     } else {
                         response.setResult(Result.FAIL);
@@ -95,7 +106,7 @@ public class RequestService {
                             .build();
                     return event;
                 },
-                Joined.with(Serdes.String(), avro.createFriendsDrinksRequestSerde(), Serdes.Long()))
+                Joined.with(Serdes.String(), avro.createFriendsDrinksRequestSerde(), avro.friendsDrinksListSerde()))
                 .selectKey(((key, value) -> value.getCreateFriendsDrinksResponse().getFriendsDrinksId()));
 
         createResponses.to(friendsDrinksApiTopicName,

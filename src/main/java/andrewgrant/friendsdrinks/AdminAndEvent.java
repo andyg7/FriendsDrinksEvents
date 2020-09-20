@@ -1,15 +1,15 @@
 package andrewgrant.friendsdrinks;
 
-import andrewgrant.friendsdrinks.avro.EventType;
+import andrewgrant.friendsdrinks.avro.FriendsDrinksEvent;
 
 /**
  * Holds admin user ID and event type.
  */
-public class AdminAndEventType {
+public class AdminAndEvent {
     private String adminUserId;
-    private EventType eventType;
+    private FriendsDrinksEvent eventType;
 
-    public AdminAndEventType(String adminUserId, EventType eventType) {
+    public AdminAndEvent(String adminUserId, FriendsDrinksEvent eventType) {
         this.adminUserId = adminUserId;
         this.eventType = eventType;
     }
@@ -22,11 +22,11 @@ public class AdminAndEventType {
         this.adminUserId = adminUserId;
     }
 
-    public EventType getEventType() {
+    public FriendsDrinksEvent getFriendsDrinksEvent() {
         return eventType;
     }
 
-    public void setEventType(EventType eventType) {
+    public void setFriendsDrinksEvent(FriendsDrinksEvent eventType) {
         this.eventType = eventType;
     }
 

@@ -132,4 +132,17 @@ public class FriendsDrinksAvro {
         return serde;
     }
 
+    public SpecificAvroSerde<andrewgrant.friendsdrinks.avro.FriendsDrinksList> friendsDrinksListSerde() {
+        SpecificAvroSerde<andrewgrant.friendsdrinks.avro.FriendsDrinksList> serde;
+        if (registryClient != null) {
+            serde = new SpecificAvroSerde<>(registryClient);
+        } else {
+            serde = new SpecificAvroSerde<>();
+        }
+        Map<String, String> config = new HashMap<>();
+        config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, registryUrl);
+        serde.configure(config, true);
+        return serde;
+    }
+
 }
