@@ -61,10 +61,12 @@ public class RequestService {
                 .aggregate(
                         () -> 0L,
                         (aggKey, newValue, aggValue) -> {
-                            if (newValue == null) {
+                            if (newValue.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.DELETED)) {
                                 return aggValue - 1;
-                            } else {
+                            } else if (newValue.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.CREATED)) {
                                 return aggValue + 1;
+                            } else {
+                                throw new RuntimeException(String.format("Unknown event type %s", newValue.getEventType().toString()));
                             }
                         },
                         Materialized.with(Serdes.String(), Serdes.Long())
