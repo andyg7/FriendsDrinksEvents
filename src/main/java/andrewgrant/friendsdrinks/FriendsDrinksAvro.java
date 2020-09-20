@@ -8,6 +8,7 @@ import java.util.Map;
 
 import andrewgrant.friendsdrinks.api.avro.CreateFriendsDrinksRequest;
 import andrewgrant.friendsdrinks.api.avro.CreateFriendsDrinksResponse;
+import andrewgrant.friendsdrinks.api.avro.DeleteFriendsDrinksResponse;
 
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
@@ -46,6 +47,19 @@ public class FriendsDrinksAvro {
 
     public SpecificAvroSerde<CreateFriendsDrinksResponse> createFriendsDrinksResponseSerde() {
         SpecificAvroSerde<CreateFriendsDrinksResponse> serde;
+        if (registryClient != null) {
+            serde = new SpecificAvroSerde<>(registryClient);
+        } else {
+            serde = new SpecificAvroSerde<>();
+        }
+        Map<String, String> config = new HashMap<>();
+        config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, registryUrl);
+        serde.configure(config, false);
+        return serde;
+    }
+
+    public SpecificAvroSerde<DeleteFriendsDrinksResponse> deleteFriendsDrinksResponseSerde() {
+        SpecificAvroSerde<DeleteFriendsDrinksResponse> serde;
         if (registryClient != null) {
             serde = new SpecificAvroSerde<>(registryClient);
         } else {

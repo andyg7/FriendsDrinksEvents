@@ -1,7 +1,6 @@
 package andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks;
 
-import static andrewgrant.friendsdrinks.frontend.restapi.StreamsService.CREATE_FRIENDSDRINKS_RESPONSES_STORE;
-import static andrewgrant.friendsdrinks.frontend.restapi.StreamsService.FRIENDSDRINKS_STORE;
+import static andrewgrant.friendsdrinks.frontend.restapi.StreamsService.*;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -107,15 +106,61 @@ public class Handler {
         return response;
     }
 
-    @POST
-    @Path("/")
+    @DELETE
+    @Path("/{friendsDrinkdsId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public DeleteFriendsDrinksResponseBean deleteFriendsDrinks(@PathParam("friendsDrinksId") String friendsDrinksId) throws InterruptedException {
+        final String topicName = envProps.getProperty("friendsdrinks_api.topic.name");
+        String requestId = UUID.randomUUID().toString();
+        DeleteFriendsDrinksRequest deleteFriendsDrinksRequest = DeleteFriendsDrinksRequest
+                .newBuilder()
+                .setFriendsDrinksId(FriendsDrinksId.newBuilder().setId(friendsDrinksId).build())
+                .setRequestId(requestId)
+                .build();
+
+        FriendsDrinksEvent friendsDrinksEvent = FriendsDrinksEvent
+                .newBuilder()
+                .setEventType(EventType.DELETE_FRIENDS_DRINKS_REQUEST)
+                .setDeleteFriendsDrinksRequest(deleteFriendsDrinksRequest)
+                .build();
+        ProducerRecord<FriendsDrinksId, FriendsDrinksEvent> producerRecord =
+                new ProducerRecord<>(topicName, friendsDrinksEvent.getDeleteFriendsDrinksRequest().getFriendsDrinksId(),
+                        friendsDrinksEvent);
+        kafkaProducer.send(producerRecord);
+
+        ReadOnlyKeyValueStore<String, DeleteFriendsDrinksResponse> kv =
+                kafkaStreams.store(DELETE_FRIENDSDRINKS_RESPONSES_STORE, QueryableStoreTypes.keyValueStore());
+
+        DeleteFriendsDrinksResponse deleteFriendsDrinksResponse = kv.get(requestId);
+        if (deleteFriendsDrinksResponse == null) {
+            for (int i = 0; i < 10; i++) {
+                if (deleteFriendsDrinksResponse != null) {
+                    break;
+                }
+                // Give the backend some more time.
+                Thread.sleep(100);
+                deleteFriendsDrinksResponse = kv.get(requestId);
+            }
+        }
+        if (deleteFriendsDrinksResponse == null) {
+            throw new RuntimeException(String.format(
+                    "Failed to get DeleteFriendsDrinksResponse for request id %s", requestId));
+        }
+        DeleteFriendsDrinksResponseBean responseBean = new DeleteFriendsDrinksResponseBean();
+        Result result = deleteFriendsDrinksResponse.getResult();
+        responseBean.setResult(result.toString());
+        return responseBean;
+    }
+
+    @PUT
+    @Path("/{friendsDrinkdsId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public CreateFriendsDrinksResponseBean createFriendsDrinks(CreateFriendsDrinksRequestBean requestBean)
+    public CreateFriendsDrinksResponseBean createFriendsDrinks(@PathParam("friendsDrinksId") String friendsDrinksId,
+                                                               CreateFriendsDrinksRequestBean requestBean)
             throws InterruptedException, ExecutionException {
         final String topicName = envProps.getProperty("friendsdrinks_api.topic.name");
         String requestId = UUID.randomUUID().toString();
-        String friendsDrinksId = UUID.randomUUID().toString();
         String scheduleType;
         if (requestBean.getScheduleType() != null) {
             scheduleType = requestBean.getScheduleType();
@@ -154,7 +199,7 @@ public class Handler {
                     break;
                 }
                 // Give the backend some more time.
-                Thread.sleep(500);
+                Thread.sleep(100);
                 createFriendsDrinksResponse = kv.get(requestId);
             }
         }
