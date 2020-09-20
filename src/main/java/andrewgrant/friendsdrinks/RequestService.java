@@ -33,6 +33,7 @@ public class RequestService {
                         envProps.getProperty("currFriendsdrinks.topic.name"),
                         Consumed.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksEventSerde()))
                         .mapValues((value -> {
+                            // Handle tombstones.
                             if (value == null) {
                                 return null;
                             } else if (value.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.CREATED)) {
