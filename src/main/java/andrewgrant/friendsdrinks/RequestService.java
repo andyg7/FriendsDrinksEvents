@@ -37,11 +37,10 @@ public class RequestService {
                 builder.table(envProps.getProperty("currFriendsdrinks.topic.name"),
                         Consumed.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksEventSerde()));
 
-        KStream<String, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> adminAndEventType = friendsDrinksEvents.leftJoin(currentFriendsDrinks,
+        KStream<String, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> adminAndEvent = friendsDrinksEvents.leftJoin(currentFriendsDrinks,
                 (l, r) -> {
                     if (l.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.CREATED)) {
-                        return new AdminAndEvent(
-                                l.getCreatedFriendsDrinks().getAdminUserId(), l);
+                        return new AdminAndEvent(l.getCreatedFriendsDrinks().getAdminUserId(), l);
                     } else if (l.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.DELETED)) {
                         if (r != null) {
                             return new AdminAndEvent(r.getCreatedFriendsDrinks().getAdminUserId(), l);
@@ -57,7 +56,7 @@ public class RequestService {
                 .selectKey(((key, value) -> value.getAdminUserId()))
                 .mapValues(value -> value.getFriendsDrinksEvent());
 
-        KTable<String, FriendsDrinksList> friendsDrinksCount = adminAndEventType
+        KTable<String, FriendsDrinksList> friendsDrinksCount = adminAndEvent
                 .groupByKey(Grouped.with(Serdes.String(), avro.friendsDrinksEventSerde()))
                 .aggregate(
                         () -> FriendsDrinksList.newBuilder().build(),
