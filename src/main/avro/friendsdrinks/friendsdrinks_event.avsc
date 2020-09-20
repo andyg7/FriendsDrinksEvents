@@ -5,6 +5,6 @@
   "fields": [
       {"name": "eventType", "type": {"type": "enum", "name": "EventType", "symbols": ["CREATED", "DELETED"]}},
       {"name": "friendsDrinksId", "type": "FriendsDrinksId"},
-      {"name": "friendsDrinks", "type": ["null", "FriendsDrinks"], "default": null}
+      {"name": "createdFriendsDrinks", "type": ["null", "CreatedFriendsDrinks"], "default": null}
   ]
 }

@@ -18,7 +18,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
 import andrewgrant.friendsdrinks.api.avro.*;
-import andrewgrant.friendsdrinks.avro.FriendsDrinks;
+import andrewgrant.friendsdrinks.avro.CreatedFriendsDrinks;
 
 /**
  * Owns writing to non-API topics.
@@ -78,7 +78,7 @@ public class WriterService {
                         log.info("Got create join {}", r.getCreateFriendsDrinksRequest().getRequestId());
                         CreateFriendsDrinksRequest createFriendsDrinksRequest =
                                 r.getCreateFriendsDrinksRequest();
-                        FriendsDrinks friendsDrinks = FriendsDrinks
+                        CreatedFriendsDrinks friendsDrinks = CreatedFriendsDrinks
                                 .newBuilder()
                                 .setAdminUserId(createFriendsDrinksRequest.getAdminUserId())
                                 .setName(createFriendsDrinksRequest.getName())
@@ -86,11 +86,6 @@ public class WriterService {
                                 .setScheduleType(andrewgrant.friendsdrinks.avro.ScheduleType.valueOf(
                                         createFriendsDrinksRequest.getScheduleType().toString()))
                                 .setCronSchedule(createFriendsDrinksRequest.getCronSchedule())
-                                .setFriendsDrinksId(
-                                        andrewgrant.friendsdrinks.avro.FriendsDrinksId
-                                                .newBuilder()
-                                                .setId(r.getCreateFriendsDrinksRequest().getFriendsDrinksId().getId())
-                                                .build())
                                 .build();
                         return andrewgrant.friendsdrinks.avro.FriendsDrinksEvent.newBuilder()
                                 .setEventType(andrewgrant.friendsdrinks.avro.EventType.CREATED)
@@ -98,7 +93,7 @@ public class WriterService {
                                         .newBuilder()
                                         .setId(r.getCreateFriendsDrinksRequest().getFriendsDrinksId().getId())
                                         .build())
-                                .setFriendsDrinks(friendsDrinks)
+                                .setCreatedFriendsDrinks(friendsDrinks)
                                 .build();
                     } else if (r.getEventType().equals(EventType.DELETE_FRIENDS_DRINKS_REQUEST)) {
                         log.info("Got delete join {}", r.getDeleteFriendsDrinksRequest().getRequestId());

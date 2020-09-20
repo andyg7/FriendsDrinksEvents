@@ -14,7 +14,7 @@ import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
 import andrewgrant.friendsdrinks.api.avro.*;
-import andrewgrant.friendsdrinks.avro.FriendsDrinks;
+import andrewgrant.friendsdrinks.avro.CreatedFriendsDrinks;
 
 /**
  * Main FriendsDrinks service.
@@ -44,8 +44,8 @@ public class RequestService {
                             } else if (l.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.DELETED)) {
                                 return andrewgrant.friendsdrinks.avro.FriendsDrinksEvent
                                         .newBuilder(r)
-                                        .setFriendsDrinks(FriendsDrinks
-                                                .newBuilder(r.getFriendsDrinks())
+                                        .setCreatedFriendsDrinks(CreatedFriendsDrinks
+                                                .newBuilder(r.getCreatedFriendsDrinks())
                                                 .build())
                                         .build();
                             } else {
@@ -56,7 +56,7 @@ public class RequestService {
 
 
         KTable<String, Long> friendsDrinksCount = decoratedFriendsDrinksEvents
-                .selectKey((key, value) -> value.getFriendsDrinks().getAdminUserId())
+                .selectKey((key, value) -> value.getCreatedFriendsDrinks().getAdminUserId())
                 .groupByKey(Grouped.with(Serdes.String(), avro.friendsDrinksEventSerde()))
                 .aggregate(
                         () -> 0L,

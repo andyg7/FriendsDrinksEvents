@@ -20,7 +20,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
 import andrewgrant.friendsdrinks.api.avro.*;
-import andrewgrant.friendsdrinks.avro.FriendsDrinks;
+import andrewgrant.friendsdrinks.avro.CreatedFriendsDrinks;
 
 /**
  * Implements frontend REST API friendsdrinks path.
@@ -48,10 +48,10 @@ public class Handler {
         List<FriendsDrinksBean> friendsDrinksList = new ArrayList<>();
         while (allKvs.hasNext()) {
             KeyValue<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> keyValue = allKvs.next();
-            FriendsDrinks friendsDrinks = keyValue.value.getFriendsDrinks();
+            CreatedFriendsDrinks friendsDrinks = keyValue.value.getCreatedFriendsDrinks();
             FriendsDrinksBean friendsDrinksBean = new FriendsDrinksBean();
             friendsDrinksBean.setAdminUserId(friendsDrinks.getAdminUserId());
-            friendsDrinksBean.setId(friendsDrinks.getFriendsDrinksId().getId());
+            friendsDrinksBean.setId(keyValue.value.getFriendsDrinksId().getId());
             friendsDrinksBean.setName(friendsDrinks.getName());
             if (friendsDrinks.getUserIds() != null) {
                 friendsDrinksBean.setUserIds(friendsDrinks.getUserIds().stream().collect(Collectors.toList()));
@@ -77,11 +77,11 @@ public class Handler {
         List<FriendsDrinksBean> memberFriendsDrinks = new ArrayList<>();
         while (allKvs.hasNext()) {
             KeyValue<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> keyValue = allKvs.next();
-            FriendsDrinks friendsDrinks = keyValue.value.getFriendsDrinks();
+            CreatedFriendsDrinks friendsDrinks = keyValue.value.getCreatedFriendsDrinks();
             if (friendsDrinks.getAdminUserId().equals(userId)) {
                 FriendsDrinksBean friendsDrinksBean = new FriendsDrinksBean();
                 friendsDrinksBean.setAdminUserId(friendsDrinks.getAdminUserId());
-                friendsDrinksBean.setId(friendsDrinks.getFriendsDrinksId().getId());
+                friendsDrinksBean.setId(keyValue.value.getFriendsDrinksId().getId());
                 friendsDrinksBean.setName(friendsDrinks.getName());
                 if (friendsDrinks.getUserIds() != null) {
                     friendsDrinksBean.setUserIds(friendsDrinks.getUserIds().stream().collect(Collectors.toList()));
@@ -92,7 +92,7 @@ public class Handler {
                 if (userIds.contains(userId)) {
                     FriendsDrinksBean friendsDrinksBean = new FriendsDrinksBean();
                     friendsDrinksBean.setAdminUserId(friendsDrinks.getAdminUserId());
-                    friendsDrinksBean.setId(friendsDrinks.getFriendsDrinksId().getId());
+                    friendsDrinksBean.setId(keyValue.value.getFriendsDrinksId().getId());
                     friendsDrinksBean.setName(friendsDrinks.getName());
                     friendsDrinksBean.setUserIds(friendsDrinks.getUserIds().stream().collect(Collectors.toList()));
                     memberFriendsDrinks.add(friendsDrinksBean);
