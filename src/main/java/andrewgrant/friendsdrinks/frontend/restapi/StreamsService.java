@@ -44,9 +44,9 @@ public class StreamsService {
         final String frontendPrivate2TopicName = envProps.getProperty("frontendPrivate2.topic.name");
         buildDeleteFriendsDrinksResponsesStore(builder, apiEvents, friendsDrinksAvro, frontendPrivate2TopicName);;
 
-        final String currFriendsDrinksTopicName = envProps.getProperty("currFriendsdrinks.topic.name");
-        builder.table(currFriendsDrinksTopicName,
-                Consumed.with(friendsDrinksAvro.friendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksEventSerde()),
+        final String friendsDrinksStateTopicName = envProps.getProperty("friendsdrinks_state.topic.name");
+        builder.table(friendsDrinksStateTopicName,
+                Consumed.with(friendsDrinksAvro.friendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksStateSerde()),
                 Materialized.as(FRIENDSDRINKS_STORE));
 
         return builder.build();

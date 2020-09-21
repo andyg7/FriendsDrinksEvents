@@ -13,12 +13,15 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
 import andrewgrant.friendsdrinks.api.avro.*;
 import andrewgrant.friendsdrinks.avro.CreatedFriendsDrinks;
+import andrewgrant.friendsdrinks.avro.FriendsDrinksState;
 
 /**
  * Owns writing to non-API topics.
@@ -29,15 +32,13 @@ public class WriterService {
 
 
     public Topology buildTopology(Properties envProps,
-                                  FriendsDrinksAvro friendsDrinksAvro) {
+                                  FriendsDrinksAvro avro) {
         StreamsBuilder builder = new StreamsBuilder();
-        String friendsDrinksApiTopicName = envProps.getProperty("friendsdrinks_api.topic.name");
 
-        KStream<FriendsDrinksId, FriendsDrinksEvent> friendsDrinksEventKStream = builder.stream(friendsDrinksApiTopicName,
-                Consumed.with(friendsDrinksAvro.apiFriendsDrinksIdSerde(), friendsDrinksAvro.apiFriendsDrinksSerde()));
+        KStream<FriendsDrinksId, FriendsDrinksEvent> apiEvents = builder.stream(envProps.getProperty("friendsdrinks_api.topic.name"),
+                Consumed.with(avro.apiFriendsDrinksIdSerde(), avro.apiFriendsDrinksSerde()));
 
-        KStream<String, FriendsDrinksEvent> successfulResponses = friendsDrinksEventKStream
-                .filter((friendsDrinksId, friendsDrinksEvent) ->
+        KStream<String, FriendsDrinksEvent> successApiResponses = apiEvents.filter((friendsDrinksId, friendsDrinksEvent) ->
                         (friendsDrinksEvent.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_RESPONSE) &&
                                 friendsDrinksEvent.getCreateFriendsDrinksResponse().getResult().equals(Result.SUCCESS)) ||
                                 (friendsDrinksEvent.getEventType().equals(EventType.DELETE_FRIENDS_DRINKS_RESPONSE) &&
@@ -56,7 +57,7 @@ public class WriterService {
                     }
                 });
 
-        KStream<String, FriendsDrinksEvent> requests = friendsDrinksEventKStream
+        KStream<String, FriendsDrinksEvent> apiRequests = apiEvents
                 .filter((k, v) -> v.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_REQUEST) ||
                         v.getEventType().equals(EventType.DELETE_FRIENDS_DRINKS_REQUEST))
                 .selectKey(((k, v) -> {
@@ -72,7 +73,7 @@ public class WriterService {
                     }
                 }));
 
-        successfulResponses.join(requests,
+        successApiResponses.join(apiRequests,
                 (l, r) -> {
                     if (r.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_REQUEST)) {
                         log.info("Got create join {}", r.getCreateFriendsDrinksRequest().getRequestId());
@@ -112,29 +113,52 @@ public class WriterService {
                 },
                 JoinWindows.of(Duration.ofSeconds(30)),
                 StreamJoined.with(Serdes.String(),
-                        friendsDrinksAvro.apiFriendsDrinksSerde(),
-                        friendsDrinksAvro.apiFriendsDrinksSerde()))
+                        avro.apiFriendsDrinksSerde(),
+                        avro.apiFriendsDrinksSerde()))
                 .selectKey((k, v) -> v.getFriendsDrinksId())
-                .to(envProps.getProperty("friendsdrinks.topic.name"),
-                        Produced.with(friendsDrinksAvro.friendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksEventSerde()));
+                .to(envProps.getProperty("friendsdrinks_event.topic.name"),
+                        Produced.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksEventSerde()));
 
 
-        KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> friendsDrinksEventStream =
-                builder.stream(envProps.getProperty("friendsdrinks.topic.name"),
-                        Consumed.with(friendsDrinksAvro.friendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksEventSerde()))
-                        .mapValues((value -> {
-                            if (value.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.CREATED)) {
-                                return value;
-                            } else if (value.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.DELETED)) {
-                                // Tombstone deleted friends drinks.
-                                return null;
-                            } else {
-                                throw new RuntimeException(String.format("Unknown event type %s", value.getEventType().toString()));
-                            }
-                        }));
+        KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState> friendsDrinksEventStream =
+                builder.stream(envProps.getProperty("friendsdrinks_event.topic.name"),
+                        Consumed.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksEventSerde()))
+                        .groupByKey(Grouped.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksEventSerde()))
+                        .aggregate(
+                                () -> FriendsDrinksState.newBuilder().build(),
+                                (aggKey, newValue, aggValue) -> {
+                                    if (newValue.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.CREATED)) {
+                                        CreatedFriendsDrinks createdFriendsDrinks = newValue.getCreatedFriendsDrinks();
+                                        List<String> userIds;
+                                        if (createdFriendsDrinks.getUserIds() != null) {
+                                            userIds = createdFriendsDrinks.getUserIds().stream().collect(Collectors.toList());
+                                        } else {
+                                            userIds = new ArrayList<>();
+                                        }
+                                        return FriendsDrinksState
+                                                .newBuilder(aggValue)
+                                                .setName(createdFriendsDrinks.getName())
+                                                .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
+                                                        .newBuilder()
+                                                        .setId(newValue.getFriendsDrinksId().getId())
+                                                        .build())
+                                                .setUserIds(userIds)
+                                                .setAdminUserId(createdFriendsDrinks.getAdminUserId())
+                                                .setCronSchedule(createdFriendsDrinks.getCronSchedule())
+                                                .setScheduleType(createdFriendsDrinks.getScheduleType())
+                                                .build();
+                                    } else if (newValue.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.DELETED)) {
+                                        return null;
+                                    } else {
+                                        throw new RuntimeException(String.format("Unexpected event type %s", newValue.getEventType().name()));
+                                    }
+                                },
+                                Materialized.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksStateSerde())
 
-        friendsDrinksEventStream.to(envProps.getProperty("currFriendsdrinks.topic.name"),
-                Produced.with(friendsDrinksAvro.friendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksEventSerde()));
+                        ).toStream();
+
+        friendsDrinksEventStream.to(envProps.getProperty("friendsdrinks_state.topic.name"),
+                Produced.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksStateSerde()));
 
         return builder.build();
     }

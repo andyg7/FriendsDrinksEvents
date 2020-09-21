@@ -20,7 +20,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
 import andrewgrant.friendsdrinks.api.avro.*;
-import andrewgrant.friendsdrinks.avro.CreatedFriendsDrinks;
+import andrewgrant.friendsdrinks.avro.FriendsDrinksState;
 
 /**
  * Implements frontend REST API friendsdrinks path.
@@ -42,19 +42,19 @@ public class Handler {
     @Path("/")
     @Produces(MediaType.APPLICATION_JSON)
     public GetAllFriendsDrinksResponseBean getAllFriendsDrinks() {
-        ReadOnlyKeyValueStore<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> kv =
+        ReadOnlyKeyValueStore<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState> kv =
                 kafkaStreams.store(FRIENDSDRINKS_STORE, QueryableStoreTypes.keyValueStore());
-        KeyValueIterator<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> allKvs = kv.all();
+        KeyValueIterator<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState> allKvs = kv.all();
         List<FriendsDrinksBean> friendsDrinksList = new ArrayList<>();
         while (allKvs.hasNext()) {
-            KeyValue<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> keyValue = allKvs.next();
-            CreatedFriendsDrinks friendsDrinks = keyValue.value.getCreatedFriendsDrinks();
+            KeyValue<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState> keyValue = allKvs.next();
+            FriendsDrinksState friendsDrinksState = keyValue.value;
             FriendsDrinksBean friendsDrinksBean = new FriendsDrinksBean();
-            friendsDrinksBean.setAdminUserId(friendsDrinks.getAdminUserId());
+            friendsDrinksBean.setAdminUserId(friendsDrinksState.getAdminUserId());
             friendsDrinksBean.setId(keyValue.value.getFriendsDrinksId().getId());
-            friendsDrinksBean.setName(friendsDrinks.getName());
-            if (friendsDrinks.getUserIds() != null) {
-                friendsDrinksBean.setUserIds(friendsDrinks.getUserIds().stream().collect(Collectors.toList()));
+            friendsDrinksBean.setName(friendsDrinksState.getName());
+            if (friendsDrinksState.getUserIds() != null) {
+                friendsDrinksBean.setUserIds(friendsDrinksState.getUserIds().stream().collect(Collectors.toList()));
             }
             friendsDrinksList.add(friendsDrinksBean);
         }
@@ -68,33 +68,33 @@ public class Handler {
     @Path("/{userId}")
     @Produces(MediaType.APPLICATION_JSON)
     public GetFriendsDrinksResponseBean getFriendsDrink(@PathParam("userId") final String userId) {
-        ReadOnlyKeyValueStore<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> kv =
+        ReadOnlyKeyValueStore<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState> kv =
                 kafkaStreams.store(FRIENDSDRINKS_STORE, QueryableStoreTypes.keyValueStore());
         // TODO(andyg7): this is not efficient! We should have a state store that
         // removes the need for a full scan but for now this is OK.
-        KeyValueIterator<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> allKvs = kv.all();
+        KeyValueIterator<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState> allKvs = kv.all();
         List<FriendsDrinksBean> adminFriendsDrinks = new ArrayList<>();
         List<FriendsDrinksBean> memberFriendsDrinks = new ArrayList<>();
         while (allKvs.hasNext()) {
-            KeyValue<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> keyValue = allKvs.next();
-            CreatedFriendsDrinks friendsDrinks = keyValue.value.getCreatedFriendsDrinks();
-            if (friendsDrinks.getAdminUserId().equals(userId)) {
+            KeyValue<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState> keyValue = allKvs.next();
+            FriendsDrinksState friendsDrinksState = keyValue.value;
+            if (friendsDrinksState.getAdminUserId().equals(userId)) {
                 FriendsDrinksBean friendsDrinksBean = new FriendsDrinksBean();
-                friendsDrinksBean.setAdminUserId(friendsDrinks.getAdminUserId());
+                friendsDrinksBean.setAdminUserId(friendsDrinksState.getAdminUserId());
                 friendsDrinksBean.setId(keyValue.value.getFriendsDrinksId().getId());
-                friendsDrinksBean.setName(friendsDrinks.getName());
-                if (friendsDrinks.getUserIds() != null) {
-                    friendsDrinksBean.setUserIds(friendsDrinks.getUserIds().stream().collect(Collectors.toList()));
+                friendsDrinksBean.setName(friendsDrinksState.getName());
+                if (friendsDrinksState.getUserIds() != null) {
+                    friendsDrinksBean.setUserIds(friendsDrinksState.getUserIds().stream().collect(Collectors.toList()));
                 }
                 adminFriendsDrinks.add(friendsDrinksBean);
             } else {
-                List<String> userIds = friendsDrinks.getUserIds();
+                List<String> userIds = friendsDrinksState.getUserIds();
                 if (userIds.contains(userId)) {
                     FriendsDrinksBean friendsDrinksBean = new FriendsDrinksBean();
-                    friendsDrinksBean.setAdminUserId(friendsDrinks.getAdminUserId());
+                    friendsDrinksBean.setAdminUserId(friendsDrinksState.getAdminUserId());
                     friendsDrinksBean.setId(keyValue.value.getFriendsDrinksId().getId());
-                    friendsDrinksBean.setName(friendsDrinks.getName());
-                    friendsDrinksBean.setUserIds(friendsDrinks.getUserIds().stream().collect(Collectors.toList()));
+                    friendsDrinksBean.setName(friendsDrinksState.getName());
+                    friendsDrinksBean.setUserIds(friendsDrinksState.getUserIds().stream().collect(Collectors.toList()));
                     memberFriendsDrinks.add(friendsDrinksBean);
                 }
             }

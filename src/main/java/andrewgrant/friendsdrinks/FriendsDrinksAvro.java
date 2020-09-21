@@ -93,6 +93,19 @@ public class FriendsDrinksAvro {
         return serde.serializer();
     }
 
+    public SpecificAvroSerde<andrewgrant.friendsdrinks.avro.FriendsDrinksState> friendsDrinksStateSerde() {
+        SpecificAvroSerde<andrewgrant.friendsdrinks.avro.FriendsDrinksState> serde;
+        if (registryClient != null) {
+            serde = new SpecificAvroSerde<>(registryClient);
+        } else {
+            serde = new SpecificAvroSerde<>();
+        }
+        Map<String, String> config = new HashMap<>();
+        config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, registryUrl);
+        serde.configure(config, false);
+        return serde;
+    }
+
     public SpecificAvroSerde<andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> friendsDrinksEventSerde() {
         SpecificAvroSerde<andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> serde;
         if (registryClient != null) {
@@ -141,7 +154,7 @@ public class FriendsDrinksAvro {
         }
         Map<String, String> config = new HashMap<>();
         config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, registryUrl);
-        serde.configure(config, true);
+        serde.configure(config, false);
         return serde;
     }
 

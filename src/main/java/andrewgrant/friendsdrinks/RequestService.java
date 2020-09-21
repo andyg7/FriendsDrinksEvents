@@ -31,21 +31,21 @@ public class RequestService {
                 Consumed.with(avro.apiFriendsDrinksIdSerde(), avro.apiFriendsDrinksSerde()));
 
         KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent>
-                friendsDrinksEvents = builder.stream(envProps.getProperty("friendsdrinks.topic.name"),
+                friendsDrinksEvents = builder.stream(envProps.getProperty("friendsdrinks_event.topic.name"),
                 Consumed.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksEventSerde()));
 
-        KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> currentFriendsDrinks =
-                builder.table(envProps.getProperty("currFriendsdrinks.topic.name"),
-                        Consumed.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksEventSerde()));
+        KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState> friendsDrinksState =
+                builder.table(envProps.getProperty("friendsdrinks_state.topic.name"),
+                        Consumed.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksStateSerde()));
 
         KStream<String, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> friendsDrinksEventKStreamKeyedByAdminUserId =
-                friendsDrinksEvents.leftJoin(currentFriendsDrinks,
+                friendsDrinksEvents.leftJoin(friendsDrinksState,
                         (l, r) -> {
                             if (l.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.CREATED)) {
                                 return new AdminAndEvent(l.getCreatedFriendsDrinks().getAdminUserId(), l);
                             } else if (l.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.DELETED)) {
                                 if (r != null) {
-                                    return new AdminAndEvent(r.getCreatedFriendsDrinks().getAdminUserId(), l);
+                                    return new AdminAndEvent(r.getAdminUserId(), l);
                                 } else {
                                     return null;
                                 }
@@ -53,7 +53,7 @@ public class RequestService {
                                 throw new RuntimeException(String.format("Unknown event type %s", l.getEventType().toString()));
                             }
                         },
-                        Joined.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksEventSerde(), avro.friendsDrinksEventSerde()))
+                        Joined.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksEventSerde(), avro.friendsDrinksStateSerde()))
                         .filter(((key, value) -> value != null))
                         .selectKey(((key, value) -> value.getAdminUserId()))
                         .mapValues(value -> value.getFriendsDrinksEvent());
