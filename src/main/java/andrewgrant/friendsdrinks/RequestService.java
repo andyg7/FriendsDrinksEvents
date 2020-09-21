@@ -77,7 +77,12 @@ public class RequestService {
                                         .build();
                             } else if (newValue.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.DELETED)) {
                                 List<String> ids = aggValue.getIds();
-                                ids.remove(newValue.getFriendsDrinksId().getId());
+                                for (int i = 0; i < ids.size(); i++) {
+                                    if (ids.get(i).equals(newValue.getFriendsDrinksId().getId())) {
+                                        ids.remove(i);
+                                        break;
+                                    }
+                                }
                                 return FriendsDrinksList
                                         .newBuilder()
                                         .setIds(ids)
