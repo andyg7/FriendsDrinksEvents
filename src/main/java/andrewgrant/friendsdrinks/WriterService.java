@@ -120,7 +120,7 @@ public class WriterService {
                         Produced.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksEventSerde()));
 
 
-        KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState> friendsDrinksEventStream =
+        KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState> friendsDrinksStateStream =
                 builder.stream(envProps.getProperty("friendsdrinks_event.topic.name"),
                         Consumed.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksEventSerde()))
                         .groupByKey(Grouped.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksEventSerde()))
@@ -157,7 +157,7 @@ public class WriterService {
 
                         ).toStream();
 
-        friendsDrinksEventStream.to(envProps.getProperty("friendsdrinks_state.topic.name"),
+        friendsDrinksStateStream.to(envProps.getProperty("friendsdrinks_state.topic.name"),
                 Produced.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksStateSerde()));
 
         return builder.build();
