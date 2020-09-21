@@ -10,6 +10,7 @@ import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.*;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
@@ -60,7 +61,10 @@ public class RequestService {
         KTable<String, FriendsDrinksList> friendsDrinksCount = friendsDrinksEventKStreamKeyedByAdminUserId
                 .groupByKey(Grouped.with(Serdes.String(), avro.friendsDrinksEventSerde()))
                 .aggregate(
-                        () -> FriendsDrinksList.newBuilder().build(),
+                        () -> FriendsDrinksList
+                                .newBuilder()
+                                .setIds(new ArrayList<>())
+                                .build(),
                         (aggKey, newValue, aggValue) -> {
                             if (newValue.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.CREATED)) {
                                 List<String> ids = aggValue.getIds();
