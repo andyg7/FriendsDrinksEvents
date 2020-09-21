@@ -37,26 +37,27 @@ public class RequestService {
                 builder.table(envProps.getProperty("currFriendsdrinks.topic.name"),
                         Consumed.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksEventSerde()));
 
-        KStream<String, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> adminAndEvent = friendsDrinksEvents.leftJoin(currentFriendsDrinks,
-                (l, r) -> {
-                    if (l.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.CREATED)) {
-                        return new AdminAndEvent(l.getCreatedFriendsDrinks().getAdminUserId(), l);
-                    } else if (l.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.DELETED)) {
-                        if (r != null) {
-                            return new AdminAndEvent(r.getCreatedFriendsDrinks().getAdminUserId(), l);
-                        } else {
-                            return null;
-                        }
-                    } else {
-                        throw new RuntimeException(String.format("Unknown event type %s", l.getEventType().toString()));
-                    }
-                },
-                Joined.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksEventSerde(), avro.friendsDrinksEventSerde()))
-                .filter(((key, value) -> value != null))
-                .selectKey(((key, value) -> value.getAdminUserId()))
-                .mapValues(value -> value.getFriendsDrinksEvent());
+        KStream<String, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> friendsDrinksEventKStreamKeyedByAdminUserId =
+                friendsDrinksEvents.leftJoin(currentFriendsDrinks,
+                        (l, r) -> {
+                            if (l.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.CREATED)) {
+                                return new AdminAndEvent(l.getCreatedFriendsDrinks().getAdminUserId(), l);
+                            } else if (l.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.DELETED)) {
+                                if (r != null) {
+                                    return new AdminAndEvent(r.getCreatedFriendsDrinks().getAdminUserId(), l);
+                                } else {
+                                    return null;
+                                }
+                            } else {
+                                throw new RuntimeException(String.format("Unknown event type %s", l.getEventType().toString()));
+                            }
+                        },
+                        Joined.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksEventSerde(), avro.friendsDrinksEventSerde()))
+                        .filter(((key, value) -> value != null))
+                        .selectKey(((key, value) -> value.getAdminUserId()))
+                        .mapValues(value -> value.getFriendsDrinksEvent());
 
-        KTable<String, FriendsDrinksList> friendsDrinksCount = adminAndEvent
+        KTable<String, FriendsDrinksList> friendsDrinksCount = friendsDrinksEventKStreamKeyedByAdminUserId
                 .groupByKey(Grouped.with(Serdes.String(), avro.friendsDrinksEventSerde()))
                 .aggregate(
                         () -> FriendsDrinksList.newBuilder().build(),
