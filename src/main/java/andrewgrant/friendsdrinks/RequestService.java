@@ -7,6 +7,8 @@ import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.*;
 import org.apache.kafka.streams.state.KeyValueStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Properties;
@@ -18,6 +20,8 @@ import andrewgrant.friendsdrinks.api.avro.*;
  * Main FriendsDrinks service.
  */
 public class RequestService {
+
+    private static final Logger log = LoggerFactory.getLogger(WriterService.class);
 
     public Topology buildTopology(Properties envProps, FriendsDrinksAvro avro) {
         StreamsBuilder builder = new StreamsBuilder();
@@ -32,9 +36,22 @@ public class RequestService {
                         .groupBy(
                                 (key, value) -> KeyValue.pair(value.getAdminUserId(), value),
                                 Grouped.with(Serdes.String(), avro.friendsDrinksStateSerde()))
-                        .count(Materialized.<String, Long, KeyValueStore<Bytes, byte[]>>as("internal_request_service_friendsdrinks_count_tracker")
-                                .withKeySerde(Serdes.String())
-                                .withValueSerde(Serdes.Long()));
+                        .aggregate(
+                                () -> 0L,
+                                (aggKey, newValue, aggValue) -> {
+                                    Long newAggValue = aggValue + 1;
+                                    log.info("new value {}. New aggValue {}", newValue, newAggValue);
+                                    return newAggValue;
+                                },
+                                (aggKey, oldValue, aggValue) -> {
+                                    Long newAggValue = aggValue - 1;
+                                    log.info("old value {}. New aggValue {}", oldValue, newAggValue);
+                                    return newAggValue;
+                                },
+                                Materialized.<String, Long, KeyValueStore<Bytes, byte[]>>as("internal_request_service_friendsdrinks_count_tracker")
+                                        .withKeySerde(Serdes.String())
+                                        .withValueSerde(Serdes.Long())
+                        );
 
         KStream<String, CreateFriendsDrinksRequest> createRequests = apiEvents
                 .filter(((s, friendsDrinksEvent) -> friendsDrinksEvent.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_REQUEST)))
