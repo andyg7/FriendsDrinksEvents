@@ -3,11 +3,13 @@ package andrewgrant.friendsdrinks;
 import static andrewgrant.friendsdrinks.env.Properties.load;
 
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.*;
+import org.apache.kafka.streams.state.KeyValueStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,7 +31,6 @@ import andrewgrant.friendsdrinks.avro.FriendsDrinksState;
 public class WriterService {
 
     private static final Logger log = LoggerFactory.getLogger(WriterService.class);
-
 
     public Topology buildTopology(Properties envProps,
                                   FriendsDrinksAvro avro) {
@@ -153,8 +154,10 @@ public class WriterService {
                                         throw new RuntimeException(String.format("Unexpected event type %s", newValue.getEventType().name()));
                                     }
                                 },
-                                Materialized.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksStateSerde())
-
+                                Materialized.<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState, KeyValueStore<Bytes, byte[]>>
+                                        as("internal_writer_service_friendsdrinks_state_tracker")
+                                        .withKeySerde(avro.friendsDrinksIdSerde())
+                                        .withValueSerde(avro.friendsDrinksStateSerde())
                         ).toStream();
 
         friendsDrinksStateStream.to(envProps.getProperty("friendsdrinks_state.topic.name"),
