@@ -3,8 +3,10 @@ package andrewgrant.friendsdrinks;
 import static andrewgrant.friendsdrinks.env.Properties.load;
 
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.*;
+import org.apache.kafka.streams.state.KeyValueStore;
 
 import java.io.IOException;
 import java.util.Properties;
@@ -30,7 +32,9 @@ public class RequestService {
                         .groupBy(
                                 (key, value) -> KeyValue.pair(value.getAdminUserId(), value),
                                 Grouped.with(Serdes.String(), avro.friendsDrinksStateSerde()))
-                        .count();
+                        .count(Materialized.<String, Long, KeyValueStore<Bytes, byte[]>>as("internal_request_service_friendsdrinks_count_tracker")
+                                .withKeySerde(Serdes.String())
+                                .withValueSerde(Serdes.Long()));
 
         KStream<String, CreateFriendsDrinksRequest> createRequests = apiEvents
                 .filter(((s, friendsDrinksEvent) -> friendsDrinksEvent.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_REQUEST)))
