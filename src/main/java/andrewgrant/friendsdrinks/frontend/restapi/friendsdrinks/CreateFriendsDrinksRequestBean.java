@@ -5,14 +5,15 @@ import java.util.List;
 /**
  * DTO for CreateFriendsDrinks request.
  */
-public class UpsertFriendsDrinksRequestBean {
+public class CreateFriendsDrinksRequestBean {
     private String adminUserId;
     private List<String> userIds;
     private String scheduleType;
     private String cronSchedule;
     private String name;
 
-    public UpsertFriendsDrinksRequestBean() {
+    public CreateFriendsDrinksRequestBean() {
+
     }
 
     public String getAdminUserId() {

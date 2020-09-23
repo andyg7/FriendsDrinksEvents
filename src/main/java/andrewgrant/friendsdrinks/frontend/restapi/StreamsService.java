@@ -16,7 +16,7 @@ import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
  */
 public class StreamsService {
 
-    public static final String UPSERT_FRIENDSDRINKS_RESPONSES_STORE = "create-friendsdrinks-responses-store";
+    public static final String CREATE_FRIENDSDRINKS_RESPONSES_STORE = "create-friendsdrinks-responses-store";
     public static final String DELETE_FRIENDSDRINKS_RESPONSES_STORE = "delete-friendsdrinks-responses-store";
     public static final String FRIENDSDRINKS_STORE = "friendsdrinks-store";
     private KafkaStreams streams;
@@ -39,7 +39,7 @@ public class StreamsService {
                 builder.stream(apiTopicName,
                         Consumed.with(friendsDrinksAvro.apiFriendsDrinksIdSerde(), friendsDrinksAvro.apiFriendsDrinksSerde()));
         final String frontendPrivate1TopicName = envProps.getProperty("frontendPrivate1.topic.name");
-        buildUpsertFriendsDrinksResponsesStore(builder, apiEvents, friendsDrinksAvro, frontendPrivate1TopicName);;
+        buildCreateFriendsDrinksResponsesStore(builder, apiEvents, friendsDrinksAvro, frontendPrivate1TopicName);;
 
         final String frontendPrivate2TopicName = envProps.getProperty("frontendPrivate2.topic.name");
         buildDeleteFriendsDrinksResponsesStore(builder, apiEvents, friendsDrinksAvro, frontendPrivate2TopicName);;
@@ -52,23 +52,23 @@ public class StreamsService {
         return builder.build();
     }
 
-    private void buildUpsertFriendsDrinksResponsesStore(StreamsBuilder builder,
+    private void buildCreateFriendsDrinksResponsesStore(StreamsBuilder builder,
                                                         KStream<andrewgrant.friendsdrinks.api.avro.FriendsDrinksId,
                                                                 andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent> stream,
                                                         FriendsDrinksAvro avro,
                                                         String topicName) {
-        stream.filter(((key, value) -> value.getEventType().equals(andrewgrant.friendsdrinks.api.avro.EventType.UPSERT_FRIENDS_DRINKS_RESPONSE)))
-                .mapValues(value -> value.getUpsertFriendsDrinksResponse())
+        stream.filter(((key, value) -> value.getEventType().equals(andrewgrant.friendsdrinks.api.avro.EventType.CREATE_FRIENDS_DRINKS_RESPONSE)))
+                .mapValues(value -> value.getCreateFriendsDrinksResponse())
                 .selectKey((key, value) -> value.getRequestId())
-                .groupByKey(Grouped.with(Serdes.String(), avro.upsertFriendsDrinksResponseSerde()))
+                .groupByKey(Grouped.with(Serdes.String(), avro.createFriendsDrinksResponseSerde()))
                 .windowedBy(TimeWindows.of(Duration.ofSeconds(1)).advanceBy(Duration.ofMillis(10)))
                 .reduce((value1, value2) -> value1)
                 .toStream((key, value) -> key.key())
                 .to(topicName, Produced.with(Serdes.String(),
-                        avro.upsertFriendsDrinksResponseSerde()));
+                        avro.createFriendsDrinksResponseSerde()));
         builder.table(topicName,
-                Consumed.with(Serdes.String(), avro.upsertFriendsDrinksResponseSerde()),
-                Materialized.as(UPSERT_FRIENDSDRINKS_RESPONSES_STORE));
+                Consumed.with(Serdes.String(), avro.createFriendsDrinksResponseSerde()),
+                Materialized.as(CREATE_FRIENDSDRINKS_RESPONSES_STORE));
     }
 
     private void buildDeleteFriendsDrinksResponsesStore(StreamsBuilder builder,

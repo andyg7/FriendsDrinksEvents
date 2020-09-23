@@ -1,7 +1,7 @@
 {
   "namespace": "andrewgrant.friendsdrinks.avro",
   "type": "record",
-  "name": "UpsertedFriendsDrinks",
+  "name": "CreatedFriendsDrinks",
   "fields": [
       {"name": "adminUserId", "type": "string"},
       {"name": "name", "type": "string"},
