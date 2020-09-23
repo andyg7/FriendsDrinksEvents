@@ -15,6 +15,7 @@ import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
 import andrewgrant.friendsdrinks.api.avro.*;
+import andrewgrant.friendsdrinks.avro.FriendsDrinksState;
 
 /**
  * Main FriendsDrinks service.
@@ -26,14 +27,16 @@ public class RequestService {
     public Topology buildTopology(Properties envProps, FriendsDrinksAvro avro) {
         StreamsBuilder builder = new StreamsBuilder();
 
-        final String friendsDrinksApiTopicName = envProps.getProperty("friendsdrinks_api.topic.name");
-        KStream<FriendsDrinksId, FriendsDrinksEvent> apiEvents = builder.stream(friendsDrinksApiTopicName,
+        final String apiTopicName = envProps.getProperty("friendsdrinks_api.topic.name");
+        KStream<FriendsDrinksId, FriendsDrinksEvent> apiEvents = builder.stream(apiTopicName,
                 Consumed.with(avro.apiFriendsDrinksIdSerde(), avro.apiFriendsDrinksSerde()));
 
-        KTable<String, Long> friendsDrinksCount =
+        KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable =
                 builder.table(envProps.getProperty("friendsdrinks_state.topic.name"),
-                        Consumed.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksStateSerde()))
-                        .groupBy(
+                        Consumed.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksStateSerde()));
+
+        KTable<String, Long> friendsDrinksCount = friendsDrinksStateKTable
+                .groupBy(
                                 (key, value) -> KeyValue.pair(value.getAdminUserId(), value),
                                 Grouped.with(Serdes.String(), avro.friendsDrinksStateSerde()))
                         .aggregate(
@@ -77,9 +80,10 @@ public class RequestService {
                 Joined.with(Serdes.String(), avro.createFriendsDrinksRequestSerde(), Serdes.Long()))
                 .selectKey(((key, value) -> value.getCreateFriendsDrinksResponse().getFriendsDrinksId()));
 
-        createResponses.to(friendsDrinksApiTopicName,
+        createResponses.to(apiTopicName,
                 Produced.with(avro.apiFriendsDrinksIdSerde(), avro.apiFriendsDrinksSerde()));
 
+        // Deletes
         apiEvents.filter(((s, friendsDrinksEvent) ->
                 friendsDrinksEvent.getEventType().equals(EventType.DELETE_FRIENDS_DRINKS_REQUEST)))
                 .mapValues((friendsDrinksEvent) -> friendsDrinksEvent.getDeleteFriendsDrinksRequest())
@@ -91,8 +95,36 @@ public class RequestService {
                                 .setRequestId(request.getRequestId())
                                 .build())
                         .build())
-                .to(friendsDrinksApiTopicName,
+                .to(apiTopicName,
                         Produced.with(avro.apiFriendsDrinksIdSerde(), avro.apiFriendsDrinksSerde()));
+
+        // Updates
+        KStream<FriendsDrinksId, UpdateFriendsDrinksRequest> updateRequests = apiEvents
+                .filter(((s, friendsDrinksEvent) -> friendsDrinksEvent.getEventType().equals(EventType.UPDATE_FRIENDS_DRINKS_REQUEST)))
+                .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getUpdateFriendsDrinksRequest());
+        KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, UpdateFriendsDrinksRequest> updateRequestsKeyed =
+                updateRequests.selectKey(((key, value) -> andrewgrant.friendsdrinks.avro.FriendsDrinksId
+                        .newBuilder().setId(key.getId()).build()));
+        KStream<FriendsDrinksId, FriendsDrinksEvent> updateResponses = updateRequestsKeyed.leftJoin(friendsDrinksStateKTable,
+                (updateRequest, state) -> {
+                    if (state != null) {
+                        return FriendsDrinksEvent.newBuilder()
+                                .setEventType(EventType.UPDATE_FRIENDS_DRINKS_RESPONSE)
+                                .setUpdateFriendsDrinksResponse(
+                                        UpdateFriendsDrinksResponse.newBuilder().setResult(Result.SUCCESS).build())
+                                .build();
+                    } else {
+                        return FriendsDrinksEvent.newBuilder()
+                                .setEventType(EventType.UPDATE_FRIENDS_DRINKS_RESPONSE)
+                                .setUpdateFriendsDrinksResponse(
+                                        UpdateFriendsDrinksResponse.newBuilder().setResult(Result.FAIL).build())
+                                .build();
+                    }
+                },
+                Joined.with(avro.friendsDrinksIdSerde(), avro.updateFriendsDrinksRequestSerde(), avro.friendsDrinksStateSerde()))
+                .selectKey(((key, value) -> FriendsDrinksId.newBuilder().setId(key.getId()).build()));
+        updateResponses.to(apiTopicName,
+                Produced.with(avro.apiFriendsDrinksIdSerde(), avro.apiFriendsDrinksSerde()));
 
         return builder.build();
     }

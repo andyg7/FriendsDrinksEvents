@@ -156,11 +156,46 @@ public class Handler {
     @Path("/{friendsDrinksId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public CreateFriendsDrinksResponseBean createFriendsDrinks(@PathParam("friendsDrinksId") String friendsDrinksId,
-                                                               CreateFriendsDrinksRequestBean requestBean)
+    public UpdateFriendsDrinksResponseBean updateFriendsDrinks(@PathParam("friendsDrinksId") String friendsDrinksId,
+                                                               UpdateFriendsDrinksRequestBean requestBean)
+            throws ExecutionException, InterruptedException {
+        final String topicName = envProps.getProperty("friendsdrinks_api.topic.name");
+        String requestId = UUID.randomUUID().toString();
+        UpdateFriendsDrinksRequest updateFriendsDrinksRequest = UpdateFriendsDrinksRequest
+                .newBuilder()
+                .setFriendsDrinksId(FriendsDrinksId.newBuilder().setId(friendsDrinksId).build())
+                .setUserIds(requestBean.getUserIds().stream().collect(Collectors.toList()))
+                .setAdminUserId(requestBean.getAdminUserId())
+                .setScheduleType(ScheduleType.valueOf(requestBean.getScheduleType()))
+                .setCronSchedule(requestBean.getCronSchedule())
+                .setRequestId(requestId)
+                .setName(requestBean.getName())
+                .build();
+        FriendsDrinksEvent friendsDrinksEvent = FriendsDrinksEvent
+                .newBuilder()
+                .setEventType(EventType.UPDATE_FRIENDS_DRINKS_REQUEST)
+                .setUpdateFriendsDrinksRequest(updateFriendsDrinksRequest)
+                .build();
+
+        ProducerRecord<FriendsDrinksId, FriendsDrinksEvent> record =
+                new ProducerRecord<>(
+                        topicName,
+                        friendsDrinksEvent.getUpdateFriendsDrinksRequest().getFriendsDrinksId(),
+                        friendsDrinksEvent);
+        kafkaProducer.send(record).get();
+
+        return new UpdateFriendsDrinksResponseBean();
+    }
+
+
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public CreateFriendsDrinksResponseBean createFriendsDrinks(CreateFriendsDrinksRequestBean requestBean)
             throws InterruptedException, ExecutionException {
         final String topicName = envProps.getProperty("friendsdrinks_api.topic.name");
         String requestId = UUID.randomUUID().toString();
+        String friendsDrinksId = UUID.randomUUID().toString();
         String scheduleType;
         if (requestBean.getScheduleType() != null) {
             scheduleType = requestBean.getScheduleType();

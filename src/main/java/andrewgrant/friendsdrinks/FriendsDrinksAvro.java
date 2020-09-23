@@ -5,9 +5,7 @@ import org.apache.kafka.common.serialization.Serializer;
 import java.util.HashMap;
 import java.util.Map;
 
-import andrewgrant.friendsdrinks.api.avro.CreateFriendsDrinksRequest;
-import andrewgrant.friendsdrinks.api.avro.CreateFriendsDrinksResponse;
-import andrewgrant.friendsdrinks.api.avro.DeleteFriendsDrinksResponse;
+import andrewgrant.friendsdrinks.api.avro.*;
 
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
@@ -57,6 +55,31 @@ public class FriendsDrinksAvro {
         return serde;
     }
 
+    public SpecificAvroSerde<UpdateFriendsDrinksRequest> updateFriendsDrinksRequestSerde() {
+        SpecificAvroSerde<UpdateFriendsDrinksRequest> serde;
+        if (registryClient != null) {
+            serde = new SpecificAvroSerde<>(registryClient);
+        } else {
+            serde = new SpecificAvroSerde<>();
+        }
+        Map<String, String> config = new HashMap<>();
+        config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, registryUrl);
+        serde.configure(config, false);
+        return serde;
+    }
+
+    public SpecificAvroSerde<UpdateFriendsDrinksResponse> updateFriendsDrinksResponseSerde() {
+        SpecificAvroSerde<UpdateFriendsDrinksResponse> serde;
+        if (registryClient != null) {
+            serde = new SpecificAvroSerde<>(registryClient);
+        } else {
+            serde = new SpecificAvroSerde<>();
+        }
+        Map<String, String> config = new HashMap<>();
+        config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, registryUrl);
+        serde.configure(config, false);
+        return serde;
+    }
     public SpecificAvroSerde<DeleteFriendsDrinksResponse> deleteFriendsDrinksResponseSerde() {
         SpecificAvroSerde<DeleteFriendsDrinksResponse> serde;
         if (registryClient != null) {
