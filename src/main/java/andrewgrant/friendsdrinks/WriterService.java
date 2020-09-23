@@ -123,6 +123,9 @@ public class WriterService {
                         UpdateFriendsDrinksRequest updateFriendsDrinksRequest = r.getUpdateFriendsDrinksRequest();
                         UpdatedFriendsDrinks friendsDrinks = UpdatedFriendsDrinks
                                 .newBuilder()
+                                .setUpdateType(
+                                        andrewgrant.friendsdrinks.avro.UpdateType.valueOf(
+                                                updateFriendsDrinksRequest.getUpdateType().toString()))
                                 .setAdminUserId(updateFriendsDrinksRequest.getAdminUserId())
                                 .setName(updateFriendsDrinksRequest.getName())
                                 .setUserIds(updateFriendsDrinksRequest.getUserIds().stream().collect(Collectors.toList()))
@@ -196,43 +199,54 @@ public class WriterService {
                                         if (aggValue.getFriendsDrinksState() == null) {
                                             throw new RuntimeException(String.format("FriendsDrinksState is null for %s", aggKey));
                                         }
-                                        friendsDrinksStateBuilder = FriendsDrinksState.newBuilder(aggValue.getFriendsDrinksState());
+                                        andrewgrant.friendsdrinks.avro.UpdateType updateType = updatedFriendsDrinks.getUpdateType();
+                                        friendsDrinksStateBuilder = FriendsDrinksState.newBuilder();
                                         String name;
-                                        if (updatedFriendsDrinks.getName() == null) {
+                                        if (updatedFriendsDrinks.getName() != null) {
+                                            name = updatedFriendsDrinks.getName();
+                                        } else if (updateType.equals(andrewgrant.friendsdrinks.avro.UpdateType.Partial)) {
                                             name = aggValue.getFriendsDrinksState().getName();
                                         } else {
-                                            name = updatedFriendsDrinks.getName();
+                                            name = null;
                                         }
                                         friendsDrinksStateBuilder.setName(name);
                                         List<String> userIds;
-                                        if (updatedFriendsDrinks.getUserIds() == null) {
+                                        if (updatedFriendsDrinks.getUserIds() != null) {
+                                            userIds = updatedFriendsDrinks.getUserIds();
+                                        } else if (updateType.equals(andrewgrant.friendsdrinks.avro.UpdateType.Partial)) {
                                             userIds = aggValue.getFriendsDrinksState().getUserIds();
                                         } else {
-                                            userIds = updatedFriendsDrinks.getUserIds();
+                                            userIds = null;
                                         }
                                         friendsDrinksStateBuilder.setUserIds(userIds);
 
                                         String adminUserId;
-                                        if (updatedFriendsDrinks.getAdminUserId() == null) {
+                                        if (updatedFriendsDrinks.getAdminUserId() != null) {
+                                            adminUserId = updatedFriendsDrinks.getAdminUserId();
+                                        } else if (updateType.equals(andrewgrant.friendsdrinks.avro.UpdateType.Partial)) {
                                             adminUserId = aggValue.getFriendsDrinksState().getAdminUserId();
                                         } else {
-                                            adminUserId = updatedFriendsDrinks.getAdminUserId();
+                                            adminUserId = null;
                                         }
                                         friendsDrinksStateBuilder.setAdminUserId(adminUserId);
 
                                         String cronSchedule;
-                                        if (updatedFriendsDrinks.getCronSchedule() == null) {
+                                        if (updatedFriendsDrinks.getCronSchedule() != null) {
+                                            cronSchedule = updatedFriendsDrinks.getCronSchedule();
+                                        } else if (updateType.equals(andrewgrant.friendsdrinks.avro.UpdateType.Partial)) {
                                             cronSchedule = aggValue.getFriendsDrinksState().getCronSchedule();
                                         } else {
-                                            cronSchedule = updatedFriendsDrinks.getCronSchedule();
+                                            cronSchedule = null;
                                         }
                                         friendsDrinksStateBuilder.setCronSchedule(cronSchedule);
 
                                         andrewgrant.friendsdrinks.avro.ScheduleType scheduleType;
-                                        if (updatedFriendsDrinks.getScheduleType() == null) {
+                                        if (updatedFriendsDrinks.getScheduleType() != null) {
+                                            scheduleType = updatedFriendsDrinks.getScheduleType();
+                                        } else if (updateType.equals(andrewgrant.friendsdrinks.avro.UpdateType.Partial)) {
                                             scheduleType = aggValue.getFriendsDrinksState().getScheduleType();
                                         } else {
-                                            scheduleType = updatedFriendsDrinks.getScheduleType();
+                                            scheduleType = null;
                                         }
                                         friendsDrinksStateBuilder.setScheduleType(scheduleType);
 

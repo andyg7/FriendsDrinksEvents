@@ -4,6 +4,7 @@
   "name": "UpdatedFriendsDrinks",
   "fields": [
       {"name": "adminUserId", "type": ["null", "string"], "default": null},
+      {"name": "updateType", "type": {"type": "enum", "name": "UpdateType", "symbols": ["Full", "Partial"]}},
       {"name": "name", "type": ["null", "string"], "default": null},
       {"name": "userIds", "type": ["null", { "type": "array", "items": "string" }], "default": null },
       {"name": "scheduleType", "type": ["null", {"type": "enum", "name": "ScheduleType", "symbols": ["OnDemand", "Cron"]}], "default": null},
