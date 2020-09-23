@@ -5,9 +5,9 @@ import org.apache.kafka.common.serialization.Serializer;
 import java.util.HashMap;
 import java.util.Map;
 
-import andrewgrant.friendsdrinks.api.avro.CreateFriendsDrinksRequest;
-import andrewgrant.friendsdrinks.api.avro.CreateFriendsDrinksResponse;
 import andrewgrant.friendsdrinks.api.avro.DeleteFriendsDrinksResponse;
+import andrewgrant.friendsdrinks.api.avro.UpsertFriendsDrinksRequest;
+import andrewgrant.friendsdrinks.api.avro.UpsertFriendsDrinksResponse;
 
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
@@ -31,8 +31,8 @@ public class FriendsDrinksAvro {
         this.registryClient = registryClient;
     }
 
-    public SpecificAvroSerde<CreateFriendsDrinksRequest> createFriendsDrinksRequestSerde() {
-        SpecificAvroSerde<CreateFriendsDrinksRequest> serde;
+    public SpecificAvroSerde<UpsertFriendsDrinksRequest> upsertFriendsDrinksRequestSerde() {
+        SpecificAvroSerde<UpsertFriendsDrinksRequest> serde;
         if (registryClient != null) {
             serde = new SpecificAvroSerde<>(registryClient);
         } else {
@@ -44,8 +44,8 @@ public class FriendsDrinksAvro {
         return serde;
     }
 
-    public SpecificAvroSerde<CreateFriendsDrinksResponse> createFriendsDrinksResponseSerde() {
-        SpecificAvroSerde<CreateFriendsDrinksResponse> serde;
+    public SpecificAvroSerde<UpsertFriendsDrinksResponse> upsertFriendsDrinksResponseSerde() {
+        SpecificAvroSerde<UpsertFriendsDrinksResponse> serde;
         if (registryClient != null) {
             serde = new SpecificAvroSerde<>(registryClient);
         } else {

@@ -53,14 +53,14 @@ public class RequestService {
                                         .withValueSerde(Serdes.Long())
                         );
 
-        KStream<String, CreateFriendsDrinksRequest> createRequests = apiEvents
-                .filter(((s, friendsDrinksEvent) -> friendsDrinksEvent.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_REQUEST)))
-                .selectKey((key, value) -> value.getCreateFriendsDrinksRequest().getAdminUserId())
-                .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getCreateFriendsDrinksRequest());
+        KStream<String, UpsertFriendsDrinksRequest> createRequests = apiEvents
+                .filter(((s, friendsDrinksEvent) -> friendsDrinksEvent.getEventType().equals(EventType.UPSERT_FRIENDS_DRINKS_REQUEST)))
+                .selectKey((key, value) -> value.getUpsertFriendsDrinksRequest().getAdminUserId())
+                .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getUpsertFriendsDrinksRequest());
 
         KStream<FriendsDrinksId, FriendsDrinksEvent> createResponses = createRequests.leftJoin(friendsDrinksCount,
                 (request, count) -> {
-                    CreateFriendsDrinksResponse.Builder response = CreateFriendsDrinksResponse.newBuilder();
+                    UpsertFriendsDrinksResponse.Builder response = UpsertFriendsDrinksResponse.newBuilder();
                     response.setRequestId(request.getRequestId());
                     response.setFriendsDrinksId(request.getFriendsDrinksId());
                     if (count == null || count < 5) {
@@ -69,13 +69,13 @@ public class RequestService {
                         response.setResult(Result.FAIL);
                     }
                     FriendsDrinksEvent event = FriendsDrinksEvent.newBuilder()
-                            .setEventType(EventType.CREATE_FRIENDS_DRINKS_RESPONSE)
-                            .setCreateFriendsDrinksResponse(response.build())
+                            .setEventType(EventType.UPSERT_FRIENDS_DRINKS_RESPONSE)
+                            .setUpsertFriendsDrinksResponse(response.build())
                             .build();
                     return event;
                 },
-                Joined.with(Serdes.String(), avro.createFriendsDrinksRequestSerde(), Serdes.Long()))
-                .selectKey(((key, value) -> value.getCreateFriendsDrinksResponse().getFriendsDrinksId()));
+                Joined.with(Serdes.String(), avro.upsertFriendsDrinksRequestSerde(), Serdes.Long()))
+                .selectKey(((key, value) -> value.getUpsertFriendsDrinksResponse().getFriendsDrinksId()));
 
         createResponses.to(friendsDrinksApiTopicName,
                 Produced.with(avro.apiFriendsDrinksIdSerde(), avro.apiFriendsDrinksSerde()));

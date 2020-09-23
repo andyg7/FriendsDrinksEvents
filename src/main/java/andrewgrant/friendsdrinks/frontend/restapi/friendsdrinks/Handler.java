@@ -156,8 +156,8 @@ public class Handler {
     @Path("/{friendsDrinksId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public CreateFriendsDrinksResponseBean createFriendsDrinks(@PathParam("friendsDrinksId") String friendsDrinksId,
-                                                               CreateFriendsDrinksRequestBean requestBean)
+    public UpsertFriendsDrinksResponseBean upsertFriendsDrinks(@PathParam("friendsDrinksId") String friendsDrinksId,
+                                                               UpsertFriendsDrinksRequestBean requestBean)
             throws InterruptedException, ExecutionException {
         final String topicName = envProps.getProperty("friendsdrinks_api.topic.name");
         String requestId = UUID.randomUUID().toString();
@@ -167,7 +167,7 @@ public class Handler {
         } else {
             scheduleType = ScheduleType.OnDemand.name();
         }
-        CreateFriendsDrinksRequest createFriendsDrinksRequest = CreateFriendsDrinksRequest
+        UpsertFriendsDrinksRequest upsertFriendsDrinksRequest = UpsertFriendsDrinksRequest
                 .newBuilder()
                 .setFriendsDrinksId(FriendsDrinksId.newBuilder().setId(friendsDrinksId).build())
                 .setUserIds(requestBean.getUserIds().stream().collect(Collectors.toList()))
@@ -179,36 +179,36 @@ public class Handler {
                 .build();
         FriendsDrinksEvent friendsDrinksEvent = FriendsDrinksEvent
                 .newBuilder()
-                .setEventType(EventType.CREATE_FRIENDS_DRINKS_REQUEST)
-                .setCreateFriendsDrinksRequest(createFriendsDrinksRequest)
+                .setEventType(EventType.UPSERT_FRIENDS_DRINKS_REQUEST)
+                .setUpsertFriendsDrinksRequest(upsertFriendsDrinksRequest)
                 .build();
         ProducerRecord<FriendsDrinksId, FriendsDrinksEvent> record =
                 new ProducerRecord<>(
                         topicName,
-                        friendsDrinksEvent.getCreateFriendsDrinksRequest().getFriendsDrinksId(),
+                        friendsDrinksEvent.getUpsertFriendsDrinksRequest().getFriendsDrinksId(),
                         friendsDrinksEvent);
         kafkaProducer.send(record).get();
 
-        ReadOnlyKeyValueStore<String, CreateFriendsDrinksResponse> kv =
-                kafkaStreams.store(CREATE_FRIENDSDRINKS_RESPONSES_STORE, QueryableStoreTypes.keyValueStore());
+        ReadOnlyKeyValueStore<String, UpsertFriendsDrinksResponse> kv =
+                kafkaStreams.store(UPSERT_FRIENDSDRINKS_RESPONSES_STORE, QueryableStoreTypes.keyValueStore());
 
-        CreateFriendsDrinksResponse createFriendsDrinksResponse = kv.get(requestId);
-        if (createFriendsDrinksResponse == null) {
+        UpsertFriendsDrinksResponse upsertFriendsDrinksResponse = kv.get(requestId);
+        if (upsertFriendsDrinksResponse == null) {
             for (int i = 0; i < 10; i++) {
-                if (createFriendsDrinksResponse != null) {
+                if (upsertFriendsDrinksResponse != null) {
                     break;
                 }
                 // Give the backend some more time.
                 Thread.sleep(100);
-                createFriendsDrinksResponse = kv.get(requestId);
+                upsertFriendsDrinksResponse = kv.get(requestId);
             }
         }
-        if (createFriendsDrinksResponse == null) {
+        if (upsertFriendsDrinksResponse == null) {
             throw new RuntimeException(String.format(
-                    "Failed to get CreateFriendsDrinksResponse for request id %s", requestId));
+                    "Failed to get UpsertFriendsDrinksResponse for request id %s", requestId));
         }
-        CreateFriendsDrinksResponseBean responseBean = new CreateFriendsDrinksResponseBean();
-        Result result = createFriendsDrinksResponse.getResult();
+        UpsertFriendsDrinksResponseBean responseBean = new UpsertFriendsDrinksResponseBean();
+        Result result = upsertFriendsDrinksResponse.getResult();
         responseBean.setResult(result.toString());
         return responseBean;
     }

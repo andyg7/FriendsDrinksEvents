@@ -1,7 +1,7 @@
 {
   "namespace": "andrewgrant.friendsdrinks.api.avro",
   "type": "record",
-  "name": "CreateFriendsDrinksResponse",
+  "name": "UpsertFriendsDrinksResponse",
   "fields": [
     {"name": "requestId", "type": "string"},
     {"name": "friendsDrinksId", "type": "FriendsDrinksId"},

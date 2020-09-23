@@ -22,9 +22,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
 import andrewgrant.friendsdrinks.api.avro.*;
-import andrewgrant.friendsdrinks.avro.CreatedFriendsDrinks;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksState;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksStateAggregate;
+import andrewgrant.friendsdrinks.avro.UpsertedFriendsDrinks;
 
 /**
  * Owns writing to non-API topics.
@@ -41,15 +41,15 @@ public class WriterService {
                 Consumed.with(avro.apiFriendsDrinksIdSerde(), avro.apiFriendsDrinksSerde()));
 
         KStream<String, FriendsDrinksEvent> successApiResponses = apiEvents.filter((friendsDrinksId, friendsDrinksEvent) ->
-                        (friendsDrinksEvent.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_RESPONSE) &&
-                                friendsDrinksEvent.getCreateFriendsDrinksResponse().getResult().equals(Result.SUCCESS)) ||
+                        (friendsDrinksEvent.getEventType().equals(EventType.UPSERT_FRIENDS_DRINKS_RESPONSE) &&
+                                friendsDrinksEvent.getUpsertFriendsDrinksResponse().getResult().equals(Result.SUCCESS)) ||
                                 (friendsDrinksEvent.getEventType().equals(EventType.DELETE_FRIENDS_DRINKS_RESPONSE) &&
                                         friendsDrinksEvent.getDeleteFriendsDrinksResponse().getResult().equals(Result.SUCCESS))
                 )
                 .selectKey((k, v) -> {
-                    if (v.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_RESPONSE)) {
-                        log.info("Got create response {}", v.getCreateFriendsDrinksResponse().getRequestId());
-                        return v.getCreateFriendsDrinksResponse().getRequestId();
+                    if (v.getEventType().equals(EventType.UPSERT_FRIENDS_DRINKS_RESPONSE)) {
+                        log.info("Got create response {}", v.getUpsertFriendsDrinksResponse().getRequestId());
+                        return v.getUpsertFriendsDrinksResponse().getRequestId();
                     } else if (v.getEventType().equals(EventType.DELETE_FRIENDS_DRINKS_RESPONSE)) {
                         log.info("Got delete response {}", v.getDeleteFriendsDrinksResponse().getRequestId());
                         return v.getDeleteFriendsDrinksResponse().getRequestId();
@@ -60,12 +60,12 @@ public class WriterService {
                 });
 
         KStream<String, FriendsDrinksEvent> apiRequests = apiEvents
-                .filter((k, v) -> v.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_REQUEST) ||
+                .filter((k, v) -> v.getEventType().equals(EventType.UPSERT_FRIENDS_DRINKS_REQUEST) ||
                         v.getEventType().equals(EventType.DELETE_FRIENDS_DRINKS_REQUEST))
                 .selectKey(((k, v) -> {
-                    if (v.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_REQUEST)) {
-                        log.info("Got create request {}", v.getCreateFriendsDrinksRequest().getRequestId());
-                        return v.getCreateFriendsDrinksRequest().getRequestId();
+                    if (v.getEventType().equals(EventType.UPSERT_FRIENDS_DRINKS_REQUEST)) {
+                        log.info("Got create request {}", v.getUpsertFriendsDrinksRequest().getRequestId());
+                        return v.getUpsertFriendsDrinksRequest().getRequestId();
                     } else if (v.getEventType().equals(EventType.DELETE_FRIENDS_DRINKS_REQUEST)) {
                         log.info("Got delete request {}", v.getDeleteFriendsDrinksRequest().getRequestId());
                         return v.getDeleteFriendsDrinksRequest().getRequestId();
@@ -77,11 +77,11 @@ public class WriterService {
 
         successApiResponses.join(apiRequests,
                 (l, r) -> {
-                    if (r.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_REQUEST)) {
-                        log.info("Got create join {}", r.getCreateFriendsDrinksRequest().getRequestId());
-                        CreateFriendsDrinksRequest createFriendsDrinksRequest =
-                                r.getCreateFriendsDrinksRequest();
-                        CreatedFriendsDrinks friendsDrinks = CreatedFriendsDrinks
+                    if (r.getEventType().equals(EventType.UPSERT_FRIENDS_DRINKS_REQUEST)) {
+                        log.info("Got create join {}", r.getUpsertFriendsDrinksRequest().getRequestId());
+                        UpsertFriendsDrinksRequest createFriendsDrinksRequest =
+                                r.getUpsertFriendsDrinksRequest();
+                        UpsertedFriendsDrinks friendsDrinks = UpsertedFriendsDrinks
                                 .newBuilder()
                                 .setAdminUserId(createFriendsDrinksRequest.getAdminUserId())
                                 .setName(createFriendsDrinksRequest.getName())
@@ -91,12 +91,12 @@ public class WriterService {
                                 .setCronSchedule(createFriendsDrinksRequest.getCronSchedule())
                                 .build();
                         return andrewgrant.friendsdrinks.avro.FriendsDrinksEvent.newBuilder()
-                                .setEventType(andrewgrant.friendsdrinks.avro.EventType.CREATED)
+                                .setEventType(andrewgrant.friendsdrinks.avro.EventType.UPSERTED)
                                 .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
                                         .newBuilder()
-                                        .setId(r.getCreateFriendsDrinksRequest().getFriendsDrinksId().getId())
+                                        .setId(r.getUpsertFriendsDrinksRequest().getFriendsDrinksId().getId())
                                         .build())
-                                .setCreatedFriendsDrinks(friendsDrinks)
+                                .setUpsertedFriendsDrinks(friendsDrinks)
                                 .build();
                     } else if (r.getEventType().equals(EventType.DELETE_FRIENDS_DRINKS_REQUEST)) {
                         log.info("Got delete join {}", r.getDeleteFriendsDrinksRequest().getRequestId());
@@ -129,8 +129,8 @@ public class WriterService {
                         .aggregate(
                                 () -> FriendsDrinksStateAggregate.newBuilder().build(),
                                 (aggKey, newValue, aggValue) -> {
-                                    if (newValue.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.CREATED)) {
-                                        CreatedFriendsDrinks createdFriendsDrinks = newValue.getCreatedFriendsDrinks();
+                                    if (newValue.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.UPSERTED)) {
+                                        UpsertedFriendsDrinks createdFriendsDrinks = newValue.getUpsertedFriendsDrinks();
                                         List<String> userIds;
                                         if (createdFriendsDrinks.getUserIds() != null) {
                                             userIds = createdFriendsDrinks.getUserIds().stream().collect(Collectors.toList());
