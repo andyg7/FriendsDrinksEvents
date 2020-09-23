@@ -145,8 +145,8 @@ public class FriendsDrinksAvro {
         return serde;
     }
 
-    public SpecificAvroSerde<andrewgrant.friendsdrinks.avro.FriendsDrinksList> friendsDrinksListSerde() {
-        SpecificAvroSerde<andrewgrant.friendsdrinks.avro.FriendsDrinksList> serde;
+    public SpecificAvroSerde<andrewgrant.friendsdrinks.avro.FriendsDrinksStateAggregate> friendsDrinksStateAggregateSerde() {
+        SpecificAvroSerde<andrewgrant.friendsdrinks.avro.FriendsDrinksStateAggregate> serde;
         if (registryClient != null) {
             serde = new SpecificAvroSerde<>(registryClient);
         } else {

@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import andrewgrant.friendsdrinks.api.avro.*;
 import andrewgrant.friendsdrinks.avro.CreatedFriendsDrinks;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksState;
+import andrewgrant.friendsdrinks.avro.FriendsDrinksStateAggregate;
 
 /**
  * Owns writing to non-API topics.
@@ -126,7 +127,7 @@ public class WriterService {
                         Consumed.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksEventSerde()))
                         .groupByKey(Grouped.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksEventSerde()))
                         .aggregate(
-                                () -> FriendsDrinksState.newBuilder().build(),
+                                () -> FriendsDrinksStateAggregate.newBuilder().build(),
                                 (aggKey, newValue, aggValue) -> {
                                     if (newValue.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.CREATED)) {
                                         CreatedFriendsDrinks createdFriendsDrinks = newValue.getCreatedFriendsDrinks();
@@ -136,17 +137,27 @@ public class WriterService {
                                         } else {
                                             userIds = new ArrayList<>();
                                         }
-                                        return FriendsDrinksState
-                                                .newBuilder(aggValue)
-                                                .setName(createdFriendsDrinks.getName())
-                                                .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
-                                                        .newBuilder()
-                                                        .setId(newValue.getFriendsDrinksId().getId())
-                                                        .build())
-                                                .setUserIds(userIds)
-                                                .setAdminUserId(createdFriendsDrinks.getAdminUserId())
-                                                .setCronSchedule(createdFriendsDrinks.getCronSchedule())
-                                                .setScheduleType(createdFriendsDrinks.getScheduleType())
+                                        FriendsDrinksState.Builder friendsDrinksStateBuilder;
+                                        if (aggValue.getFriendsDrinksState() == null) {
+                                            friendsDrinksStateBuilder = FriendsDrinksState
+                                                    .newBuilder();
+                                        } else {
+                                            friendsDrinksStateBuilder = FriendsDrinksState
+                                                    .newBuilder(aggValue.getFriendsDrinksState());
+                                        }
+                                        FriendsDrinksState friendsDrinksState =
+                                                friendsDrinksStateBuilder.setName(createdFriendsDrinks.getName())
+                                                        .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
+                                                                .newBuilder()
+                                                                .setId(newValue.getFriendsDrinksId().getId())
+                                                                .build())
+                                                        .setUserIds(userIds)
+                                                        .setAdminUserId(createdFriendsDrinks.getAdminUserId())
+                                                        .setCronSchedule(createdFriendsDrinks.getCronSchedule())
+                                                        .setScheduleType(createdFriendsDrinks.getScheduleType())
+                                                        .build();
+                                        return FriendsDrinksStateAggregate.newBuilder()
+                                                .setFriendsDrinksState(friendsDrinksState)
                                                 .build();
                                     } else if (newValue.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.DELETED)) {
                                         return null;
@@ -154,11 +165,13 @@ public class WriterService {
                                         throw new RuntimeException(String.format("Unexpected event type %s", newValue.getEventType().name()));
                                     }
                                 },
-                                Materialized.<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState, KeyValueStore<Bytes, byte[]>>
+                                Materialized.<
+                                        andrewgrant.friendsdrinks.avro.FriendsDrinksId,
+                                        FriendsDrinksStateAggregate, KeyValueStore<Bytes, byte[]>>
                                         as("internal_writer_service_friendsdrinks_state_tracker")
                                         .withKeySerde(avro.friendsDrinksIdSerde())
-                                        .withValueSerde(avro.friendsDrinksStateSerde())
-                        ).toStream();
+                                        .withValueSerde(avro.friendsDrinksStateAggregateSerde())
+                        ).toStream().mapValues(value -> value.getFriendsDrinksState());
 
         friendsDrinksStateStream.to(envProps.getProperty("friendsdrinks_state.topic.name"),
                 Produced.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksStateSerde()));

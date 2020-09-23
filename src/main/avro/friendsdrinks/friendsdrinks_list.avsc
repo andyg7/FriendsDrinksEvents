@@ -1,8 +1,0 @@
-{
-  "namespace": "andrewgrant.friendsdrinks.avro",
-  "type": "record",
-  "name": "FriendsDrinksList",
-  "fields": [
-      {"name": "ids", "type": {"type": "array", "items": "string"}}
-  ]
-}
