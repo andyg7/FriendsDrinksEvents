@@ -171,7 +171,12 @@ public class WriterService {
                                         as("internal_writer_service_friendsdrinks_state_tracker")
                                         .withKeySerde(avro.friendsDrinksIdSerde())
                                         .withValueSerde(avro.friendsDrinksStateAggregateSerde())
-                        ).toStream().mapValues(value -> value.getFriendsDrinksState());
+                        ).toStream().mapValues(value -> {
+                    if (value == null) {
+                        return null;
+                    }
+                    return value.getFriendsDrinksState();
+                });
 
         friendsDrinksStateStream.to(envProps.getProperty("friendsdrinks_state.topic.name"),
                 Produced.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksStateSerde()));
