@@ -111,13 +111,19 @@ public class RequestService {
                         return FriendsDrinksEvent.newBuilder()
                                 .setEventType(EventType.UPDATE_FRIENDS_DRINKS_RESPONSE)
                                 .setUpdateFriendsDrinksResponse(
-                                        UpdateFriendsDrinksResponse.newBuilder().setResult(Result.SUCCESS).build())
+                                        UpdateFriendsDrinksResponse
+                                                .newBuilder()
+                                                .setRequestId(updateRequest.getRequestId())
+                                                .setResult(Result.SUCCESS).build())
                                 .build();
                     } else {
                         return FriendsDrinksEvent.newBuilder()
                                 .setEventType(EventType.UPDATE_FRIENDS_DRINKS_RESPONSE)
                                 .setUpdateFriendsDrinksResponse(
-                                        UpdateFriendsDrinksResponse.newBuilder().setResult(Result.FAIL).build())
+                                        UpdateFriendsDrinksResponse
+                                                .newBuilder()
+                                                .setRequestId(updateRequest.getRequestId())
+                                                .setResult(Result.FAIL).build())
                                 .build();
                     }
                 },
