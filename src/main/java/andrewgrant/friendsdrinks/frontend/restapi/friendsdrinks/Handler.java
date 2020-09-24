@@ -173,7 +173,7 @@ public class Handler {
         UpdateFriendsDrinksRequest updateFriendsDrinksRequest = UpdateFriendsDrinksRequest
                 .newBuilder()
                 .setFriendsDrinksId(FriendsDrinksId.newBuilder().setId(friendsDrinksId).build())
-                .setUpdateType(UpdateType.valueOf(requestBean.getUpdateType()))
+                .setUpdateType(UpdateType.Partial)
                 .setUserIds(userIds)
                 .setAdminUserId(requestBean.getAdminUserId())
                 .setScheduleType(scheduleType)
