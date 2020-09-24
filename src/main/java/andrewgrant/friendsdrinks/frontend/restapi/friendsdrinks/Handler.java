@@ -132,23 +132,23 @@ public class Handler {
         ReadOnlyKeyValueStore<String, FriendsDrinksEvent> kv =
                 kafkaStreams.store(RESPONSES_STORE, QueryableStoreTypes.keyValueStore());
 
-        DeleteFriendsDrinksResponse deleteFriendsDrinksResponse = kv.get(requestId).getDeleteFriendsDrinksResponse();
-        if (deleteFriendsDrinksResponse == null) {
+        FriendsDrinksEvent backendResponse = kv.get(requestId);
+        if (backendResponse == null) {
             for (int i = 0; i < 10; i++) {
-                if (deleteFriendsDrinksResponse != null) {
+                if (backendResponse != null) {
                     break;
                 }
                 // Give the backend some more time.
                 Thread.sleep(100);
-                deleteFriendsDrinksResponse = kv.get(requestId).getDeleteFriendsDrinksResponse();
+                backendResponse = kv.get(requestId);
             }
         }
-        if (deleteFriendsDrinksResponse == null) {
+        if (backendResponse == null) {
             throw new RuntimeException(String.format(
                     "Failed to get DeleteFriendsDrinksResponse for request id %s", requestId));
         }
         DeleteFriendsDrinksResponseBean responseBean = new DeleteFriendsDrinksResponseBean();
-        Result result = deleteFriendsDrinksResponse.getResult();
+        Result result = backendResponse.getDeleteFriendsDrinksResponse().getResult();
         responseBean.setResult(result.toString());
         return responseBean;
     }
@@ -189,23 +189,23 @@ public class Handler {
         ReadOnlyKeyValueStore<String, FriendsDrinksEvent> kv =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(RESPONSES_STORE, QueryableStoreTypes.keyValueStore()));
 
-        UpdateFriendsDrinksResponse updateFriendsDrinksResponse = kv.get(requestId).getUpdateFriendsDrinksResponse();
-        if (updateFriendsDrinksResponse == null) {
+        FriendsDrinksEvent backendResponse = kv.get(requestId);
+        if (backendResponse == null) {
             for (int i = 0; i < 10; i++) {
-                if (updateFriendsDrinksResponse != null) {
+                if (backendResponse != null) {
                     break;
                 }
                 // Give the backend some more time.
                 Thread.sleep(100);
-                updateFriendsDrinksResponse = kv.get(requestId).getUpdateFriendsDrinksResponse();
+                backendResponse = kv.get(requestId);
             }
         }
-        if (updateFriendsDrinksResponse == null) {
+        if (backendResponse == null) {
             throw new RuntimeException(String.format(
                     "Failed to get UpdateFriendsDrinksResponse for request id %s", requestId));
         }
         UpdateFriendsDrinksResponseBean responseBean = new UpdateFriendsDrinksResponseBean();
-        Result result = updateFriendsDrinksResponse.getResult();
+        Result result = backendResponse.getUpdateFriendsDrinksResponse().getResult();
         responseBean.setResult(result.toString());
         return responseBean;
     }
@@ -250,23 +250,23 @@ public class Handler {
         ReadOnlyKeyValueStore<String, FriendsDrinksEvent> kv =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(RESPONSES_STORE, QueryableStoreTypes.keyValueStore()));
 
-        CreateFriendsDrinksResponse createFriendsDrinksResponse = kv.get(requestId).getCreateFriendsDrinksResponse();
-        if (createFriendsDrinksResponse == null) {
+        FriendsDrinksEvent backendResponse = kv.get(requestId);
+        if (backendResponse == null) {
             for (int i = 0; i < 10; i++) {
-                if (createFriendsDrinksResponse != null) {
+                if (backendResponse != null) {
                     break;
                 }
                 // Give the backend some more time.
                 Thread.sleep(100);
-                createFriendsDrinksResponse = kv.get(requestId).getCreateFriendsDrinksResponse();
+                backendResponse = kv.get(requestId);
             }
         }
-        if (createFriendsDrinksResponse == null) {
+        if (backendResponse == null) {
             throw new RuntimeException(String.format(
                     "Failed to get CreateFriendsDrinksResponse for request id %s", requestId));
         }
         CreateFriendsDrinksResponseBean responseBean = new CreateFriendsDrinksResponseBean();
-        Result result = createFriendsDrinksResponse.getResult();
+        Result result = backendResponse.getCreateFriendsDrinksResponse().getResult();
         responseBean.setResult(result.toString());
         return responseBean;
     }
