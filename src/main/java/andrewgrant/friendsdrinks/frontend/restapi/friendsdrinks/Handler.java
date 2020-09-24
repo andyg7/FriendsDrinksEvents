@@ -276,6 +276,7 @@ public class Handler {
         CreateFriendsDrinksResponseBean responseBean = new CreateFriendsDrinksResponseBean();
         Result result = backendResponse.getCreateFriendsDrinksResponse().getResult();
         responseBean.setResult(result.toString());
+        responseBean.setFriendsDrinksId(backendResponse.getCreateFriendsDrinksResponse().getFriendsDrinksId().getId());
         return responseBean;
     }
 }

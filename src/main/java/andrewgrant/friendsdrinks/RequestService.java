@@ -91,6 +91,7 @@ public class RequestService {
                         .setDeleteFriendsDrinksResponse(DeleteFriendsDrinksResponse
                                 .newBuilder()
                                 .setResult(Result.SUCCESS)
+                                .setFriendsDrinksId(request.getFriendsDrinksId())
                                 .setRequestId(request.getRequestId())
                                 .build())
                         .build())
