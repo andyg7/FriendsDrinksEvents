@@ -72,7 +72,7 @@ public class StreamsService {
                     }
                 })
                 .groupByKey(Grouped.with(Serdes.String(), avro.apiFriendsDrinksSerde()))
-                .windowedBy(TimeWindows.of(Duration.ofSeconds(1)).advanceBy(Duration.ofMillis(10)))
+                .windowedBy(TimeWindows.of(Duration.ofSeconds(1)))
                 .reduce((value1, value2) -> value1)
                 .toStream((key, value) -> key.key())
                 .to(topicName, Produced.with(Serdes.String(), avro.apiFriendsDrinksSerde()));

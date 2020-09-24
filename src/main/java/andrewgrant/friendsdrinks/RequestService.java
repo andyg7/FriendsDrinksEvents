@@ -36,25 +36,24 @@ public class RequestService {
                         Consumed.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksStateSerde()));
 
         KTable<String, Long> friendsDrinksCount = friendsDrinksStateKTable
-                .groupBy(
-                                (key, value) -> KeyValue.pair(value.getAdminUserId(), value),
-                                Grouped.with(Serdes.String(), avro.friendsDrinksStateSerde()))
-                        .aggregate(
-                                () -> 0L,
-                                (aggKey, newValue, aggValue) -> {
-                                    Long newAggValue = aggValue + 1;
-                                    log.info("new value {}. New aggValue {}", newValue, newAggValue);
-                                    return newAggValue;
-                                },
-                                (aggKey, oldValue, aggValue) -> {
-                                    Long newAggValue = aggValue - 1;
-                                    log.info("old value {}. New aggValue {}", oldValue, newAggValue);
-                                    return newAggValue;
-                                },
-                                Materialized.<String, Long, KeyValueStore<Bytes, byte[]>>as("internal_request_service_friendsdrinks_count_tracker")
-                                        .withKeySerde(Serdes.String())
-                                        .withValueSerde(Serdes.Long())
-                        );
+                .groupBy((key, value) -> KeyValue.pair(value.getAdminUserId(), value),
+                        Grouped.with(Serdes.String(), avro.friendsDrinksStateSerde()))
+                .aggregate(
+                        () -> 0L,
+                        (aggKey, newValue, aggValue) -> {
+                            Long newAggValue = aggValue + 1;
+                            log.info("new value {}. New aggValue {}", newValue, newAggValue);
+                            return newAggValue;
+                        },
+                        (aggKey, oldValue, aggValue) -> {
+                            Long newAggValue = aggValue - 1;
+                            log.info("old value {}. New aggValue {}", oldValue, newAggValue);
+                            return newAggValue;
+                        },
+                        Materialized.<String, Long, KeyValueStore<Bytes, byte[]>>as("internal_request_service_friendsdrinks_count_tracker")
+                                .withKeySerde(Serdes.String())
+                                .withValueSerde(Serdes.Long())
+                );
 
         KStream<String, CreateFriendsDrinksRequest> createRequests = apiEvents
                 .filter(((s, friendsDrinksEvent) -> friendsDrinksEvent.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_REQUEST)))
