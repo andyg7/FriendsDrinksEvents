@@ -153,7 +153,7 @@ public class Handler {
         return responseBean;
     }
 
-    @PATCH
+    @POST
     @Path("/{friendsDrinksId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
