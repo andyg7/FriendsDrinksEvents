@@ -1,6 +1,5 @@
 package andrewgrant.friendsdrinks.frontend.restapi;
 
-import andrewgrant.friendsdrinks.api.avro.EventType;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.*;
@@ -9,6 +8,7 @@ import java.time.Duration;
 import java.util.Properties;
 
 import andrewgrant.friendsdrinks.FriendsDrinksAvro;
+import andrewgrant.friendsdrinks.api.avro.EventType;
 
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 
