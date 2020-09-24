@@ -119,8 +119,18 @@ public class WriterService {
                                         .build())
                                 .build();
                     } else if (r.getEventType().equals(EventType.UPDATE_FRIENDS_DRINKS_REQUEST)) {
-                        log.info("Got update join {}", r.getDeleteFriendsDrinksRequest().getRequestId());
+                        log.info("Got update join {}", r.getUpdateFriendsDrinksRequest().getRequestId());
                         UpdateFriendsDrinksRequest updateFriendsDrinksRequest = r.getUpdateFriendsDrinksRequest();
+                        List<String> userIds = null;
+                        if (updateFriendsDrinksRequest.getUserIds() != null) {
+                            userIds = updateFriendsDrinksRequest.getUserIds().stream().collect(Collectors.toList());
+                        }
+                        andrewgrant.friendsdrinks.avro.ScheduleType scheduleType = null;
+                        if (updateFriendsDrinksRequest.getScheduleType() != null) {
+                            scheduleType = andrewgrant.friendsdrinks.avro.ScheduleType.valueOf(
+                                    updateFriendsDrinksRequest.getScheduleType().toString());
+                        }
+
                         UpdatedFriendsDrinks friendsDrinks = UpdatedFriendsDrinks
                                 .newBuilder()
                                 .setUpdateType(
@@ -128,9 +138,8 @@ public class WriterService {
                                                 updateFriendsDrinksRequest.getUpdateType().toString()))
                                 .setAdminUserId(updateFriendsDrinksRequest.getAdminUserId())
                                 .setName(updateFriendsDrinksRequest.getName())
-                                .setUserIds(updateFriendsDrinksRequest.getUserIds().stream().collect(Collectors.toList()))
-                                .setScheduleType(andrewgrant.friendsdrinks.avro.ScheduleType.valueOf(
-                                        updateFriendsDrinksRequest.getScheduleType().toString()))
+                                .setUserIds(userIds)
+                                .setScheduleType(scheduleType)
                                 .setCronSchedule(updateFriendsDrinksRequest.getCronSchedule())
                                 .build();
                         return andrewgrant.friendsdrinks.avro.FriendsDrinksEvent
@@ -200,7 +209,7 @@ public class WriterService {
                                             throw new RuntimeException(String.format("FriendsDrinksState is null for %s", aggKey));
                                         }
                                         andrewgrant.friendsdrinks.avro.UpdateType updateType = updatedFriendsDrinks.getUpdateType();
-                                        friendsDrinksStateBuilder = FriendsDrinksState.newBuilder();
+                                        friendsDrinksStateBuilder = FriendsDrinksState.newBuilder(aggValue.getFriendsDrinksState());
                                         String name;
                                         if (updatedFriendsDrinks.getName() != null) {
                                             name = updatedFriendsDrinks.getName();
