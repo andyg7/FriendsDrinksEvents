@@ -162,13 +162,21 @@ public class Handler {
             throws ExecutionException, InterruptedException {
         final String topicName = envProps.getProperty("friendsdrinks_api.topic.name");
         String requestId = UUID.randomUUID().toString();
+        List<String> userIds = null;
+        if (requestBean.getUserIds() != null) {
+            userIds = requestBean.getUserIds();
+        }
+        ScheduleType scheduleType = null;
+        if (requestBean.getScheduleType() != null) {
+            scheduleType = ScheduleType.valueOf(requestBean.getScheduleType());
+        }
         UpdateFriendsDrinksRequest updateFriendsDrinksRequest = UpdateFriendsDrinksRequest
                 .newBuilder()
                 .setFriendsDrinksId(FriendsDrinksId.newBuilder().setId(friendsDrinksId).build())
                 .setUpdateType(UpdateType.valueOf(requestBean.getUpdateType()))
-                .setUserIds(requestBean.getUserIds().stream().collect(Collectors.toList()))
+                .setUserIds(userIds)
                 .setAdminUserId(requestBean.getAdminUserId())
-                .setScheduleType(ScheduleType.valueOf(requestBean.getScheduleType()))
+                .setScheduleType(scheduleType)
                 .setCronSchedule(requestBean.getCronSchedule())
                 .setRequestId(requestId)
                 .setName(requestBean.getName())
