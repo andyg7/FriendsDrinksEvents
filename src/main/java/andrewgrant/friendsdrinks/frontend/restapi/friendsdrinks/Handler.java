@@ -164,6 +164,7 @@ public class Handler {
         UpdateFriendsDrinksRequest updateFriendsDrinksRequest = UpdateFriendsDrinksRequest
                 .newBuilder()
                 .setFriendsDrinksId(FriendsDrinksId.newBuilder().setId(friendsDrinksId).build())
+                .setUpdateType(UpdateType.valueOf(requestBean.getUpdateType()))
                 .setUserIds(requestBean.getUserIds().stream().collect(Collectors.toList()))
                 .setAdminUserId(requestBean.getAdminUserId())
                 .setScheduleType(ScheduleType.valueOf(requestBean.getScheduleType()))
@@ -184,7 +185,28 @@ public class Handler {
                         friendsDrinksEvent);
         kafkaProducer.send(record).get();
 
-        return new UpdateFriendsDrinksResponseBean();
+        ReadOnlyKeyValueStore<String, FriendsDrinksEvent> kv =
+                kafkaStreams.store(RESPONSES_STORE, QueryableStoreTypes.keyValueStore());
+
+        UpdateFriendsDrinksResponse updateFriendsDrinksResponse = kv.get(requestId).getUpdateFriendsDrinksResponse();
+        if (updateFriendsDrinksResponse == null) {
+            for (int i = 0; i < 10; i++) {
+                if (updateFriendsDrinksResponse != null) {
+                    break;
+                }
+                // Give the backend some more time.
+                Thread.sleep(100);
+                updateFriendsDrinksResponse = kv.get(requestId).getUpdateFriendsDrinksResponse();
+            }
+        }
+        if (updateFriendsDrinksResponse == null) {
+            throw new RuntimeException(String.format(
+                    "Failed to get UpdateFriendsDrinksResponse for request id %s", requestId));
+        }
+        UpdateFriendsDrinksResponseBean responseBean = new UpdateFriendsDrinksResponseBean();
+        Result result = updateFriendsDrinksResponse.getResult();
+        responseBean.setResult(result.toString());
+        return responseBean;
     }
 
 

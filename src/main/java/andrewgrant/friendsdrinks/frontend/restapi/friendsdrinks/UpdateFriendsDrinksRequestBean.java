@@ -6,6 +6,7 @@ import java.util.List;
  * DTO for UpdateFriendsDrinksRequest.
  */
 public class UpdateFriendsDrinksRequestBean {
+    private String updateType;
     private String friendsDrinksId;
     private String adminUserId;
     private List<String> userIds;
@@ -63,4 +64,13 @@ public class UpdateFriendsDrinksRequestBean {
     public void setName(String name) {
         this.name = name;
     }
+
+    public String getUpdateType() {
+        return updateType;
+    }
+
+    public void setUpdateType(String updateType) {
+        this.updateType = updateType;
+    }
+
 }
