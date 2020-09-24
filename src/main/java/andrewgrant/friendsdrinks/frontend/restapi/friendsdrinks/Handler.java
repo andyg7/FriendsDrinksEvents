@@ -6,6 +6,7 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.StoreQueryParameters;
 import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
@@ -186,7 +187,7 @@ public class Handler {
         kafkaProducer.send(record).get();
 
         ReadOnlyKeyValueStore<String, FriendsDrinksEvent> kv =
-                kafkaStreams.store(RESPONSES_STORE, QueryableStoreTypes.keyValueStore());
+                kafkaStreams.store(StoreQueryParameters.fromNameAndType(RESPONSES_STORE, QueryableStoreTypes.keyValueStore()));
 
         UpdateFriendsDrinksResponse updateFriendsDrinksResponse = kv.get(requestId).getUpdateFriendsDrinksResponse();
         if (updateFriendsDrinksResponse == null) {
@@ -247,7 +248,7 @@ public class Handler {
         kafkaProducer.send(record).get();
 
         ReadOnlyKeyValueStore<String, FriendsDrinksEvent> kv =
-                kafkaStreams.store(RESPONSES_STORE, QueryableStoreTypes.keyValueStore());
+                kafkaStreams.store(StoreQueryParameters.fromNameAndType(RESPONSES_STORE, QueryableStoreTypes.keyValueStore()));
 
         CreateFriendsDrinksResponse createFriendsDrinksResponse = kv.get(requestId).getCreateFriendsDrinksResponse();
         if (createFriendsDrinksResponse == null) {
