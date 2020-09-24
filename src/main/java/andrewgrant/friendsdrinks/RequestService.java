@@ -114,6 +114,7 @@ public class RequestService {
                                         UpdateFriendsDrinksResponse
                                                 .newBuilder()
                                                 .setRequestId(updateRequest.getRequestId())
+                                                .setFriendsDrinksId(updateRequest.getFriendsDrinksId())
                                                 .setResult(Result.SUCCESS).build())
                                 .build();
                     } else {
@@ -123,6 +124,7 @@ public class RequestService {
                                         UpdateFriendsDrinksResponse
                                                 .newBuilder()
                                                 .setRequestId(updateRequest.getRequestId())
+                                                .setFriendsDrinksId(updateRequest.getFriendsDrinksId())
                                                 .setResult(Result.FAIL).build())
                                 .build();
                     }
