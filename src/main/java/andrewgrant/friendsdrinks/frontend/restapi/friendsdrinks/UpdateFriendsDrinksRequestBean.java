@@ -7,7 +7,6 @@ import java.util.List;
  */
 public class UpdateFriendsDrinksRequestBean {
     private String updateType;
-    private String friendsDrinksId;
     private String adminUserId;
     private List<String> userIds;
     private String scheduleType;
@@ -15,14 +14,6 @@ public class UpdateFriendsDrinksRequestBean {
     private String name;
 
     public UpdateFriendsDrinksRequestBean() {
-    }
-
-    public String getFriendsDrinksId() {
-        return friendsDrinksId;
-    }
-
-    public void setFriendsDrinksId(String friendsDrinksId) {
-        this.friendsDrinksId = friendsDrinksId;
     }
 
     public String getAdminUserId() {
