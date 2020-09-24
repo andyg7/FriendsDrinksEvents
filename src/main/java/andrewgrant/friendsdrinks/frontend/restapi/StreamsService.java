@@ -1,5 +1,6 @@
 package andrewgrant.friendsdrinks.frontend.restapi;
 
+import andrewgrant.friendsdrinks.api.avro.EventType;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.*;
@@ -16,8 +17,7 @@ import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
  */
 public class StreamsService {
 
-    public static final String CREATE_FRIENDSDRINKS_RESPONSES_STORE = "create-friendsdrinks-responses-store";
-    public static final String DELETE_FRIENDSDRINKS_RESPONSES_STORE = "delete-friendsdrinks-responses-store";
+    public static final String RESPONSES_STORE = "responses-store";
     public static final String FRIENDSDRINKS_STORE = "friendsdrinks-store";
     private KafkaStreams streams;
 
@@ -38,11 +38,9 @@ public class StreamsService {
         KStream<andrewgrant.friendsdrinks.api.avro.FriendsDrinksId, andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent> apiEvents =
                 builder.stream(apiTopicName,
                         Consumed.with(friendsDrinksAvro.apiFriendsDrinksIdSerde(), friendsDrinksAvro.apiFriendsDrinksSerde()));
-        final String frontendPrivate1TopicName = envProps.getProperty("frontendPrivate1.topic.name");
-        buildCreateFriendsDrinksResponsesStore(builder, apiEvents, friendsDrinksAvro, frontendPrivate1TopicName);;
 
-        final String frontendPrivate2TopicName = envProps.getProperty("frontendPrivate2.topic.name");
-        buildDeleteFriendsDrinksResponsesStore(builder, apiEvents, friendsDrinksAvro, frontendPrivate2TopicName);;
+        final String frontendPrivateTopicName = envProps.getProperty("frontendPrivate.topic.name");
+        buildResponsesStore(builder, apiEvents, friendsDrinksAvro, frontendPrivateTopicName);;
 
         final String friendsDrinksStateTopicName = envProps.getProperty("friendsdrinks_state.topic.name");
         builder.table(friendsDrinksStateTopicName,
@@ -52,41 +50,36 @@ public class StreamsService {
         return builder.build();
     }
 
-    private void buildCreateFriendsDrinksResponsesStore(StreamsBuilder builder,
-                                                        KStream<andrewgrant.friendsdrinks.api.avro.FriendsDrinksId,
-                                                                andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent> stream,
-                                                        FriendsDrinksAvro avro,
-                                                        String topicName) {
-        stream.filter(((key, value) -> value.getEventType().equals(andrewgrant.friendsdrinks.api.avro.EventType.CREATE_FRIENDS_DRINKS_RESPONSE)))
-                .mapValues(value -> value.getCreateFriendsDrinksResponse())
-                .selectKey((key, value) -> value.getRequestId())
-                .groupByKey(Grouped.with(Serdes.String(), avro.createFriendsDrinksResponseSerde()))
+    private void buildResponsesStore(StreamsBuilder builder,
+                                     KStream<andrewgrant.friendsdrinks.api.avro.FriendsDrinksId,
+                                             andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent> stream,
+                                     FriendsDrinksAvro avro,
+                                     String topicName) {
+        stream.filter(((key, value) -> {
+            EventType eventType = value.getEventType();
+            return eventType.equals(EventType.CREATE_FRIENDS_DRINKS_RESPONSE) ||
+                    eventType.equals(EventType.UPDATE_FRIENDS_DRINKS_RESPONSE) ||
+                    eventType.equals(EventType.DELETE_FRIENDS_DRINKS_RESPONSE);
+        }))
+                .selectKey((key, value) -> {
+                    if (value.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_RESPONSE)) {
+                        return value.getCreateFriendsDrinksResponse().getRequestId();
+                    } else if (value.getEventType().equals(EventType.UPDATE_FRIENDS_DRINKS_RESPONSE)) {
+                        return value.getUpdateFriendsDrinksResponse().getRequestId();
+                    } else if (value.getEventType().equals(EventType.DELETE_FRIENDS_DRINKS_RESPONSE)) {
+                        return value.getDeleteFriendsDrinksResponse().getRequestId();
+                    } else {
+                        throw new RuntimeException(String.format("Unknown event type %s", value.getEventType().toString()));
+                    }
+                })
+                .groupByKey(Grouped.with(Serdes.String(), avro.apiFriendsDrinksSerde()))
                 .windowedBy(TimeWindows.of(Duration.ofSeconds(1)).advanceBy(Duration.ofMillis(10)))
                 .reduce((value1, value2) -> value1)
                 .toStream((key, value) -> key.key())
-                .to(topicName, Produced.with(Serdes.String(),
-                        avro.createFriendsDrinksResponseSerde()));
+                .to(topicName, Produced.with(Serdes.String(), avro.apiFriendsDrinksSerde()));
         builder.table(topicName,
                 Consumed.with(Serdes.String(), avro.createFriendsDrinksResponseSerde()),
-                Materialized.as(CREATE_FRIENDSDRINKS_RESPONSES_STORE));
-    }
-
-    private void buildDeleteFriendsDrinksResponsesStore(StreamsBuilder builder,
-                                                        KStream<andrewgrant.friendsdrinks.api.avro.FriendsDrinksId,
-                                                                andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent> stream,
-                                                        FriendsDrinksAvro avro,
-                                                        String topicName) {
-        stream.filter(((key, value) -> value.getEventType().equals(andrewgrant.friendsdrinks.api.avro.EventType.DELETE_FRIENDS_DRINKS_RESPONSE)))
-                .mapValues(value -> value.getDeleteFriendsDrinksResponse())
-                .selectKey((key, value) -> value.getRequestId())
-                .groupByKey(Grouped.with(Serdes.String(), avro.deleteFriendsDrinksResponseSerde()))
-                .windowedBy(TimeWindows.of(Duration.ofSeconds(1)).advanceBy(Duration.ofMillis(10)))
-                .reduce((value1, value2) -> value1)
-                .toStream((key, value) -> key.key())
-                .to(topicName, Produced.with(Serdes.String(), avro.deleteFriendsDrinksResponseSerde()));
-        builder.table(topicName,
-                Consumed.with(Serdes.String(), avro.deleteFriendsDrinksResponseSerde()),
-                Materialized.as(DELETE_FRIENDSDRINKS_RESPONSES_STORE));
+                Materialized.as(RESPONSES_STORE));
     }
 
     private static Properties buildStreamsProperties(Properties envProps, String uri) {

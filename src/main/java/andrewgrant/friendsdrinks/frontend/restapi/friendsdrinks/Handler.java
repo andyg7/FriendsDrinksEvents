@@ -128,10 +128,10 @@ public class Handler {
                         friendsDrinksEvent);
         kafkaProducer.send(producerRecord);
 
-        ReadOnlyKeyValueStore<String, DeleteFriendsDrinksResponse> kv =
-                kafkaStreams.store(DELETE_FRIENDSDRINKS_RESPONSES_STORE, QueryableStoreTypes.keyValueStore());
+        ReadOnlyKeyValueStore<String, FriendsDrinksEvent> kv =
+                kafkaStreams.store(RESPONSES_STORE, QueryableStoreTypes.keyValueStore());
 
-        DeleteFriendsDrinksResponse deleteFriendsDrinksResponse = kv.get(requestId);
+        DeleteFriendsDrinksResponse deleteFriendsDrinksResponse = kv.get(requestId).getDeleteFriendsDrinksResponse();
         if (deleteFriendsDrinksResponse == null) {
             for (int i = 0; i < 10; i++) {
                 if (deleteFriendsDrinksResponse != null) {
@@ -139,7 +139,7 @@ public class Handler {
                 }
                 // Give the backend some more time.
                 Thread.sleep(100);
-                deleteFriendsDrinksResponse = kv.get(requestId);
+                deleteFriendsDrinksResponse = kv.get(requestId).getDeleteFriendsDrinksResponse();
             }
         }
         if (deleteFriendsDrinksResponse == null) {
@@ -224,10 +224,10 @@ public class Handler {
                         friendsDrinksEvent);
         kafkaProducer.send(record).get();
 
-        ReadOnlyKeyValueStore<String, CreateFriendsDrinksResponse> kv =
-                kafkaStreams.store(CREATE_FRIENDSDRINKS_RESPONSES_STORE, QueryableStoreTypes.keyValueStore());
+        ReadOnlyKeyValueStore<String, FriendsDrinksEvent> kv =
+                kafkaStreams.store(RESPONSES_STORE, QueryableStoreTypes.keyValueStore());
 
-        CreateFriendsDrinksResponse createFriendsDrinksResponse = kv.get(requestId);
+        CreateFriendsDrinksResponse createFriendsDrinksResponse = kv.get(requestId).getCreateFriendsDrinksResponse();
         if (createFriendsDrinksResponse == null) {
             for (int i = 0; i < 10; i++) {
                 if (createFriendsDrinksResponse != null) {
@@ -235,7 +235,7 @@ public class Handler {
                 }
                 // Give the backend some more time.
                 Thread.sleep(100);
-                createFriendsDrinksResponse = kv.get(requestId);
+                createFriendsDrinksResponse = kv.get(requestId).getCreateFriendsDrinksResponse();
             }
         }
         if (createFriendsDrinksResponse == null) {
