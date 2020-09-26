@@ -89,6 +89,7 @@ public class RequestService {
                 .mapValues((friendsDrinksEvent) -> friendsDrinksEvent.getDeleteFriendsDrinksRequest())
                 .mapValues((request) -> FriendsDrinksEvent.newBuilder()
                         .setEventType(EventType.DELETE_FRIENDS_DRINKS_RESPONSE)
+                        .setFriendsDrinksId(request.getFriendsDrinksId())
                         .setDeleteFriendsDrinksResponse(DeleteFriendsDrinksResponse
                                 .newBuilder()
                                 .setResult(Result.SUCCESS)
@@ -111,6 +112,7 @@ public class RequestService {
                     if (state != null) {
                         return FriendsDrinksEvent.newBuilder()
                                 .setEventType(EventType.UPDATE_FRIENDS_DRINKS_RESPONSE)
+                                .setFriendsDrinksId(updateRequest.getFriendsDrinksId())
                                 .setUpdateFriendsDrinksResponse(
                                         UpdateFriendsDrinksResponse
                                                 .newBuilder()

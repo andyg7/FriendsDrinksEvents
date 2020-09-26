@@ -1,14 +1,17 @@
 package andrewgrant.friendsdrinks.frontend.restapi;
 
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.*;
+import org.apache.kafka.streams.state.WindowStore;
 
 import java.time.Duration;
 import java.util.Properties;
 
 import andrewgrant.friendsdrinks.FriendsDrinksAvro;
 import andrewgrant.friendsdrinks.api.avro.EventType;
+import andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent;
 
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 
@@ -72,12 +75,14 @@ public class StreamsService {
                     }
                 })
                 .groupByKey(Grouped.with(Serdes.String(), avro.apiFriendsDrinksSerde()))
-                .windowedBy(TimeWindows.of(Duration.ofMillis(1)))
-                .reduce((value1, value2) -> value1)
+                .windowedBy(TimeWindows.of(Duration.ofMillis(1)).grace(Duration.ZERO))
+                .reduce((value1, value2) -> value1, Materialized.<String, FriendsDrinksEvent, WindowStore<Bytes, byte[]>>as("windowed-responses")
+                        .withKeySerde(Serdes.String())
+                        .withValueSerde(avro.apiFriendsDrinksSerde())
+                        .withRetention(Duration.ofSeconds(5)))
                 .toStream((key, value) -> key.key())
                 .to(topicName, Produced.with(Serdes.String(), avro.apiFriendsDrinksSerde()));
-        builder.table(topicName,
-                Consumed.with(Serdes.String(), avro.createFriendsDrinksResponseSerde()),
+        builder.table(topicName, Consumed.with(Serdes.String(), avro.createFriendsDrinksResponseSerde()),
                 Materialized.as(RESPONSES_STORE));
     }
 
