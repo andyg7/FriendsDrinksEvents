@@ -121,6 +121,7 @@ public class Handler {
 
         FriendsDrinksEvent friendsDrinksEvent = FriendsDrinksEvent
                 .newBuilder()
+                .setFriendsDrinksId(deleteFriendsDrinksRequest.getFriendsDrinksId())
                 .setEventType(EventType.DELETE_FRIENDS_DRINKS_REQUEST)
                 .setDeleteFriendsDrinksRequest(deleteFriendsDrinksRequest)
                 .build();
@@ -183,6 +184,7 @@ public class Handler {
                 .build();
         FriendsDrinksEvent friendsDrinksEvent = FriendsDrinksEvent
                 .newBuilder()
+                .setFriendsDrinksId(updateFriendsDrinksRequest.getFriendsDrinksId())
                 .setEventType(EventType.UPDATE_FRIENDS_DRINKS_REQUEST)
                 .setUpdateFriendsDrinksRequest(updateFriendsDrinksRequest)
                 .build();
@@ -245,6 +247,7 @@ public class Handler {
                 .build();
         FriendsDrinksEvent friendsDrinksEvent = FriendsDrinksEvent
                 .newBuilder()
+                .setFriendsDrinksId(createFriendsDrinksRequest.getFriendsDrinksId())
                 .setEventType(EventType.CREATE_FRIENDS_DRINKS_REQUEST)
                 .setCreateFriendsDrinksRequest(createFriendsDrinksRequest)
                 .build();
