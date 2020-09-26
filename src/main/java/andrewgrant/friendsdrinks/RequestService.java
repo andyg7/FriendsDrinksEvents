@@ -72,6 +72,7 @@ public class RequestService {
                     }
                     FriendsDrinksEvent event = FriendsDrinksEvent.newBuilder()
                             .setEventType(EventType.CREATE_FRIENDS_DRINKS_RESPONSE)
+                            .setFriendsDrinksId(response.getFriendsDrinksId())
                             .setCreateFriendsDrinksResponse(response.build())
                             .build();
                     return event;
