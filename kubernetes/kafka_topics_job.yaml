@@ -12,8 +12,8 @@ spec:
             - sh
             - -c
             - "echo About to create topics... && \
-               kafka-topics --create --if-not-exists --zookeeper zk-cs:2181 --partitions 2 --replication-factor 2 --topic frontendPrivate1 && \
-               kafka-topics --create --if-not-exists --zookeeper zk-cs:2181 --partitions 2 --replication-factor 2 --topic frontendPrivate2 && \
+               kafka-topics --create --if-not-exists --zookeeper zk-cs:2181 --partitions 2 --replication-factor 2 --topic frontend_private && \
+               kafka-topics --create --if-not-exists --zookeeper zk-cs:2181 --partitions 2 --replication-factor 2 --topic frontend_api_request && \
                kafka-topics --create --if-not-exists --zookeeper zk-cs:2181 --partitions 2 --replication-factor 2 --topic friendsdrinks_event && \
                kafka-topics --create --if-not-exists --zookeeper zk-cs:2181 --partitions 2 --replication-factor 2 --topic friendsdrinks_state && \
                kafka-topics --create --if-not-exists --zookeeper zk-cs:2181 --partitions 2 --replication-factor 2 --topic friendsdrinks_api && \

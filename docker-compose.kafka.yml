@@ -57,7 +57,8 @@ services:
                        sleep 90 && \
                        cub kafka-ready -b broker:9092 1 20 && \
                        echo About to create topics... && \
-                       kafka-topics --create --if-not-exists --zookeeper zookeeper:2181 --partitions 2 --replication-factor 1 --topic frontendPrivate && \
+                       kafka-topics --create --if-not-exists --zookeeper zookeeper:2181 --partitions 2 --replication-factor 1 --topic frontend_private && \
+                       kafka-topics --create --if-not-exists --zookeeper zookeeper:2181 --partitions 2 --replication-factor 1 --topic frontend_api_request && \
                        kafka-topics --create --if-not-exists --zookeeper zookeeper:2181 --partitions 2 --replication-factor 1 --topic friendsdrinks_event && \
                        kafka-topics --create --if-not-exists --zookeeper zookeeper:2181 --partitions 2 --replication-factor 1 --topic friendsdrinks_state && \
                        kafka-topics --create --if-not-exists --zookeeper zookeeper:2181 --partitions 2 --replication-factor 1 --topic friendsdrinks_api && \

@@ -41,7 +41,7 @@ public class StreamsService {
                 builder.stream(apiTopicName,
                         Consumed.with(friendsDrinksAvro.apiFriendsDrinksIdSerde(), friendsDrinksAvro.apiFriendsDrinksSerde()));
 
-        final String frontendPrivateTopicName = envProps.getProperty("frontendPrivate.topic.name");
+        final String frontendPrivateTopicName = envProps.getProperty("frontend_private.topic.name");
         buildResponsesStore(builder, apiEvents, friendsDrinksAvro, frontendPrivateTopicName);;
 
         final String friendsDrinksStateTopicName = envProps.getProperty("friendsdrinks_state.topic.name");
@@ -56,7 +56,7 @@ public class StreamsService {
                                      KStream<andrewgrant.friendsdrinks.api.avro.FriendsDrinksId,
                                              andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent> stream,
                                      FriendsDrinksAvro avro,
-                                     String topicName) {
+                                     String responsesTopicName) {
         stream.filter(((key, value) -> {
             EventType eventType = value.getEventType();
             return eventType.equals(EventType.CREATE_FRIENDS_DRINKS_RESPONSE) ||
@@ -81,8 +81,8 @@ public class StreamsService {
                         .withValueSerde(avro.apiFriendsDrinksSerde())
                         .withRetention(Duration.ofSeconds(5)))
                 .toStream((key, value) -> key.key())
-                .to(topicName, Produced.with(Serdes.String(), avro.apiFriendsDrinksSerde()));
-        builder.table(topicName, Consumed.with(Serdes.String(), avro.createFriendsDrinksResponseSerde()),
+                .to(responsesTopicName, Produced.with(Serdes.String(), avro.apiFriendsDrinksSerde()));
+        builder.table(responsesTopicName, Consumed.with(Serdes.String(), avro.apiFriendsDrinksSerde()),
                 Materialized.as(RESPONSES_STORE));
     }
 
