@@ -77,16 +77,15 @@ public class StreamsService {
         builder.table(responsesTopicName, Consumed.with(Serdes.String(), friendsDrinksAvro.apiFriendsDrinksSerde()),
                 Materialized.as(RESPONSES_STORE));
 
+        // Logic to tombstone responses in responsesTopicName so the KTable doesn't grow indefinitely.
         StoreBuilder storeBuilder = Stores.keyValueStoreBuilder(
                 Stores.persistentKeyValueStore(RequestsPurger.RESPONSES_PENDING_DELETION),
                 Serdes.String(),
                 friendsDrinksAvro.apiFriendsDrinksSerde());
         builder.addStateStore(storeBuilder);
-
-
         builder.stream(responsesTopicName, Consumed.with(Serdes.String(), friendsDrinksAvro.apiFriendsDrinksSerde()))
                 .transform(() -> new RequestsPurger(), RequestsPurger.RESPONSES_PENDING_DELETION)
-                .filter((key, value) -> value != null).flatMapValues(value -> value)
+                .filter((key, value) -> value != null || value.isEmpty()).flatMapValues(value -> value)
                 .selectKey((key, value) -> value).mapValues(value -> (FriendsDrinksEvent) null)
                 .to(responsesTopicName, Produced.with(Serdes.String(), friendsDrinksAvro.apiFriendsDrinksSerde()));
     }
