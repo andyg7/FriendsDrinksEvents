@@ -38,6 +38,7 @@ public class RequestsPurger implements Transformer<String, FriendsDrinksEvent, K
             final KeyValue<String, FriendsDrinksEvent> record = iterator.next();
             requestsToPurge.add(record.key);
         }
+        iterator.close();
         return new KeyValue<>(key, requestsToPurge);
     }
 

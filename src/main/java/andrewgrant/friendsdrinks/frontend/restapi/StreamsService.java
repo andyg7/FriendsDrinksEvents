@@ -73,9 +73,12 @@ public class StreamsService {
                         throw new RuntimeException(String.format("Unknown event type %s", value.getEventType().toString()));
                     }
                 }).to(responsesTopicName, Produced.with(Serdes.String(), friendsDrinksAvro.apiFriendsDrinksSerde()));
+
+        KStream<String, FriendsDrinksEvent> responsesStream =
+                builder.stream(responsesTopicName, Consumed.with(Serdes.String(), friendsDrinksAvro.apiFriendsDrinksSerde()));
+
         // KTable for getting response results.
-        builder.table(responsesTopicName, Consumed.with(Serdes.String(), friendsDrinksAvro.apiFriendsDrinksSerde()),
-                Materialized.as(RESPONSES_STORE));
+        responsesStream.toTable(Materialized.as(RESPONSES_STORE));
 
         // Logic to tombstone responses in responsesTopicName so the KTable doesn't grow indefinitely.
         StoreBuilder storeBuilder = Stores.keyValueStoreBuilder(
@@ -83,8 +86,7 @@ public class StreamsService {
                 Serdes.String(),
                 friendsDrinksAvro.apiFriendsDrinksSerde());
         builder.addStateStore(storeBuilder);
-        builder.stream(responsesTopicName, Consumed.with(Serdes.String(), friendsDrinksAvro.apiFriendsDrinksSerde()))
-                .transform(() -> new RequestsPurger(), RequestsPurger.RESPONSES_PENDING_DELETION)
+        responsesStream.transform(() -> new RequestsPurger(), RequestsPurger.RESPONSES_PENDING_DELETION)
                 .filter((key, value) -> value != null && !value.isEmpty()).flatMapValues(value -> value)
                 .selectKey((key, value) -> value).mapValues(value -> (FriendsDrinksEvent) null)
                 .to(responsesTopicName, Produced.with(Serdes.String(), friendsDrinksAvro.apiFriendsDrinksSerde()));
