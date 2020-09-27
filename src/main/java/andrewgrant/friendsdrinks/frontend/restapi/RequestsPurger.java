@@ -16,13 +16,13 @@ import andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent;
  */
 public class RequestsPurger implements Transformer<String, FriendsDrinksEvent, KeyValue<String, List<String>>> {
 
-    public static final String PENDING_RESPONSES = "pending-responses";
+    public static final String RESPONSES_PENDING_DELETION = "responses-pending-deletion";
 
     private KeyValueStore<String, FriendsDrinksEvent> stateStore;
 
     @Override
     public void init(ProcessorContext context) {
-        stateStore = (KeyValueStore) context.getStateStore(PENDING_RESPONSES);
+        stateStore = (KeyValueStore) context.getStateStore(RESPONSES_PENDING_DELETION);
     }
 
     @Override

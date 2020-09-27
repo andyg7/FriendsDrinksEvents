@@ -78,14 +78,14 @@ public class StreamsService {
                 Materialized.as(RESPONSES_STORE));
 
         StoreBuilder storeBuilder = Stores.keyValueStoreBuilder(
-                Stores.persistentKeyValueStore(RequestsPurger.PENDING_RESPONSES),
+                Stores.persistentKeyValueStore(RequestsPurger.RESPONSES_PENDING_DELETION),
                 Serdes.String(),
                 friendsDrinksAvro.apiFriendsDrinksSerde());
         builder.addStateStore(storeBuilder);
 
 
         builder.stream(responsesTopicName, Consumed.with(Serdes.String(), friendsDrinksAvro.apiFriendsDrinksSerde()))
-                .transform(() -> new RequestsPurger(), RequestsPurger.PENDING_RESPONSES)
+                .transform(() -> new RequestsPurger(), RequestsPurger.RESPONSES_PENDING_DELETION)
                 .filter((key, value) -> value != null).flatMapValues(value -> value)
                 .selectKey((key, value) -> value).mapValues(value -> (FriendsDrinksEvent) null)
                 .to(responsesTopicName, Produced.with(Serdes.String(), friendsDrinksAvro.apiFriendsDrinksSerde()));
