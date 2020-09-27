@@ -124,6 +124,7 @@ public class RequestService {
                                 .build();
                     } else {
                         return FriendsDrinksEvent.newBuilder()
+                                .setFriendsDrinksId(updateRequest.getFriendsDrinksId())
                                 .setEventType(EventType.UPDATE_FRIENDS_DRINKS_RESPONSE)
                                 .setUpdateFriendsDrinksResponse(
                                         UpdateFriendsDrinksResponse
