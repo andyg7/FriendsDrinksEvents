@@ -42,7 +42,7 @@ public class RequestsPurger implements Transformer<String, FriendsDrinksEvent, K
         }
         long numEntries = stateStore.approximateNumEntries();
         log.info("State store approx num entries is {}", numEntries);
-        if (numEntries > 5) {
+        if (numEntries > 2) {
             final KeyValueIterator<String, FriendsDrinksEvent> iterator = stateStore.all();
             List<String> requestsToPurge = new ArrayList<>();
             while (iterator.hasNext()) {
