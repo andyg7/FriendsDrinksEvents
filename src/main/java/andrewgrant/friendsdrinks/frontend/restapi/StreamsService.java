@@ -85,7 +85,7 @@ public class StreamsService {
         builder.addStateStore(storeBuilder);
         builder.stream(responsesTopicName, Consumed.with(Serdes.String(), friendsDrinksAvro.apiFriendsDrinksSerde()))
                 .transform(() -> new RequestsPurger(), RequestsPurger.RESPONSES_PENDING_DELETION)
-                .filter((key, value) -> value != null || value.isEmpty()).flatMapValues(value -> value)
+                .filter((key, value) -> value != null && !value.isEmpty()).flatMapValues(value -> value)
                 .selectKey((key, value) -> value).mapValues(value -> (FriendsDrinksEvent) null)
                 .to(responsesTopicName, Produced.with(Serdes.String(), friendsDrinksAvro.apiFriendsDrinksSerde()));
     }
