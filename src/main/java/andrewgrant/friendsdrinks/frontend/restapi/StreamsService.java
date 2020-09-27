@@ -1,12 +1,11 @@
 package andrewgrant.friendsdrinks.frontend.restapi;
 
 import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.*;
-import org.apache.kafka.streams.state.WindowStore;
+import org.apache.kafka.streams.state.StoreBuilder;
+import org.apache.kafka.streams.state.Stores;
 
-import java.time.Duration;
 import java.util.Properties;
 
 import andrewgrant.friendsdrinks.FriendsDrinksAvro;
@@ -55,7 +54,7 @@ public class StreamsService {
     private void buildResponsesStore(StreamsBuilder builder,
                                      KStream<andrewgrant.friendsdrinks.api.avro.FriendsDrinksId,
                                              andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent> stream,
-                                     FriendsDrinksAvro avro,
+                                     FriendsDrinksAvro friendsDrinksAvro,
                                      String responsesTopicName) {
         stream.filter(((key, value) -> {
             EventType eventType = value.getEventType();
@@ -73,17 +72,23 @@ public class StreamsService {
                     } else {
                         throw new RuntimeException(String.format("Unknown event type %s", value.getEventType().toString()));
                     }
-                })
-                .groupByKey(Grouped.with(Serdes.String(), avro.apiFriendsDrinksSerde()))
-                .windowedBy(TimeWindows.of(Duration.ofMillis(1)).grace(Duration.ZERO))
-                .reduce((value1, value2) -> value1, Materialized.<String, FriendsDrinksEvent, WindowStore<Bytes, byte[]>>as("windowed-responses")
-                        .withKeySerde(Serdes.String())
-                        .withValueSerde(avro.apiFriendsDrinksSerde())
-                        .withRetention(Duration.ofSeconds(5)))
-                .toStream((key, value) -> key.key())
-                .to(responsesTopicName, Produced.with(Serdes.String(), avro.apiFriendsDrinksSerde()));
-        builder.table(responsesTopicName, Consumed.with(Serdes.String(), avro.apiFriendsDrinksSerde()),
+                }).to(responsesTopicName, Produced.with(Serdes.String(), friendsDrinksAvro.apiFriendsDrinksSerde()));
+        // KTable for getting response results.
+        builder.table(responsesTopicName, Consumed.with(Serdes.String(), friendsDrinksAvro.apiFriendsDrinksSerde()),
                 Materialized.as(RESPONSES_STORE));
+
+        StoreBuilder storeBuilder = Stores.keyValueStoreBuilder(
+                Stores.persistentKeyValueStore(RequestsPurger.PENDING_RESPONSES),
+                Serdes.String(),
+                friendsDrinksAvro.apiFriendsDrinksSerde());
+        builder.addStateStore(storeBuilder);
+
+
+        builder.stream(responsesTopicName, Consumed.with(Serdes.String(), friendsDrinksAvro.apiFriendsDrinksSerde()))
+                .transform(() -> new RequestsPurger(), RequestsPurger.PENDING_RESPONSES)
+                .filter((key, value) -> value != null).flatMapValues(value -> value)
+                .selectKey((key, value) -> value).mapValues(value -> (FriendsDrinksEvent) null)
+                .to(responsesTopicName, Produced.with(Serdes.String(), friendsDrinksAvro.apiFriendsDrinksSerde()));
     }
 
     private static Properties buildStreamsProperties(Properties envProps, String uri) {
