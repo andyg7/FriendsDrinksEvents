@@ -104,7 +104,8 @@ public class WriterService {
                                 .setEventType(andrewgrant.friendsdrinks.avro.EventType.CREATED)
                                 .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
                                         .newBuilder()
-                                        .setId(r.getCreateFriendsDrinksRequest().getFriendsDrinksId().getId())
+                                        .setFriendsDrinksId(r.getCreateFriendsDrinksRequest().getFriendsDrinksId().getFriendsDrinksId())
+                                        .setAdminUserId(r.getCreateFriendsDrinksRequest().getFriendsDrinksId().getAdminUserId())
                                         .build())
                                 .setCreatedFriendsDrinks(friendsDrinks)
                                 .build();
@@ -115,7 +116,8 @@ public class WriterService {
                                 .setEventType(andrewgrant.friendsdrinks.avro.EventType.DELETED)
                                 .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
                                         .newBuilder()
-                                        .setId(r.getDeleteFriendsDrinksRequest().getFriendsDrinksId().getId())
+                                        .setFriendsDrinksId(r.getDeleteFriendsDrinksRequest().getFriendsDrinksId().getFriendsDrinksId())
+                                        .setAdminUserId(r.getDeleteFriendsDrinksRequest().getFriendsDrinksId().getAdminUserId())
                                         .build())
                                 .build();
                     } else if (r.getEventType().equals(EventType.UPDATE_FRIENDS_DRINKS_REQUEST)) {
@@ -147,7 +149,8 @@ public class WriterService {
                                 .setEventType(andrewgrant.friendsdrinks.avro.EventType.UPDATED)
                                 .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
                                         .newBuilder()
-                                        .setId(r.getUpdateFriendsDrinksRequest().getFriendsDrinksId().getId())
+                                        .setFriendsDrinksId(r.getUpdateFriendsDrinksRequest().getFriendsDrinksId().getFriendsDrinksId())
+                                        .setAdminUserId(r.getUpdateFriendsDrinksRequest().getFriendsDrinksId().getAdminUserId())
                                         .build())
                                 .setUpdatedFriendsDrinks(friendsDrinks)
                                 .build();
@@ -192,7 +195,9 @@ public class WriterService {
                                                 friendsDrinksStateBuilder.setName(createdFriendsDrinks.getName())
                                                         .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
                                                                 .newBuilder()
-                                                                .setId(newValue.getFriendsDrinksId().getId())
+                                                                .setFriendsDrinksId(
+                                                                        newValue.getFriendsDrinksId().getFriendsDrinksId())
+                                                                .setAdminUserId(newValue.getFriendsDrinksId().getAdminUserId())
                                                                 .build())
                                                         .setUserIds(userIds)
                                                         .setAdminUserId(createdFriendsDrinks.getAdminUserId())

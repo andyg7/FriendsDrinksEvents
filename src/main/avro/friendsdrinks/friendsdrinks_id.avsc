@@ -3,6 +3,7 @@
   "type": "record",
   "name": "FriendsDrinksId",
   "fields": [
-    {"name": "id", "type": "string"}
+    {"name": "adminUserId", "type": "string"},
+    {"name": "friendsDrinksId", "type": "string"}
   ]
 }

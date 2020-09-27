@@ -7,21 +7,12 @@ import java.util.List;
  */
 public class UpdateFriendsDrinksRequestBean {
     private String updateType;
-    private String adminUserId;
     private List<String> userIds;
     private String scheduleType;
     private String cronSchedule;
     private String name;
 
     public UpdateFriendsDrinksRequestBean() {
-    }
-
-    public String getAdminUserId() {
-        return adminUserId;
-    }
-
-    public void setAdminUserId(String adminUserId) {
-        this.adminUserId = adminUserId;
     }
 
     public List<String> getUserIds() {

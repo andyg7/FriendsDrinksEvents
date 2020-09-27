@@ -6,7 +6,6 @@ import java.util.List;
  * DTO for CreateFriendsDrinks request.
  */
 public class CreateFriendsDrinksRequestBean {
-    private String adminUserId;
     private List<String> userIds;
     private String scheduleType;
     private String cronSchedule;
@@ -14,14 +13,6 @@ public class CreateFriendsDrinksRequestBean {
 
     public CreateFriendsDrinksRequestBean() {
 
-    }
-
-    public String getAdminUserId() {
-        return adminUserId;
-    }
-
-    public void setAdminUserId(String adminUserId) {
-        this.adminUserId = adminUserId;
     }
 
     public List<String> getUserIds() {
