@@ -1,8 +1,10 @@
 package andrewgrant.friendsdrinks.frontend.restapi;
 
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.*;
+import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
 
@@ -78,7 +80,10 @@ public class StreamsService {
                 builder.stream(responsesTopicName, Consumed.with(Serdes.String(), friendsDrinksAvro.apiFriendsDrinksSerde()));
 
         // KTable for getting response results.
-        responsesStream.toTable(Materialized.as(RESPONSES_STORE));
+        responsesStream.toTable(Materialized.<String, FriendsDrinksEvent, KeyValueStore<Bytes, byte[]>>
+                as(RESPONSES_STORE)
+                .withKeySerde(Serdes.String())
+                .withValueSerde(friendsDrinksAvro.apiFriendsDrinksSerde()));
 
         // Logic to tombstone responses in responsesTopicName so the KTable doesn't grow indefinitely.
         StoreBuilder storeBuilder = Stores.keyValueStoreBuilder(
