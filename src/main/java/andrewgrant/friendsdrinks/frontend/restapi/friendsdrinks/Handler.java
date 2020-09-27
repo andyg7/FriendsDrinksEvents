@@ -26,7 +26,7 @@ import andrewgrant.friendsdrinks.avro.FriendsDrinksState;
 /**
  * Implements frontend REST API friendsdrinks path.
  */
-@Path("")
+@Path("/friendsdrinks/")
 public class Handler {
 
     private KafkaStreams kafkaStreams;
@@ -66,9 +66,8 @@ public class Handler {
     }
 
     @GET
-    @Path("/{userId}")
     @Produces(MediaType.APPLICATION_JSON)
-    public GetFriendsDrinksResponseBean getFriendsDrink(@PathParam("userId") final String userId) {
+    public GetFriendsDrinksResponseBean getFriendsDrinksForUser(@QueryParam("userId") final String userId) {
         ReadOnlyKeyValueStore<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState> kv =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_STORE, QueryableStoreTypes.keyValueStore()));
         // TODO(andyg7): this is not efficient! We should have a state store that

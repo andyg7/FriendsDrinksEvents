@@ -88,13 +88,12 @@ public class Main {
                                       FriendsDrinksAvro friendsDrinksAvro,
                                       int port) {
         // Jetty server context handler.
-        final ServletContextHandler context =
-                new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
+        final ServletContextHandler context = new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
         context.setContextPath("/v1");
         final Server jettyServer = new Server(port);
         jettyServer.setHandler(context);
 
-        context.addServlet(buildFriendsDrinksHolder(streams, friendsDrinksAvro, envProps), "/friendsdrinks/*");
+        context.addServlet(buildFriendsDrinksHolder(streams, friendsDrinksAvro, envProps), "/*");
 
         return jettyServer;
     }
