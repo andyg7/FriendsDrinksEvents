@@ -4,7 +4,7 @@
   "name": "FriendsDrinksInvitationResponse",
   "fields": [
     {"name": "friendsDrinksId", "type": "FriendsDrinksId"},
-    {"name": "requestId", "type": "string"},
+    {"name": "userId", "type": "string"},
     {"name": "response", "type": {"type": "enum", "name": "Response", "symbols": ["ACCEPT", "REJECT"] } }
   ]
 }

@@ -210,7 +210,7 @@ public class WriterService {
                                         String name;
                                         if (updatedFriendsDrinks.getName() != null) {
                                             name = updatedFriendsDrinks.getName();
-                                        } else if (updateType.equals(andrewgrant.friendsdrinks.avro.UpdateType.Partial)) {
+                                        } else if (updateType.equals(andrewgrant.friendsdrinks.avro.UpdateType.PARTIAL)) {
                                             name = aggValue.getFriendsDrinksState().getName();
                                         } else {
                                             name = null;
@@ -220,7 +220,7 @@ public class WriterService {
                                         String cronSchedule;
                                         if (updatedFriendsDrinks.getCronSchedule() != null) {
                                             cronSchedule = updatedFriendsDrinks.getCronSchedule();
-                                        } else if (updateType.equals(andrewgrant.friendsdrinks.avro.UpdateType.Partial)) {
+                                        } else if (updateType.equals(andrewgrant.friendsdrinks.avro.UpdateType.PARTIAL)) {
                                             cronSchedule = aggValue.getFriendsDrinksState().getCronSchedule();
                                         } else {
                                             cronSchedule = null;
@@ -230,7 +230,7 @@ public class WriterService {
                                         andrewgrant.friendsdrinks.avro.ScheduleType scheduleType;
                                         if (updatedFriendsDrinks.getScheduleType() != null) {
                                             scheduleType = updatedFriendsDrinks.getScheduleType();
-                                        } else if (updateType.equals(andrewgrant.friendsdrinks.avro.UpdateType.Partial)) {
+                                        } else if (updateType.equals(andrewgrant.friendsdrinks.avro.UpdateType.PARTIAL)) {
                                             scheduleType = aggValue.getFriendsDrinksState().getScheduleType();
                                         } else {
                                             scheduleType = null;
