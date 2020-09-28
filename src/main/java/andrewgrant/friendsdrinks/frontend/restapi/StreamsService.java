@@ -43,7 +43,7 @@ public class StreamsService {
                         Consumed.with(friendsDrinksAvro.apiFriendsDrinksIdSerde(), friendsDrinksAvro.apiFriendsDrinksSerde()));
 
         final String frontendPrivateTopicName = envProps.getProperty("frontend-private.topic.name");
-        buildResponsesStore(builder, apiEvents, friendsDrinksAvro, frontendPrivateTopicName);;
+        buildResponsesStore(builder, apiEvents, friendsDrinksAvro, frontendPrivateTopicName);
 
         final String friendsDrinksStateTopicName = envProps.getProperty("friendsdrinks-state.topic.name");
         builder.table(friendsDrinksStateTopicName,
