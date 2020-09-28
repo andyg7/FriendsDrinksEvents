@@ -9,7 +9,6 @@ public class CreateFriendsDrinksRequestBean {
     private String name;
 
     public CreateFriendsDrinksRequestBean() {
-
     }
 
     public String getScheduleType() {

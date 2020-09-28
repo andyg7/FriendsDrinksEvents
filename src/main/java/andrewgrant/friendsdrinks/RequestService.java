@@ -57,7 +57,7 @@ public class RequestService {
 
         KStream<String, CreateFriendsDrinksRequest> createRequests = apiEvents
                 .filter(((s, friendsDrinksEvent) -> friendsDrinksEvent.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_REQUEST)))
-                .selectKey((key, value) -> value.getCreateFriendsDrinksRequest().getAdminUserId())
+                .selectKey((key, value) -> value.getCreateFriendsDrinksRequest().getFriendsDrinksId().getAdminUserId())
                 .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getCreateFriendsDrinksRequest());
 
         KStream<FriendsDrinksId, FriendsDrinksEvent> createResponses = createRequests.leftJoin(friendsDrinksCount,

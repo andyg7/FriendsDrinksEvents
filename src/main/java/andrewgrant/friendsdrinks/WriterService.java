@@ -90,7 +90,11 @@ public class WriterService {
                                 r.getCreateFriendsDrinksRequest();
                         CreatedFriendsDrinks friendsDrinks = CreatedFriendsDrinks
                                 .newBuilder()
-                                .setAdminUserId(createFriendsDrinksRequest.getAdminUserId())
+                                .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
+                                        .newBuilder()
+                                        .setAdminUserId(createFriendsDrinksRequest.getFriendsDrinksId().getAdminUserId())
+                                        .setFriendsDrinksId(createFriendsDrinksRequest.getFriendsDrinksId().getFriendsDrinksId())
+                                        .build())
                                 .setName(createFriendsDrinksRequest.getName())
                                 .setScheduleType(andrewgrant.friendsdrinks.avro.ScheduleType.valueOf(
                                         createFriendsDrinksRequest.getScheduleType().toString()))
@@ -130,7 +134,11 @@ public class WriterService {
                                 .setUpdateType(
                                         andrewgrant.friendsdrinks.avro.UpdateType.valueOf(
                                                 updateFriendsDrinksRequest.getUpdateType().toString()))
-                                .setAdminUserId(updateFriendsDrinksRequest.getAdminUserId())
+                                .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
+                                        .newBuilder()
+                                        .setAdminUserId(updateFriendsDrinksRequest.getFriendsDrinksId().getAdminUserId())
+                                        .setFriendsDrinksId(updateFriendsDrinksRequest.getFriendsDrinksId().getFriendsDrinksId())
+                                        .build())
                                 .setName(updateFriendsDrinksRequest.getName())
                                 .setScheduleType(scheduleType)
                                 .setCronSchedule(updateFriendsDrinksRequest.getCronSchedule())

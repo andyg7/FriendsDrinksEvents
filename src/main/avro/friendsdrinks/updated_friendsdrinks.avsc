@@ -3,7 +3,7 @@
   "type": "record",
   "name": "UpdatedFriendsDrinks",
   "fields": [
-      {"name": "adminUserId", "type": ["null", "string"], "default": null},
+      {"name": "friendsDrinksId", "type": "FriendsDrinksId"},
       {"name": "updateType", "type": {"type": "enum", "name": "UpdateType", "symbols": ["Full", "Partial"]}},
       {"name": "name", "type": ["null", "string"], "default": null},
       {"name": "scheduleType", "type": ["null", {"type": "enum", "name": "ScheduleType", "symbols": ["OnDemand", "Cron"]}], "default": null},

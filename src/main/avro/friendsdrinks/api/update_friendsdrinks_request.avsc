@@ -4,7 +4,6 @@
   "name": "UpdateFriendsDrinksRequest",
   "fields": [
     {"name": "requestId", "type": "string"},
-    {"name": "adminUserId", "type": ["null", "string"], "default": null},
     {"name": "friendsDrinksId", "type": "FriendsDrinksId"},
     {"name": "updateType", "type": {"type": "enum", "name": "UpdateType", "symbols": ["Full", "Partial"]}},
     {"name": "name", "type": ["null", "string"], "default": null},

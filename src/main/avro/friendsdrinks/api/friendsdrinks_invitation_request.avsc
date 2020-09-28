@@ -1,10 +1,11 @@
 {
   "namespace": "andrewgrant.friendsdrinks.api.avro",
   "type": "record",
-  "name": "CreateFriendsDrinksRequest",
+  "name": "FriendsDrinksInvitationRequest",
   "fields": [
-    {"name": "requestId", "type": "string"},
     {"name": "friendsDrinksId", "type": "FriendsDrinksId"},
+    {"name": "requestId", "type": "string"},
+    {"name": "adminUserId", "type": "string"},
     {"name": "name", "type": "string"},
     {"name": "scheduleType", "type": {"type": "enum", "name": "ScheduleType", "symbols": ["OnDemand", "Cron"]}},
     {"name": "cronSchedule", "type": ["null", "string"], "default": null}
