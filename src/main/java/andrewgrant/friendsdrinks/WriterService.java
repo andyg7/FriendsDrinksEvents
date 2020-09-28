@@ -35,7 +35,7 @@ public class WriterService {
                                   FriendsDrinksAvro avro) {
         StreamsBuilder builder = new StreamsBuilder();
 
-        KStream<FriendsDrinksId, FriendsDrinksEvent> apiEvents = builder.stream(envProps.getProperty("friendsdrinks_api.topic.name"),
+        KStream<FriendsDrinksId, FriendsDrinksEvent> apiEvents = builder.stream(envProps.getProperty("friendsdrinks-api.topic.name"),
                 Consumed.with(avro.apiFriendsDrinksIdSerde(), avro.apiFriendsDrinksSerde()));
 
         KStream<String, FriendsDrinksEvent> successApiResponses = apiEvents.filter((friendsDrinksId, friendsDrinksEvent) ->
@@ -163,12 +163,12 @@ public class WriterService {
                         avro.apiFriendsDrinksSerde(),
                         avro.apiFriendsDrinksSerde()))
                 .selectKey((k, v) -> v.getFriendsDrinksId())
-                .to(envProps.getProperty("friendsdrinks_event.topic.name"),
+                .to(envProps.getProperty("friendsdrinks-event.topic.name"),
                         Produced.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksEventSerde()));
 
 
         KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState> friendsDrinksStateStream =
-                builder.stream(envProps.getProperty("friendsdrinks_event.topic.name"),
+                builder.stream(envProps.getProperty("friendsdrinks-event.topic.name"),
                         Consumed.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksEventSerde()))
                         .groupByKey(Grouped.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksEventSerde()))
                         .aggregate(
@@ -249,7 +249,7 @@ public class WriterService {
                                 Materialized.<
                                         andrewgrant.friendsdrinks.avro.FriendsDrinksId,
                                         FriendsDrinksStateAggregate, KeyValueStore<Bytes, byte[]>>
-                                        as("internal_writer_service_friendsdrinks_state_tracker")
+                                        as("internal_writer_service_friendsdrinks-state_tracker")
                                         .withKeySerde(avro.friendsDrinksIdSerde())
                                         .withValueSerde(avro.friendsDrinksStateAggregateSerde())
                         ).toStream().mapValues(value -> {
@@ -259,7 +259,7 @@ public class WriterService {
                     return value.getFriendsDrinksState();
                 });
 
-        friendsDrinksStateStream.to(envProps.getProperty("friendsdrinks_state.topic.name"),
+        friendsDrinksStateStream.to(envProps.getProperty("friendsdrinks-state.topic.name"),
                 Produced.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksStateSerde()));
 
         return builder.build();
@@ -267,7 +267,7 @@ public class WriterService {
 
     public Properties buildStreamsProperties(Properties envProps) {
         Properties streamProps = new Properties();
-        streamProps.put(StreamsConfig.APPLICATION_ID_CONFIG, envProps.getProperty("friendsdrinks_writer.application.id"));
+        streamProps.put(StreamsConfig.APPLICATION_ID_CONFIG, envProps.getProperty("friendsdrinks-writer.application.id"));
         streamProps.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, envProps.getProperty("bootstrap.servers"));
         return streamProps;
     }

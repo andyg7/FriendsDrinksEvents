@@ -115,7 +115,7 @@ public class Handler {
     public DeleteFriendsDrinksResponseBean deleteFriendsDrinks(
             @PathParam("userId") String userId,
             @PathParam("friendsDrinksId") String friendsDrinksId) throws InterruptedException {
-        final String topicName = envProps.getProperty("friendsdrinks_api.topic.name");
+        final String topicName = envProps.getProperty("friendsdrinks-api.topic.name");
         String requestId = UUID.randomUUID().toString();
         DeleteFriendsDrinksRequest deleteFriendsDrinksRequest = DeleteFriendsDrinksRequest
                 .newBuilder()
@@ -171,7 +171,7 @@ public class Handler {
                                                              @PathParam("friendsDrinksId") String friendsDrinksId,
                                                              PostFriendsDrinksRequestBean requestBean)
             throws ExecutionException, InterruptedException {
-        final String topicName = envProps.getProperty("friendsdrinks_api.topic.name");
+        final String topicName = envProps.getProperty("friendsdrinks-api.topic.name");
         String requestId = UUID.randomUUID().toString();
         ScheduleType scheduleType = null;
         if (requestBean.getScheduleType() != null) {
@@ -237,7 +237,7 @@ public class Handler {
     public CreateFriendsDrinksResponseBean createFriendsDrinks(@PathParam("userId") String userId,
                                                                CreateFriendsDrinksRequestBean requestBean)
             throws InterruptedException, ExecutionException {
-        final String topicName = envProps.getProperty("friendsdrinks_api.topic.name");
+        final String topicName = envProps.getProperty("friendsdrinks-api.topic.name");
         String requestId = UUID.randomUUID().toString();
         String friendsDrinksId = UUID.randomUUID().toString();
         String scheduleType;

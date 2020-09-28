@@ -27,12 +27,12 @@ public class RequestService {
     public Topology buildTopology(Properties envProps, FriendsDrinksAvro avro) {
         StreamsBuilder builder = new StreamsBuilder();
 
-        final String apiTopicName = envProps.getProperty("friendsdrinks_api.topic.name");
+        final String apiTopicName = envProps.getProperty("friendsdrinks-api.topic.name");
         KStream<FriendsDrinksId, FriendsDrinksEvent> apiEvents = builder.stream(apiTopicName,
                 Consumed.with(avro.apiFriendsDrinksIdSerde(), avro.apiFriendsDrinksSerde()));
 
         KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable =
-                builder.table(envProps.getProperty("friendsdrinks_state.topic.name"),
+                builder.table(envProps.getProperty("friendsdrinks-state.topic.name"),
                         Consumed.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksStateSerde()));
 
         KTable<String, Long> friendsDrinksCount = friendsDrinksStateKTable
@@ -50,7 +50,7 @@ public class RequestService {
                             log.info("old value {}. New aggValue {}", oldValue, newAggValue);
                             return newAggValue;
                         },
-                        Materialized.<String, Long, KeyValueStore<Bytes, byte[]>>as("internal_request_service_friendsdrinks_count_tracker")
+                        Materialized.<String, Long, KeyValueStore<Bytes, byte[]>>as("internal_request_service_friendsdrinks-count_tracker")
                                 .withKeySerde(Serdes.String())
                                 .withValueSerde(Serdes.Long())
                 );
@@ -149,7 +149,7 @@ public class RequestService {
 
     public Properties buildStreamProperties(Properties envProps) {
         Properties streamProps = new Properties();
-        streamProps.put(StreamsConfig.APPLICATION_ID_CONFIG, envProps.getProperty("friendsdrinks_request.application.id"));
+        streamProps.put(StreamsConfig.APPLICATION_ID_CONFIG, envProps.getProperty("friendsdrinks-request.application.id"));
         streamProps.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, envProps.getProperty("bootstrap.servers"));
         return streamProps;
     }
