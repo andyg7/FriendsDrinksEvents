@@ -183,7 +183,7 @@ public class Handler {
                                 .setAdminUserId(userId)
                                 .setFriendsDrinksId(friendsDrinksId)
                                 .build())
-                .setUpdateType(UpdateType.valueOf(UpdateType.Partial.name()))
+                .setUpdateType(UpdateType.valueOf(UpdateType.PARTIAL.name()))
                 .setScheduleType(scheduleType)
                 .setCronSchedule(requestBean.getCronSchedule())
                 .setRequestId(requestId)
@@ -242,7 +242,7 @@ public class Handler {
         if (requestBean.getScheduleType() != null) {
             scheduleType = requestBean.getScheduleType();
         } else {
-            scheduleType = ScheduleType.OnDemand.name();
+            scheduleType = ScheduleType.ON_DEMAND.name();
         }
         CreateFriendsDrinksRequest createFriendsDrinksRequest = CreateFriendsDrinksRequest
                 .newBuilder()
