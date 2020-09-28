@@ -22,6 +22,8 @@ import javax.ws.rs.core.MediaType;
 
 import andrewgrant.friendsdrinks.api.avro.*;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksState;
+import andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.post.PostFriendsDrinksRequestBean;
+import andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.post.PostFriendsDrinksResponseBean;
 
 /**
  * Implements frontend REST API friendsdrinks path.
@@ -165,9 +167,9 @@ public class Handler {
     @Path("/users/{userId}/friendsdrinks/{friendsDrinksId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public UpdateFriendsDrinksResponseBean updateFriendsDrinks(@PathParam("userId") String userId,
-            @PathParam("friendsDrinksId") String friendsDrinksId,
-            UpdateFriendsDrinksRequestBean requestBean)
+    public PostFriendsDrinksResponseBean updateFriendsDrinks(@PathParam("userId") String userId,
+                                                             @PathParam("friendsDrinksId") String friendsDrinksId,
+                                                             PostFriendsDrinksRequestBean requestBean)
             throws ExecutionException, InterruptedException {
         final String topicName = envProps.getProperty("friendsdrinks_api.topic.name");
         String requestId = UUID.randomUUID().toString();
@@ -221,7 +223,7 @@ public class Handler {
             throw new RuntimeException(String.format(
                     "Failed to get UpdateFriendsDrinksResponse for request id %s", requestId));
         }
-        UpdateFriendsDrinksResponseBean responseBean = new UpdateFriendsDrinksResponseBean();
+        PostFriendsDrinksResponseBean responseBean = new PostFriendsDrinksResponseBean();
         Result result = backendResponse.getUpdateFriendsDrinksResponse().getResult();
         responseBean.setResult(result.toString());
         return responseBean;

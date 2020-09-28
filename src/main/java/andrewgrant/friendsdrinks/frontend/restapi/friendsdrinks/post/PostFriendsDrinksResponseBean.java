@@ -1,12 +1,12 @@
-package andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks;
+package andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.post;
 
 /**
  * DTO for UpdateFriendsDrinksResponse.
  */
-public class UpdateFriendsDrinksResponseBean {
+public class PostFriendsDrinksResponseBean {
     private String result;
 
-    public UpdateFriendsDrinksResponseBean() {
+    public PostFriendsDrinksResponseBean() {
     }
 
     public String getResult() {

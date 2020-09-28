@@ -1,15 +1,16 @@
-package andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks;
+package andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.post;
 
 /**
  * DTO for UpdateFriendsDrinksRequest.
  */
-public class UpdateFriendsDrinksRequestBean {
+public class PostFriendsDrinksRequestBean {
     private String updateType;
     private String scheduleType;
     private String cronSchedule;
     private String name;
+    private String type;
 
-    public UpdateFriendsDrinksRequestBean() {
+    public PostFriendsDrinksRequestBean() {
     }
 
     public String getScheduleType() {
@@ -42,6 +43,14 @@ public class UpdateFriendsDrinksRequestBean {
 
     public void setUpdateType(String updateType) {
         this.updateType = updateType;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 
 }
