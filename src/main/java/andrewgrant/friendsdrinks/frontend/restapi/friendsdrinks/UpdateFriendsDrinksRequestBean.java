@@ -1,26 +1,15 @@
 package andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks;
 
-import java.util.List;
-
 /**
  * DTO for UpdateFriendsDrinksRequest.
  */
 public class UpdateFriendsDrinksRequestBean {
     private String updateType;
-    private List<String> userIds;
     private String scheduleType;
     private String cronSchedule;
     private String name;
 
     public UpdateFriendsDrinksRequestBean() {
-    }
-
-    public List<String> getUserIds() {
-        return userIds;
-    }
-
-    public void setUserIds(List<String> userIds) {
-        this.userIds = userIds;
     }
 
     public String getScheduleType() {
