@@ -36,7 +36,7 @@ public class RequestService {
                         Consumed.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksStateSerde()));
 
         KTable<String, Long> friendsDrinksCount = friendsDrinksStateKTable
-                .groupBy((key, value) -> KeyValue.pair(value.getAdminUserId(), value),
+                .groupBy((key, value) -> KeyValue.pair(value.getFriendsDrinksId().getAdminUserId(), value),
                         Grouped.with(Serdes.String(), avro.friendsDrinksStateSerde()))
                 .aggregate(
                         () -> 0L,

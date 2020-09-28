@@ -51,7 +51,7 @@ public class Handler {
             KeyValue<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState> keyValue = allKvs.next();
             FriendsDrinksState friendsDrinksState = keyValue.value;
             FriendsDrinksBean friendsDrinksBean = new FriendsDrinksBean();
-            friendsDrinksBean.setAdminUserId(friendsDrinksState.getAdminUserId());
+            friendsDrinksBean.setAdminUserId(friendsDrinksState.getFriendsDrinksId().getAdminUserId());
             friendsDrinksBean.setId(keyValue.value.getFriendsDrinksId().getFriendsDrinksId());
             friendsDrinksBean.setName(friendsDrinksState.getName());
             if (friendsDrinksState.getUserIds() != null) {
@@ -79,9 +79,9 @@ public class Handler {
         while (allKvs.hasNext()) {
             KeyValue<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState> keyValue = allKvs.next();
             FriendsDrinksState friendsDrinksState = keyValue.value;
-            if (friendsDrinksState.getAdminUserId().equals(userId)) {
+            if (friendsDrinksState.getFriendsDrinksId().getAdminUserId().equals(userId)) {
                 FriendsDrinksBean friendsDrinksBean = new FriendsDrinksBean();
-                friendsDrinksBean.setAdminUserId(friendsDrinksState.getAdminUserId());
+                friendsDrinksBean.setAdminUserId(friendsDrinksState.getFriendsDrinksId().getAdminUserId());
                 friendsDrinksBean.setId(keyValue.value.getFriendsDrinksId().getFriendsDrinksId());
                 friendsDrinksBean.setName(friendsDrinksState.getName());
                 if (friendsDrinksState.getUserIds() != null) {
@@ -92,7 +92,7 @@ public class Handler {
                 List<String> userIds = friendsDrinksState.getUserIds();
                 if (userIds.contains(userId)) {
                     FriendsDrinksBean friendsDrinksBean = new FriendsDrinksBean();
-                    friendsDrinksBean.setAdminUserId(friendsDrinksState.getAdminUserId());
+                    friendsDrinksBean.setAdminUserId(friendsDrinksState.getFriendsDrinksId().getAdminUserId());
                     friendsDrinksBean.setId(keyValue.value.getFriendsDrinksId().getFriendsDrinksId());
                     friendsDrinksBean.setName(friendsDrinksState.getName());
                     friendsDrinksBean.setUserIds(friendsDrinksState.getUserIds().stream().collect(Collectors.toList()));

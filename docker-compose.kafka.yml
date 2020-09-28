@@ -62,6 +62,7 @@ services:
                        kafka-topics --create --if-not-exists --zookeeper zookeeper:2181 --partitions 2 --replication-factor 1 --topic friendsdrinks_event && \
                        kafka-topics --create --if-not-exists --zookeeper zookeeper:2181 --partitions 2 --replication-factor 1 --topic friendsdrinks_state && \
                        kafka-topics --create --if-not-exists --zookeeper zookeeper:2181 --partitions 2 --replication-factor 1 --topic friendsdrinks_api && \
+                       kafka-topics --create --if-not-exists --zookeeper zookeeper:2181 --partitions 2 --replication-factor 1 --topic user && \
                        echo Done creating topics...  \
                        '"
     environment:

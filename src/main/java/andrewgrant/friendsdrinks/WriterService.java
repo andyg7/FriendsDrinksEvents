@@ -200,7 +200,6 @@ public class WriterService {
                                                                 .setAdminUserId(newValue.getFriendsDrinksId().getAdminUserId())
                                                                 .build())
                                                         .setUserIds(userIds)
-                                                        .setAdminUserId(createdFriendsDrinks.getAdminUserId())
                                                         .setCronSchedule(createdFriendsDrinks.getCronSchedule())
                                                         .setScheduleType(createdFriendsDrinks.getScheduleType())
                                                         .build();
@@ -233,16 +232,6 @@ public class WriterService {
                                             userIds = null;
                                         }
                                         friendsDrinksStateBuilder.setUserIds(userIds);
-
-                                        String adminUserId;
-                                        if (updatedFriendsDrinks.getAdminUserId() != null) {
-                                            adminUserId = updatedFriendsDrinks.getAdminUserId();
-                                        } else if (updateType.equals(andrewgrant.friendsdrinks.avro.UpdateType.Partial)) {
-                                            adminUserId = aggValue.getFriendsDrinksState().getAdminUserId();
-                                        } else {
-                                            adminUserId = null;
-                                        }
-                                        friendsDrinksStateBuilder.setAdminUserId(adminUserId);
 
                                         String cronSchedule;
                                         if (updatedFriendsDrinks.getCronSchedule() != null) {
