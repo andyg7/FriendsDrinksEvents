@@ -1,0 +1,10 @@
+{
+  "namespace": "andrewgrant.friendsdrinks.user.avro",
+  "type": "record",
+  "name": "UserEvent",
+  "fields": [
+      {"name": "eventType", "type": {"type": "enum", "name": "EventType", "symbols": ["SIGNED_UP"] } },
+      {"name": "userId", "type": "UserId"},
+      {"name": "userSignedUp", "type": ["null", "UserSignedUp"], "default": null}
+  ]
+}

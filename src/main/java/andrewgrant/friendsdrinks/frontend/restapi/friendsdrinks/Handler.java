@@ -24,6 +24,9 @@ import andrewgrant.friendsdrinks.api.avro.*;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksState;
 import andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.post.PostFriendsDrinksRequestBean;
 import andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.post.PostFriendsDrinksResponseBean;
+import andrewgrant.friendsdrinks.user.avro.UserEvent;
+import andrewgrant.friendsdrinks.user.avro.UserId;
+import andrewgrant.friendsdrinks.user.avro.UserSignedUp;
 
 /**
  * Implements frontend REST API friendsdrinks path.
@@ -32,12 +35,17 @@ import andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.post.PostFriends
 public class Handler {
 
     private KafkaStreams kafkaStreams;
-    private KafkaProducer<FriendsDrinksId, FriendsDrinksEvent> kafkaProducer;
+    private KafkaProducer<FriendsDrinksId, FriendsDrinksEvent> friendsDrinksKafkaProducer;
+    private KafkaProducer<UserId, UserEvent> userKafkaProducer;
     private Properties envProps;
 
-    public Handler(KafkaStreams kafkaStreams, KafkaProducer<FriendsDrinksId, FriendsDrinksEvent> kafkaProducer, Properties envProps) {
+    public Handler(KafkaStreams kafkaStreams,
+                   KafkaProducer<FriendsDrinksId, FriendsDrinksEvent> friendsDrinksKafkaProducer,
+                   KafkaProducer<UserId, UserEvent> userKafkaProducer,
+                   Properties envProps) {
         this.kafkaStreams = kafkaStreams;
-        this.kafkaProducer = kafkaProducer;
+        this.friendsDrinksKafkaProducer = friendsDrinksKafkaProducer;
+        this.userKafkaProducer = userKafkaProducer;
         this.envProps = envProps;
     }
 
@@ -137,7 +145,7 @@ public class Handler {
         ProducerRecord<FriendsDrinksId, FriendsDrinksEvent> producerRecord =
                 new ProducerRecord<>(topicName, friendsDrinksEvent.getDeleteFriendsDrinksRequest().getFriendsDrinksId(),
                         friendsDrinksEvent);
-        kafkaProducer.send(producerRecord);
+        friendsDrinksKafkaProducer.send(producerRecord);
 
         ReadOnlyKeyValueStore<String, FriendsDrinksEvent> kv =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(RESPONSES_STORE, QueryableStoreTypes.keyValueStore()));
@@ -203,7 +211,7 @@ public class Handler {
                         topicName,
                         friendsDrinksEvent.getUpdateFriendsDrinksRequest().getFriendsDrinksId(),
                         friendsDrinksEvent);
-        kafkaProducer.send(record).get();
+        friendsDrinksKafkaProducer.send(record).get();
 
         ReadOnlyKeyValueStore<String, FriendsDrinksEvent> kv =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(RESPONSES_STORE, QueryableStoreTypes.keyValueStore()));
@@ -229,6 +237,28 @@ public class Handler {
         return responseBean;
     }
 
+    @POST
+    @Path("/users/{userId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public UserSignedUpResponseBean registerUser(@PathParam("userId") String userId) throws ExecutionException, InterruptedException {
+        final String topicName = envProps.getProperty("user.topic.name");
+        UserId userIdAvro = UserId.newBuilder().setUserId(userId).build();
+        UserSignedUp userSignedUp = UserSignedUp.newBuilder().setUserId(userIdAvro).build();
+        UserEvent userEvent = UserEvent
+                .newBuilder()
+                .setEventType(andrewgrant.friendsdrinks.user.avro.EventType.SIGNED_UP)
+                .setUserSignedUp(userSignedUp)
+                .setUserId(userIdAvro)
+                .build();
+        ProducerRecord<UserId, UserEvent> record = new ProducerRecord<>(
+                topicName,
+                userEvent.getUserId(),
+                userEvent
+        );
+        userKafkaProducer.send(record).get();
+        return new UserSignedUpResponseBean();
+    }
 
     @POST
     @Path("/users/{userId}/friendsdrinks")
@@ -270,7 +300,7 @@ public class Handler {
                         topicName,
                         friendsDrinksEvent.getCreateFriendsDrinksRequest().getFriendsDrinksId(),
                         friendsDrinksEvent);
-        kafkaProducer.send(record).get();
+        friendsDrinksKafkaProducer.send(record).get();
 
         ReadOnlyKeyValueStore<String, FriendsDrinksEvent> kv =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(RESPONSES_STORE, QueryableStoreTypes.keyValueStore()));
