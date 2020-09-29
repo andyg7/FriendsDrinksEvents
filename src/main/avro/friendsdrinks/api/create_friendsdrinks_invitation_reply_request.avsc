@@ -1,0 +1,11 @@
+{
+  "namespace": "andrewgrant.friendsdrinks.api.avro",
+  "type": "record",
+  "name": "CreateFriendsDrinksInvitationReplyRequest",
+  "fields": [
+      {"name": "userId", "type": "UserId" },
+      {"name": "friendsDrinksId", "type": "FriendsDrinksId"},
+      {"name": "requestId", "type": "string"},
+      {"name": "reply", "type": {"type": "enum", "name": "Reply", "symbols": ["ACCEPTED", "REJECTED"]}}
+  ]
+}

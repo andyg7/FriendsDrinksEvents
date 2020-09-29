@@ -1,0 +1,11 @@
+{
+  "namespace": "andrewgrant.friendsdrinks.api.avro",
+  "type": "record",
+  "name": "FriendsDrinksPendingInvitation",
+  "fields": [
+      {"name": "invitationId", "type": "FriendsDrinksPendingInvitationId"},
+      {"name": "friendsDrinksId", "type": "FriendsDrinksId"},
+      {"name": "userId", "type": "UserId" },
+      {"name": "message", "type": "string" }
+  ]
+}
