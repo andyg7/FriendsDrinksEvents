@@ -4,11 +4,15 @@ package andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.post;
  * DTO for UpdateFriendsDrinksRequest.
  */
 public class PostFriendsDrinksRequestBean {
+    // Defaults to partial update of FriendsDrinks.
+    // Other options: ADD_FRIEND
     private String updateType;
     private String scheduleType;
     private String cronSchedule;
     private String name;
     private String type;
+    // Only relevant for ADD_FRIEND
+    private String userId;
 
     public PostFriendsDrinksRequestBean() {
     }
@@ -53,4 +57,11 @@ public class PostFriendsDrinksRequestBean {
         this.type = type;
     }
 
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
 }

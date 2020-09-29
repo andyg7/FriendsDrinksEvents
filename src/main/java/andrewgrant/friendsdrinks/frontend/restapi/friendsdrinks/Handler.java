@@ -184,26 +184,49 @@ public class Handler {
         if (requestBean.getScheduleType() != null) {
             scheduleType = ScheduleType.valueOf(requestBean.getScheduleType());
         }
-        UpdateFriendsDrinksRequest updateFriendsDrinksRequest = UpdateFriendsDrinksRequest
+        FriendsDrinksEvent friendsDrinksEvent;
+        FriendsDrinksId friendsDrinksIdAvro = FriendsDrinksId
                 .newBuilder()
-                .setFriendsDrinksId(
-                        FriendsDrinksId
-                                .newBuilder()
-                                .setAdminUserId(userId)
-                                .setFriendsDrinksId(friendsDrinksId)
-                                .build())
-                .setUpdateType(UpdateType.valueOf(UpdateType.PARTIAL.name()))
-                .setScheduleType(scheduleType)
-                .setCronSchedule(requestBean.getCronSchedule())
-                .setRequestId(requestId)
-                .setName(requestBean.getName())
+                .setAdminUserId(userId)
+                .setFriendsDrinksId(friendsDrinksId)
                 .build();
-        FriendsDrinksEvent friendsDrinksEvent = FriendsDrinksEvent
-                .newBuilder()
-                .setRequestId(updateFriendsDrinksRequest.getRequestId())
-                .setEventType(EventType.UPDATE_FRIENDS_DRINKS_REQUEST)
-                .setUpdateFriendsDrinksRequest(updateFriendsDrinksRequest)
-                .build();
+        if (requestBean.getUpdateType() == null) {
+            UpdateFriendsDrinksRequest updateFriendsDrinksRequest = UpdateFriendsDrinksRequest
+                    .newBuilder()
+                    .setFriendsDrinksId(friendsDrinksIdAvro)
+                    .setUpdateType(UpdateType.valueOf(UpdateType.PARTIAL.name()))
+                    .setScheduleType(scheduleType)
+                    .setCronSchedule(requestBean.getCronSchedule())
+                    .setRequestId(requestId)
+                    .setName(requestBean.getName())
+                    .build();
+            friendsDrinksEvent = FriendsDrinksEvent
+                    .newBuilder()
+                    .setRequestId(updateFriendsDrinksRequest.getRequestId())
+                    .setEventType(EventType.UPDATE_FRIENDS_DRINKS_REQUEST)
+                    .setUpdateFriendsDrinksRequest(updateFriendsDrinksRequest)
+                    .build();
+        } else if (requestBean.getUpdateType().equals("INVITE_FRIEND")) {
+            CreateFriendsDrinksInvitationRequest createFriendsDrinksInvitationRequest =
+                    CreateFriendsDrinksInvitationRequest
+                            .newBuilder()
+                            .setRequestId(requestId)
+                            .setFriendsDrinksId(friendsDrinksIdAvro)
+                            .setUserId(
+                                    andrewgrant.friendsdrinks.api.avro.UserId
+                                            .newBuilder()
+                                            .setUserId(requestBean.getUserId())
+                                            .build())
+                            .build();
+            friendsDrinksEvent = FriendsDrinksEvent
+                    .newBuilder()
+                    .setRequestId(createFriendsDrinksInvitationRequest.getRequestId())
+                    .setEventType(EventType.CREATE_FRIENDSDRINKS_INVITATION_REQUEST)
+                    .setCreateFriendsDrinksInvitationRequest(createFriendsDrinksInvitationRequest)
+                    .build();
+        } else {
+            throw new RuntimeException(String.format("Unknown update type %s", requestBean.getUpdateType()));
+        }
 
         ProducerRecord<String, FriendsDrinksEvent> record =
                 new ProducerRecord<>(
@@ -228,6 +251,13 @@ public class Handler {
             throw new RuntimeException(String.format(
                     "Failed to get UpdateFriendsDrinksResponse for request id %s", requestId));
         }
+
+        if (requestBean.getUpdateType() != null) {
+            PostFriendsDrinksResponseBean responseBean = new PostFriendsDrinksResponseBean();
+            responseBean.setResult("SUCCESS");
+            return responseBean;
+        }
+
         PostFriendsDrinksResponseBean responseBean = new PostFriendsDrinksResponseBean();
         Result result = backendResponse.getUpdateFriendsDrinksResponse().getResult();
         responseBean.setResult(result.toString());
