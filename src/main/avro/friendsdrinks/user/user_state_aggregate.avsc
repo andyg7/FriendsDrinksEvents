@@ -1,0 +1,8 @@
+{
+  "namespace": "andrewgrant.friendsdrinks.user.avro",
+  "type": "record",
+  "name": "UserStateAggregate",
+  "fields": [
+      {"name": "userState", "type": ["null", "UserState"], "default": null}
+  ]
+}

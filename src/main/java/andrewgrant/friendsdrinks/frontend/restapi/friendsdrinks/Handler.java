@@ -242,7 +242,7 @@ public class Handler {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public UserSignedUpResponseBean registerUser(@PathParam("userId") String userId) throws ExecutionException, InterruptedException {
-        final String topicName = envProps.getProperty("user.topic.name");
+        final String topicName = envProps.getProperty("user-event.topic.name");
         UserId userIdAvro = UserId.newBuilder().setUserId(userId).build();
         UserSignedUp userSignedUp = UserSignedUp.newBuilder().setUserId(userIdAvro).build();
         UserEvent userEvent = UserEvent

@@ -1,0 +1,8 @@
+{
+  "namespace": "andrewgrant.friendsdrinks.user.avro",
+  "type": "record",
+  "name": "UserState",
+  "fields": [
+      {"name": "userId", "type": "UserId"}
+  ]
+}
