@@ -241,23 +241,35 @@ public class Handler {
     @Path("/users/{userId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public UserSignedUpResponseBean registerUser(@PathParam("userId") String userId) throws ExecutionException, InterruptedException {
+    public UserResponseBean registerUserEvent(@PathParam("userId") String userId,
+                                         UserRequestBean requestBean) throws ExecutionException, InterruptedException {
         final String topicName = envProps.getProperty("user-event.topic.name");
         UserId userIdAvro = UserId.newBuilder().setUserId(userId).build();
-        UserSignedUp userSignedUp = UserSignedUp.newBuilder().setUserId(userIdAvro).build();
-        UserEvent userEvent = UserEvent
-                .newBuilder()
-                .setEventType(andrewgrant.friendsdrinks.user.avro.EventType.SIGNED_UP)
-                .setUserSignedUp(userSignedUp)
-                .setUserId(userIdAvro)
-                .build();
+        UserEvent userEvent;
+        if (requestBean.getEventType().equals("SIGNED_UP")) {
+            UserSignedUp userSignedUp = UserSignedUp.newBuilder().setUserId(userIdAvro).build();
+            userEvent = UserEvent
+                    .newBuilder()
+                    .setEventType(andrewgrant.friendsdrinks.user.avro.EventType.SIGNED_UP)
+                    .setUserSignedUp(userSignedUp)
+                    .setUserId(userIdAvro)
+                    .build();
+        } else if (requestBean.getEventType().equals("CANCELLED")) {
+            userEvent = UserEvent
+                    .newBuilder()
+                    .setEventType(andrewgrant.friendsdrinks.user.avro.EventType.CANCELLED)
+                    .setUserId(userIdAvro)
+                    .build();
+        } else {
+            throw new RuntimeException(String.format("Unknown event type %s", requestBean.getEventType()));
+        }
         ProducerRecord<UserId, UserEvent> record = new ProducerRecord<>(
                 topicName,
                 userEvent.getUserId(),
                 userEvent
         );
         userKafkaProducer.send(record).get();
-        return new UserSignedUpResponseBean();
+        return new UserResponseBean();
     }
 
     @POST
