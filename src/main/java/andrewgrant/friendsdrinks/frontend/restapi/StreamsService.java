@@ -38,9 +38,9 @@ public class StreamsService {
         final StreamsBuilder builder = new StreamsBuilder();
         final String apiTopicName = envProps.getProperty("friendsdrinks-api.topic.name");
 
-        KStream<andrewgrant.friendsdrinks.api.avro.FriendsDrinksId, andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent> apiEvents =
+        KStream<String, andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent> apiEvents =
                 builder.stream(apiTopicName,
-                        Consumed.with(friendsDrinksAvro.apiFriendsDrinksIdSerde(), friendsDrinksAvro.apiFriendsDrinksSerde()));
+                        Consumed.with(Serdes.String(), friendsDrinksAvro.apiFriendsDrinksSerde()));
 
         final String frontendPrivateTopicName = envProps.getProperty("frontend-private.topic.name");
         buildResponsesStore(builder, apiEvents, friendsDrinksAvro, frontendPrivateTopicName);
@@ -54,8 +54,7 @@ public class StreamsService {
     }
 
     private void buildResponsesStore(StreamsBuilder builder,
-                                     KStream<andrewgrant.friendsdrinks.api.avro.FriendsDrinksId,
-                                             andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent> stream,
+                                     KStream<String, andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent> stream,
                                      FriendsDrinksAvro friendsDrinksAvro,
                                      String responsesTopicName) {
         stream.filter(((key, value) -> {
@@ -63,18 +62,7 @@ public class StreamsService {
             return eventType.equals(EventType.CREATE_FRIENDS_DRINKS_RESPONSE) ||
                     eventType.equals(EventType.UPDATE_FRIENDS_DRINKS_RESPONSE) ||
                     eventType.equals(EventType.DELETE_FRIENDS_DRINKS_RESPONSE);
-        }))
-                .selectKey((key, value) -> {
-                    if (value.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_RESPONSE)) {
-                        return value.getCreateFriendsDrinksResponse().getRequestId();
-                    } else if (value.getEventType().equals(EventType.UPDATE_FRIENDS_DRINKS_RESPONSE)) {
-                        return value.getUpdateFriendsDrinksResponse().getRequestId();
-                    } else if (value.getEventType().equals(EventType.DELETE_FRIENDS_DRINKS_RESPONSE)) {
-                        return value.getDeleteFriendsDrinksResponse().getRequestId();
-                    } else {
-                        throw new RuntimeException(String.format("Unknown event type %s", value.getEventType().toString()));
-                    }
-                }).to(responsesTopicName, Produced.with(Serdes.String(), friendsDrinksAvro.apiFriendsDrinksSerde()));
+        })).to(responsesTopicName, Produced.with(Serdes.String(), friendsDrinksAvro.apiFriendsDrinksSerde()));
 
         KStream<String, FriendsDrinksEvent> responsesStream =
                 builder.stream(responsesTopicName, Consumed.with(Serdes.String(), friendsDrinksAvro.apiFriendsDrinksSerde()));
