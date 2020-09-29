@@ -32,6 +32,16 @@ services:
           java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.frontend.restapi.Main /app/dev.properties 8080 \
           '"
 
+  user-service:
+    image: friendsdrinks:latest
+    networks:
+      - kafka-network
+    command:
+      "bash -c '
+          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.user.Service /app/dev.properties \
+          -DlogPath=/app/
+          '"
+
 networks:
   kafka-network:
     external: true
