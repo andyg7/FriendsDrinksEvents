@@ -4,6 +4,7 @@ import static andrewgrant.friendsdrinks.env.Properties.load;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -20,7 +21,6 @@ import java.util.Properties;
 
 import andrewgrant.friendsdrinks.FriendsDrinksAvro;
 import andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent;
-import andrewgrant.friendsdrinks.api.avro.FriendsDrinksId;
 import andrewgrant.friendsdrinks.user.UserAvro;
 import andrewgrant.friendsdrinks.user.avro.UserEvent;
 import andrewgrant.friendsdrinks.user.avro.UserId;
@@ -77,14 +77,14 @@ public class Main {
         Thread.currentThread().join();
     }
 
-    private static KafkaProducer<FriendsDrinksId, FriendsDrinksEvent> buildFriendsDrinksProducer(
+    private static KafkaProducer<String, FriendsDrinksEvent> buildFriendsDrinksProducer(
             Properties envProps,
             FriendsDrinksAvro avro) {
         Properties producerProps = new Properties();
         producerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, envProps.getProperty("bootstrap.servers"));
         return new KafkaProducer<>(
                 producerProps,
-                avro.apiFriendsDrinksIdSerializer(),
+                Serdes.String().serializer(),
                 avro.apiFriendsDrinksSerializer());
     }
 
@@ -118,7 +118,7 @@ public class Main {
                                                           FriendsDrinksAvro friendsDrinksAvro,
                                                           UserAvro userAvro,
                                                           Properties envProps) {
-        KafkaProducer<FriendsDrinksId, FriendsDrinksEvent> friendsDrinksProducer =
+        KafkaProducer<String, FriendsDrinksEvent> friendsDrinksProducer =
                 buildFriendsDrinksProducer(envProps, friendsDrinksAvro);
         KafkaProducer<UserId, UserEvent> userProducer =
                 buildUserDrinksProducer(envProps, userAvro);

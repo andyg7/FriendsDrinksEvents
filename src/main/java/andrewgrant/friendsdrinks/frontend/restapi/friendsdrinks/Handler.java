@@ -35,12 +35,12 @@ import andrewgrant.friendsdrinks.user.avro.UserSignedUp;
 public class Handler {
 
     private KafkaStreams kafkaStreams;
-    private KafkaProducer<FriendsDrinksId, FriendsDrinksEvent> friendsDrinksKafkaProducer;
+    private KafkaProducer<String, FriendsDrinksEvent> friendsDrinksKafkaProducer;
     private KafkaProducer<UserId, UserEvent> userKafkaProducer;
     private Properties envProps;
 
     public Handler(KafkaStreams kafkaStreams,
-                   KafkaProducer<FriendsDrinksId, FriendsDrinksEvent> friendsDrinksKafkaProducer,
+                   KafkaProducer<String, FriendsDrinksEvent> friendsDrinksKafkaProducer,
                    KafkaProducer<UserId, UserEvent> userKafkaProducer,
                    Properties envProps) {
         this.kafkaStreams = kafkaStreams;
@@ -138,13 +138,12 @@ public class Handler {
 
         FriendsDrinksEvent friendsDrinksEvent = FriendsDrinksEvent
                 .newBuilder()
-                .setFriendsDrinksId(deleteFriendsDrinksRequest.getFriendsDrinksId())
+                .setRequestId(deleteFriendsDrinksRequest.getRequestId())
                 .setEventType(EventType.DELETE_FRIENDS_DRINKS_REQUEST)
                 .setDeleteFriendsDrinksRequest(deleteFriendsDrinksRequest)
                 .build();
-        ProducerRecord<FriendsDrinksId, FriendsDrinksEvent> producerRecord =
-                new ProducerRecord<>(topicName, friendsDrinksEvent.getDeleteFriendsDrinksRequest().getFriendsDrinksId(),
-                        friendsDrinksEvent);
+        ProducerRecord<String, FriendsDrinksEvent> producerRecord =
+                new ProducerRecord<>(topicName, requestId, friendsDrinksEvent);
         friendsDrinksKafkaProducer.send(producerRecord);
 
         ReadOnlyKeyValueStore<String, FriendsDrinksEvent> kv =
@@ -201,16 +200,14 @@ public class Handler {
                 .build();
         FriendsDrinksEvent friendsDrinksEvent = FriendsDrinksEvent
                 .newBuilder()
-                .setFriendsDrinksId(updateFriendsDrinksRequest.getFriendsDrinksId())
+                .setRequestId(updateFriendsDrinksRequest.getRequestId())
                 .setEventType(EventType.UPDATE_FRIENDS_DRINKS_REQUEST)
                 .setUpdateFriendsDrinksRequest(updateFriendsDrinksRequest)
                 .build();
 
-        ProducerRecord<FriendsDrinksId, FriendsDrinksEvent> record =
+        ProducerRecord<String, FriendsDrinksEvent> record =
                 new ProducerRecord<>(
-                        topicName,
-                        friendsDrinksEvent.getUpdateFriendsDrinksRequest().getFriendsDrinksId(),
-                        friendsDrinksEvent);
+                        topicName, requestId, friendsDrinksEvent);
         friendsDrinksKafkaProducer.send(record).get();
 
         ReadOnlyKeyValueStore<String, FriendsDrinksEvent> kv =
@@ -303,15 +300,12 @@ public class Handler {
                 .build();
         FriendsDrinksEvent friendsDrinksEvent = FriendsDrinksEvent
                 .newBuilder()
-                .setFriendsDrinksId(createFriendsDrinksRequest.getFriendsDrinksId())
+                .setRequestId(createFriendsDrinksRequest.getRequestId())
                 .setEventType(EventType.CREATE_FRIENDS_DRINKS_REQUEST)
                 .setCreateFriendsDrinksRequest(createFriendsDrinksRequest)
                 .build();
-        ProducerRecord<FriendsDrinksId, FriendsDrinksEvent> record =
-                new ProducerRecord<>(
-                        topicName,
-                        friendsDrinksEvent.getCreateFriendsDrinksRequest().getFriendsDrinksId(),
-                        friendsDrinksEvent);
+        ProducerRecord<String, FriendsDrinksEvent> record =
+                new ProducerRecord<>(topicName, requestId, friendsDrinksEvent);
         friendsDrinksKafkaProducer.send(record).get();
 
         ReadOnlyKeyValueStore<String, FriendsDrinksEvent> kv =
