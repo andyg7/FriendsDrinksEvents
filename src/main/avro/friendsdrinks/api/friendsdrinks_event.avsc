@@ -3,7 +3,7 @@
   "type": "record",
   "name": "FriendsDrinksEvent",
   "fields": [
-    {"name": "eventType", "type": {"type": "enum", "name": "EventType", "symbols" : ["CREATE_FRIENDS_DRINKS_REQUEST", "CREATE_FRIENDS_DRINKS_RESPONSE", "UPDATE_FRIENDS_DRINKS_REQUEST", "UPDATE_FRIENDS_DRINKS_RESPONSE", "DELETE_FRIENDS_DRINKS_REQUEST", "DELETE_FRIENDS_DRINKS_RESPONSE", "CREATE_FRIENDSDRINKS_INVITATION_REQUEST", "CREATE_FRIENDSDRINKS_INVITATION_REPLY_REQUEST", "CREATE_FRIENDSDRINKS_INVITATION_REPLY_RESPONSE"] } },
+    {"name": "eventType", "type": {"type": "enum", "name": "EventType", "symbols" : ["CREATE_FRIENDSDRINKS_REQUEST", "CREATE_FRIENDSDRINKS_RESPONSE", "UPDATE_FRIENDSDRINKS_REQUEST", "UPDATE_FRIENDSDRINKS_RESPONSE", "DELETE_FRIENDSDRINKS_REQUEST", "DELETE_FRIENDSDRINKS_RESPONSE", "CREATE_FRIENDSDRINKS_INVITATION_REQUEST", "CREATE_FRIENDSDRINKS_INVITATION_REPLY_REQUEST", "CREATE_FRIENDSDRINKS_INVITATION_REPLY_RESPONSE"] } },
     {"name": "requestId", "type": "string"},
     {"name": "createFriendsDrinksRequest", "type": ["null", "CreateFriendsDrinksRequest"], "default": null},
     {"name": "createFriendsDrinksResponse", "type": ["null", "CreateFriendsDrinksResponse"], "default": null},

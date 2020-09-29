@@ -39,22 +39,22 @@ public class WriterService {
                 Consumed.with(Serdes.String(), avro.apiFriendsDrinksSerde()));
 
         KStream<String, FriendsDrinksEvent> successApiResponses = apiEvents.filter((friendsDrinksId, friendsDrinksEvent) ->
-                (friendsDrinksEvent.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_RESPONSE) &&
+                (friendsDrinksEvent.getEventType().equals(EventType.CREATE_FRIENDSDRINKS_RESPONSE) &&
                         friendsDrinksEvent.getCreateFriendsDrinksResponse().getResult().equals(Result.SUCCESS)) ||
-                        (friendsDrinksEvent.getEventType().equals(EventType.UPDATE_FRIENDS_DRINKS_RESPONSE) &&
+                        (friendsDrinksEvent.getEventType().equals(EventType.UPDATE_FRIENDSDRINKS_RESPONSE) &&
                                 friendsDrinksEvent.getUpdateFriendsDrinksResponse().getResult().equals(Result.SUCCESS)) ||
-                        (friendsDrinksEvent.getEventType().equals(EventType.DELETE_FRIENDS_DRINKS_RESPONSE) &&
+                        (friendsDrinksEvent.getEventType().equals(EventType.DELETE_FRIENDSDRINKS_RESPONSE) &&
                                 friendsDrinksEvent.getDeleteFriendsDrinksResponse().getResult().equals(Result.SUCCESS))
         );
 
         KStream<String, FriendsDrinksEvent> apiRequests = apiEvents
-                .filter((k, v) -> v.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_REQUEST) ||
-                        v.getEventType().equals(EventType.UPDATE_FRIENDS_DRINKS_REQUEST) ||
-                        v.getEventType().equals(EventType.DELETE_FRIENDS_DRINKS_REQUEST));
+                .filter((k, v) -> v.getEventType().equals(EventType.CREATE_FRIENDSDRINKS_REQUEST) ||
+                        v.getEventType().equals(EventType.UPDATE_FRIENDSDRINKS_REQUEST) ||
+                        v.getEventType().equals(EventType.DELETE_FRIENDSDRINKS_REQUEST));
 
         successApiResponses.join(apiRequests,
                 (l, r) -> {
-                    if (r.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_REQUEST)) {
+                    if (r.getEventType().equals(EventType.CREATE_FRIENDSDRINKS_REQUEST)) {
                         log.info("Got create join {}", r.getCreateFriendsDrinksRequest().getRequestId());
                         CreateFriendsDrinksRequest createFriendsDrinksRequest =
                                 r.getCreateFriendsDrinksRequest();
@@ -79,7 +79,7 @@ public class WriterService {
                                         .build())
                                 .setCreatedFriendsDrinks(friendsDrinks)
                                 .build();
-                    } else if (r.getEventType().equals(EventType.DELETE_FRIENDS_DRINKS_REQUEST)) {
+                    } else if (r.getEventType().equals(EventType.DELETE_FRIENDSDRINKS_REQUEST)) {
                         log.info("Got delete join {}", r.getDeleteFriendsDrinksRequest().getRequestId());
                         return andrewgrant.friendsdrinks.avro.FriendsDrinksEvent
                                 .newBuilder()
@@ -90,7 +90,7 @@ public class WriterService {
                                         .setAdminUserId(r.getDeleteFriendsDrinksRequest().getFriendsDrinksId().getAdminUserId())
                                         .build())
                                 .build();
-                    } else if (r.getEventType().equals(EventType.UPDATE_FRIENDS_DRINKS_REQUEST)) {
+                    } else if (r.getEventType().equals(EventType.UPDATE_FRIENDSDRINKS_REQUEST)) {
                         log.info("Got update join {}", r.getUpdateFriendsDrinksRequest().getRequestId());
                         UpdateFriendsDrinksRequest updateFriendsDrinksRequest = r.getUpdateFriendsDrinksRequest();
                         andrewgrant.friendsdrinks.avro.ScheduleType scheduleType = null;

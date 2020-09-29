@@ -4,7 +4,6 @@
   "name": "CreateFriendsDrinksResponse",
   "fields": [
     {"name": "requestId", "type": "string"},
-    {"name": "friendsDrinksId", "type": "FriendsDrinksId"},
     {"name": "result", "type": {"type": "enum", "name": "Result", "symbols": ["SUCCESS", "FAIL"] } }
   ]
 }

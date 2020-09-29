@@ -56,7 +56,7 @@ public class RequestService {
                 );
 
         KStream<String, CreateFriendsDrinksRequest> createRequests = apiEvents
-                .filter(((s, friendsDrinksEvent) -> friendsDrinksEvent.getEventType().equals(EventType.CREATE_FRIENDS_DRINKS_REQUEST)))
+                .filter(((s, friendsDrinksEvent) -> friendsDrinksEvent.getEventType().equals(EventType.CREATE_FRIENDSDRINKS_REQUEST)))
                 .selectKey((key, value) -> value.getCreateFriendsDrinksRequest().getFriendsDrinksId().getAdminUserId())
                 .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getCreateFriendsDrinksRequest());
 
@@ -64,14 +64,13 @@ public class RequestService {
                 (request, count) -> {
                     CreateFriendsDrinksResponse.Builder response = CreateFriendsDrinksResponse.newBuilder();
                     response.setRequestId(request.getRequestId());
-                    response.setFriendsDrinksId(request.getFriendsDrinksId());
                     if (count == null || count < 5) {
                         response.setResult(Result.SUCCESS);
                     } else {
                         response.setResult(Result.FAIL);
                     }
                     FriendsDrinksEvent event = FriendsDrinksEvent.newBuilder()
-                            .setEventType(EventType.CREATE_FRIENDS_DRINKS_RESPONSE)
+                            .setEventType(EventType.CREATE_FRIENDSDRINKS_RESPONSE)
                             .setRequestId(response.getRequestId())
                             .setCreateFriendsDrinksResponse(response.build())
                             .build();
@@ -85,15 +84,14 @@ public class RequestService {
 
         // Deletes
         apiEvents.filter(((s, friendsDrinksEvent) ->
-                friendsDrinksEvent.getEventType().equals(EventType.DELETE_FRIENDS_DRINKS_REQUEST)))
+                friendsDrinksEvent.getEventType().equals(EventType.DELETE_FRIENDSDRINKS_REQUEST)))
                 .mapValues((friendsDrinksEvent) -> friendsDrinksEvent.getDeleteFriendsDrinksRequest())
                 .mapValues((request) -> FriendsDrinksEvent.newBuilder()
-                        .setEventType(EventType.DELETE_FRIENDS_DRINKS_RESPONSE)
+                        .setEventType(EventType.DELETE_FRIENDSDRINKS_RESPONSE)
                         .setRequestId(request.getRequestId())
                         .setDeleteFriendsDrinksResponse(DeleteFriendsDrinksResponse
                                 .newBuilder()
                                 .setResult(Result.SUCCESS)
-                                .setFriendsDrinksId(request.getFriendsDrinksId())
                                 .setRequestId(request.getRequestId())
                                 .build())
                         .build())
@@ -102,7 +100,7 @@ public class RequestService {
 
         // Updates
         KStream<String, UpdateFriendsDrinksRequest> updateRequests = apiEvents
-                .filter(((s, friendsDrinksEvent) -> friendsDrinksEvent.getEventType().equals(EventType.UPDATE_FRIENDS_DRINKS_REQUEST)))
+                .filter(((s, friendsDrinksEvent) -> friendsDrinksEvent.getEventType().equals(EventType.UPDATE_FRIENDSDRINKS_REQUEST)))
                 .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getUpdateFriendsDrinksRequest());
         KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, UpdateFriendsDrinksRequest> updateRequestsKeyed =
                 updateRequests.selectKey(((key, value) -> andrewgrant.friendsdrinks.avro.FriendsDrinksId
@@ -113,24 +111,22 @@ public class RequestService {
                 (updateRequest, state) -> {
                     if (state != null) {
                         return FriendsDrinksEvent.newBuilder()
-                                .setEventType(EventType.UPDATE_FRIENDS_DRINKS_RESPONSE)
+                                .setEventType(EventType.UPDATE_FRIENDSDRINKS_RESPONSE)
                                 .setRequestId(updateRequest.getRequestId())
                                 .setUpdateFriendsDrinksResponse(
                                         UpdateFriendsDrinksResponse
                                                 .newBuilder()
                                                 .setRequestId(updateRequest.getRequestId())
-                                                .setFriendsDrinksId(updateRequest.getFriendsDrinksId())
                                                 .setResult(Result.SUCCESS).build())
                                 .build();
                     } else {
                         return FriendsDrinksEvent.newBuilder()
                                 .setRequestId(updateRequest.getRequestId())
-                                .setEventType(EventType.UPDATE_FRIENDS_DRINKS_RESPONSE)
+                                .setEventType(EventType.UPDATE_FRIENDSDRINKS_RESPONSE)
                                 .setUpdateFriendsDrinksResponse(
                                         UpdateFriendsDrinksResponse
                                                 .newBuilder()
                                                 .setRequestId(updateRequest.getRequestId())
-                                                .setFriendsDrinksId(updateRequest.getFriendsDrinksId())
                                                 .setResult(Result.FAIL).build())
                                 .build();
                     }
@@ -195,14 +191,12 @@ public class RequestService {
                                 return CreateFriendsDrinksInvitationReplyResponse
                                         .newBuilder()
                                         .setRequestId(request.getRequestId())
-                                        .setFriendsDrinksId(state.getFriendsDrinksId())
                                         .setResult(Result.SUCCESS)
                                         .build();
                             } else {
                                 return CreateFriendsDrinksInvitationReplyResponse
                                         .newBuilder()
                                         .setRequestId(request.getRequestId())
-                                        .setFriendsDrinksId(request.getFriendsDrinksId())
                                         .setResult(Result.FAIL)
                                         .build();
                             }

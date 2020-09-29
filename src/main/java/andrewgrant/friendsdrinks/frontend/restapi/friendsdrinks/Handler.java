@@ -139,7 +139,7 @@ public class Handler {
         FriendsDrinksEvent friendsDrinksEvent = FriendsDrinksEvent
                 .newBuilder()
                 .setRequestId(deleteFriendsDrinksRequest.getRequestId())
-                .setEventType(EventType.DELETE_FRIENDS_DRINKS_REQUEST)
+                .setEventType(EventType.DELETE_FRIENDSDRINKS_REQUEST)
                 .setDeleteFriendsDrinksRequest(deleteFriendsDrinksRequest)
                 .build();
         ProducerRecord<String, FriendsDrinksEvent> producerRecord =
@@ -203,7 +203,7 @@ public class Handler {
             friendsDrinksEvent = FriendsDrinksEvent
                     .newBuilder()
                     .setRequestId(updateFriendsDrinksRequest.getRequestId())
-                    .setEventType(EventType.UPDATE_FRIENDS_DRINKS_REQUEST)
+                    .setEventType(EventType.UPDATE_FRIENDSDRINKS_REQUEST)
                     .setUpdateFriendsDrinksRequest(updateFriendsDrinksRequest)
                     .build();
         } else if (requestBean.getUpdateType().equals("INVITE_FRIEND")) {
@@ -331,7 +331,7 @@ public class Handler {
         FriendsDrinksEvent friendsDrinksEvent = FriendsDrinksEvent
                 .newBuilder()
                 .setRequestId(createFriendsDrinksRequest.getRequestId())
-                .setEventType(EventType.CREATE_FRIENDS_DRINKS_REQUEST)
+                .setEventType(EventType.CREATE_FRIENDSDRINKS_REQUEST)
                 .setCreateFriendsDrinksRequest(createFriendsDrinksRequest)
                 .build();
         ProducerRecord<String, FriendsDrinksEvent> record =
@@ -359,8 +359,7 @@ public class Handler {
         CreateFriendsDrinksResponseBean responseBean = new CreateFriendsDrinksResponseBean();
         Result result = backendResponse.getCreateFriendsDrinksResponse().getResult();
         responseBean.setResult(result.toString());
-        responseBean.setFriendsDrinksId(
-                backendResponse.getCreateFriendsDrinksResponse().getFriendsDrinksId().getFriendsDrinksId());
+        responseBean.setFriendsDrinksId(friendsDrinksId);
         return responseBean;
     }
 }

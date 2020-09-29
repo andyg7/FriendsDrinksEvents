@@ -59,9 +59,9 @@ public class StreamsService {
                                      String responsesTopicName) {
         stream.filter(((key, value) -> {
             EventType eventType = value.getEventType();
-            return eventType.equals(EventType.CREATE_FRIENDS_DRINKS_RESPONSE) ||
-                    eventType.equals(EventType.UPDATE_FRIENDS_DRINKS_RESPONSE) ||
-                    eventType.equals(EventType.DELETE_FRIENDS_DRINKS_RESPONSE);
+            return eventType.equals(EventType.CREATE_FRIENDSDRINKS_RESPONSE) ||
+                    eventType.equals(EventType.UPDATE_FRIENDSDRINKS_RESPONSE) ||
+                    eventType.equals(EventType.DELETE_FRIENDSDRINKS_RESPONSE);
         })).to(responsesTopicName, Produced.with(Serdes.String(), friendsDrinksAvro.apiFriendsDrinksSerde()));
 
         KStream<String, FriendsDrinksEvent> responsesStream =
