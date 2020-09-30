@@ -23,6 +23,7 @@ public class StreamsService {
 
     public static final String RESPONSES_STORE = "api-response-store";
     public static final String FRIENDSDRINKS_STORE = "friendsdrinks-store";
+    public static final String PENDING_INVITATIONS_STORE = "pending-invitations-store";
     private KafkaStreams streams;
 
     public StreamsService(Properties envProps,
@@ -49,6 +50,11 @@ public class StreamsService {
         builder.table(friendsDrinksStateTopicName,
                 Consumed.with(friendsDrinksAvro.friendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksStateSerde()),
                 Materialized.as(FRIENDSDRINKS_STORE));
+
+        final String pendingInvitationsTopicName = envProps.getProperty("friendsdrinks-pending-invitation.topic.name");
+        builder.table(pendingInvitationsTopicName,
+                Consumed.with(friendsDrinksAvro.friendsDrinksPendingInvitationIdSerde(), friendsDrinksAvro.friendsDrinksPendingInvitationSerde()),
+                Materialized.as(PENDING_INVITATIONS_STORE));
 
         return builder.build();
     }

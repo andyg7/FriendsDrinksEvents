@@ -3,26 +3,43 @@ package andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks;
 import java.util.List;
 
 /**
- * DTO for GetFriendsDrinksResponseBean.
+ * DTO for GetFriendsDrinksResponse.
  */
 public class GetFriendsDrinksResponseBean {
-    private List<FriendsDrinksBean> adminFriendsDrinks;
-    private List<FriendsDrinksBean> memberFriendsDrinks;
+    private String id;
+    private String adminUserId;
+    private List<String> userIds;
+    private String name;
 
-    public List<FriendsDrinksBean> getAdminFriendsDrinks() {
-        return adminFriendsDrinks;
+    public String getId() {
+        return id;
     }
 
-    public void setAdminFriendsDrinks(List<FriendsDrinksBean> adminFriendsDrinks) {
-        this.adminFriendsDrinks = adminFriendsDrinks;
+    public void setId(String id) {
+        this.id = id;
     }
 
-    public List<FriendsDrinksBean> getMemberFriendsDrinks() {
-        return memberFriendsDrinks;
+    public String getAdminUserId() {
+        return adminUserId;
     }
 
-    public void setMemberFriendsDrinks(List<FriendsDrinksBean> memberFriendsDrinks) {
-        this.memberFriendsDrinks = memberFriendsDrinks;
+    public void setAdminUserId(String adminUserId) {
+        this.adminUserId = adminUserId;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public List<String> getUserIds() {
+        return userIds;
+    }
+
+    public void setUserIds(List<String> userIds) {
+        this.userIds = userIds;
+    }
 }

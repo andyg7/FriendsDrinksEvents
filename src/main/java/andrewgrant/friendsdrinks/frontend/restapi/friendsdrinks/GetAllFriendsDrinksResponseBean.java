@@ -6,13 +6,13 @@ import java.util.List;
  * DTO for GetAllFriendsDrinksResponseBean.
  */
 public class GetAllFriendsDrinksResponseBean {
-    private List<FriendsDrinksBean> friendsDrinkList;
+    private List<FriendsDrinksIdBean> friendsDrinkList;
 
-    public List<FriendsDrinksBean> getFriendsDrinkList() {
+    public List<FriendsDrinksIdBean> getFriendsDrinkList() {
         return friendsDrinkList;
     }
 
-    public void setFriendsDrinkList(List<FriendsDrinksBean> friendsDrinkList) {
+    public void setFriendsDrinkList(List<FriendsDrinksIdBean> friendsDrinkList) {
         this.friendsDrinkList = friendsDrinkList;
     }
 }
