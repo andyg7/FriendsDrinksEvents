@@ -9,11 +9,11 @@ public class PostUsersRequestBean {
     private String updateType;
     private String friendsDrinksId;
 
-    private String adminUserId;
     // Only relevant for ADD_FRIEND
     private String userId;
     // Only relevant for REPLY_TO_INVITATION
     private String invitationReply;
+    private String adminUserId;
 
     public PostUsersRequestBean() {
     }
