@@ -68,6 +68,7 @@ public class StreamsService {
             return eventType.equals(EventType.CREATE_FRIENDSDRINKS_RESPONSE) ||
                     eventType.equals(EventType.UPDATE_FRIENDSDRINKS_RESPONSE) ||
                     eventType.equals(EventType.CREATE_FRIENDSDRINKS_INVITATION_RESPONSE) ||
+                    eventType.equals(EventType.CREATE_FRIENDSDRINKS_INVITATION_REPLY_RESPONSE) ||
                     eventType.equals(EventType.DELETE_FRIENDSDRINKS_RESPONSE);
         })).to(responsesTopicName, Produced.with(Serdes.String(), friendsDrinksAvro.apiFriendsDrinksSerde()));
 
