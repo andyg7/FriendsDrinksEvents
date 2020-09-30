@@ -100,7 +100,7 @@ public class Handler {
                 adminFriendsDrinks.add(friendsDrinksBean);
             } else {
                 List<String> userIds = friendsDrinksState.getUserIds();
-                if (userIds.contains(userId)) {
+                if (userIds != null && userIds.contains(userId)) {
                     FriendsDrinksBean friendsDrinksBean = new FriendsDrinksBean();
                     friendsDrinksBean.setAdminUserId(friendsDrinksState.getFriendsDrinksId().getAdminUserId());
                     friendsDrinksBean.setId(keyValue.value.getFriendsDrinksId().getFriendsDrinksId());
