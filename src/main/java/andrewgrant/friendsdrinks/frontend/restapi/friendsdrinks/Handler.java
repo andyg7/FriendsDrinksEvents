@@ -24,6 +24,8 @@ import andrewgrant.friendsdrinks.api.avro.*;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksState;
 import andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.post.PostFriendsDrinksRequestBean;
 import andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.post.PostFriendsDrinksResponseBean;
+import andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.post.PostUsersRequestBean;
+import andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.post.PostUsersResponseBean;
 import andrewgrant.friendsdrinks.user.avro.UserEvent;
 import andrewgrant.friendsdrinks.user.avro.UserId;
 import andrewgrant.friendsdrinks.user.avro.UserSignedUp;
@@ -34,6 +36,8 @@ import andrewgrant.friendsdrinks.user.avro.UserSignedUp;
 @Path("")
 public class Handler {
 
+    public static final String INVITE_FRIEND = "INVITE_FRIEND";
+    public static final String REPLY_TO_INVITATION = "REPLY_TO_INVITATION";
     private KafkaStreams kafkaStreams;
     private KafkaProducer<String, FriendsDrinksEvent> friendsDrinksKafkaProducer;
     private KafkaProducer<UserId, UserEvent> userKafkaProducer;
@@ -228,10 +232,10 @@ public class Handler {
     @Path("/users/{userId}/friendsdrinks/{friendsDrinksId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public PostFriendsDrinksResponseBean updateFriendsDrinks(@PathParam("userId") String userId,
-                                                             @PathParam("friendsDrinksId") String friendsDrinksId,
-                                                             PostFriendsDrinksRequestBean requestBean)
-            throws ExecutionException, InterruptedException {
+    public PostFriendsDrinksResponseBean postFriendsDrinks(@PathParam("userId") String userId,
+                                                           @PathParam("friendsDrinksId") String friendsDrinksId,
+                                                           PostFriendsDrinksRequestBean requestBean) throws InterruptedException, ExecutionException {
+
         final String topicName = envProps.getProperty("friendsdrinks-api.topic.name");
         String requestId = UUID.randomUUID().toString();
         ScheduleType scheduleType = null;
@@ -244,7 +248,6 @@ public class Handler {
                 .setAdminUserId(userId)
                 .setFriendsDrinksId(friendsDrinksId)
                 .build();
-        if (requestBean.getUpdateType() == null) {
             UpdateFriendsDrinksRequest updateFriendsDrinksRequest = UpdateFriendsDrinksRequest
                     .newBuilder()
                     .setFriendsDrinksId(friendsDrinksIdAvro)
@@ -260,7 +263,57 @@ public class Handler {
                     .setEventType(EventType.UPDATE_FRIENDSDRINKS_REQUEST)
                     .setUpdateFriendsDrinksRequest(updateFriendsDrinksRequest)
                     .build();
-        } else if (requestBean.getUpdateType().equals("INVITE_FRIEND")) {
+
+        ProducerRecord<String, FriendsDrinksEvent> record =
+                new ProducerRecord<>(
+                        topicName, requestId, friendsDrinksEvent);
+        friendsDrinksKafkaProducer.send(record).get();
+
+
+        ReadOnlyKeyValueStore<String, FriendsDrinksEvent> kv =
+                kafkaStreams.store(StoreQueryParameters.fromNameAndType(RESPONSES_STORE, QueryableStoreTypes.keyValueStore()));
+
+        FriendsDrinksEvent backendResponse = kv.get(requestId);
+        if (backendResponse == null) {
+            for (int i = 0; i < 10; i++) {
+                if (backendResponse != null) {
+                    break;
+                }
+                // Give the backend some more time.
+                Thread.sleep(100);
+                backendResponse = kv.get(requestId);
+            }
+        }
+        if (backendResponse == null) {
+            throw new RuntimeException(String.format(
+                    "Failed to get UpdateFriendsDrinksResponse for request id %s", requestId));
+        }
+
+
+        PostFriendsDrinksResponseBean responseBean = new PostFriendsDrinksResponseBean();
+        Result result = null;
+        responseBean.setResult(result.toString());
+        return responseBean;
+    }
+
+
+    @POST
+    @Path("/users/{userId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public PostUsersResponseBean postUsers(@PathParam("userId") String userId,
+                                           PostUsersRequestBean requestBean)
+            throws ExecutionException, InterruptedException {
+        final String topicName = envProps.getProperty("friendsdrinks-api.topic.name");
+        String requestId = UUID.randomUUID().toString();
+        String friendsDrinksId = requestBean.getFriendsDrinksId();
+        FriendsDrinksEvent friendsDrinksEvent;
+        FriendsDrinksId friendsDrinksIdAvro = FriendsDrinksId
+                .newBuilder()
+                .setAdminUserId(userId)
+                .setFriendsDrinksId(friendsDrinksId)
+                .build();
+        if (requestBean.getUpdateType().equals(INVITE_FRIEND)) {
             CreateFriendsDrinksInvitationRequest createFriendsDrinksInvitationRequest =
                     CreateFriendsDrinksInvitationRequest
                             .newBuilder()
@@ -277,6 +330,19 @@ public class Handler {
                     .setRequestId(createFriendsDrinksInvitationRequest.getRequestId())
                     .setEventType(EventType.CREATE_FRIENDSDRINKS_INVITATION_REQUEST)
                     .setCreateFriendsDrinksInvitationRequest(createFriendsDrinksInvitationRequest)
+                    .build();
+        } else if (requestBean.getUpdateType().equals(REPLY_TO_INVITATION)) {
+            CreateFriendsDrinksInvitationReplyRequest createFriendsDrinksInvitationReplyRequest =
+                    CreateFriendsDrinksInvitationReplyRequest.newBuilder()
+                            .setFriendsDrinksId(friendsDrinksIdAvro)
+                            .setReply(Reply.valueOf(requestBean.getInvitationReply()))
+                            .setRequestId(requestId)
+                            .build();
+            friendsDrinksEvent = FriendsDrinksEvent
+                    .newBuilder()
+                    .setRequestId(createFriendsDrinksInvitationReplyRequest.getRequestId())
+                    .setEventType(EventType.CREATE_FRIENDSDRINKS_INVITATION_REPLY_REQUEST)
+                    .setCreateFriendsDrinksInvitationReplyRequest(createFriendsDrinksInvitationReplyRequest)
                     .build();
         } else {
             throw new RuntimeException(String.format("Unknown update type %s", requestBean.getUpdateType()));
@@ -308,12 +374,12 @@ public class Handler {
         }
 
 
-        PostFriendsDrinksResponseBean responseBean = new PostFriendsDrinksResponseBean();
+        PostUsersResponseBean responseBean = new PostUsersResponseBean();
         Result result;
-        if (requestBean.getUpdateType() == null) {
-            result = backendResponse.getUpdateFriendsDrinksResponse().getResult();
-        } else if (requestBean.getUpdateType().equals("INVITE_FRIEND")) {
+        if (requestBean.getUpdateType().equals(INVITE_FRIEND)) {
             result = backendResponse.getCreateFriendsDrinksInvitationResponse().getResult();
+        } else if (requestBean.getUpdateType().equals(REPLY_TO_INVITATION)) {
+            result = backendResponse.getCreateFriendsDrinksInvitationReplyResponse().getResult();
         } else {
             throw new RuntimeException(String.format("Unexpected update type %s", requestBean.getUpdateType()));
         }
