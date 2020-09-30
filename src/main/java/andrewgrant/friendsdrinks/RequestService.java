@@ -193,6 +193,7 @@ public class RequestService {
                 FriendsDrinksEvent friendsDrinksEvent = FriendsDrinksEvent
                         .newBuilder()
                         .setEventType(EventType.CREATE_FRIENDSDRINKS_INVITATION_RESPONSE)
+                        .setRequestId(value.createFriendsDrinksInvitationRequest.getRequestId())
                         .setCreateFriendsDrinksInvitationResponse(response)
                         .build();
                 return new KeyValue<>(
@@ -207,6 +208,7 @@ public class RequestService {
                 FriendsDrinksEvent friendsDrinksEvent = FriendsDrinksEvent
                         .newBuilder()
                         .setEventType(EventType.CREATE_FRIENDSDRINKS_INVITATION_RESPONSE)
+                        .setRequestId(value.createFriendsDrinksInvitationRequest.getRequestId())
                         .setCreateFriendsDrinksInvitationResponse(response)
                         .build();
                 return new KeyValue<>(
