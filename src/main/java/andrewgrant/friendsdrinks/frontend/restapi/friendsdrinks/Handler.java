@@ -233,11 +233,6 @@ public class Handler {
                         topicName, requestId, friendsDrinksEvent);
         friendsDrinksKafkaProducer.send(record).get();
 
-        if (requestBean.getUpdateType() != null) {
-            PostFriendsDrinksResponseBean responseBean = new PostFriendsDrinksResponseBean();
-            responseBean.setResult("SUCCESS");
-            return responseBean;
-        }
 
         ReadOnlyKeyValueStore<String, FriendsDrinksEvent> kv =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(RESPONSES_STORE, QueryableStoreTypes.keyValueStore()));
@@ -260,7 +255,12 @@ public class Handler {
 
 
         PostFriendsDrinksResponseBean responseBean = new PostFriendsDrinksResponseBean();
-        Result result = backendResponse.getUpdateFriendsDrinksResponse().getResult();
+        Result result;
+        if (requestBean.getUpdateType() == null) {
+            result = backendResponse.getUpdateFriendsDrinksResponse().getResult();
+        } else if (requestBean.getUpdateType().equals("INVITE_FRIEND")) {
+            result = backendResponse.getCreateFriendsDrinksInvitationResponse().getResult();
+        }
         responseBean.setResult(result.toString());
         return responseBean;
     }
