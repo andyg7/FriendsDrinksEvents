@@ -291,8 +291,7 @@ public class Handler {
 
 
         PostFriendsDrinksResponseBean responseBean = new PostFriendsDrinksResponseBean();
-        Result result = null;
-        responseBean.setResult(result.toString());
+        responseBean.setResult(backendResponse.getUpdateFriendsDrinksResponse().getResult().toString());
         return responseBean;
     }
 
