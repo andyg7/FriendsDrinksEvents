@@ -307,12 +307,14 @@ public class Handler {
         String requestId = UUID.randomUUID().toString();
         String friendsDrinksId = requestBean.getFriendsDrinksId();
         FriendsDrinksEvent friendsDrinksEvent;
-        FriendsDrinksId friendsDrinksIdAvro = FriendsDrinksId
-                .newBuilder()
-                .setAdminUserId(userId)
-                .setFriendsDrinksId(friendsDrinksId)
-                .build();
+        FriendsDrinksId friendsDrinksIdAvro;
+
         if (requestBean.getUpdateType().equals(INVITE_FRIEND)) {
+            friendsDrinksIdAvro = FriendsDrinksId
+                    .newBuilder()
+                    .setAdminUserId(userId)
+                    .setFriendsDrinksId(friendsDrinksId)
+                    .build();
             CreateFriendsDrinksInvitationRequest createFriendsDrinksInvitationRequest =
                     CreateFriendsDrinksInvitationRequest
                             .newBuilder()
@@ -331,9 +333,20 @@ public class Handler {
                     .setCreateFriendsDrinksInvitationRequest(createFriendsDrinksInvitationRequest)
                     .build();
         } else if (requestBean.getUpdateType().equals(REPLY_TO_INVITATION)) {
+            friendsDrinksIdAvro = FriendsDrinksId
+                    .newBuilder()
+                    .setAdminUserId(requestBean.getAdminUserId())
+                    .setFriendsDrinksId(friendsDrinksId)
+                    .build();
             CreateFriendsDrinksInvitationReplyRequest createFriendsDrinksInvitationReplyRequest =
                     CreateFriendsDrinksInvitationReplyRequest.newBuilder()
                             .setFriendsDrinksId(friendsDrinksIdAvro)
+                            .setUserId(
+                                    andrewgrant.friendsdrinks.api.avro.UserId
+                                            .newBuilder()
+                                            .setUserId(userId)
+                                            .build()
+                            )
                             .setReply(Reply.valueOf(requestBean.getInvitationReply()))
                             .setRequestId(requestId)
                             .build();
