@@ -184,37 +184,29 @@ public class RequestService {
                         Produced.with(avro.friendsDrinksPendingInvitationIdSerde(), avro.friendsDrinksPendingInvitationSerde()));
 
         createFriendsDrinksInvitationAggregateResult.map((key, value) -> {
+            CreateFriendsDrinksInvitationResponse response;
             if (value.failed) {
-                CreateFriendsDrinksInvitationResponse response =  CreateFriendsDrinksInvitationResponse
+                response = CreateFriendsDrinksInvitationResponse
                         .newBuilder()
                         .setRequestId(value.createFriendsDrinksInvitationRequest.getRequestId())
                         .setResult(Result.FAIL)
                         .build();
-                FriendsDrinksEvent friendsDrinksEvent = FriendsDrinksEvent
-                        .newBuilder()
-                        .setEventType(EventType.CREATE_FRIENDSDRINKS_INVITATION_RESPONSE)
-                        .setRequestId(value.createFriendsDrinksInvitationRequest.getRequestId())
-                        .setCreateFriendsDrinksInvitationResponse(response)
-                        .build();
-                return new KeyValue<>(
-                        friendsDrinksEvent.getCreateFriendsDrinksInvitationResponse().getRequestId(),
-                        friendsDrinksEvent);
             } else {
-                CreateFriendsDrinksInvitationResponse response =  CreateFriendsDrinksInvitationResponse
+                response = CreateFriendsDrinksInvitationResponse
                         .newBuilder()
                         .setRequestId(value.createFriendsDrinksInvitationRequest.getRequestId())
-                        .setResult(Result.FAIL)
+                        .setResult(Result.SUCCESS)
                         .build();
-                FriendsDrinksEvent friendsDrinksEvent = FriendsDrinksEvent
-                        .newBuilder()
-                        .setEventType(EventType.CREATE_FRIENDSDRINKS_INVITATION_RESPONSE)
-                        .setRequestId(value.createFriendsDrinksInvitationRequest.getRequestId())
-                        .setCreateFriendsDrinksInvitationResponse(response)
-                        .build();
-                return new KeyValue<>(
-                        friendsDrinksEvent.getCreateFriendsDrinksInvitationResponse().getRequestId(),
-                        friendsDrinksEvent);
             }
+            FriendsDrinksEvent friendsDrinksEvent = FriendsDrinksEvent
+                    .newBuilder()
+                    .setEventType(EventType.CREATE_FRIENDSDRINKS_INVITATION_RESPONSE)
+                    .setRequestId(value.createFriendsDrinksInvitationRequest.getRequestId())
+                    .setCreateFriendsDrinksInvitationResponse(response)
+                    .build();
+            return new KeyValue<>(
+                    friendsDrinksEvent.getCreateFriendsDrinksInvitationResponse().getRequestId(),
+                    friendsDrinksEvent);
         }).to(envProps.getProperty("friendsdrinks-api.topic.name"),
                 Produced.with(Serdes.String(), avro.apiFriendsDrinksSerde()));
 
