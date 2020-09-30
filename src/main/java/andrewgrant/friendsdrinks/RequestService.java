@@ -140,7 +140,7 @@ public class RequestService {
                 .filter((key, value) -> value.getEventType().equals(EventType.CREATE_FRIENDSDRINKS_INVITATION_REQUEST))
                 .mapValues(value -> value.getCreateFriendsDrinksInvitationRequest());
         KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, CreateFriendsDrinksInvitationAggregateResult>
-                agg = friendsDrinksInvitations.selectKey((key, value) -> andrewgrant.friendsdrinks.avro.FriendsDrinksId
+                createFriendsDrinksInvitationAggregateResult = friendsDrinksInvitations.selectKey((key, value) -> andrewgrant.friendsdrinks.avro.FriendsDrinksId
                 .newBuilder()
                 .setAdminUserId(value.getFriendsDrinksId().getAdminUserId())
                 .setFriendsDrinksId(value.getFriendsDrinksId().getFriendsDrinksId())
@@ -177,12 +177,12 @@ public class RequestService {
                         Joined.with(avro.friendsDrinksIdSerde(), avro.createFriendsDrinksInvitationRequestSerde(), avro.friendsDrinksStateSerde())
                 );
 
-        agg.filter((key, value) -> value.failed == false).map((key, value) ->
+        createFriendsDrinksInvitationAggregateResult.filter((key, value) -> value.failed == false).map((key, value) ->
                 new KeyValue<>(value.friendsDrinksPendingInvitation.getInvitationId(), value.friendsDrinksPendingInvitation))
                 .to(envProps.getProperty("friendsdrinks-pending-invitation.topic.name"),
                         Produced.with(avro.friendsDrinksPendingInvitationIdSerde(), avro.friendsDrinksPendingInvitationSerde()));
 
-        agg.map((key, value) -> {
+        createFriendsDrinksInvitationAggregateResult.map((key, value) -> {
             if (value.failed) {
                 CreateFriendsDrinksInvitationResponse response =  CreateFriendsDrinksInvitationResponse
                         .newBuilder()

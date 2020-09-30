@@ -260,6 +260,8 @@ public class Handler {
             result = backendResponse.getUpdateFriendsDrinksResponse().getResult();
         } else if (requestBean.getUpdateType().equals("INVITE_FRIEND")) {
             result = backendResponse.getCreateFriendsDrinksInvitationResponse().getResult();
+        } else {
+            throw new RuntimeException(String.format("Unexpected update type %s", requestBean.getUpdateType()));
         }
         responseBean.setResult(result.toString());
         return responseBean;
