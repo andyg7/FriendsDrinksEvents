@@ -145,23 +145,23 @@ public class RequestService {
                 .setFriendsDrinksId(value.getFriendsDrinksId().getFriendsDrinksId())
                 .build())
                 .leftJoin(friendsDrinksStateKTable,
-                        (invitation, state) -> {
+                        (request, state) -> {
                             if (state != null) {
                                 // Confirms the FriendsDrinks exists.
                                 return FriendsDrinksPendingInvitation
                                         .newBuilder()
-                                        .setFriendsDrinksId(invitation.getFriendsDrinksId())
-                                        .setUserId(invitation.getUserId())
+                                        .setFriendsDrinksId(request.getFriendsDrinksId())
+                                        .setUserId(request.getUserId())
                                         .setInvitationId(
                                                 FriendsDrinksPendingInvitationId
                                                         .newBuilder()
-                                                        .setFriendsDrinksId(invitation.getFriendsDrinksId())
-                                                        .setUserId(invitation.getUserId())
+                                                        .setFriendsDrinksId(request.getFriendsDrinksId())
+                                                        .setUserId(request.getUserId())
                                                         .build())
                                         .setMessage(String.format("Want to join %s?!", state.getName()))
                                         .build();
                             } else {
-                                log.info(String.format("Dropping FriendsDrinksInvitation request %s", invitation.getRequestId()));
+                                log.info(String.format("Dropping FriendsDrinksInvitation request %s", request.getRequestId()));
                                 return null;
                             }
                         },

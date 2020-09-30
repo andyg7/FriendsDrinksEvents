@@ -233,6 +233,12 @@ public class Handler {
                         topicName, requestId, friendsDrinksEvent);
         friendsDrinksKafkaProducer.send(record).get();
 
+        if (requestBean.getUpdateType() != null) {
+            PostFriendsDrinksResponseBean responseBean = new PostFriendsDrinksResponseBean();
+            responseBean.setResult("SUCCESS");
+            return responseBean;
+        }
+
         ReadOnlyKeyValueStore<String, FriendsDrinksEvent> kv =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(RESPONSES_STORE, QueryableStoreTypes.keyValueStore()));
 
@@ -252,11 +258,6 @@ public class Handler {
                     "Failed to get UpdateFriendsDrinksResponse for request id %s", requestId));
         }
 
-        if (requestBean.getUpdateType() != null) {
-            PostFriendsDrinksResponseBean responseBean = new PostFriendsDrinksResponseBean();
-            responseBean.setResult("SUCCESS");
-            return responseBean;
-        }
 
         PostFriendsDrinksResponseBean responseBean = new PostFriendsDrinksResponseBean();
         Result result = backendResponse.getUpdateFriendsDrinksResponse().getResult();
