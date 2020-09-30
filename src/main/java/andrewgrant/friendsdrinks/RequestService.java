@@ -140,11 +140,12 @@ public class RequestService {
                 .filter((key, value) -> value.getEventType().equals(EventType.CREATE_FRIENDSDRINKS_INVITATION_REQUEST))
                 .mapValues(value -> value.getCreateFriendsDrinksInvitationRequest());
         KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, CreateFriendsDrinksInvitationAggregateResult>
-                createFriendsDrinksInvitationAggregateResult = friendsDrinksInvitations.selectKey((key, value) -> andrewgrant.friendsdrinks.avro.FriendsDrinksId
-                .newBuilder()
-                .setAdminUserId(value.getFriendsDrinksId().getAdminUserId())
-                .setFriendsDrinksId(value.getFriendsDrinksId().getFriendsDrinksId())
-                .build())
+                createFriendsDrinksInvitationAggregateResult = friendsDrinksInvitations.selectKey((key, value) ->
+                andrewgrant.friendsdrinks.avro.FriendsDrinksId
+                        .newBuilder()
+                        .setAdminUserId(value.getFriendsDrinksId().getAdminUserId())
+                        .setFriendsDrinksId(value.getFriendsDrinksId().getFriendsDrinksId())
+                        .build())
                 .leftJoin(friendsDrinksStateKTable,
                         (request, state) -> {
                             if (state != null) {
