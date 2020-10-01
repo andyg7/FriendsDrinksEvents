@@ -6,24 +6,24 @@ import java.util.List;
  * DTO for GetUserResponse.
  */
 public class GetUserResponseBean {
-    private List<FriendsDrinksBean> adminFriendsDrinks;
-    private List<FriendsDrinksBean> memberFriendsDrinks;
+    private List<FriendsDrinksIdBean> adminFriendsDrinksIdBeans;
+    private List<FriendsDrinksIdBean> memberFriendsDrinksIdBeans;
     private List<FriendsDrinksInvitationBean> invitations;
 
-    public List<FriendsDrinksBean> getAdminFriendsDrinks() {
-        return adminFriendsDrinks;
+    public List<FriendsDrinksIdBean> getAdminFriendsDrinksIdBeans() {
+        return adminFriendsDrinksIdBeans;
     }
 
-    public void setAdminFriendsDrinks(List<FriendsDrinksBean> adminFriendsDrinks) {
-        this.adminFriendsDrinks = adminFriendsDrinks;
+    public void setAdminFriendsDrinksIdBeans(List<FriendsDrinksIdBean> adminFriendsDrinksIdBeans) {
+        this.adminFriendsDrinksIdBeans = adminFriendsDrinksIdBeans;
     }
 
-    public List<FriendsDrinksBean> getMemberFriendsDrinks() {
-        return memberFriendsDrinks;
+    public List<FriendsDrinksIdBean> getMemberFriendsDrinksIdBeans() {
+        return memberFriendsDrinksIdBeans;
     }
 
-    public void setMemberFriendsDrinks(List<FriendsDrinksBean> memberFriendsDrinks) {
-        this.memberFriendsDrinks = memberFriendsDrinks;
+    public void setMemberFriendsDrinksIdBeans(List<FriendsDrinksIdBean> memberFriendsDrinksIdBeans) {
+        this.memberFriendsDrinksIdBeans = memberFriendsDrinksIdBeans;
     }
 
     public List<FriendsDrinksInvitationBean> getInvitations() {

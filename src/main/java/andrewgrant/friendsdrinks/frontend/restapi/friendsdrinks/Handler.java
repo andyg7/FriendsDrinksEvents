@@ -58,13 +58,24 @@ public class Handler {
     @GET
     @Path("/friendsdrinks")
     @Produces(MediaType.APPLICATION_JSON)
-    public GetAllFriendsDrinksResponseBean getAllFriendsDrinks() {
+    public GetAllFriendsDrinksResponseBean getAllFriendsDrinks(@QueryParam("adminUserId") String adminUserId,
+                                                               @QueryParam("memberUserId") String memberUserId) {
         ReadOnlyKeyValueStore<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState> kv =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_STORE, QueryableStoreTypes.keyValueStore()));
         KeyValueIterator<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState> allKvs = kv.all();
         List<FriendsDrinksIdBean> friendsDrinksList = new ArrayList<>();
         while (allKvs.hasNext()) {
             KeyValue<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState> keyValue = allKvs.next();
+            FriendsDrinksState friendsDrinksState = keyValue.value;
+            if (adminUserId != null && !friendsDrinksState.getFriendsDrinksId().getAdminUserId().equals(adminUserId)) {
+                continue;
+            }
+            if (memberUserId != null) {
+                List<String> userIds = friendsDrinksState.getUserIds();
+                if (userIds == null || !userIds.contains(memberUserId)) {
+                    continue;
+                }
+            }
             friendsDrinksList.add(new FriendsDrinksIdBean(
                     keyValue.value.getFriendsDrinksId().getAdminUserId(),
                     keyValue.value.getFriendsDrinksId().getFriendsDrinksId()));
@@ -109,15 +120,15 @@ public class Handler {
     @Path("/users/{userId}")
     @Produces(MediaType.APPLICATION_JSON)
     public GetUserResponseBean getUser(@PathParam("userId") String userId) {
-        GetAllFriendsDrinksForUserResponseBean getAllFriendsDrinksForUserResponseBean =
-                getAllFriendsDrinksForUser(userId);
+        GetAllFriendsDrinksResponseBean adminFriendsDrinks = getAllFriendsDrinks(userId, null);
         GetUserResponseBean getUserResponseBean = new GetUserResponseBean();
-        getUserResponseBean.setAdminFriendsDrinks(getAllFriendsDrinksForUserResponseBean.getAdminFriendsDrinks());
-        getUserResponseBean.setMemberFriendsDrinks(getAllFriendsDrinksForUserResponseBean.getMemberFriendsDrinks());
+        getUserResponseBean.setAdminFriendsDrinksIdBeans(adminFriendsDrinks.getFriendsDrinkList());
+        GetAllFriendsDrinksResponseBean memberFriendsDrinks = getAllFriendsDrinks(null, userId);
+        getUserResponseBean.setMemberFriendsDrinksIdBeans(memberFriendsDrinks.getFriendsDrinkList());
+
         ReadOnlyKeyValueStore<FriendsDrinksPendingInvitationId, FriendsDrinksPendingInvitation> kv =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(PENDING_INVITATIONS_STORE, QueryableStoreTypes.keyValueStore()));
         KeyValueIterator<FriendsDrinksPendingInvitationId, FriendsDrinksPendingInvitation> allKvs = kv.all();
-
         List<FriendsDrinksInvitationBean> invitationBeans = new ArrayList<>();
         while (allKvs.hasNext()) {
             KeyValue<FriendsDrinksPendingInvitationId, FriendsDrinksPendingInvitation> keyValue = allKvs.next();
@@ -133,48 +144,6 @@ public class Handler {
         getUserResponseBean.setInvitations(invitationBeans);
 
         return getUserResponseBean;
-    }
-
-    @GET
-    @Path("/users/{userId}/friendsdrinks")
-    @Produces(MediaType.APPLICATION_JSON)
-    public GetAllFriendsDrinksForUserResponseBean getAllFriendsDrinksForUser(@PathParam("userId") final String userId) {
-        ReadOnlyKeyValueStore<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState> kv =
-                kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_STORE, QueryableStoreTypes.keyValueStore()));
-        // TODO(andyg7): this is not efficient! We should have a state store that
-        // removes the need for a full scan but for now this is OK.
-        KeyValueIterator<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState> allKvs = kv.all();
-        List<FriendsDrinksBean> adminFriendsDrinks = new ArrayList<>();
-        List<FriendsDrinksBean> memberFriendsDrinks = new ArrayList<>();
-        while (allKvs.hasNext()) {
-            KeyValue<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState> keyValue = allKvs.next();
-            FriendsDrinksState friendsDrinksState = keyValue.value;
-            if (friendsDrinksState.getFriendsDrinksId().getAdminUserId().equals(userId)) {
-                FriendsDrinksBean friendsDrinksBean = new FriendsDrinksBean();
-                friendsDrinksBean.setAdminUserId(friendsDrinksState.getFriendsDrinksId().getAdminUserId());
-                friendsDrinksBean.setId(keyValue.value.getFriendsDrinksId().getFriendsDrinksId());
-                friendsDrinksBean.setName(friendsDrinksState.getName());
-                if (friendsDrinksState.getUserIds() != null) {
-                    friendsDrinksBean.setUserIds(friendsDrinksState.getUserIds().stream().collect(Collectors.toList()));
-                }
-                adminFriendsDrinks.add(friendsDrinksBean);
-            } else {
-                List<String> userIds = friendsDrinksState.getUserIds();
-                if (userIds != null && userIds.contains(userId)) {
-                    FriendsDrinksBean friendsDrinksBean = new FriendsDrinksBean();
-                    friendsDrinksBean.setAdminUserId(friendsDrinksState.getFriendsDrinksId().getAdminUserId());
-                    friendsDrinksBean.setId(keyValue.value.getFriendsDrinksId().getFriendsDrinksId());
-                    friendsDrinksBean.setName(friendsDrinksState.getName());
-                    friendsDrinksBean.setUserIds(friendsDrinksState.getUserIds().stream().collect(Collectors.toList()));
-                    memberFriendsDrinks.add(friendsDrinksBean);
-                }
-            }
-        }
-        allKvs.close();
-        GetAllFriendsDrinksForUserResponseBean response = new GetAllFriendsDrinksForUserResponseBean();
-        response.setAdminFriendsDrinks(adminFriendsDrinks);
-        response.setMemberFriendsDrinks(memberFriendsDrinks);
-        return response;
     }
 
     @DELETE
@@ -289,7 +258,6 @@ public class Handler {
             throw new RuntimeException(String.format(
                     "Failed to get UpdateFriendsDrinksResponse for request id %s", requestId));
         }
-
 
         PostFriendsDrinksResponseBean responseBean = new PostFriendsDrinksResponseBean();
         responseBean.setResult(backendResponse.getUpdateFriendsDrinksResponse().getResult().toString());
