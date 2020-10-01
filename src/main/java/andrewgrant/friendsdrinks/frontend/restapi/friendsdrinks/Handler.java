@@ -205,7 +205,8 @@ public class Handler {
     @Consumes(MediaType.APPLICATION_JSON)
     public PostFriendsDrinksResponseBean updateFriendsDrinks(@PathParam("userId") String userId,
                                                              @PathParam("friendsDrinksId") String friendsDrinksId,
-                                                             PostFriendsDrinksRequestBean requestBean) throws InterruptedException, ExecutionException {
+                                                             PostFriendsDrinksRequestBean requestBean)
+            throws InterruptedException, ExecutionException {
 
         final String topicName = envProps.getProperty("friendsdrinks-api.topic.name");
         String requestId = UUID.randomUUID().toString();
