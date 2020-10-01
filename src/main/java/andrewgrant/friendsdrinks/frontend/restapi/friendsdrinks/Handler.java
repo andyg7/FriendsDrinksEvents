@@ -382,9 +382,8 @@ public class Handler {
         }
         if (backendResponse == null) {
             throw new RuntimeException(String.format(
-                    "Failed to get UpdateFriendsDrinksResponse for request id %s", requestId));
+                    "Failed to get backend response for request id %s", requestId));
         }
-
 
         PostUsersResponseBean responseBean = new PostUsersResponseBean();
         Result result;

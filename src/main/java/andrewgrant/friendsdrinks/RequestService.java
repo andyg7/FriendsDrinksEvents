@@ -210,23 +210,23 @@ public class RequestService {
         }).to(envProps.getProperty("friendsdrinks-api.topic.name"),
                 Produced.with(Serdes.String(), avro.apiFriendsDrinksSerde()));
 
-        KStream<String, CreateFriendsDrinksInvitationReplyRequest> createFriendsDrinksInvitationReplyRequests = apiEvents
-                .filter((key, value) -> value.getEventType().equals(EventType.CREATE_FRIENDSDRINKS_INVITATION_REPLY_REQUEST))
-                .mapValues(value -> value.getCreateFriendsDrinksInvitationReplyRequest());
-
         KTable<FriendsDrinksPendingInvitationId, FriendsDrinksPendingInvitation> pendingFriendsDrinksInvitations = builder.table(
                 envProps.getProperty("friendsdrinks-pending-invitation.topic.name"),
                 Consumed.with(avro.friendsDrinksPendingInvitationIdSerde(), avro.friendsDrinksPendingInvitationSerde()));
 
-        createFriendsDrinksInvitationReplyRequests.selectKey((key, value) -> FriendsDrinksPendingInvitationId
-                .newBuilder()
-                .setFriendsDrinksId(value.getFriendsDrinksId())
-                .setUserId(value.getUserId())
-                .build())
-                .leftJoin(pendingFriendsDrinksInvitations,
-                        (request, state) -> {
-                            if (state != null) {
-                                return CreateFriendsDrinksInvitationReplyResponse
+        KStream<String, CreateFriendsDrinksInvitationReplyRequest> createFriendsDrinksInvitationReplyRequests = apiEvents
+                .filter((key, value) -> value.getEventType().equals(EventType.CREATE_FRIENDSDRINKS_INVITATION_REPLY_REQUEST))
+                .mapValues(value -> value.getCreateFriendsDrinksInvitationReplyRequest());
+        KStream<FriendsDrinksPendingInvitationId, CreateFriendsDrinksInvitationReplyResponse> createFriendsDrinksInvitationReplyResponses =
+                createFriendsDrinksInvitationReplyRequests.selectKey((key, value) -> FriendsDrinksPendingInvitationId
+                        .newBuilder()
+                        .setFriendsDrinksId(value.getFriendsDrinksId())
+                        .setUserId(value.getUserId())
+                        .build())
+                        .leftJoin(pendingFriendsDrinksInvitations,
+                                (request, state) -> {
+                                    if (state != null) {
+                                        return CreateFriendsDrinksInvitationReplyResponse
                                         .newBuilder()
                                         .setRequestId(request.getRequestId())
                                         .setResult(Result.SUCCESS)
@@ -242,8 +242,19 @@ public class RequestService {
                         Joined.with(
                                 avro.friendsDrinksPendingInvitationIdSerde(),
                                 avro.createFriendsDrinksInvitationReplyRequestSerde(), avro.friendsDrinksPendingInvitationSerde())
-                )
-                .filter((key, value) -> value.getResult().equals(Result.SUCCESS))
+                );
+
+        createFriendsDrinksInvitationReplyResponses.selectKey(((key, value) -> value.getRequestId()))
+                .mapValues(value -> FriendsDrinksEvent
+                        .newBuilder()
+                        .setEventType(EventType.CREATE_FRIENDSDRINKS_INVITATION_REPLY_RESPONSE)
+                        .setRequestId(value.getRequestId())
+                        .setCreateFriendsDrinksInvitationReplyResponse(value)
+                        .build())
+                .to(envProps.getProperty("friendsdrinks-api.topic.name"),
+                        Produced.with(Serdes.String(), avro.apiFriendsDrinksSerde()));
+
+        createFriendsDrinksInvitationReplyResponses.filter((key, value) -> value.getResult().equals(Result.SUCCESS))
                 .mapValues(value -> (FriendsDrinksPendingInvitation) null)
                 .to(envProps.getProperty("friendsdrinks-pending-invitation.topic.name"),
                         Produced.with(avro.friendsDrinksPendingInvitationIdSerde(), avro.friendsDrinksPendingInvitationSerde()));
