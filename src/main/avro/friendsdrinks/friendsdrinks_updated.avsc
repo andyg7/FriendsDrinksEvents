@@ -1,7 +1,7 @@
 {
   "namespace": "andrewgrant.friendsdrinks.avro",
   "type": "record",
-  "name": "UpdatedFriendsDrinks",
+  "name": "FriendsDrinksUpdated",
   "fields": [
       {"name": "friendsDrinksId", "type": "FriendsDrinksId"},
       {"name": "updateType", "type": {"type": "enum", "name": "UpdateType", "symbols": ["FULL", "PARTIAL"]}},
