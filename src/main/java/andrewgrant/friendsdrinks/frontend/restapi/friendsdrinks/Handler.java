@@ -122,9 +122,9 @@ public class Handler {
     public GetUserResponseBean getUser(@PathParam("userId") String userId) {
         GetAllFriendsDrinksResponseBean adminFriendsDrinks = getAllFriendsDrinks(userId, null);
         GetUserResponseBean getUserResponseBean = new GetUserResponseBean();
-        getUserResponseBean.setAdminFriendsDrinksIdBeans(adminFriendsDrinks.getFriendsDrinkList());
+        getUserResponseBean.setAdminFriendsDrinksIds(adminFriendsDrinks.getFriendsDrinkList());
         GetAllFriendsDrinksResponseBean memberFriendsDrinks = getAllFriendsDrinks(null, userId);
-        getUserResponseBean.setMemberFriendsDrinksIdBeans(memberFriendsDrinks.getFriendsDrinkList());
+        getUserResponseBean.setMemberFriendsDrinksIds(memberFriendsDrinks.getFriendsDrinkList());
 
         ReadOnlyKeyValueStore<FriendsDrinksPendingInvitationId, FriendsDrinksPendingInvitation> kv =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(PENDING_INVITATIONS_STORE, QueryableStoreTypes.keyValueStore()));
