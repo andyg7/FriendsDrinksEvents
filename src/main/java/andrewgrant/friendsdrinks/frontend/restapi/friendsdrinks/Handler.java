@@ -307,7 +307,7 @@ public class Handler {
             throws ExecutionException, InterruptedException {
         if (requestBean.getEventType().equals(SIGNED_UP) ||
                 requestBean.getEventType().equals(CANCELLED)) {
-            return registerUserEvent(userId, requestBean);
+            return registerUserEvent(userId, requestBean.getEventType());
         }
 
         final String topicName = envProps.getProperty("friendsdrinks-api.topic.name");
@@ -405,11 +405,11 @@ public class Handler {
         return responseBean;
     }
 
-    public PostUsersResponseBean registerUserEvent(String userId, PostUsersRequestBean requestBean) throws ExecutionException, InterruptedException {
+    public PostUsersResponseBean registerUserEvent(String userId, String eventType) throws ExecutionException, InterruptedException {
         final String topicName = envProps.getProperty("user-event.topic.name");
         UserId userIdAvro = UserId.newBuilder().setUserId(userId).build();
         UserEvent userEvent;
-        if (requestBean.getEventType().equals(SIGNED_UP)) {
+        if (eventType.equals(SIGNED_UP)) {
             UserSignedUp userSignedUp = UserSignedUp.newBuilder().setUserId(userIdAvro).build();
             userEvent = UserEvent
                     .newBuilder()
@@ -417,14 +417,14 @@ public class Handler {
                     .setUserSignedUp(userSignedUp)
                     .setUserId(userIdAvro)
                     .build();
-        } else if (requestBean.getEventType().equals(CANCELLED)) {
+        } else if (eventType.equals(CANCELLED)) {
             userEvent = UserEvent
                     .newBuilder()
                     .setEventType(andrewgrant.friendsdrinks.user.avro.EventType.CANCELLED)
                     .setUserId(userIdAvro)
                     .build();
         } else {
-            throw new RuntimeException(String.format("Unknown event type %s", requestBean.getEventType()));
+            throw new RuntimeException(String.format("Unknown event type %s", eventType));
         }
         ProducerRecord<UserId, UserEvent> record = new ProducerRecord<>(
                 topicName,
