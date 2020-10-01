@@ -54,7 +54,8 @@ public class WriterService {
         KStream<String, FriendsDrinksEvent> apiRequests = apiEvents
                 .filter((k, v) -> v.getEventType().equals(EventType.CREATE_FRIENDSDRINKS_REQUEST) ||
                         v.getEventType().equals(EventType.UPDATE_FRIENDSDRINKS_REQUEST) ||
-                        v.getEventType().equals(EventType.CREATE_FRIENDSDRINKS_INVITATION_REPLY_REQUEST) ||
+                        (v.getEventType().equals(EventType.CREATE_FRIENDSDRINKS_INVITATION_REPLY_REQUEST)
+                                && v.getCreateFriendsDrinksInvitationReplyRequest().getReply().equals(Reply.ACCEPTED)) ||
                         v.getEventType().equals(EventType.DELETE_FRIENDSDRINKS_REQUEST));
 
         successApiResponses.join(apiRequests,
