@@ -13,6 +13,7 @@ import java.util.Properties;
 import andrewgrant.friendsdrinks.FriendsDrinksAvro;
 import andrewgrant.friendsdrinks.api.avro.EventType;
 import andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent;
+import andrewgrant.friendsdrinks.avro.FriendsDrinksId;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksState;
 
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
@@ -49,12 +50,13 @@ public class StreamsService {
         buildResponsesStore(builder, apiEvents, friendsDrinksAvro, frontendPrivateTopicName);
 
         final String friendsDrinksStateTopicName = envProps.getProperty("friendsdrinks-state.topic.name");
-        builder.table(friendsDrinksStateTopicName,
-                Consumed.with(friendsDrinksAvro.friendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksStateSerde()),
-                Materialized.as(FRIENDSDRINKS_STORE));
-        builder.stream(friendsDrinksStateTopicName,
-                Consumed.with(friendsDrinksAvro.friendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksStateSerde()))
-                .selectKey((key, value) -> key.getFriendsDrinksId())
+        KStream<FriendsDrinksId, FriendsDrinksState> friendsDrinksState =
+                builder.stream(friendsDrinksStateTopicName,
+                        Consumed.with(friendsDrinksAvro.friendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksStateSerde()));
+
+        friendsDrinksState.toTable(Materialized.as(FRIENDSDRINKS_STORE));
+
+        friendsDrinksState.selectKey((key, value) -> key.getFriendsDrinksId())
                 .toTable(
                         Materialized.<String, FriendsDrinksState, KeyValueStore<Bytes, byte[]>>
                                 as(FRIENDSDRINKS_KEYED_BY_SINGLE_ID_STORE)
