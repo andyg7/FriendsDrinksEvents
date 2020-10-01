@@ -31,7 +31,7 @@ import andrewgrant.friendsdrinks.user.avro.UserId;
 import andrewgrant.friendsdrinks.user.avro.UserSignedUp;
 
 /**
- * Implements frontend REST API friendsdrinks path.
+ * Implements frontend REST API.
  */
 @Path("")
 public class Handler {
@@ -90,28 +90,19 @@ public class Handler {
     @Path("/friendsdrinks/{friendsDrinksId}")
     @Produces(MediaType.APPLICATION_JSON)
     public GetFriendsDrinksResponseBean getFriendsDrinks(@PathParam("friendsDrinksId") String friendsDrinksId) {
-        ReadOnlyKeyValueStore<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState> kv =
-                kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_STORE, QueryableStoreTypes.keyValueStore()));
-        KeyValueIterator<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState> allKvs = kv.all();
-        GetFriendsDrinksResponseBean response = null;
-        while (allKvs.hasNext()) {
-            KeyValue<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState> keyValue = allKvs.next();
-            FriendsDrinksState friendsDrinksState = keyValue.value;
-            andrewgrant.friendsdrinks.avro.FriendsDrinksId friendsDrinksIdAvro = keyValue.value.getFriendsDrinksId();
-            if (friendsDrinksIdAvro.getFriendsDrinksId().equals(friendsDrinksId)) {
-                response = new GetFriendsDrinksResponseBean();
-                response.setAdminUserId(friendsDrinksState.getFriendsDrinksId().getAdminUserId());
-                response.setId(keyValue.value.getFriendsDrinksId().getFriendsDrinksId());
-                response.setName(friendsDrinksState.getName());
-                if (friendsDrinksState.getUserIds() != null) {
-                    response.setUserIds(friendsDrinksState.getUserIds().stream().collect(Collectors.toList()));
-                }
-                break;
-            }
-        }
-        allKvs.close();
-        if (response == null) {
+        ReadOnlyKeyValueStore<String, andrewgrant.friendsdrinks.avro.FriendsDrinksState> kv =
+                kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_KEYED_BY_SINGLE_ID_STORE, QueryableStoreTypes.keyValueStore()));
+        FriendsDrinksState friendsDrinksState = kv.get(friendsDrinksId);
+        if (friendsDrinksState == null) {
             throw new BadRequestException(String.format("%s does not exist", friendsDrinksId));
+        }
+        GetFriendsDrinksResponseBean response = new GetFriendsDrinksResponseBean();
+        response.setAdminUserId(friendsDrinksState.getFriendsDrinksId().getAdminUserId());
+        response.setId(friendsDrinksState.getFriendsDrinksId().getFriendsDrinksId());
+        response.setName(friendsDrinksState.getName());
+
+        if (friendsDrinksState.getUserIds() != null) {
+            response.setUserIds(friendsDrinksState.getUserIds().stream().collect(Collectors.toList()));
         }
         return response;
     }
