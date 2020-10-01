@@ -5,7 +5,7 @@ package andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.post;
  */
 public class PostUsersRequestBean {
     // Options for updateType: INVITE_FRIEND, REPLY_TO_INVITATION.
-    private String updateType;
+    private String eventType;
     // This is always required.
     private String friendsDrinksId;
 
@@ -42,12 +42,12 @@ public class PostUsersRequestBean {
         this.invitationReply = invitationReply;
     }
 
-    public String getUpdateType() {
-        return updateType;
+    public String getEventType() {
+        return eventType;
     }
 
-    public void setUpdateType(String updateType) {
-        this.updateType = updateType;
+    public void setEventType(String eventType) {
+        this.eventType = eventType;
     }
 
     public String getAdminUserId() {

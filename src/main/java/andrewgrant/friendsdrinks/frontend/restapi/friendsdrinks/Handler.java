@@ -38,6 +38,8 @@ public class Handler {
 
     public static final String INVITE_FRIEND = "INVITE_FRIEND";
     public static final String REPLY_TO_INVITATION = "REPLY_TO_INVITATION";
+    public static final String SIGNED_UP = "SIGNED_UP";
+    public static final String CANCELLED = "CANCELLED";
     private KafkaStreams kafkaStreams;
     private KafkaProducer<String, FriendsDrinksEvent> friendsDrinksKafkaProducer;
     private KafkaProducer<UserId, UserEvent> userKafkaProducer;
@@ -303,13 +305,18 @@ public class Handler {
     public PostUsersResponseBean postUsers(@PathParam("userId") String userId,
                                            PostUsersRequestBean requestBean)
             throws ExecutionException, InterruptedException {
+        if (requestBean.getEventType().equals(SIGNED_UP) ||
+                requestBean.getEventType().equals(CANCELLED)) {
+            return registerUserEvent(userId, requestBean);
+        }
+
         final String topicName = envProps.getProperty("friendsdrinks-api.topic.name");
         String requestId = UUID.randomUUID().toString();
         String friendsDrinksId = requestBean.getFriendsDrinksId();
         FriendsDrinksEvent friendsDrinksEvent;
         FriendsDrinksId friendsDrinksIdAvro;
 
-        if (requestBean.getUpdateType().equals(INVITE_FRIEND)) {
+        if (requestBean.getEventType().equals(INVITE_FRIEND)) {
             friendsDrinksIdAvro = FriendsDrinksId
                     .newBuilder()
                     .setAdminUserId(userId)
@@ -332,7 +339,7 @@ public class Handler {
                     .setEventType(EventType.CREATE_FRIENDSDRINKS_INVITATION_REQUEST)
                     .setCreateFriendsDrinksInvitationRequest(createFriendsDrinksInvitationRequest)
                     .build();
-        } else if (requestBean.getUpdateType().equals(REPLY_TO_INVITATION)) {
+        } else if (requestBean.getEventType().equals(REPLY_TO_INVITATION)) {
             friendsDrinksIdAvro = FriendsDrinksId
                     .newBuilder()
                     .setAdminUserId(requestBean.getAdminUserId())
@@ -357,7 +364,7 @@ public class Handler {
                     .setCreateFriendsDrinksInvitationReplyRequest(createFriendsDrinksInvitationReplyRequest)
                     .build();
         } else {
-            throw new RuntimeException(String.format("Unknown update type %s", requestBean.getUpdateType()));
+            throw new RuntimeException(String.format("Unknown update type %s", requestBean.getEventType()));
         }
 
         ProducerRecord<String, FriendsDrinksEvent> record =
@@ -387,26 +394,22 @@ public class Handler {
 
         PostUsersResponseBean responseBean = new PostUsersResponseBean();
         Result result;
-        if (requestBean.getUpdateType().equals(INVITE_FRIEND)) {
+        if (requestBean.getEventType().equals(INVITE_FRIEND)) {
             result = backendResponse.getCreateFriendsDrinksInvitationResponse().getResult();
-        } else if (requestBean.getUpdateType().equals(REPLY_TO_INVITATION)) {
+        } else if (requestBean.getEventType().equals(REPLY_TO_INVITATION)) {
             result = backendResponse.getCreateFriendsDrinksInvitationReplyResponse().getResult();
         } else {
-            throw new RuntimeException(String.format("Unexpected update type %s", requestBean.getUpdateType()));
+            throw new RuntimeException(String.format("Unexpected update type %s", requestBean.getEventType()));
         }
         responseBean.setResult(result.toString());
         return responseBean;
     }
 
-    @POST
-    @Path("/users")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_JSON)
-    public RegisterUserEventResponseBean registerUserEvent(RegisterUserEventRequestBean requestBean) throws ExecutionException, InterruptedException {
+    public PostUsersResponseBean registerUserEvent(String userId, PostUsersRequestBean requestBean) throws ExecutionException, InterruptedException {
         final String topicName = envProps.getProperty("user-event.topic.name");
-        UserId userIdAvro = UserId.newBuilder().setUserId(requestBean.getUserId()).build();
+        UserId userIdAvro = UserId.newBuilder().setUserId(userId).build();
         UserEvent userEvent;
-        if (requestBean.getEventType().equals("SIGNED_UP")) {
+        if (requestBean.getEventType().equals(SIGNED_UP)) {
             UserSignedUp userSignedUp = UserSignedUp.newBuilder().setUserId(userIdAvro).build();
             userEvent = UserEvent
                     .newBuilder()
@@ -414,7 +417,7 @@ public class Handler {
                     .setUserSignedUp(userSignedUp)
                     .setUserId(userIdAvro)
                     .build();
-        } else if (requestBean.getEventType().equals("CANCELLED")) {
+        } else if (requestBean.getEventType().equals(CANCELLED)) {
             userEvent = UserEvent
                     .newBuilder()
                     .setEventType(andrewgrant.friendsdrinks.user.avro.EventType.CANCELLED)
@@ -429,7 +432,9 @@ public class Handler {
                 userEvent
         );
         userKafkaProducer.send(record).get();
-        return new RegisterUserEventResponseBean();
+        PostUsersResponseBean postUsersResponseBean = new PostUsersResponseBean();
+        postUsersResponseBean.setResult("SUCCESS");
+        return postUsersResponseBean;
     }
 
     @POST
