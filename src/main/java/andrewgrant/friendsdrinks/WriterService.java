@@ -133,6 +133,11 @@ public class WriterService {
                         return andrewgrant.friendsdrinks.avro.FriendsDrinksEvent
                                 .newBuilder()
                                 .setEventType(andrewgrant.friendsdrinks.avro.EventType.USER_ADDED)
+                                .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
+                                        .newBuilder()
+                                        .setAdminUserId(request.getFriendsDrinksId().getAdminUserId())
+                                        .setFriendsDrinksId(request.getFriendsDrinksId().getFriendsDrinksId())
+                                        .build())
                                 .setFriendsDrinksUserAdded(FriendsDrinksUserAdded
                                         .newBuilder()
                                         .setUserId(request.getUserId().getUserId())

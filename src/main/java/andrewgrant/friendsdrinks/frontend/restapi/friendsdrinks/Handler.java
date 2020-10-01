@@ -280,11 +280,6 @@ public class Handler {
 
     public PostUsersResponseBean handleReplyToInvitation(String userId, PostUsersRequestBean requestBean)
             throws InterruptedException, ExecutionException {
-        if (requestBean.getEventType().equals(SIGNED_UP) ||
-                requestBean.getEventType().equals(CANCELLED)) {
-            return registerUserEvent(userId, requestBean.getEventType());
-        }
-
         final String topicName = envProps.getProperty("friendsdrinks-api.topic.name");
         String requestId = UUID.randomUUID().toString();
         String friendsDrinksId = requestBean.getFriendsDrinksId();
