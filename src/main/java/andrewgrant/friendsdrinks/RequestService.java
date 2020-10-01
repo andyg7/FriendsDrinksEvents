@@ -148,32 +148,34 @@ public class RequestService {
                         .build())
                 .leftJoin(friendsDrinksStateKTable,
                         (request, state) -> {
+                            CreateFriendsDrinksInvitationAggregateResult aggregateResult =
+                                    new CreateFriendsDrinksInvitationAggregateResult();
                             if (state != null) {
-                                CreateFriendsDrinksInvitationAggregateResult aggregateResult =
-                                        new CreateFriendsDrinksInvitationAggregateResult();
-                                // Confirms the FriendsDrinks exists.
-                                FriendsDrinksPendingInvitation pendingInvitation = FriendsDrinksPendingInvitation
-                                        .newBuilder()
-                                        .setFriendsDrinksId(request.getFriendsDrinksId())
-                                        .setUserId(request.getUserId())
-                                        .setInvitationId(
-                                                FriendsDrinksPendingInvitationId
-                                                        .newBuilder()
-                                                        .setFriendsDrinksId(request.getFriendsDrinksId())
-                                                        .setUserId(request.getUserId())
-                                                        .build())
-                                        .setMessage(String.format("Want to join %s?!", state.getName()))
-                                        .build();
-                                aggregateResult.createFriendsDrinksInvitationRequest = request;
-                                aggregateResult.friendsDrinksPendingInvitation = pendingInvitation;
-                                aggregateResult.failed = false;
-                                return aggregateResult;
+                                if (state.getUserIds().contains(request.getUserId()) ||
+                                        state.getFriendsDrinksId().getAdminUserId().equals(request.getUserId().getUserId())) {
+                                    aggregateResult.failed = true;
+                                } else {
+                                    // Confirms the FriendsDrinks exists.
+                                    FriendsDrinksPendingInvitation pendingInvitation = FriendsDrinksPendingInvitation
+                                            .newBuilder()
+                                            .setFriendsDrinksId(request.getFriendsDrinksId())
+                                            .setUserId(request.getUserId())
+                                            .setInvitationId(
+                                                    FriendsDrinksPendingInvitationId
+                                                            .newBuilder()
+                                                            .setFriendsDrinksId(request.getFriendsDrinksId())
+                                                            .setUserId(request.getUserId())
+                                                            .build())
+                                            .setMessage(String.format("Want to join %s?!", state.getName()))
+                                            .build();
+                                    aggregateResult.createFriendsDrinksInvitationRequest = request;
+                                    aggregateResult.friendsDrinksPendingInvitation = pendingInvitation;
+                                    aggregateResult.failed = false;
+                                }
                             } else {
-                                CreateFriendsDrinksInvitationAggregateResult aggregateResult =
-                                        new CreateFriendsDrinksInvitationAggregateResult();
                                 aggregateResult.failed = true;
-                                return aggregateResult;
                             }
+                            return aggregateResult;
                         },
                         Joined.with(avro.friendsDrinksIdSerde(), avro.createFriendsDrinksInvitationRequestSerde(), avro.friendsDrinksStateSerde())
                 );
