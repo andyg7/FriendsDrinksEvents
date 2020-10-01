@@ -3,5 +3,5 @@ package andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks;
 /**
  * DTO for UserSignedUpResponse.
  */
-public class UserResponseBean {
+public class RegisterUserEventResponseBean {
 }

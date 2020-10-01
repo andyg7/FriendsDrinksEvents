@@ -400,13 +400,12 @@ public class Handler {
     }
 
     @POST
-    @Path("/users/{userId}")
+    @Path("/users")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public UserResponseBean registerUserEvent(@PathParam("userId") String userId,
-                                         UserRequestBean requestBean) throws ExecutionException, InterruptedException {
+    public RegisterUserEventResponseBean registerUserEvent(RegisterUserEventRequestBean requestBean) throws ExecutionException, InterruptedException {
         final String topicName = envProps.getProperty("user-event.topic.name");
-        UserId userIdAvro = UserId.newBuilder().setUserId(userId).build();
+        UserId userIdAvro = UserId.newBuilder().setUserId(requestBean.getUserId()).build();
         UserEvent userEvent;
         if (requestBean.getEventType().equals("SIGNED_UP")) {
             UserSignedUp userSignedUp = UserSignedUp.newBuilder().setUserId(userIdAvro).build();
@@ -431,7 +430,7 @@ public class Handler {
                 userEvent
         );
         userKafkaProducer.send(record).get();
-        return new UserResponseBean();
+        return new RegisterUserEventResponseBean();
     }
 
     @POST
