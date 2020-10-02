@@ -43,7 +43,6 @@ public class RequestService {
         KTable<FriendsDrinksPendingInvitationId, FriendsDrinksPendingInvitation> pendingFriendsDrinksInvitations = builder.table(
                 pendingInvitationsTopicName,
                 Consumed.with(avro.friendsDrinksPendingInvitationIdSerde(), avro.friendsDrinksPendingInvitationSerde()));
-
         handleInvitations(
                 apiEvents,
                 friendsDrinksStateKTable,
@@ -263,7 +262,7 @@ public class RequestService {
             return new KeyValue<>(
                     friendsDrinksEvent.getCreateFriendsDrinksInvitationResponse().getRequestId(),
                     friendsDrinksEvent);
-        }).to(pendingInvitationsTopicName, Produced.with(Serdes.String(), avro.apiFriendsDrinksSerde()));
+        }).to(apiTopicName, Produced.with(Serdes.String(), avro.apiFriendsDrinksSerde()));
 
         KStream<String, CreateFriendsDrinksInvitationReplyRequest> createFriendsDrinksInvitationReplyRequests = apiEvents
                 .filter((key, value) -> value.getEventType().equals(EventType.CREATE_FRIENDSDRINKS_INVITATION_REPLY_REQUEST))
