@@ -15,11 +15,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
-import java.util.stream.Collectors;
 
 import andrewgrant.friendsdrinks.api.avro.*;
 import andrewgrant.friendsdrinks.api.avro.EventType;
@@ -36,114 +33,13 @@ public class WriterService {
     public Topology buildTopology(Properties envProps,
                                   FriendsDrinksAvro avro) {
         StreamsBuilder builder = new StreamsBuilder();
-
         KStream<String, FriendsDrinksEvent> apiEvents = builder.stream(envProps.getProperty("friendsdrinks-api.topic.name"),
                 Consumed.with(Serdes.String(), avro.apiFriendsDrinksSerde()));
-
-        KStream<String, FriendsDrinksEvent> successApiResponses = apiEvents.filter((friendsDrinksId, friendsDrinksEvent) ->
-                (friendsDrinksEvent.getEventType().equals(EventType.CREATE_FRIENDSDRINKS_RESPONSE) &&
-                        friendsDrinksEvent.getCreateFriendsDrinksResponse().getResult().equals(Result.SUCCESS)) ||
-                        (friendsDrinksEvent.getEventType().equals(EventType.UPDATE_FRIENDSDRINKS_RESPONSE) &&
-                                friendsDrinksEvent.getUpdateFriendsDrinksResponse().getResult().equals(Result.SUCCESS)) ||
-                        (friendsDrinksEvent.getEventType().equals(EventType.CREATE_FRIENDSDRINKS_INVITATION_REPLY_RESPONSE) &&
-                                friendsDrinksEvent.getCreateFriendsDrinksInvitationReplyResponse().getResult().equals(Result.SUCCESS)) ||
-                        (friendsDrinksEvent.getEventType().equals(EventType.DELETE_FRIENDSDRINKS_RESPONSE) &&
-                                friendsDrinksEvent.getDeleteFriendsDrinksResponse().getResult().equals(Result.SUCCESS))
-        );
-
-        KStream<String, FriendsDrinksEvent> apiRequests = apiEvents
-                .filter((k, v) -> v.getEventType().equals(EventType.CREATE_FRIENDSDRINKS_REQUEST) ||
-                        v.getEventType().equals(EventType.UPDATE_FRIENDSDRINKS_REQUEST) ||
-                        (v.getEventType().equals(EventType.CREATE_FRIENDSDRINKS_INVITATION_REPLY_REQUEST)
-                                && v.getCreateFriendsDrinksInvitationReplyRequest().getReply().equals(Reply.ACCEPTED)) ||
-                        v.getEventType().equals(EventType.DELETE_FRIENDSDRINKS_REQUEST));
+        KStream<String, FriendsDrinksEvent> successApiResponses = streamOfResponses(apiEvents);
+        KStream<String, FriendsDrinksEvent> apiRequests = streamOfRequests(apiEvents);
 
         successApiResponses.join(apiRequests,
-                (l, r) -> {
-                    if (r.getEventType().equals(EventType.CREATE_FRIENDSDRINKS_REQUEST)) {
-                        log.info("Got create join {}", r.getCreateFriendsDrinksRequest().getRequestId());
-                        CreateFriendsDrinksRequest createFriendsDrinksRequest =
-                                r.getCreateFriendsDrinksRequest();
-                        FriendsDrinksCreated friendsDrinks = FriendsDrinksCreated
-                                .newBuilder()
-                                .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
-                                        .newBuilder()
-                                        .setAdminUserId(createFriendsDrinksRequest.getFriendsDrinksId().getAdminUserId())
-                                        .setFriendsDrinksId(createFriendsDrinksRequest.getFriendsDrinksId().getFriendsDrinksId())
-                                        .build())
-                                .setName(createFriendsDrinksRequest.getName())
-                                .build();
-                        return andrewgrant.friendsdrinks.avro.FriendsDrinksEvent.newBuilder()
-                                .setEventType(andrewgrant.friendsdrinks.avro.EventType.CREATED)
-                                .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
-                                        .newBuilder()
-                                        .setFriendsDrinksId(r.getCreateFriendsDrinksRequest().getFriendsDrinksId().getFriendsDrinksId())
-                                        .setAdminUserId(r.getCreateFriendsDrinksRequest().getFriendsDrinksId().getAdminUserId())
-                                        .build())
-                                .setFriendsDrinksCreated(friendsDrinks)
-                                .build();
-                    } else if (r.getEventType().equals(EventType.DELETE_FRIENDSDRINKS_REQUEST)) {
-                        log.info("Got delete join {}", r.getDeleteFriendsDrinksRequest().getRequestId());
-                        return andrewgrant.friendsdrinks.avro.FriendsDrinksEvent
-                                .newBuilder()
-                                .setEventType(andrewgrant.friendsdrinks.avro.EventType.DELETED)
-                                .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
-                                        .newBuilder()
-                                        .setFriendsDrinksId(r.getDeleteFriendsDrinksRequest().getFriendsDrinksId().getFriendsDrinksId())
-                                        .setAdminUserId(r.getDeleteFriendsDrinksRequest().getFriendsDrinksId().getAdminUserId())
-                                        .build())
-                                .build();
-                    } else if (r.getEventType().equals(EventType.UPDATE_FRIENDSDRINKS_REQUEST)) {
-                        log.info("Got update join {}", r.getUpdateFriendsDrinksRequest().getRequestId());
-                        UpdateFriendsDrinksRequest updateFriendsDrinksRequest = r.getUpdateFriendsDrinksRequest();
-
-                        FriendsDrinksUpdated friendsDrinks = FriendsDrinksUpdated
-                                .newBuilder()
-                                .setUpdateType(
-                                        andrewgrant.friendsdrinks.avro.UpdateType.valueOf(
-                                                updateFriendsDrinksRequest.getUpdateType().toString()))
-                                .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
-                                        .newBuilder()
-                                        .setAdminUserId(updateFriendsDrinksRequest.getFriendsDrinksId().getAdminUserId())
-                                        .setFriendsDrinksId(updateFriendsDrinksRequest.getFriendsDrinksId().getFriendsDrinksId())
-                                        .build())
-                                .setName(updateFriendsDrinksRequest.getName())
-                                .build();
-                        return andrewgrant.friendsdrinks.avro.FriendsDrinksEvent
-                                .newBuilder()
-                                .setEventType(andrewgrant.friendsdrinks.avro.EventType.UPDATED)
-                                .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
-                                        .newBuilder()
-                                        .setFriendsDrinksId(r.getUpdateFriendsDrinksRequest().getFriendsDrinksId().getFriendsDrinksId())
-                                        .setAdminUserId(r.getUpdateFriendsDrinksRequest().getFriendsDrinksId().getAdminUserId())
-                                        .build())
-                                .setFriendsDrinksUpdated(friendsDrinks)
-                                .build();
-                    } else if (r.getEventType().equals(EventType.CREATE_FRIENDSDRINKS_INVITATION_REPLY_REQUEST)) {
-                        CreateFriendsDrinksInvitationReplyRequest request = r.getCreateFriendsDrinksInvitationReplyRequest();
-                        return andrewgrant.friendsdrinks.avro.FriendsDrinksEvent
-                                .newBuilder()
-                                .setEventType(andrewgrant.friendsdrinks.avro.EventType.USER_ADDED)
-                                .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
-                                        .newBuilder()
-                                        .setAdminUserId(request.getFriendsDrinksId().getAdminUserId())
-                                        .setFriendsDrinksId(request.getFriendsDrinksId().getFriendsDrinksId())
-                                        .build())
-                                .setFriendsDrinksUserAdded(FriendsDrinksUserAdded
-                                        .newBuilder()
-                                        .setUserId(request.getUserId().getUserId())
-                                        .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
-                                                .newBuilder()
-                                                .setFriendsDrinksId(request.getFriendsDrinksId().getFriendsDrinksId())
-                                                .setAdminUserId(request.getFriendsDrinksId().getAdminUserId())
-                                                .build())
-                                        .build())
-                                .build();
-                    } else {
-                        throw new RuntimeException(
-                                String.format("Received unexpected event type %s", r.getEventType().toString()));
-                    }
-                },
+                (l, r) -> new EventEmitter().emit(r),
                 JoinWindows.of(Duration.ofSeconds(30)),
                 StreamJoined.with(Serdes.String(),
                         avro.apiFriendsDrinksSerde(),
@@ -158,70 +54,7 @@ public class WriterService {
                         .groupByKey(Grouped.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksEventSerde()))
                         .aggregate(
                                 () -> FriendsDrinksStateAggregate.newBuilder().build(),
-                                (aggKey, newValue, aggValue) -> {
-                                    if (newValue.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.CREATED)) {
-                                        FriendsDrinksCreated createdFriendsDrinks = newValue.getFriendsDrinksCreated();
-                                        FriendsDrinksState.Builder friendsDrinksStateBuilder;
-                                        if (aggValue.getFriendsDrinksState() == null) {
-                                            friendsDrinksStateBuilder = FriendsDrinksState
-                                                    .newBuilder();
-                                        } else {
-                                            friendsDrinksStateBuilder = FriendsDrinksState
-                                                    .newBuilder(aggValue.getFriendsDrinksState());
-                                        }
-
-                                        FriendsDrinksState friendsDrinksState =
-                                                friendsDrinksStateBuilder.setName(createdFriendsDrinks.getName())
-                                                        .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
-                                                                .newBuilder()
-                                                                .setFriendsDrinksId(
-                                                                        newValue.getFriendsDrinksId().getFriendsDrinksId())
-                                                                .setAdminUserId(newValue.getFriendsDrinksId().getAdminUserId())
-                                                                .build())
-                                                        .build();
-                                        return FriendsDrinksStateAggregate.newBuilder()
-                                                .setFriendsDrinksState(friendsDrinksState)
-                                                .build();
-                                    } else if (newValue.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.UPDATED)) {
-                                        FriendsDrinksUpdated updatedFriendsDrinks = newValue.getFriendsDrinksUpdated();
-                                        FriendsDrinksState.Builder friendsDrinksStateBuilder;
-                                        if (aggValue.getFriendsDrinksState() == null) {
-                                            throw new RuntimeException(String.format("FriendsDrinksState is null for %s", aggKey));
-                                        }
-                                        andrewgrant.friendsdrinks.avro.UpdateType updateType = updatedFriendsDrinks.getUpdateType();
-                                        friendsDrinksStateBuilder = FriendsDrinksState.newBuilder(aggValue.getFriendsDrinksState());
-                                        String name;
-                                        if (updatedFriendsDrinks.getName() != null) {
-                                            name = updatedFriendsDrinks.getName();
-                                        } else if (updateType.equals(andrewgrant.friendsdrinks.avro.UpdateType.PARTIAL)) {
-                                            name = aggValue.getFriendsDrinksState().getName();
-                                        } else {
-                                            name = null;
-                                        }
-                                        friendsDrinksStateBuilder.setName(name);
-
-                                        return FriendsDrinksStateAggregate.newBuilder()
-                                                .setFriendsDrinksState(friendsDrinksStateBuilder.build())
-                                                .build();
-                                    } else if (newValue.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.DELETED)) {
-                                        return null;
-                                    } else if (newValue.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.USER_ADDED)) {
-                                        FriendsDrinksState.Builder friendsDrinksStateBuilder =
-                                                FriendsDrinksState.newBuilder(aggValue.getFriendsDrinksState());
-                                        List<String> currentUserIds = friendsDrinksStateBuilder.getUserIds();
-                                        if (currentUserIds == null) {
-                                            currentUserIds = new ArrayList<>();
-                                        }
-                                        List<String> newUserIds = currentUserIds.stream().collect(Collectors.toList());
-                                        newUserIds.add(newValue.getFriendsDrinksUserAdded().getUserId());
-                                        friendsDrinksStateBuilder.setUserIds(newUserIds);
-                                        return FriendsDrinksStateAggregate.newBuilder()
-                                                .setFriendsDrinksState(friendsDrinksStateBuilder.build())
-                                                .build();
-                                    } else {
-                                        throw new RuntimeException(String.format("Unexpected event type %s", newValue.getEventType().name()));
-                                    }
-                                },
+                                (aggKey, newValue, aggValue) -> new StateAggregator().handleNewEvent(aggKey, newValue, aggValue),
                                 Materialized.<
                                         andrewgrant.friendsdrinks.avro.FriendsDrinksId,
                                         FriendsDrinksStateAggregate, KeyValueStore<Bytes, byte[]>>
@@ -239,6 +72,27 @@ public class WriterService {
                 Produced.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksStateSerde()));
 
         return builder.build();
+    }
+
+    private KStream<String, FriendsDrinksEvent> streamOfResponses(KStream<String, FriendsDrinksEvent> apiEvents) {
+        return apiEvents.filter((friendsDrinksId, friendsDrinksEvent) ->
+                (friendsDrinksEvent.getEventType().equals(EventType.CREATE_FRIENDSDRINKS_RESPONSE) &&
+                        friendsDrinksEvent.getCreateFriendsDrinksResponse().getResult().equals(Result.SUCCESS)) ||
+                        (friendsDrinksEvent.getEventType().equals(EventType.UPDATE_FRIENDSDRINKS_RESPONSE) &&
+                                friendsDrinksEvent.getUpdateFriendsDrinksResponse().getResult().equals(Result.SUCCESS)) ||
+                        (friendsDrinksEvent.getEventType().equals(EventType.CREATE_FRIENDSDRINKS_INVITATION_REPLY_RESPONSE) &&
+                                friendsDrinksEvent.getCreateFriendsDrinksInvitationReplyResponse().getResult().equals(Result.SUCCESS)) ||
+                        (friendsDrinksEvent.getEventType().equals(EventType.DELETE_FRIENDSDRINKS_RESPONSE) &&
+                                friendsDrinksEvent.getDeleteFriendsDrinksResponse().getResult().equals(Result.SUCCESS))
+        );
+    }
+
+    private KStream<String, FriendsDrinksEvent> streamOfRequests(KStream<String, FriendsDrinksEvent> apiEvents) {
+        return apiEvents.filter((k, v) -> v.getEventType().equals(EventType.CREATE_FRIENDSDRINKS_REQUEST) ||
+                v.getEventType().equals(EventType.UPDATE_FRIENDSDRINKS_REQUEST) ||
+                (v.getEventType().equals(EventType.CREATE_FRIENDSDRINKS_INVITATION_REPLY_REQUEST)
+                        && v.getCreateFriendsDrinksInvitationReplyRequest().getReply().equals(Reply.ACCEPTED)) ||
+                v.getEventType().equals(EventType.DELETE_FRIENDSDRINKS_REQUEST));
     }
 
     public Properties buildStreamsProperties(Properties envProps) {

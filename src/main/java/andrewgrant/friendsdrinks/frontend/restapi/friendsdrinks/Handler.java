@@ -40,6 +40,7 @@ public class Handler {
     public static final String REPLY_TO_INVITATION = "REPLY_TO_INVITATION";
     public static final String SIGNED_UP = "SIGNED_UP";
     public static final String CANCELLED = "CANCELLED";
+
     private KafkaStreams kafkaStreams;
     private KafkaProducer<String, FriendsDrinksEvent> friendsDrinksKafkaProducer;
     private KafkaProducer<UserId, UserEvent> userKafkaProducer;
