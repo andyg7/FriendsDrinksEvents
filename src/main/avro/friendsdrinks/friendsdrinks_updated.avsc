@@ -5,8 +5,6 @@
   "fields": [
       {"name": "friendsDrinksId", "type": "FriendsDrinksId"},
       {"name": "updateType", "type": {"type": "enum", "name": "UpdateType", "symbols": ["FULL", "PARTIAL"]}},
-      {"name": "name", "type": ["null", "string"], "default": null},
-      {"name": "scheduleType", "type": ["null", {"type": "enum", "name": "ScheduleType", "symbols": ["ON_DEMAND", "CRON"]}], "default": null},
-      {"name": "cronSchedule", "type": ["null", "string"], "default": null}
+      {"name": "name", "type": ["null", "string"], "default": null}
   ]
 }

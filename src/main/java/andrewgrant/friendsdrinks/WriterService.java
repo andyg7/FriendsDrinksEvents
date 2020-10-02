@@ -72,9 +72,6 @@ public class WriterService {
                                         .setFriendsDrinksId(createFriendsDrinksRequest.getFriendsDrinksId().getFriendsDrinksId())
                                         .build())
                                 .setName(createFriendsDrinksRequest.getName())
-                                .setScheduleType(andrewgrant.friendsdrinks.avro.ScheduleType.valueOf(
-                                        createFriendsDrinksRequest.getScheduleType().toString()))
-                                .setCronSchedule(createFriendsDrinksRequest.getCronSchedule())
                                 .build();
                         return andrewgrant.friendsdrinks.avro.FriendsDrinksEvent.newBuilder()
                                 .setEventType(andrewgrant.friendsdrinks.avro.EventType.CREATED)
@@ -99,11 +96,6 @@ public class WriterService {
                     } else if (r.getEventType().equals(EventType.UPDATE_FRIENDSDRINKS_REQUEST)) {
                         log.info("Got update join {}", r.getUpdateFriendsDrinksRequest().getRequestId());
                         UpdateFriendsDrinksRequest updateFriendsDrinksRequest = r.getUpdateFriendsDrinksRequest();
-                        andrewgrant.friendsdrinks.avro.ScheduleType scheduleType = null;
-                        if (updateFriendsDrinksRequest.getScheduleType() != null) {
-                            scheduleType = andrewgrant.friendsdrinks.avro.ScheduleType.valueOf(
-                                    updateFriendsDrinksRequest.getScheduleType().toString());
-                        }
 
                         FriendsDrinksUpdated friendsDrinks = FriendsDrinksUpdated
                                 .newBuilder()
@@ -116,8 +108,6 @@ public class WriterService {
                                         .setFriendsDrinksId(updateFriendsDrinksRequest.getFriendsDrinksId().getFriendsDrinksId())
                                         .build())
                                 .setName(updateFriendsDrinksRequest.getName())
-                                .setScheduleType(scheduleType)
-                                .setCronSchedule(updateFriendsDrinksRequest.getCronSchedule())
                                 .build();
                         return andrewgrant.friendsdrinks.avro.FriendsDrinksEvent
                                 .newBuilder()
@@ -162,7 +152,6 @@ public class WriterService {
                 .to(envProps.getProperty("friendsdrinks-event.topic.name"),
                         Produced.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksEventSerde()));
 
-
         KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState> friendsDrinksStateStream =
                 builder.stream(envProps.getProperty("friendsdrinks-event.topic.name"),
                         Consumed.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksEventSerde()))
@@ -189,8 +178,6 @@ public class WriterService {
                                                                         newValue.getFriendsDrinksId().getFriendsDrinksId())
                                                                 .setAdminUserId(newValue.getFriendsDrinksId().getAdminUserId())
                                                                 .build())
-                                                        .setCronSchedule(createdFriendsDrinks.getCronSchedule())
-                                                        .setScheduleType(createdFriendsDrinks.getScheduleType())
                                                         .build();
                                         return FriendsDrinksStateAggregate.newBuilder()
                                                 .setFriendsDrinksState(friendsDrinksState)
@@ -212,26 +199,6 @@ public class WriterService {
                                             name = null;
                                         }
                                         friendsDrinksStateBuilder.setName(name);
-
-                                        String cronSchedule;
-                                        if (updatedFriendsDrinks.getCronSchedule() != null) {
-                                            cronSchedule = updatedFriendsDrinks.getCronSchedule();
-                                        } else if (updateType.equals(andrewgrant.friendsdrinks.avro.UpdateType.PARTIAL)) {
-                                            cronSchedule = aggValue.getFriendsDrinksState().getCronSchedule();
-                                        } else {
-                                            cronSchedule = null;
-                                        }
-                                        friendsDrinksStateBuilder.setCronSchedule(cronSchedule);
-
-                                        andrewgrant.friendsdrinks.avro.ScheduleType scheduleType;
-                                        if (updatedFriendsDrinks.getScheduleType() != null) {
-                                            scheduleType = updatedFriendsDrinks.getScheduleType();
-                                        } else if (updateType.equals(andrewgrant.friendsdrinks.avro.UpdateType.PARTIAL)) {
-                                            scheduleType = aggValue.getFriendsDrinksState().getScheduleType();
-                                        } else {
-                                            scheduleType = null;
-                                        }
-                                        friendsDrinksStateBuilder.setScheduleType(scheduleType);
 
                                         return FriendsDrinksStateAggregate.newBuilder()
                                                 .setFriendsDrinksState(friendsDrinksStateBuilder.build())

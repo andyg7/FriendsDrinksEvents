@@ -137,6 +137,62 @@ public class Handler {
         return getUserResponseBean;
     }
 
+    @POST
+    @Path("/users/{userId}/friendsdrinks")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public CreateFriendsDrinksResponseBean createFriendsDrinks(@PathParam("userId") String userId,
+                                                               CreateFriendsDrinksRequestBean requestBean)
+            throws InterruptedException, ExecutionException {
+        final String topicName = envProps.getProperty("friendsdrinks-api.topic.name");
+        String requestId = UUID.randomUUID().toString();
+        String friendsDrinksId = UUID.randomUUID().toString();
+        CreateFriendsDrinksRequest createFriendsDrinksRequest = CreateFriendsDrinksRequest
+                .newBuilder()
+                .setFriendsDrinksId(
+                        FriendsDrinksId
+                                .newBuilder()
+                                .setFriendsDrinksId(friendsDrinksId)
+                                .setAdminUserId(userId)
+                                .build())
+                .setRequestId(requestId)
+                .setName(requestBean.getName())
+                .build();
+        FriendsDrinksEvent friendsDrinksEvent = FriendsDrinksEvent
+                .newBuilder()
+                .setRequestId(createFriendsDrinksRequest.getRequestId())
+                .setEventType(EventType.CREATE_FRIENDSDRINKS_REQUEST)
+                .setCreateFriendsDrinksRequest(createFriendsDrinksRequest)
+                .build();
+        ProducerRecord<String, FriendsDrinksEvent> record =
+                new ProducerRecord<>(topicName, requestId, friendsDrinksEvent);
+        friendsDrinksKafkaProducer.send(record).get();
+
+        ReadOnlyKeyValueStore<String, FriendsDrinksEvent> kv =
+                kafkaStreams.store(StoreQueryParameters.fromNameAndType(RESPONSES_STORE, QueryableStoreTypes.keyValueStore()));
+
+        FriendsDrinksEvent backendResponse = kv.get(requestId);
+        if (backendResponse == null) {
+            for (int i = 0; i < 10; i++) {
+                if (backendResponse != null) {
+                    break;
+                }
+                // Give the backend some more time.
+                Thread.sleep(100);
+                backendResponse = kv.get(requestId);
+            }
+        }
+        if (backendResponse == null) {
+            throw new RuntimeException(String.format(
+                    "Failed to get CreateFriendsDrinksResponse for request id %s", requestId));
+        }
+        CreateFriendsDrinksResponseBean responseBean = new CreateFriendsDrinksResponseBean();
+        Result result = backendResponse.getCreateFriendsDrinksResponse().getResult();
+        responseBean.setResult(result.toString());
+        responseBean.setFriendsDrinksId(friendsDrinksId);
+        return responseBean;
+    }
+
     @DELETE
     @Path("/users/{userId}/friendsdrinks/{friendsDrinksId}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -201,10 +257,6 @@ public class Handler {
 
         final String topicName = envProps.getProperty("friendsdrinks-api.topic.name");
         String requestId = UUID.randomUUID().toString();
-        ScheduleType scheduleType = null;
-        if (requestBean.getScheduleType() != null) {
-            scheduleType = ScheduleType.valueOf(requestBean.getScheduleType());
-        }
         FriendsDrinksEvent friendsDrinksEvent;
         FriendsDrinksId friendsDrinksIdAvro = FriendsDrinksId
                 .newBuilder()
@@ -215,8 +267,6 @@ public class Handler {
                     .newBuilder()
                     .setFriendsDrinksId(friendsDrinksIdAvro)
                     .setUpdateType(UpdateType.valueOf(UpdateType.PARTIAL.name()))
-                    .setScheduleType(scheduleType)
-                    .setCronSchedule(requestBean.getCronSchedule())
                     .setRequestId(requestId)
                     .setName(requestBean.getName())
                     .build();
@@ -429,67 +479,4 @@ public class Handler {
         return postUsersResponseBean;
     }
 
-    @POST
-    @Path("/users/{userId}/friendsdrinks")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_JSON)
-    public CreateFriendsDrinksResponseBean createFriendsDrinks(@PathParam("userId") String userId,
-                                                               CreateFriendsDrinksRequestBean requestBean)
-            throws InterruptedException, ExecutionException {
-        final String topicName = envProps.getProperty("friendsdrinks-api.topic.name");
-        String requestId = UUID.randomUUID().toString();
-        String friendsDrinksId = UUID.randomUUID().toString();
-        String scheduleType;
-        if (requestBean.getScheduleType() != null) {
-            scheduleType = requestBean.getScheduleType();
-        } else {
-            scheduleType = ScheduleType.ON_DEMAND.name();
-        }
-        CreateFriendsDrinksRequest createFriendsDrinksRequest = CreateFriendsDrinksRequest
-                .newBuilder()
-                .setFriendsDrinksId(
-                        FriendsDrinksId
-                                .newBuilder()
-                                .setFriendsDrinksId(friendsDrinksId)
-                                .setAdminUserId(userId)
-                                .build())
-                .setScheduleType(ScheduleType.valueOf(scheduleType))
-                .setCronSchedule(requestBean.getCronSchedule())
-                .setRequestId(requestId)
-                .setName(requestBean.getName())
-                .build();
-        FriendsDrinksEvent friendsDrinksEvent = FriendsDrinksEvent
-                .newBuilder()
-                .setRequestId(createFriendsDrinksRequest.getRequestId())
-                .setEventType(EventType.CREATE_FRIENDSDRINKS_REQUEST)
-                .setCreateFriendsDrinksRequest(createFriendsDrinksRequest)
-                .build();
-        ProducerRecord<String, FriendsDrinksEvent> record =
-                new ProducerRecord<>(topicName, requestId, friendsDrinksEvent);
-        friendsDrinksKafkaProducer.send(record).get();
-
-        ReadOnlyKeyValueStore<String, FriendsDrinksEvent> kv =
-                kafkaStreams.store(StoreQueryParameters.fromNameAndType(RESPONSES_STORE, QueryableStoreTypes.keyValueStore()));
-
-        FriendsDrinksEvent backendResponse = kv.get(requestId);
-        if (backendResponse == null) {
-            for (int i = 0; i < 10; i++) {
-                if (backendResponse != null) {
-                    break;
-                }
-                // Give the backend some more time.
-                Thread.sleep(100);
-                backendResponse = kv.get(requestId);
-            }
-        }
-        if (backendResponse == null) {
-            throw new RuntimeException(String.format(
-                    "Failed to get CreateFriendsDrinksResponse for request id %s", requestId));
-        }
-        CreateFriendsDrinksResponseBean responseBean = new CreateFriendsDrinksResponseBean();
-        Result result = backendResponse.getCreateFriendsDrinksResponse().getResult();
-        responseBean.setResult(result.toString());
-        responseBean.setFriendsDrinksId(friendsDrinksId);
-        return responseBean;
-    }
 }
