@@ -186,7 +186,20 @@ public class RequestService {
             FriendsDrinksAvro avro,
             String apiTopicName,
             String pendingInvitationsTopicName) {
-        // FriendsDrinks invitations
+
+        handleInvitationRequests(apiEvents, friendsDrinksStateKTable, avro, apiTopicName, pendingInvitationsTopicName);
+        handleInvitationReplies(apiEvents, friendsDrinksStateKTable,
+                pendingFriendsDrinksInvitations, avro, apiTopicName, pendingInvitationsTopicName);
+
+    }
+
+    private void handleInvitationRequests(
+            KStream<String, FriendsDrinksEvent> apiEvents,
+            KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable,
+            FriendsDrinksAvro avro,
+            String apiTopicName,
+            String pendingInvitationsTopicName) {
+        // FriendsDrinks invitation requests
         KStream<String, CreateFriendsDrinksInvitationRequest> friendsDrinksInvitations = apiEvents
                 .filter((key, value) -> value.getEventType().equals(EventType.CREATE_FRIENDSDRINKS_INVITATION_REQUEST))
                 .mapValues(value -> value.getCreateFriendsDrinksInvitationRequest());
@@ -263,7 +276,16 @@ public class RequestService {
                     friendsDrinksEvent.getCreateFriendsDrinksInvitationResponse().getRequestId(),
                     friendsDrinksEvent);
         }).to(apiTopicName, Produced.with(Serdes.String(), avro.apiFriendsDrinksSerde()));
+    }
 
+    private void handleInvitationReplies(
+            KStream<String, FriendsDrinksEvent> apiEvents,
+            KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable,
+            KTable<FriendsDrinksPendingInvitationId, FriendsDrinksPendingInvitation> pendingFriendsDrinksInvitations,
+            FriendsDrinksAvro avro,
+            String apiTopicName,
+            String pendingInvitationsTopicName) {
+        // FriendsDrinks replies
         KStream<String, CreateFriendsDrinksInvitationReplyRequest> createFriendsDrinksInvitationReplyRequests = apiEvents
                 .filter((key, value) -> value.getEventType().equals(EventType.CREATE_FRIENDSDRINKS_INVITATION_REPLY_REQUEST))
                 .mapValues(value -> value.getCreateFriendsDrinksInvitationReplyRequest());
