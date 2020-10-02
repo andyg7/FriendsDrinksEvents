@@ -24,7 +24,7 @@ import andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent;
 import andrewgrant.friendsdrinks.avro.*;
 
 /**
- * Owns writing to non-API topics.
+ * Reads API results and writes to backend topics.
  */
 public class WriterService {
 

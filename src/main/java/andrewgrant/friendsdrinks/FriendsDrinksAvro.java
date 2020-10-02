@@ -68,8 +68,9 @@ public class FriendsDrinksAvro {
         return serde;
     }
 
-    public SpecificAvroSerde<UpdateFriendsDrinksResponse> updateFriendsDrinksResponseSerde() {
-        SpecificAvroSerde<UpdateFriendsDrinksResponse> serde;
+
+    public SpecificAvroSerde<DeleteFriendsDrinksRequest> deleteFriendsDrinksRequestSerde() {
+        SpecificAvroSerde<DeleteFriendsDrinksRequest> serde;
         if (registryClient != null) {
             serde = new SpecificAvroSerde<>(registryClient);
         } else {
@@ -80,6 +81,7 @@ public class FriendsDrinksAvro {
         serde.configure(config, false);
         return serde;
     }
+
     public SpecificAvroSerde<DeleteFriendsDrinksResponse> deleteFriendsDrinksResponseSerde() {
         SpecificAvroSerde<DeleteFriendsDrinksResponse> serde;
         if (registryClient != null) {

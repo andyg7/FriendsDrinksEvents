@@ -18,7 +18,7 @@ import andrewgrant.friendsdrinks.api.avro.*;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksState;
 
 /**
- * Main FriendsDrinks service.
+ * Handles API requests.
  */
 public class RequestService {
 
@@ -36,7 +36,7 @@ public class RequestService {
                         Consumed.with(avro.friendsDrinksIdSerde(), avro.friendsDrinksStateSerde()));
 
         handleCreateRequests(apiEvents, friendsDrinksStateKTable, avro, apiTopicName);
-        handleDeleteRequests(apiEvents, avro, apiTopicName);
+        handleDeleteRequests(apiEvents, friendsDrinksStateKTable, avro, apiTopicName);
         handleUpdateRequests(apiEvents, friendsDrinksStateKTable, avro, apiTopicName);
 
         String pendingInvitationsTopicName = envProps.getProperty("friendsdrinks-pending-invitation.topic.name");
@@ -115,24 +115,50 @@ public class RequestService {
     }
 
     private void handleDeleteRequests(KStream<String, FriendsDrinksEvent> apiEvents,
+                                      KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable,
                                       FriendsDrinksAvro avro,
                                       String apiTopicName) {
 
-        // Deletes
-        apiEvents.filter(((s, friendsDrinksEvent) ->
-                friendsDrinksEvent.getEventType().equals(EventType.DELETE_FRIENDSDRINKS_REQUEST)))
-                .mapValues((friendsDrinksEvent) -> friendsDrinksEvent.getDeleteFriendsDrinksRequest())
-                .mapValues((request) -> FriendsDrinksEvent.newBuilder()
-                        .setEventType(EventType.DELETE_FRIENDSDRINKS_RESPONSE)
-                        .setRequestId(request.getRequestId())
-                        .setDeleteFriendsDrinksResponse(DeleteFriendsDrinksResponse
+        KStream<String, DeleteFriendsDrinksRequest> deleteRequests =
+                apiEvents.filter(((s, friendsDrinksEvent) ->
+                        friendsDrinksEvent.getEventType().equals(EventType.DELETE_FRIENDSDRINKS_REQUEST)))
+                        .mapValues((friendsDrinksEvent) -> friendsDrinksEvent.getDeleteFriendsDrinksRequest());
+        KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, DeleteFriendsDrinksRequest> deleteRequestsKeyed =
+                deleteRequests.selectKey(((key, value) -> andrewgrant.friendsdrinks.avro.FriendsDrinksId
+                        .newBuilder()
+                        .setAdminUserId(value.getFriendsDrinksId().getAdminUserId())
+                        .setFriendsDrinksId(value.getFriendsDrinksId().getFriendsDrinksId()).build()));
+
+        deleteRequestsKeyed.leftJoin(friendsDrinksStateKTable,
+                (request, state) -> {
+                    if (state != null) {
+                        return FriendsDrinksEvent
                                 .newBuilder()
-                                .setResult(Result.SUCCESS)
+                                .setEventType(EventType.DELETE_FRIENDSDRINKS_RESPONSE)
                                 .setRequestId(request.getRequestId())
-                                .build())
-                        .build())
-                .to(apiTopicName,
-                        Produced.with(Serdes.String(), avro.apiFriendsDrinksSerde()));
+                                .setDeleteFriendsDrinksResponse(DeleteFriendsDrinksResponse
+                                        .newBuilder()
+                                        .setResult(Result.SUCCESS)
+                                        .setRequestId(request.getRequestId())
+                                        .build())
+                                .build();
+
+                    } else {
+                        return FriendsDrinksEvent
+                                .newBuilder()
+                                .setEventType(EventType.DELETE_FRIENDSDRINKS_RESPONSE)
+                                .setRequestId(request.getRequestId())
+                                .setDeleteFriendsDrinksResponse(DeleteFriendsDrinksResponse
+                                        .newBuilder()
+                                        .setResult(Result.FAIL)
+                                        .setRequestId(request.getRequestId())
+                                        .build())
+                                .build();
+                    }
+                },
+                Joined.with(avro.friendsDrinksIdSerde(), avro.deleteFriendsDrinksRequestSerde(), avro.friendsDrinksStateSerde()))
+                .selectKey((key, value) -> value.getRequestId())
+                .to(apiTopicName, Produced.with(Serdes.String(), avro.apiFriendsDrinksSerde()));
     }
 
     private void handleUpdateRequests(KStream<String, FriendsDrinksEvent> apiEvents,
