@@ -15,6 +15,7 @@ public class StateAggregator {
             FriendsDrinksId aggKey,
             FriendsDrinksEvent newValue,
             FriendsDrinksStateAggregate aggValue) {
+
             if (newValue.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.CREATED)) {
                 FriendsDrinksCreated createdFriendsDrinks = newValue.getFriendsDrinksCreated();
                 FriendsDrinksState.Builder friendsDrinksStateBuilder;
