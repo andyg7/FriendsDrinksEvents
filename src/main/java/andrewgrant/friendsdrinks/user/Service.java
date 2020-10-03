@@ -42,7 +42,7 @@ public class Service {
                                                 .setUserId(newValue.getUserSignedUp().getUserId()).build())
                                         .build();
                                 return userStateAggregate;
-                            } else if (newValue.getEventType().equals(EventType.CANCELLED)) {
+                            } else if (newValue.getEventType().equals(EventType.CANCELLED_ACCOUNT)) {
                                 return null;
                             } else {
                                 throw new RuntimeException(String.format("Unknown event type %s", newValue.getEventType().name()));

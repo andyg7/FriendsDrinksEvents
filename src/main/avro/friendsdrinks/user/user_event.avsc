@@ -3,7 +3,7 @@
   "type": "record",
   "name": "UserEvent",
   "fields": [
-      {"name": "eventType", "type": {"type": "enum", "name": "EventType", "symbols": ["SIGNED_UP", "CANCELLED"] } },
+      {"name": "eventType", "type": {"type": "enum", "name": "EventType", "symbols": ["SIGNED_UP", "CANCELLED_ACCOUNT"] } },
       {"name": "userId", "type": "UserId"},
       {"name": "userSignedUp", "type": ["null", "UserSignedUp"], "default": null}
   ]

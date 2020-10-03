@@ -39,7 +39,7 @@ public class Handler {
     public static final String INVITE_FRIEND = "INVITE_FRIEND";
     public static final String REPLY_TO_INVITATION = "REPLY_TO_INVITATION";
     public static final String SIGNED_UP = "SIGNED_UP";
-    public static final String CANCELLED = "CANCELLED";
+    public static final String CANCELLED_ACCOUNT = "CANCELLED_ACCOUNT";
 
     private KafkaStreams kafkaStreams;
     private KafkaProducer<String, FriendsDrinksEvent> friendsDrinksKafkaProducer;
@@ -316,7 +316,7 @@ public class Handler {
                                            PostUsersRequestBean requestBean)
             throws ExecutionException, InterruptedException {
         if (requestBean.getEventType().equals(SIGNED_UP) ||
-                requestBean.getEventType().equals(CANCELLED)) {
+                requestBean.getEventType().equals(CANCELLED_ACCOUNT)) {
             return registerUserEvent(userId, requestBean.getEventType());
         }
 
@@ -460,10 +460,10 @@ public class Handler {
                     .setUserSignedUp(userSignedUp)
                     .setUserId(userIdAvro)
                     .build();
-        } else if (eventType.equals(CANCELLED)) {
+        } else if (eventType.equals(CANCELLED_ACCOUNT)) {
             userEvent = UserEvent
                     .newBuilder()
-                    .setEventType(andrewgrant.friendsdrinks.user.avro.EventType.CANCELLED)
+                    .setEventType(andrewgrant.friendsdrinks.user.avro.EventType.CANCELLED_ACCOUNT)
                     .setUserId(userIdAvro)
                     .build();
         } else {
