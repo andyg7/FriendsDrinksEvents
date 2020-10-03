@@ -12,6 +12,16 @@ services:
           -DlogPath=/app/
           '"
 
+  friendsdrinks-invitation-request-service:
+    image: friendsdrinks:latest
+    networks:
+      - kafka-network
+    command:
+      "bash -c '
+          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.InvitationRequestService /app/dev.properties \
+          -DlogPath=/app/
+          '"
+
   friendsdrinks-writer-service:
     image: friendsdrinks:latest
     networks:

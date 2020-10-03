@@ -52,8 +52,10 @@ public class StateAggregator {
                     name = updatedFriendsDrinks.getName();
                 } else if (updateType.equals(andrewgrant.friendsdrinks.avro.UpdateType.PARTIAL)) {
                     name = aggValue.getFriendsDrinksState().getName();
-                } else {
+                } else if (updateType.equals(andrewgrant.friendsdrinks.avro.UpdateType.FULL)) {
                     name = null;
+                } else {
+                    throw new RuntimeException(String.format("Unknown update type %s", updateType.name()));
                 }
                 friendsDrinksStateBuilder.setName(name);
 
