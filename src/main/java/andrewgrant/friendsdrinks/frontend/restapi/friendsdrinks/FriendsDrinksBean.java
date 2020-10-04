@@ -6,26 +6,9 @@ import java.util.List;
  * DTO for FriendsDrinksBean.
  */
 public class FriendsDrinksBean {
-    private String id;
-    private String adminUserId;
     private List<String> userIds;
     private String name;
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getAdminUserId() {
-        return adminUserId;
-    }
-
-    public void setAdminUserId(String adminUserId) {
-        this.adminUserId = adminUserId;
-    }
+    private FriendsDrinksIdBean friendsDrinksId;
 
     public String getName() {
         return name;
@@ -41,5 +24,13 @@ public class FriendsDrinksBean {
 
     public void setUserIds(List<String> userIds) {
         this.userIds = userIds;
+    }
+
+    public FriendsDrinksIdBean getFriendsDrinksId() {
+        return friendsDrinksId;
+    }
+
+    public void setFriendsDrinksId(FriendsDrinksIdBean friendsDrinksId) {
+        this.friendsDrinksId = friendsDrinksId;
     }
 }

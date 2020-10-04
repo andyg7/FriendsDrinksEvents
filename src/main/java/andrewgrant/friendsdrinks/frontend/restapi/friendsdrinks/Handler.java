@@ -190,7 +190,10 @@ public class Handler {
         CreateFriendsDrinksResponseBean responseBean = new CreateFriendsDrinksResponseBean();
         Result result = backendResponse.getCreateFriendsDrinksResponse().getResult();
         responseBean.setResult(result.toString());
-        responseBean.setFriendsDrinksId(friendsDrinksUuid);
+        FriendsDrinksIdBean friendsDrinksIdBean = new FriendsDrinksIdBean();
+        friendsDrinksIdBean.setUuid(friendsDrinksUuid);
+        friendsDrinksIdBean.setAdminUserId(userId);
+        responseBean.setFriendsDrinksId(friendsDrinksIdBean);
         return responseBean;
     }
 

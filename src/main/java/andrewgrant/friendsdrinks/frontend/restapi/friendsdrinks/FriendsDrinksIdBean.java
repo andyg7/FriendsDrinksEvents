@@ -12,6 +12,10 @@ public class FriendsDrinksIdBean {
         this.uuid = uuid;
     }
 
+    public FriendsDrinksIdBean() {
+
+    }
+
     public String getUuid() {
         return uuid;
     }

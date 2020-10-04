@@ -5,16 +5,7 @@ package andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks;
  */
 public class CreateFriendsDrinksResponseBean {
     private String result;
-    private String friendsDrinksId;
-
-    public String getFriendsDrinksId() {
-        return friendsDrinksId;
-    }
-
-    public void setFriendsDrinksId(String friendsDrinksId) {
-        this.friendsDrinksId = friendsDrinksId;
-    }
-
+    private FriendsDrinksIdBean friendsDrinksId;
 
     public String getResult() {
         return result;
@@ -22,5 +13,13 @@ public class CreateFriendsDrinksResponseBean {
 
     public void setResult(String result) {
         this.result = result;
+    }
+
+    public FriendsDrinksIdBean getFriendsDrinksId() {
+        return friendsDrinksId;
+    }
+
+    public void setFriendsDrinksId(FriendsDrinksIdBean friendsDrinksId) {
+        this.friendsDrinksId = friendsDrinksId;
     }
 }
