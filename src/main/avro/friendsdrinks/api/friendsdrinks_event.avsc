@@ -3,7 +3,7 @@
   "type": "record",
   "name": "FriendsDrinksEvent",
   "fields": [
-    {"name": "eventType", "type": {"type": "enum", "name": "EventType", "symbols" : ["CREATE_FRIENDSDRINKS_REQUEST", "CREATE_FRIENDSDRINKS_RESPONSE", "UPDATE_FRIENDSDRINKS_REQUEST", "UPDATE_FRIENDSDRINKS_RESPONSE", "DELETE_FRIENDSDRINKS_REQUEST", "DELETE_FRIENDSDRINKS_RESPONSE", "FRIENDSDRINKS_INVITATION_REQUEST", "FRIENDSDRINKS_INVITATION_RESPONSE" ,"FRIENDSDRINKS_INVITATION_REPLY_REQUEST", "FRIENDSDRINKS_INVITATION_REPLY_RESPONSE"] } },
+    {"name": "eventType", "type": {"type": "enum", "name": "EventType", "symbols" : ["CREATE_FRIENDSDRINKS_REQUEST", "CREATE_FRIENDSDRINKS_RESPONSE", "UPDATE_FRIENDSDRINKS_REQUEST", "UPDATE_FRIENDSDRINKS_RESPONSE", "DELETE_FRIENDSDRINKS_REQUEST", "DELETE_FRIENDSDRINKS_RESPONSE", "FRIENDSDRINKS_INVITATION_REQUEST", "FRIENDSDRINKS_INVITATION_RESPONSE" ,"FRIENDSDRINKS_INVITATION_REPLY_REQUEST", "FRIENDSDRINKS_INVITATION_REPLY_RESPONSE", "FRIENDSDRINKS_REMOVE_USER_REQUEST", "FRIENDSDRINKS_REMOVE_USER_RESPONSE"] } },
     {"name": "requestId", "type": "string"},
     {"name": "createFriendsDrinksRequest", "type": ["null", "CreateFriendsDrinksRequest"], "default": null},
     {"name": "createFriendsDrinksResponse", "type": ["null", "CreateFriendsDrinksResponse"], "default": null},
@@ -14,6 +14,8 @@
     {"name": "friendsDrinksInvitationRequest", "type": ["null", "FriendsDrinksInvitationRequest"], "default": null},
     {"name": "friendsDrinksInvitationResponse", "type": ["null", "FriendsDrinksInvitationResponse"], "default": null},
     {"name": "friendsDrinksInvitationReplyRequest", "type": ["null", "FriendsDrinksInvitationReplyRequest"], "default": null},
-    {"name": "friendsDrinksInvitationReplyResponse", "type": ["null", "FriendsDrinksInvitationReplyResponse"], "default": null}
+    {"name": "friendsDrinksInvitationReplyResponse", "type": ["null", "FriendsDrinksInvitationReplyResponse"], "default": null},
+    {"name": "friendsDrinksRemoveUserRequest", "type": ["null", "FriendsDrinksRemoveUserRequest"], "default": null},
+    {"name": "friendsDrinksRemoveUserResponse", "type": ["null", "FriendsDrinksRemoveUserResponse"], "default": null}
   ]
 }

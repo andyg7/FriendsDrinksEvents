@@ -23,9 +23,9 @@ import andrewgrant.friendsdrinks.user.avro.UserState;
 /**
  * Processes invitation requests.
  */
-public class InvitationRequestService {
+public class FriendsDrinksMembershipRequestService {
 
-    private static final Logger log = LoggerFactory.getLogger(InvitationRequestService.class);
+    private static final Logger log = LoggerFactory.getLogger(FriendsDrinksMembershipRequestService.class);
 
     public Topology buildTopology(Properties envProps, FriendsDrinksAvro friendsDrinksAvro,
                                   UserAvro userAvro) {
@@ -48,17 +48,118 @@ public class InvitationRequestService {
         KTable<FriendsDrinksPendingInvitationId, FriendsDrinksPendingInvitation> pendingFriendsDrinksInvitations = builder.table(
                 pendingInvitationsTopicName,
                 Consumed.with(friendsDrinksAvro.friendsDrinksPendingInvitationIdSerde(), friendsDrinksAvro.friendsDrinksPendingInvitationSerde()));
-        handleInvitations(
-                apiEvents,
-                friendsDrinksStateKTable,
-                pendingFriendsDrinksInvitations,
-                userState,
-                friendsDrinksAvro,
-                userAvro,
-                apiTopicName,
-                pendingInvitationsTopicName);
+        handleInvitations(apiEvents, friendsDrinksStateKTable, pendingFriendsDrinksInvitations, userState, friendsDrinksAvro,
+                userAvro, apiTopicName, pendingInvitationsTopicName);
+
+        handleUserRemovals(apiEvents, friendsDrinksStateKTable, userState, friendsDrinksAvro, userAvro, apiTopicName);
 
         return builder.build();
+    }
+
+    private void handleUserRemovals(KStream<String, FriendsDrinksEvent> apiEvents,
+                                    KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable,
+                                    KTable<UserId, UserState> userState,
+                                    FriendsDrinksAvro friendsDrinksAvro, UserAvro userAvro, String apiTopicName) {
+
+        // FriendsDrinks invitation requests
+        KStream<String, FriendsDrinksRemoveUserRequest> friendsDrinksRemoveUserRequest = apiEvents
+                .filter((key, value) -> value.getEventType().equals(EventType.FRIENDSDRINKS_REMOVE_USER_REQUEST))
+                .mapValues(value -> value.getFriendsDrinksRemoveUserRequest());
+
+        KStream<String, RemoveUserResult> resultsAfterValidatingUserState = friendsDrinksRemoveUserRequest
+                .selectKey((key, value) -> UserId.newBuilder().setUserId(value.getUserIdToRemove().getUserId()).build())
+                .leftJoin(userState,
+                        (request, state) -> {
+                            RemoveUserResult removeUserResult = new RemoveUserResult();
+                            removeUserResult.friendsDrinksRemoveUserRequest = request;
+                            if (state != null) {
+                                removeUserResult.failed = false;
+                            } else {
+                                removeUserResult.failed = true;
+                            }
+                            return removeUserResult;
+                        },
+                        Joined.with(userAvro.userIdSerde(), friendsDrinksAvro.friendsDrinksRemoveUserRequestSerde(), userAvro.userStateSerde()))
+                .selectKey((key, value) -> value.friendsDrinksRemoveUserRequest.getRequestId());
+
+        KStream<String, RemoveUserResult>[] branchedResultsAfterValidatingUserState =
+                resultsAfterValidatingUserState.branch(
+                        ((key, value) -> value.failed),
+                        ((key, value) -> true)
+                );
+
+        emitFailedRemoveUserRequests(branchedResultsAfterValidatingUserState[0]
+                .mapValues(value -> value.friendsDrinksRemoveUserRequest), apiTopicName, friendsDrinksAvro);
+
+        KStream<String, RemoveUserResult> resultsAfterValidatingFriendsDrinksState =
+                branchedResultsAfterValidatingUserState[1].selectKey((key, value) ->
+                        andrewgrant.friendsdrinks.avro.FriendsDrinksId
+                                .newBuilder()
+                                .setFriendsDrinksId(value.friendsDrinksRemoveUserRequest.getFriendsDrinksId().getFriendsDrinksId())
+                                .setAdminUserId(value.friendsDrinksRemoveUserRequest.getFriendsDrinksId().getAdminUserId())
+                                .build())
+                        .mapValues(value -> value.friendsDrinksRemoveUserRequest)
+                        .leftJoin(friendsDrinksStateKTable,
+                                (request, state) -> {
+                                    RemoveUserResult removeUserResult = new RemoveUserResult();
+                                    if (state != null) {
+                                        if (request.getRequester().getUserId().equals(state.getFriendsDrinksId().getAdminUserId())) {
+                                            removeUserResult.failed = false;
+                                        } else {
+                                            if (state.getUserIds() != null &&
+                                                    state.getUserIds().contains(request.getUserIdToRemove().getUserId())) {
+                                                removeUserResult.failed = false;
+                                            } else {
+                                                removeUserResult.failed = true;
+                                            }
+                                        }
+                                    } else {
+                                        removeUserResult.failed = true;
+                                    }
+                                    return removeUserResult;
+                                },
+                                Joined.with(friendsDrinksAvro.friendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksRemoveUserRequestSerde(),
+                                        friendsDrinksAvro.friendsDrinksStateSerde()))
+                        .selectKey((key, value) -> value.friendsDrinksRemoveUserRequest.getRequestId());
+
+        KStream<String, RemoveUserResult>[] branchedResultsAfterValidatingFriendsDrinksState =
+                resultsAfterValidatingFriendsDrinksState.branch(
+                        ((key, value) -> value.failed),
+                        ((key, value) -> true)
+                );
+
+        emitFailedRemoveUserRequests(branchedResultsAfterValidatingFriendsDrinksState[0]
+                .mapValues(value -> value.friendsDrinksRemoveUserRequest), apiTopicName, friendsDrinksAvro);
+
+        branchedResultsAfterValidatingFriendsDrinksState[1].mapValues(value -> {
+            FriendsDrinksRemoveUserResponse removeUserResponse = FriendsDrinksRemoveUserResponse
+                    .newBuilder()
+                    .setRequestId(value.friendsDrinksRemoveUserRequest.getRequestId())
+                    .setResult(Result.SUCCESS)
+                    .build();
+            return FriendsDrinksEvent
+                    .newBuilder()
+                    .setEventType(EventType.FRIENDSDRINKS_REMOVE_USER_RESPONSE)
+                    .setFriendsDrinksRemoveUserResponse(removeUserResponse)
+                    .build();
+        }).to(apiTopicName, Produced.with(Serdes.String(), friendsDrinksAvro.apiFriendsDrinksSerde()));
+    }
+
+    private void emitFailedRemoveUserRequests(KStream<String, FriendsDrinksRemoveUserRequest> requests,
+                                              String apiTopicName, FriendsDrinksAvro friendsDrinksAvro) {
+        requests.mapValues(value -> {
+            FriendsDrinksRemoveUserResponse removeUserResponse = FriendsDrinksRemoveUserResponse
+                    .newBuilder()
+                    .setRequestId(value.getRequestId())
+                    .setResult(Result.FAIL)
+                    .build();
+            return FriendsDrinksEvent
+                    .newBuilder()
+                    .setEventType(EventType.FRIENDSDRINKS_REMOVE_USER_RESPONSE)
+                    .setFriendsDrinksRemoveUserResponse(removeUserResponse)
+                    .build();
+        }).to(apiTopicName, Produced.with(Serdes.String(), friendsDrinksAvro.apiFriendsDrinksSerde()));
+
     }
 
     private void handleInvitations(KStream<String, FriendsDrinksEvent> apiEvents,
@@ -84,7 +185,7 @@ public class InvitationRequestService {
                 .filter((key, value) -> value.getEventType().equals(EventType.FRIENDSDRINKS_INVITATION_REQUEST))
                 .mapValues(value -> value.getFriendsDrinksInvitationRequest());
 
-        KStream<String, InvitationTuple> resultsAfterValidatingFriendsDrinksState = friendsDrinksInvitations.selectKey((key, value) ->
+        KStream<String, InvitationResult> resultsAfterValidatingFriendsDrinksState = friendsDrinksInvitations.selectKey((key, value) ->
                 andrewgrant.friendsdrinks.avro.FriendsDrinksId
                         .newBuilder()
                         .setAdminUserId(value.getFriendsDrinksId().getAdminUserId())
@@ -93,21 +194,21 @@ public class InvitationRequestService {
                 .leftJoin(friendsDrinksStateKTable,
                         (request, state) -> {
                             // Validate request against state of FriendsDrinks
-                            InvitationTuple invitationTuple = new InvitationTuple();
-                            invitationTuple.invitationRequest = request;
+                            InvitationResult invitationResult = new InvitationResult();
+                            invitationResult.invitationRequest = request;
                             if (state != null) {
                                 if (state.getUserIds() != null &&
                                         state.getUserIds().contains(request.getUserId()) ||
                                         state.getFriendsDrinksId().getAdminUserId().equals(request.getUserId().getUserId())) {
-                                    invitationTuple.failed = true;
+                                    invitationResult.failed = true;
                                 } else {
                                     // Confirms the FriendsDrinks exists.
-                                    invitationTuple.failed = false;
+                                    invitationResult.failed = false;
                                 }
                             } else {
-                                invitationTuple.failed = true;
+                                invitationResult.failed = true;
                             }
-                            return invitationTuple;
+                            return invitationResult;
                         },
                         Joined.with(friendsDrinksAvro.friendsDrinksIdSerde(),
                                 friendsDrinksAvro.friendsDrinksInvitationRequestSerde(),
@@ -115,7 +216,7 @@ public class InvitationRequestService {
                 )
                 .selectKey((key, value) -> value.invitationRequest.getRequestId());
 
-        KStream<String, InvitationTuple>[] branchedResultsAfterValidatingFriendsDrinksState =
+        KStream<String, InvitationResult>[] branchedResultsAfterValidatingFriendsDrinksState =
                 resultsAfterValidatingFriendsDrinksState.branch(
                         ((key, value) -> value.failed),
                         ((key, value) -> !value.failed)
@@ -124,25 +225,25 @@ public class InvitationRequestService {
         emitFailedInvitationRequests(branchedResultsAfterValidatingFriendsDrinksState[0].mapValues(value -> value.invitationRequest),
                 friendsDrinksAvro, apiTopicName);
 
-        KStream<String, InvitationTuple> resultsAfterValidatingUserState = branchedResultsAfterValidatingFriendsDrinksState[1]
+        KStream<String, InvitationResult> resultsAfterValidatingUserState = branchedResultsAfterValidatingFriendsDrinksState[1]
                 .selectKey((key, value) -> UserId.newBuilder().setUserId(value.invitationRequest.getUserId().getUserId()).build())
                 .mapValues(value -> value.invitationRequest)
                 .leftJoin(userState,
                         (request, state) -> {
-                            InvitationTuple invitationTuple = new InvitationTuple();
-                            invitationTuple.invitationRequest = request;
+                            InvitationResult invitationResult = new InvitationResult();
+                            invitationResult.invitationRequest = request;
                             if (state != null) {
-                                invitationTuple.failed = false;
+                                invitationResult.failed = false;
                             } else {
-                                invitationTuple.failed = true;
+                                invitationResult.failed = true;
                             }
-                            return invitationTuple;
+                            return invitationResult;
                         },
                         Joined.with(userAvro.userIdSerde(), friendsDrinksAvro.friendsDrinksInvitationRequestSerde(),
                                 userAvro.userStateSerde()))
                 .selectKey((key, value) -> value.invitationRequest.getRequestId());
 
-        KStream<String, InvitationTuple>[] branchedResultsAfterValidatingUserState =
+        KStream<String, InvitationResult>[] branchedResultsAfterValidatingUserState =
                 resultsAfterValidatingUserState.branch(
                         ((key, value) -> value.failed),
                         ((key, value) -> !value.failed)
@@ -284,7 +385,7 @@ public class InvitationRequestService {
 
     public static void main(String[] args) throws IOException {
         Properties envProps = load(args[0]);
-        InvitationRequestService service = new InvitationRequestService();
+        FriendsDrinksMembershipRequestService service = new FriendsDrinksMembershipRequestService();
         String registryUrl = envProps.getProperty("schema.registry.url");
         Topology topology = service.buildTopology(envProps, new FriendsDrinksAvro(registryUrl), new UserAvro(registryUrl));
         Properties streamProps = service.buildStreamProperties(envProps);

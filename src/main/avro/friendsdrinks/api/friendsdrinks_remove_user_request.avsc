@@ -1,0 +1,11 @@
+{
+  "namespace": "andrewgrant.friendsdrinks.api.avro",
+  "type": "record",
+  "name": "FriendsDrinksRemoveUserRequest",
+  "fields": [
+    {"name": "requestId", "type": "string"},
+    {"name": "friendsDrinksId", "type": "FriendsDrinksId"},
+    {"name": "userIdToRemove", "type": "UserId" },
+    {"name": "requester", "type": "UserId" }
+  ]
+}
