@@ -94,13 +94,14 @@ public class InvitationRequestService {
                         (request, state) -> {
                             // Validate request against state of FriendsDrinks
                             InvitationTuple invitationTuple = new InvitationTuple();
+                            invitationTuple.invitationRequest = request;
                             if (state != null) {
-                                if (state.getUserIds().contains(request.getUserId()) ||
+                                if (state.getUserIds() != null &&
+                                        state.getUserIds().contains(request.getUserId()) ||
                                         state.getFriendsDrinksId().getAdminUserId().equals(request.getUserId().getUserId())) {
                                     invitationTuple.failed = true;
                                 } else {
                                     // Confirms the FriendsDrinks exists.
-                                    invitationTuple.invitationRequest = request;
                                     invitationTuple.failed = false;
                                 }
                             } else {
@@ -129,8 +130,8 @@ public class InvitationRequestService {
                 .leftJoin(userState,
                         (request, state) -> {
                             InvitationTuple invitationTuple = new InvitationTuple();
+                            invitationTuple.invitationRequest = request;
                             if (state != null) {
-                                invitationTuple.invitationRequest = request;
                                 invitationTuple.failed = false;
                             } else {
                                 invitationTuple.failed = true;
