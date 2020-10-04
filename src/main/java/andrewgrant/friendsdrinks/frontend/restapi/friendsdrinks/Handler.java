@@ -98,8 +98,8 @@ public class Handler {
             throw new BadRequestException(String.format("%s does not exist", friendsDrinksUuid));
         }
         GetFriendsDrinksResponseBean response = new GetFriendsDrinksResponseBean();
-        response.setAdminUserId(friendsDrinksState.getFriendsDrinksId().getAdminUserId());
-        response.setId(friendsDrinksState.getFriendsDrinksId().getUuid());
+        andrewgrant.friendsdrinks.avro.FriendsDrinksId friendsDrinksId = friendsDrinksState.getFriendsDrinksId();
+        response.setFriendsDrinksId(new FriendsDrinksIdBean(friendsDrinksId.getAdminUserId(), friendsDrinksId.getUuid()));
         response.setName(friendsDrinksState.getName());
 
         if (friendsDrinksState.getUserIds() != null) {
@@ -126,8 +126,10 @@ public class Handler {
             KeyValue<FriendsDrinksPendingInvitationId, FriendsDrinksPendingInvitation> keyValue = allKvs.next();
             if (keyValue.key.getUserId().getUserId().equals(userId)) {
                 FriendsDrinksInvitationBean invitationBean = new FriendsDrinksInvitationBean();
-                invitationBean.setAdminUserId(keyValue.value.getFriendsDrinksId().getAdminUserId());
-                invitationBean.setFriendsDrinksId(keyValue.value.getFriendsDrinksId().getUuid());
+                invitationBean.setFriendsDrinksId(
+                        new FriendsDrinksIdBean(
+                                keyValue.value.getFriendsDrinksId().getAdminUserId(),
+                                keyValue.value.getFriendsDrinksId().getUuid()));
                 invitationBean.setMessage(keyValue.value.getMessage());
                 invitationBeans.add(invitationBean);
             }

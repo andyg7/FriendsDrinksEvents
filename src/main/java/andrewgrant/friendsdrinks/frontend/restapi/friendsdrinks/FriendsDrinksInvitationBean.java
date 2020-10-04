@@ -4,25 +4,17 @@ package andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks;
  * DTO for FriendsDrinksInvitation.
  */
 public class FriendsDrinksInvitationBean {
-    private String friendsDrinksId;
-    private String adminUserId;
     private String message;
+    private FriendsDrinksIdBean friendsDrinksId;
 
-    public String getFriendsDrinksId() {
+    public FriendsDrinksIdBean getFriendsDrinksId() {
         return friendsDrinksId;
     }
 
-    public void setFriendsDrinksId(String friendsDrinksId) {
+    public void setFriendsDrinksId(FriendsDrinksIdBean friendsDrinksId) {
         this.friendsDrinksId = friendsDrinksId;
     }
 
-    public String getAdminUserId() {
-        return adminUserId;
-    }
-
-    public void setAdminUserId(String adminUserId) {
-        this.adminUserId = adminUserId;
-    }
 
     public String getMessage() {
         return message;

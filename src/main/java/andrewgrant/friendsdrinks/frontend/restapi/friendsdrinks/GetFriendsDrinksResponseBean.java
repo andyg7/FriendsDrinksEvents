@@ -6,26 +6,18 @@ import java.util.List;
  * DTO for GetFriendsDrinksResponse.
  */
 public class GetFriendsDrinksResponseBean {
-    private String id;
-    private String adminUserId;
     private List<String> userIds;
     private String name;
+    private FriendsDrinksIdBean friendsDrinksId;
 
-    public String getId() {
-        return id;
+    public FriendsDrinksIdBean getFriendsDrinksId() {
+        return friendsDrinksId;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public void setFriendsDrinksId(FriendsDrinksIdBean friendsDrinksId) {
+        this.friendsDrinksId = friendsDrinksId;
     }
 
-    public String getAdminUserId() {
-        return adminUserId;
-    }
-
-    public void setAdminUserId(String adminUserId) {
-        this.adminUserId = adminUserId;
-    }
 
     public String getName() {
         return name;
