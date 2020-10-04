@@ -42,19 +42,6 @@ public class FriendsDrinksAvro {
         return serde;
     }
 
-    public SpecificAvroSerde<CreateFriendsDrinksResponse> createFriendsDrinksResponseSerde() {
-        SpecificAvroSerde<CreateFriendsDrinksResponse> serde;
-        if (registryClient != null) {
-            serde = new SpecificAvroSerde<>(registryClient);
-        } else {
-            serde = new SpecificAvroSerde<>();
-        }
-        Map<String, String> config = new HashMap<>();
-        config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, registryUrl);
-        serde.configure(config, false);
-        return serde;
-    }
-
     public SpecificAvroSerde<UpdateFriendsDrinksRequest> updateFriendsDrinksRequestSerde() {
         SpecificAvroSerde<UpdateFriendsDrinksRequest> serde;
         if (registryClient != null) {
@@ -71,19 +58,6 @@ public class FriendsDrinksAvro {
 
     public SpecificAvroSerde<DeleteFriendsDrinksRequest> deleteFriendsDrinksRequestSerde() {
         SpecificAvroSerde<DeleteFriendsDrinksRequest> serde;
-        if (registryClient != null) {
-            serde = new SpecificAvroSerde<>(registryClient);
-        } else {
-            serde = new SpecificAvroSerde<>();
-        }
-        Map<String, String> config = new HashMap<>();
-        config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, registryUrl);
-        serde.configure(config, false);
-        return serde;
-    }
-
-    public SpecificAvroSerde<DeleteFriendsDrinksResponse> deleteFriendsDrinksResponseSerde() {
-        SpecificAvroSerde<DeleteFriendsDrinksResponse> serde;
         if (registryClient != null) {
             serde = new SpecificAvroSerde<>(registryClient);
         } else {
@@ -183,7 +157,7 @@ public class FriendsDrinksAvro {
         return serde;
     }
 
-    public SpecificAvroSerde<FriendsDrinksInvitationRequest> createFriendsDrinksInvitationRequestSerde() {
+    public SpecificAvroSerde<FriendsDrinksInvitationRequest> friendsDrinksInvitationRequestSerde() {
         SpecificAvroSerde<FriendsDrinksInvitationRequest> serde;
         if (registryClient != null) {
             serde = new SpecificAvroSerde<>(registryClient);
@@ -196,7 +170,7 @@ public class FriendsDrinksAvro {
         return serde;
     }
 
-    public SpecificAvroSerde<FriendsDrinksInvitationReplyRequest> createFriendsDrinksInvitationReplyRequestSerde() {
+    public SpecificAvroSerde<FriendsDrinksInvitationReplyRequest> friendsDrinksInvitationReplyRequestSerde() {
         SpecificAvroSerde<FriendsDrinksInvitationReplyRequest> serde;
         if (registryClient != null) {
             serde = new SpecificAvroSerde<>(registryClient);
