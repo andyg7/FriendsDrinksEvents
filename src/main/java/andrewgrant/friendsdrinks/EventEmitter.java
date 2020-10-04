@@ -29,7 +29,7 @@ public class EventEmitter {
                     .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
                             .newBuilder()
                             .setAdminUserId(createFriendsDrinksRequest.getFriendsDrinksId().getAdminUserId())
-                            .setFriendsDrinksId(createFriendsDrinksRequest.getFriendsDrinksId().getFriendsDrinksId())
+                            .setUuid(createFriendsDrinksRequest.getFriendsDrinksId().getUuid())
                             .build())
                     .setName(createFriendsDrinksRequest.getName())
                     .build();
@@ -37,7 +37,7 @@ public class EventEmitter {
                     .setEventType(andrewgrant.friendsdrinks.avro.EventType.CREATED)
                     .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
                             .newBuilder()
-                            .setFriendsDrinksId(r.getCreateFriendsDrinksRequest().getFriendsDrinksId().getFriendsDrinksId())
+                            .setUuid(r.getCreateFriendsDrinksRequest().getFriendsDrinksId().getUuid())
                             .setAdminUserId(r.getCreateFriendsDrinksRequest().getFriendsDrinksId().getAdminUserId())
                             .build())
                     .setFriendsDrinksCreated(friendsDrinks)
@@ -49,7 +49,7 @@ public class EventEmitter {
                     .setEventType(andrewgrant.friendsdrinks.avro.EventType.DELETED)
                     .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
                             .newBuilder()
-                            .setFriendsDrinksId(r.getDeleteFriendsDrinksRequest().getFriendsDrinksId().getFriendsDrinksId())
+                            .setUuid(r.getDeleteFriendsDrinksRequest().getFriendsDrinksId().getUuid())
                             .setAdminUserId(r.getDeleteFriendsDrinksRequest().getFriendsDrinksId().getAdminUserId())
                             .build())
                     .build();
@@ -65,7 +65,7 @@ public class EventEmitter {
                     .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
                             .newBuilder()
                             .setAdminUserId(updateFriendsDrinksRequest.getFriendsDrinksId().getAdminUserId())
-                            .setFriendsDrinksId(updateFriendsDrinksRequest.getFriendsDrinksId().getFriendsDrinksId())
+                            .setUuid(updateFriendsDrinksRequest.getFriendsDrinksId().getUuid())
                             .build())
                     .setName(updateFriendsDrinksRequest.getName())
                     .build();
@@ -74,7 +74,7 @@ public class EventEmitter {
                     .setEventType(andrewgrant.friendsdrinks.avro.EventType.UPDATED)
                     .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
                             .newBuilder()
-                            .setFriendsDrinksId(r.getUpdateFriendsDrinksRequest().getFriendsDrinksId().getFriendsDrinksId())
+                            .setUuid(r.getUpdateFriendsDrinksRequest().getFriendsDrinksId().getUuid())
                             .setAdminUserId(r.getUpdateFriendsDrinksRequest().getFriendsDrinksId().getAdminUserId())
                             .build())
                     .setFriendsDrinksUpdated(friendsDrinks)
@@ -87,14 +87,14 @@ public class EventEmitter {
                     .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
                             .newBuilder()
                             .setAdminUserId(request.getFriendsDrinksId().getAdminUserId())
-                            .setFriendsDrinksId(request.getFriendsDrinksId().getFriendsDrinksId())
+                            .setUuid(request.getFriendsDrinksId().getUuid())
                             .build())
                     .setFriendsDrinksUserAdded(FriendsDrinksUserAdded
                             .newBuilder()
                             .setUserId(request.getUserId().getUserId())
                             .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
                                     .newBuilder()
-                                    .setFriendsDrinksId(request.getFriendsDrinksId().getFriendsDrinksId())
+                                    .setUuid(request.getFriendsDrinksId().getUuid())
                                     .setAdminUserId(request.getFriendsDrinksId().getAdminUserId())
                                     .build())
                             .build())

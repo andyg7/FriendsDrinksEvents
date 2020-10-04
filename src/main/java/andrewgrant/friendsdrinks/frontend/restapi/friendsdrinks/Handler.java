@@ -79,7 +79,7 @@ public class Handler {
             }
             friendsDrinksList.add(new FriendsDrinksIdBean(
                     keyValue.value.getFriendsDrinksId().getAdminUserId(),
-                    keyValue.value.getFriendsDrinksId().getFriendsDrinksId()));
+                    keyValue.value.getFriendsDrinksId().getUuid()));
         }
         allKvs.close();
         GetAllFriendsDrinksResponseBean response = new GetAllFriendsDrinksResponseBean();
@@ -99,7 +99,7 @@ public class Handler {
         }
         GetFriendsDrinksResponseBean response = new GetFriendsDrinksResponseBean();
         response.setAdminUserId(friendsDrinksState.getFriendsDrinksId().getAdminUserId());
-        response.setId(friendsDrinksState.getFriendsDrinksId().getFriendsDrinksId());
+        response.setId(friendsDrinksState.getFriendsDrinksId().getUuid());
         response.setName(friendsDrinksState.getName());
 
         if (friendsDrinksState.getUserIds() != null) {
@@ -127,7 +127,7 @@ public class Handler {
             if (keyValue.key.getUserId().getUserId().equals(userId)) {
                 FriendsDrinksInvitationBean invitationBean = new FriendsDrinksInvitationBean();
                 invitationBean.setAdminUserId(keyValue.value.getFriendsDrinksId().getAdminUserId());
-                invitationBean.setFriendsDrinksId(keyValue.value.getFriendsDrinksId().getFriendsDrinksId());
+                invitationBean.setFriendsDrinksId(keyValue.value.getFriendsDrinksId().getUuid());
                 invitationBean.setMessage(keyValue.value.getMessage());
                 invitationBeans.add(invitationBean);
             }
@@ -153,7 +153,7 @@ public class Handler {
                 .setFriendsDrinksId(
                         FriendsDrinksId
                                 .newBuilder()
-                                .setFriendsDrinksId(friendsDrinksId)
+                                .setUuid(friendsDrinksId)
                                 .setAdminUserId(userId)
                                 .build())
                 .setRequestId(requestId)
@@ -209,7 +209,7 @@ public class Handler {
         FriendsDrinksId friendsDrinksIdAvro = FriendsDrinksId
                 .newBuilder()
                 .setAdminUserId(userId)
-                .setFriendsDrinksId(friendsDrinksId)
+                .setUuid(friendsDrinksId)
                 .build();
         UpdateFriendsDrinksRequest updateFriendsDrinksRequest = UpdateFriendsDrinksRequest
                 .newBuilder()
@@ -267,7 +267,7 @@ public class Handler {
                 .setFriendsDrinksId(
                         FriendsDrinksId
                                 .newBuilder()
-                                .setFriendsDrinksId(friendsDrinksId)
+                                .setUuid(friendsDrinksId)
                                 .setAdminUserId(userId)
                                 .build())
                 .setRequestId(requestId)
@@ -339,7 +339,7 @@ public class Handler {
         friendsDrinksIdAvro = FriendsDrinksId
                 .newBuilder()
                 .setAdminUserId(requestBean.getAdminUserId())
-                .setFriendsDrinksId(friendsDrinksId)
+                .setUuid(friendsDrinksId)
                 .build();
         FriendsDrinksInvitationReplyRequest friendsDrinksInvitationReplyRequest =
                 FriendsDrinksInvitationReplyRequest.newBuilder()
@@ -400,7 +400,7 @@ public class Handler {
         friendsDrinksIdAvro = FriendsDrinksId
                 .newBuilder()
                 .setAdminUserId(userId)
-                .setFriendsDrinksId(friendsDrinksId)
+                .setUuid(friendsDrinksId)
                 .build();
         FriendsDrinksInvitationRequest friendsDrinksInvitationRequest =
                 FriendsDrinksInvitationRequest

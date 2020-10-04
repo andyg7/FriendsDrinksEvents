@@ -60,7 +60,7 @@ public class StreamsService {
                         .withKeySerde(friendsDrinksAvro.friendsDrinksIdSerde())
                         .withValueSerde(friendsDrinksAvro.friendsDrinksStateSerde()));
 
-        friendsDrinksState.selectKey((key, value) -> key.getFriendsDrinksId())
+        friendsDrinksState.selectKey((key, value) -> key.getUuid())
                 .toTable(
                         Materialized.<String, FriendsDrinksState, KeyValueStore<Bytes, byte[]>>
                                 as(FRIENDSDRINKS_KEYED_BY_SINGLE_ID_STORE)

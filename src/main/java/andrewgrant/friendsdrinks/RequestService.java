@@ -109,7 +109,7 @@ public class RequestService {
                 deleteRequests.selectKey(((key, value) -> andrewgrant.friendsdrinks.avro.FriendsDrinksId
                         .newBuilder()
                         .setAdminUserId(value.getFriendsDrinksId().getAdminUserId())
-                        .setFriendsDrinksId(value.getFriendsDrinksId().getFriendsDrinksId()).build()));
+                        .setUuid(value.getFriendsDrinksId().getUuid()).build()));
 
         deleteRequestsKeyed.leftJoin(friendsDrinksStateKTable,
                 (request, state) -> {
@@ -156,7 +156,7 @@ public class RequestService {
                 updateRequests.selectKey(((key, value) -> andrewgrant.friendsdrinks.avro.FriendsDrinksId
                         .newBuilder()
                         .setAdminUserId(value.getFriendsDrinksId().getAdminUserId())
-                        .setFriendsDrinksId(value.getFriendsDrinksId().getFriendsDrinksId()).build()));
+                        .setUuid(value.getFriendsDrinksId().getUuid()).build()));
         KStream<String, FriendsDrinksEvent> updateResponses = updateRequestsKeyed.leftJoin(friendsDrinksStateKTable,
                 (updateRequest, state) -> {
                     if (state != null) {

@@ -95,7 +95,7 @@ public class FriendsDrinksMembershipRequestService {
                 branchedResultsAfterValidatingUserState[1].selectKey((key, value) ->
                         andrewgrant.friendsdrinks.avro.FriendsDrinksId
                                 .newBuilder()
-                                .setFriendsDrinksId(value.friendsDrinksRemoveUserRequest.getFriendsDrinksId().getFriendsDrinksId())
+                                .setUuid(value.friendsDrinksRemoveUserRequest.getFriendsDrinksId().getUuid())
                                 .setAdminUserId(value.friendsDrinksRemoveUserRequest.getFriendsDrinksId().getAdminUserId())
                                 .build())
                         .mapValues(value -> value.friendsDrinksRemoveUserRequest)
@@ -189,7 +189,7 @@ public class FriendsDrinksMembershipRequestService {
                 andrewgrant.friendsdrinks.avro.FriendsDrinksId
                         .newBuilder()
                         .setAdminUserId(value.getFriendsDrinksId().getAdminUserId())
-                        .setFriendsDrinksId(value.getFriendsDrinksId().getFriendsDrinksId())
+                        .setUuid(value.getFriendsDrinksId().getUuid())
                         .build())
                 .leftJoin(friendsDrinksStateKTable,
                         (request, state) -> {
@@ -259,7 +259,7 @@ public class FriendsDrinksMembershipRequestService {
                 andrewgrant.friendsdrinks.avro.FriendsDrinksId
                         .newBuilder()
                         .setAdminUserId(value.getFriendsDrinksId().getAdminUserId())
-                        .setFriendsDrinksId(value.getFriendsDrinksId().getFriendsDrinksId())
+                        .setUuid(value.getFriendsDrinksId().getUuid())
                         .build())
                 .leftJoin(friendsDrinksStateKTable,
                         (request, state) -> {

@@ -5,19 +5,19 @@ package andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks;
  */
 public class FriendsDrinksIdBean {
     private String adminUserId;
-    private String friendsDrinksId;
+    private String uuid;
 
-    public FriendsDrinksIdBean(String adminUserId, String friendsDrinksId) {
+    public FriendsDrinksIdBean(String adminUserId, String uuid) {
         this.adminUserId = adminUserId;
-        this.friendsDrinksId = friendsDrinksId;
+        this.uuid = uuid;
     }
 
-    public String getFriendsDrinksId() {
-        return friendsDrinksId;
+    public String getUuid() {
+        return uuid;
     }
 
-    public void setFriendsDrinksId(String friendsDrinksId) {
-        this.friendsDrinksId = friendsDrinksId;
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
     }
 
     public String getAdminUserId() {

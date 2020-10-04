@@ -4,6 +4,6 @@
   "name": "FriendsDrinksId",
   "fields": [
     {"name": "adminUserId", "type": "string"},
-    {"name": "friendsDrinksId", "type": "string"}
+    {"name": "uuid", "type": "string"}
   ]
 }
