@@ -99,7 +99,7 @@ public class InvitationRequestService {
                 Joined.with(userAvro.userIdSerde(), friendsDrinksAvro.friendsDrinksInvitationRequestSerde(),
                         userAvro.userStateSerde()));
 
-        KStream<String, InvitationTuple> invitationAggregateResultKStream = friendsDrinksInvitations.selectKey((key, value) ->
+        KStream<String, InvitationTuple> resultsAfterValidatingFriendsDrinksState = friendsDrinksInvitations.selectKey((key, value) ->
                 andrewgrant.friendsdrinks.avro.FriendsDrinksId
                         .newBuilder()
                         .setAdminUserId(value.getFriendsDrinksId().getAdminUserId())
@@ -129,37 +129,84 @@ public class InvitationRequestService {
                 )
                 .selectKey((key, value) -> value.invitationRequest.getRequestId());
 
-        KStream<String, InvitationTuple>[] requestResultsSoFar =
-                invitationAggregateResultKStream.branch(
+        KStream<String, InvitationTuple>[] branchedResultsAfterValidatingFriendsDrinksState =
+                resultsAfterValidatingFriendsDrinksState.branch(
                         ((key, value) -> value.failed),
                         ((key, value) -> !value.failed)
                 );
 
-        emitFailedInvitationRequests(requestResultsSoFar[0].mapValues(value -> value.invitationRequest),
+        emitFailedInvitationRequests(branchedResultsAfterValidatingFriendsDrinksState[0].mapValues(value -> value.invitationRequest),
                 friendsDrinksAvro, apiTopicName);
 
-        KStream<String, FriendsDrinksInvitationRequest> acceptedRequests = requestResultsSoFar[1]
-                .mapValues(value -> value.invitationRequest);
-        acceptedRequests.map((key, value) -> {
-            FriendsDrinksPendingInvitation pendingInvitation = FriendsDrinksPendingInvitation
-                    .newBuilder()
-                    .setFriendsDrinksId(value.getFriendsDrinksId())
-                    .setUserId(value.getUserId())
-                    .setInvitationId(
-                            FriendsDrinksPendingInvitationId
-                                    .newBuilder()
-                                    .setFriendsDrinksId(value.getFriendsDrinksId())
-                                    .setUserId(value.getUserId())
-                                    .build())
-                    .setMessage(String.format("Want to join %s?!", "TODO"))
-                    .build();
-            return new KeyValue<>(pendingInvitation.getInvitationId(), pendingInvitation);
-        }).to(pendingInvitationsTopicName,
-                Produced.with(
-                        friendsDrinksAvro.friendsDrinksPendingInvitationIdSerde(),
-                        friendsDrinksAvro.friendsDrinksPendingInvitationSerde()));
+        KStream<String, InvitationTuple> resultsAfterValidatingUserState = branchedResultsAfterValidatingFriendsDrinksState[1]
+                .selectKey((key, value) -> {
+                    return UserId.newBuilder().setUserId(value.invitationRequest.getUserId().getUserId()).build();
+                })
+                .mapValues(value -> value.invitationRequest)
+                .leftJoin(userState,
+                        (request, state) -> {
+                            InvitationTuple invitationTuple = new InvitationTuple();
+                            if (state != null) {
+                                invitationTuple.invitationRequest = request;
+                                invitationTuple.failed = false;
+                            } else {
+                                invitationTuple.failed = true;
+                            }
+                            return invitationTuple;
+                        },
+                        Joined.with(userAvro.userIdSerde(), friendsDrinksAvro.friendsDrinksInvitationRequestSerde(),
+                                userAvro.userStateSerde()))
+                .selectKey((key, value) -> value.invitationRequest.getRequestId());
 
-        acceptedRequests.map((key, value) -> {
+        KStream<String, InvitationTuple>[] branchedResultsAfterValidatingUserState =
+                resultsAfterValidatingUserState.branch(
+                        ((key, value) -> value.failed),
+                        ((key, value) -> !value.failed)
+                );
+
+        emitFailedInvitationRequests(branchedResultsAfterValidatingUserState[0].mapValues(value -> value.invitationRequest),
+                friendsDrinksAvro, apiTopicName);
+
+        KStream<String, FriendsDrinksInvitationRequest> acceptedInvitationRequests = branchedResultsAfterValidatingUserState[1]
+                .mapValues(value -> value.invitationRequest);
+
+        acceptedInvitationRequests.selectKey((key, value) ->
+                andrewgrant.friendsdrinks.avro.FriendsDrinksId
+                        .newBuilder()
+                        .setAdminUserId(value.getFriendsDrinksId().getAdminUserId())
+                        .setFriendsDrinksId(value.getFriendsDrinksId().getFriendsDrinksId())
+                        .build())
+                .leftJoin(friendsDrinksStateKTable,
+                        (request, state) -> {
+                            if (state != null) {
+                                FriendsDrinksPendingInvitation pendingInvitation = FriendsDrinksPendingInvitation
+                                        .newBuilder()
+                                        .setFriendsDrinksId(request.getFriendsDrinksId())
+                                        .setUserId(request.getUserId())
+                                        .setInvitationId(
+                                                FriendsDrinksPendingInvitationId
+                                                        .newBuilder()
+                                                        .setFriendsDrinksId(request.getFriendsDrinksId())
+                                                        .setUserId(request.getUserId())
+                                                        .build())
+                                        .setMessage(String.format("Want to join %s?!", state.getName()))
+                                        .build();
+                                return pendingInvitation;
+                            } else {
+                                throw new RuntimeException(String.format("Failed to find FriendsDrinks state %s",
+                                        request.getRequestId()));
+                            }
+                        },
+                        Joined.with(friendsDrinksAvro.friendsDrinksIdSerde(),
+                                friendsDrinksAvro.friendsDrinksInvitationRequestSerde(),
+                                friendsDrinksAvro.friendsDrinksStateSerde())
+                )
+                .selectKey((key, value) -> value.getInvitationId())
+                .to(pendingInvitationsTopicName,
+                        Produced.with(friendsDrinksAvro.friendsDrinksPendingInvitationIdSerde(),
+                                friendsDrinksAvro.friendsDrinksPendingInvitationSerde()));
+
+        acceptedInvitationRequests.map((key, value) -> {
             FriendsDrinksInvitationResponse response = FriendsDrinksInvitationResponse
                     .newBuilder()
                     .setRequestId(value.getRequestId())
