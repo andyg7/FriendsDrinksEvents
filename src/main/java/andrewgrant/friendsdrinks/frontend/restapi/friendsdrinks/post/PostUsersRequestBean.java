@@ -7,7 +7,7 @@ public class PostUsersRequestBean {
     // Options for updateType: INVITE_FRIEND, REPLY_TO_INVITATION.
     private String eventType;
     // This is always required.
-    private String friendsDrinksId;
+    private String friendsDrinksUuid;
 
     // Only relevant for INVITE_FRIEND.
     private String userId;
@@ -26,12 +26,12 @@ public class PostUsersRequestBean {
         this.userId = userId;
     }
 
-    public String getFriendsDrinksId() {
-        return friendsDrinksId;
+    public String getFriendsDrinksUuid() {
+        return friendsDrinksUuid;
     }
 
-    public void setFriendsDrinksId(String friendsDrinksId) {
-        this.friendsDrinksId = friendsDrinksId;
+    public void setFriendsDrinksUuid(String friendsDrinksUuid) {
+        this.friendsDrinksUuid = friendsDrinksUuid;
     }
 
     public String getInvitationReply() {
