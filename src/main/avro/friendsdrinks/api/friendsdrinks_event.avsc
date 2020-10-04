@@ -3,7 +3,7 @@
   "type": "record",
   "name": "FriendsDrinksEvent",
   "fields": [
-    {"name": "eventType", "type": {"type": "enum", "name": "EventType", "symbols" : ["CREATE_FRIENDSDRINKS_REQUEST", "CREATE_FRIENDSDRINKS_RESPONSE", "UPDATE_FRIENDSDRINKS_REQUEST", "UPDATE_FRIENDSDRINKS_RESPONSE", "DELETE_FRIENDSDRINKS_REQUEST", "DELETE_FRIENDSDRINKS_RESPONSE", "CREATE_FRIENDSDRINKS_INVITATION_REQUEST", "CREATE_FRIENDSDRINKS_INVITATION_RESPONSE" ,"CREATE_FRIENDSDRINKS_INVITATION_REPLY_REQUEST", "CREATE_FRIENDSDRINKS_INVITATION_REPLY_RESPONSE"] } },
+    {"name": "eventType", "type": {"type": "enum", "name": "EventType", "symbols" : ["CREATE_FRIENDSDRINKS_REQUEST", "CREATE_FRIENDSDRINKS_RESPONSE", "UPDATE_FRIENDSDRINKS_REQUEST", "UPDATE_FRIENDSDRINKS_RESPONSE", "DELETE_FRIENDSDRINKS_REQUEST", "DELETE_FRIENDSDRINKS_RESPONSE", "FRIENDSDRINKS_INVITATION_REQUEST", "FRIENDSDRINKS_INVITATION_RESPONSE" ,"FRIENDSDRINKS_INVITATION_REPLY_REQUEST", "FRIENDSDRINKS_INVITATION_REPLY_RESPONSE"] } },
     {"name": "requestId", "type": "string"},
     {"name": "createFriendsDrinksRequest", "type": ["null", "CreateFriendsDrinksRequest"], "default": null},
     {"name": "createFriendsDrinksResponse", "type": ["null", "CreateFriendsDrinksResponse"], "default": null},
@@ -11,9 +11,9 @@
     {"name": "deleteFriendsDrinksResponse", "type": ["null", "DeleteFriendsDrinksResponse"], "default": null},
     {"name": "updateFriendsDrinksRequest", "type": ["null", "UpdateFriendsDrinksRequest"], "default": null},
     {"name": "updateFriendsDrinksResponse", "type": ["null", "UpdateFriendsDrinksResponse"], "default": null},
-    {"name": "createFriendsDrinksInvitationRequest", "type": ["null", "CreateFriendsDrinksInvitationRequest"], "default": null},
-    {"name": "createFriendsDrinksInvitationResponse", "type": ["null", "CreateFriendsDrinksInvitationResponse"], "default": null},
-    {"name": "createFriendsDrinksInvitationReplyRequest", "type": ["null", "CreateFriendsDrinksInvitationReplyRequest"], "default": null},
-    {"name": "createFriendsDrinksInvitationReplyResponse", "type": ["null", "CreateFriendsDrinksInvitationReplyResponse"], "default": null}
+    {"name": "friendsDrinksInvitationRequest", "type": ["null", "FriendsDrinksInvitationRequest"], "default": null},
+    {"name": "friendsDrinksInvitationResponse", "type": ["null", "FriendsDrinksInvitationResponse"], "default": null},
+    {"name": "friendsDrinksInvitationReplyRequest", "type": ["null", "FriendsDrinksInvitationReplyRequest"], "default": null},
+    {"name": "friendsDrinksInvitationReplyResponse", "type": ["null", "FriendsDrinksInvitationReplyResponse"], "default": null}
   ]
 }

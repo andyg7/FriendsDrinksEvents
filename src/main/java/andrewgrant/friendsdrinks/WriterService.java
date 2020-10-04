@@ -80,8 +80,8 @@ public class WriterService {
                         friendsDrinksEvent.getCreateFriendsDrinksResponse().getResult().equals(Result.SUCCESS)) ||
                         (friendsDrinksEvent.getEventType().equals(EventType.UPDATE_FRIENDSDRINKS_RESPONSE) &&
                                 friendsDrinksEvent.getUpdateFriendsDrinksResponse().getResult().equals(Result.SUCCESS)) ||
-                        (friendsDrinksEvent.getEventType().equals(EventType.CREATE_FRIENDSDRINKS_INVITATION_REPLY_RESPONSE) &&
-                                friendsDrinksEvent.getCreateFriendsDrinksInvitationReplyResponse().getResult().equals(Result.SUCCESS)) ||
+                        (friendsDrinksEvent.getEventType().equals(EventType.FRIENDSDRINKS_INVITATION_REPLY_RESPONSE) &&
+                                friendsDrinksEvent.getFriendsDrinksInvitationReplyResponse().getResult().equals(Result.SUCCESS)) ||
                         (friendsDrinksEvent.getEventType().equals(EventType.DELETE_FRIENDSDRINKS_RESPONSE) &&
                                 friendsDrinksEvent.getDeleteFriendsDrinksResponse().getResult().equals(Result.SUCCESS))
         );
@@ -90,8 +90,8 @@ public class WriterService {
     private KStream<String, FriendsDrinksEvent> streamOfRequests(KStream<String, FriendsDrinksEvent> apiEvents) {
         return apiEvents.filter((k, v) -> v.getEventType().equals(EventType.CREATE_FRIENDSDRINKS_REQUEST) ||
                 v.getEventType().equals(EventType.UPDATE_FRIENDSDRINKS_REQUEST) ||
-                (v.getEventType().equals(EventType.CREATE_FRIENDSDRINKS_INVITATION_REPLY_REQUEST)
-                        && v.getCreateFriendsDrinksInvitationReplyRequest().getReply().equals(Reply.ACCEPTED)) ||
+                (v.getEventType().equals(EventType.FRIENDSDRINKS_INVITATION_REPLY_REQUEST)
+                        && v.getFriendsDrinksInvitationReplyRequest().getReply().equals(Reply.ACCEPTED)) ||
                 v.getEventType().equals(EventType.DELETE_FRIENDSDRINKS_REQUEST));
     }
 

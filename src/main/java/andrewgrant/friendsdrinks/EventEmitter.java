@@ -3,9 +3,9 @@ package andrewgrant.friendsdrinks;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import andrewgrant.friendsdrinks.api.avro.CreateFriendsDrinksInvitationReplyRequest;
 import andrewgrant.friendsdrinks.api.avro.CreateFriendsDrinksRequest;
 import andrewgrant.friendsdrinks.api.avro.EventType;
+import andrewgrant.friendsdrinks.api.avro.FriendsDrinksInvitationReplyRequest;
 import andrewgrant.friendsdrinks.api.avro.UpdateFriendsDrinksRequest;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksCreated;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksEvent;
@@ -79,8 +79,8 @@ public class EventEmitter {
                             .build())
                     .setFriendsDrinksUpdated(friendsDrinks)
                     .build();
-        } else if (r.getEventType().equals(EventType.CREATE_FRIENDSDRINKS_INVITATION_REPLY_REQUEST)) {
-            CreateFriendsDrinksInvitationReplyRequest request = r.getCreateFriendsDrinksInvitationReplyRequest();
+        } else if (r.getEventType().equals(EventType.FRIENDSDRINKS_INVITATION_REPLY_REQUEST)) {
+            FriendsDrinksInvitationReplyRequest request = r.getFriendsDrinksInvitationReplyRequest();
             return andrewgrant.friendsdrinks.avro.FriendsDrinksEvent
                     .newBuilder()
                     .setEventType(andrewgrant.friendsdrinks.avro.EventType.USER_ADDED)

@@ -183,8 +183,8 @@ public class FriendsDrinksAvro {
         return serde;
     }
 
-    public SpecificAvroSerde<CreateFriendsDrinksInvitationRequest> createFriendsDrinksInvitationRequestSerde() {
-        SpecificAvroSerde<CreateFriendsDrinksInvitationRequest> serde;
+    public SpecificAvroSerde<FriendsDrinksInvitationRequest> createFriendsDrinksInvitationRequestSerde() {
+        SpecificAvroSerde<FriendsDrinksInvitationRequest> serde;
         if (registryClient != null) {
             serde = new SpecificAvroSerde<>(registryClient);
         } else {
@@ -196,8 +196,8 @@ public class FriendsDrinksAvro {
         return serde;
     }
 
-    public SpecificAvroSerde<CreateFriendsDrinksInvitationReplyRequest> createFriendsDrinksInvitationReplyRequestSerde() {
-        SpecificAvroSerde<CreateFriendsDrinksInvitationReplyRequest> serde;
+    public SpecificAvroSerde<FriendsDrinksInvitationReplyRequest> createFriendsDrinksInvitationReplyRequestSerde() {
+        SpecificAvroSerde<FriendsDrinksInvitationReplyRequest> serde;
         if (registryClient != null) {
             serde = new SpecificAvroSerde<>(registryClient);
         } else {

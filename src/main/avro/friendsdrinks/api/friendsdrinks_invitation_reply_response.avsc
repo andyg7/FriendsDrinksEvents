@@ -1,7 +1,7 @@
 {
   "namespace": "andrewgrant.friendsdrinks.api.avro",
   "type": "record",
-  "name": "CreateFriendsDrinksInvitationResponse",
+  "name": "FriendsDrinksInvitationReplyResponse",
   "fields": [
       {"name": "requestId", "type": "string"},
       {"name": "result", "type": {"type": "enum", "name": "Result", "symbols": ["SUCCESS", "FAIL"] } }

@@ -76,15 +76,30 @@ public class InvitationRequestService {
 
     private void handleInvitationRequests(KStream<String, FriendsDrinksEvent> apiEvents,
                                           KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable,
-                                          KTable<UserId, UserState> userState, FriendsDrinksAvro avro, UserAvro userAvro,
-                                          String apiTopicName, String pendingInvitationsTopicName) {
+                                          KTable<UserId, UserState> userState, FriendsDrinksAvro friendsDrinksAvro,
+                                          UserAvro userAvro, String apiTopicName, String pendingInvitationsTopicName) {
 
         // FriendsDrinks invitation requests
-        KStream<String, CreateFriendsDrinksInvitationRequest> friendsDrinksInvitations = apiEvents
-                .filter((key, value) -> value.getEventType().equals(EventType.CREATE_FRIENDSDRINKS_INVITATION_REQUEST))
-                .mapValues(value -> value.getCreateFriendsDrinksInvitationRequest());
-        KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, CreateFriendsDrinksInvitationAggregateResult>
-                createFriendsDrinksInvitationAggregateResult = friendsDrinksInvitations.selectKey((key, value) ->
+        KStream<String, FriendsDrinksInvitationRequest> friendsDrinksInvitations = apiEvents
+                .filter((key, value) -> value.getEventType().equals(EventType.FRIENDSDRINKS_INVITATION_REQUEST))
+                .mapValues(value -> value.getFriendsDrinksInvitationRequest());
+
+        KStream<UserId, FriendsDrinksInvitationRequest> friendsDrinksInvitationsKeyedByUserId =
+                friendsDrinksInvitations.selectKey(((key, value) -> UserId.newBuilder().setUserId(value.getUserId().getUserId()).build()));
+        friendsDrinksInvitationsKeyedByUserId.leftJoin(userState,
+                (request, state) -> {
+                    InvitationTuple invitationTuple = new InvitationTuple();
+                    if (state != null) {
+                        invitationTuple.failed = false;
+                    } else {
+                        invitationTuple.failed = true;
+                    }
+                    return invitationTuple;
+                },
+                Joined.with(userAvro.userIdSerde(), friendsDrinksAvro.createFriendsDrinksInvitationRequestSerde(),
+                        userAvro.userStateSerde()));
+
+        KStream<String, InvitationTuple> invitationAggregateResultKStream = friendsDrinksInvitations.selectKey((key, value) ->
                 andrewgrant.friendsdrinks.avro.FriendsDrinksId
                         .newBuilder()
                         .setAdminUserId(value.getFriendsDrinksId().getAdminUserId())
@@ -92,69 +107,89 @@ public class InvitationRequestService {
                         .build())
                 .leftJoin(friendsDrinksStateKTable,
                         (request, state) -> {
-                            CreateFriendsDrinksInvitationAggregateResult aggregateResult =
-                                    new CreateFriendsDrinksInvitationAggregateResult();
+                            // Validate request against state of FriendsDrinks
+                            InvitationTuple invitationTuple = new InvitationTuple();
                             if (state != null) {
                                 if (state.getUserIds().contains(request.getUserId()) ||
                                         state.getFriendsDrinksId().getAdminUserId().equals(request.getUserId().getUserId())) {
-                                    aggregateResult.failed = true;
+                                    invitationTuple.failed = true;
                                 } else {
                                     // Confirms the FriendsDrinks exists.
-                                    aggregateResult.createFriendsDrinksInvitationRequest = request;
-                                    aggregateResult.name = state.getName();
-                                    aggregateResult.failed = false;
+                                    invitationTuple.invitationRequest = request;
+                                    invitationTuple.failed = false;
                                 }
                             } else {
-                                aggregateResult.failed = true;
+                                invitationTuple.failed = true;
                             }
-                            return aggregateResult;
+                            return invitationTuple;
                         },
-                        Joined.with(avro.friendsDrinksIdSerde(), avro.createFriendsDrinksInvitationRequestSerde(), avro.friendsDrinksStateSerde())
+                        Joined.with(friendsDrinksAvro.friendsDrinksIdSerde(),
+                                friendsDrinksAvro.createFriendsDrinksInvitationRequestSerde(),
+                                friendsDrinksAvro.friendsDrinksStateSerde())
+                )
+                .selectKey((key, value) -> value.invitationRequest.getRequestId());
+
+        KStream<String, InvitationTuple>[] requestResultsSoFar =
+                invitationAggregateResultKStream.branch(
+                        ((key, value) -> value.failed),
+                        ((key, value) -> !value.failed)
                 );
 
-        createFriendsDrinksInvitationAggregateResult.filter((key, value) -> value.failed == false).map((key, value) -> {
+        emitFailedInvitationRequests(requestResultsSoFar[0].mapValues(value -> value.invitationRequest),
+                friendsDrinksAvro, apiTopicName);
+
+        KStream<String, FriendsDrinksInvitationRequest> acceptedRequests = requestResultsSoFar[1]
+                .mapValues(value -> value.invitationRequest);
+        acceptedRequests.map((key, value) -> {
             FriendsDrinksPendingInvitation pendingInvitation = FriendsDrinksPendingInvitation
                     .newBuilder()
-                    .setFriendsDrinksId(value.createFriendsDrinksInvitationRequest.getFriendsDrinksId())
-                    .setUserId(value.createFriendsDrinksInvitationRequest.getUserId())
+                    .setFriendsDrinksId(value.getFriendsDrinksId())
+                    .setUserId(value.getUserId())
                     .setInvitationId(
                             FriendsDrinksPendingInvitationId
                                     .newBuilder()
-                                    .setFriendsDrinksId(value.createFriendsDrinksInvitationRequest.getFriendsDrinksId())
-                                    .setUserId(value.createFriendsDrinksInvitationRequest.getUserId())
+                                    .setFriendsDrinksId(value.getFriendsDrinksId())
+                                    .setUserId(value.getUserId())
                                     .build())
-                    .setMessage(String.format("Want to join %s?!", value.name))
+                    .setMessage(String.format("Want to join %s?!", "TODO"))
                     .build();
             return new KeyValue<>(pendingInvitation.getInvitationId(), pendingInvitation);
         }).to(pendingInvitationsTopicName,
                 Produced.with(
-                        avro.friendsDrinksPendingInvitationIdSerde(),
-                        avro.friendsDrinksPendingInvitationSerde()));
+                        friendsDrinksAvro.friendsDrinksPendingInvitationIdSerde(),
+                        friendsDrinksAvro.friendsDrinksPendingInvitationSerde()));
 
-        createFriendsDrinksInvitationAggregateResult.map((key, value) -> {
-            CreateFriendsDrinksInvitationResponse response;
-            if (value.failed) {
-                response = CreateFriendsDrinksInvitationResponse
-                        .newBuilder()
-                        .setRequestId(value.createFriendsDrinksInvitationRequest.getRequestId())
-                        .setResult(Result.FAIL)
-                        .build();
-            } else {
-                response = CreateFriendsDrinksInvitationResponse
-                        .newBuilder()
-                        .setRequestId(value.createFriendsDrinksInvitationRequest.getRequestId())
-                        .setResult(Result.SUCCESS)
-                        .build();
-            }
+        acceptedRequests.map((key, value) -> {
+            FriendsDrinksInvitationResponse response = FriendsDrinksInvitationResponse
+                    .newBuilder()
+                    .setRequestId(value.getRequestId())
+                    .setResult(Result.SUCCESS)
+                    .build();
             FriendsDrinksEvent friendsDrinksEvent = FriendsDrinksEvent
                     .newBuilder()
-                    .setEventType(EventType.CREATE_FRIENDSDRINKS_INVITATION_RESPONSE)
-                    .setRequestId(value.createFriendsDrinksInvitationRequest.getRequestId())
-                    .setCreateFriendsDrinksInvitationResponse(response)
+                    .setEventType(EventType.FRIENDSDRINKS_INVITATION_RESPONSE)
+                    .setRequestId(value.getRequestId())
+                    .setFriendsDrinksInvitationResponse(response)
                     .build();
             return new KeyValue<>(
-                    friendsDrinksEvent.getCreateFriendsDrinksInvitationResponse().getRequestId(),
+                    friendsDrinksEvent.getFriendsDrinksInvitationResponse().getRequestId(),
                     friendsDrinksEvent);
+        }).to(apiTopicName, Produced.with(Serdes.String(), friendsDrinksAvro.apiFriendsDrinksSerde()));
+    }
+
+    private void emitFailedInvitationRequests(KStream<String, FriendsDrinksInvitationRequest> stream,
+                                              FriendsDrinksAvro avro, String apiTopicName) {
+        stream.mapValues(value -> {
+            FriendsDrinksInvitationResponse response = FriendsDrinksInvitationResponse
+                    .newBuilder()
+                    .setResult(Result.FAIL)
+                    .setRequestId(value.getRequestId())
+                    .build();
+            return FriendsDrinksEvent
+                    .newBuilder()
+                    .setEventType(EventType.FRIENDSDRINKS_INVITATION_RESPONSE)
+                    .setFriendsDrinksInvitationResponse(response)
+                    .build();
         }).to(apiTopicName, Produced.with(Serdes.String(), avro.apiFriendsDrinksSerde()));
     }
 
@@ -163,10 +198,10 @@ public class InvitationRequestService {
                                          FriendsDrinksAvro avro, String apiTopicName, String pendingInvitationsTopicName) {
 
         // FriendsDrinks replies
-        KStream<String, CreateFriendsDrinksInvitationReplyRequest> createFriendsDrinksInvitationReplyRequests = apiEvents
-                .filter((key, value) -> value.getEventType().equals(EventType.CREATE_FRIENDSDRINKS_INVITATION_REPLY_REQUEST))
-                .mapValues(value -> value.getCreateFriendsDrinksInvitationReplyRequest());
-        KStream<FriendsDrinksPendingInvitationId, CreateFriendsDrinksInvitationReplyResponse> createFriendsDrinksInvitationReplyResponses =
+        KStream<String, FriendsDrinksInvitationReplyRequest> createFriendsDrinksInvitationReplyRequests = apiEvents
+                .filter((key, value) -> value.getEventType().equals(EventType.FRIENDSDRINKS_INVITATION_REPLY_REQUEST))
+                .mapValues(value -> value.getFriendsDrinksInvitationReplyRequest());
+        KStream<FriendsDrinksPendingInvitationId, FriendsDrinksInvitationReplyResponse> createFriendsDrinksInvitationReplyResponses =
                 createFriendsDrinksInvitationReplyRequests.selectKey((key, value) -> FriendsDrinksPendingInvitationId
                         .newBuilder()
                         .setFriendsDrinksId(value.getFriendsDrinksId())
@@ -175,31 +210,30 @@ public class InvitationRequestService {
                         .leftJoin(pendingFriendsDrinksInvitations,
                                 (request, state) -> {
                                     if (state != null) {
-                                        return CreateFriendsDrinksInvitationReplyResponse
+                                        return FriendsDrinksInvitationReplyResponse
                                                 .newBuilder()
                                                 .setRequestId(request.getRequestId())
                                                 .setResult(Result.SUCCESS)
                                                 .build();
                                     } else {
                                         log.info("Rejecting invitation reply for {}", request.getRequestId());
-                                        return CreateFriendsDrinksInvitationReplyResponse
+                                        return FriendsDrinksInvitationReplyResponse
                                                 .newBuilder()
                                                 .setRequestId(request.getRequestId())
                                                 .setResult(Result.FAIL)
                                                 .build();
                                     }
                                 },
-                                Joined.with(
-                                        avro.friendsDrinksPendingInvitationIdSerde(),
+                                Joined.with(avro.friendsDrinksPendingInvitationIdSerde(),
                                         avro.createFriendsDrinksInvitationReplyRequestSerde(), avro.friendsDrinksPendingInvitationSerde())
                         );
 
         createFriendsDrinksInvitationReplyResponses.selectKey(((key, value) -> value.getRequestId()))
                 .mapValues(value -> FriendsDrinksEvent
                         .newBuilder()
-                        .setEventType(EventType.CREATE_FRIENDSDRINKS_INVITATION_REPLY_RESPONSE)
+                        .setEventType(EventType.FRIENDSDRINKS_INVITATION_REPLY_RESPONSE)
                         .setRequestId(value.getRequestId())
-                        .setCreateFriendsDrinksInvitationReplyResponse(value)
+                        .setFriendsDrinksInvitationReplyResponse(value)
                         .build())
                 .to(apiTopicName, Produced.with(Serdes.String(), avro.apiFriendsDrinksSerde()));
 

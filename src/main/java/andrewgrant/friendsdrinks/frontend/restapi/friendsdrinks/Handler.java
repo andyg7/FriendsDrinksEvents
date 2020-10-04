@@ -307,8 +307,6 @@ public class Handler {
         return responseBean;
     }
 
-
-
     @POST
     @Path("/users/{userId}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -343,8 +341,8 @@ public class Handler {
                 .setAdminUserId(requestBean.getAdminUserId())
                 .setFriendsDrinksId(friendsDrinksId)
                 .build();
-        CreateFriendsDrinksInvitationReplyRequest createFriendsDrinksInvitationReplyRequest =
-                CreateFriendsDrinksInvitationReplyRequest.newBuilder()
+        FriendsDrinksInvitationReplyRequest friendsDrinksInvitationReplyRequest =
+                FriendsDrinksInvitationReplyRequest.newBuilder()
                         .setFriendsDrinksId(friendsDrinksIdAvro)
                         .setUserId(
                                 andrewgrant.friendsdrinks.api.avro.UserId
@@ -357,9 +355,9 @@ public class Handler {
                         .build();
         friendsDrinksEvent = FriendsDrinksEvent
                 .newBuilder()
-                .setRequestId(createFriendsDrinksInvitationReplyRequest.getRequestId())
-                .setEventType(EventType.CREATE_FRIENDSDRINKS_INVITATION_REPLY_REQUEST)
-                .setCreateFriendsDrinksInvitationReplyRequest(createFriendsDrinksInvitationReplyRequest)
+                .setRequestId(friendsDrinksInvitationReplyRequest.getRequestId())
+                .setEventType(EventType.FRIENDSDRINKS_INVITATION_REPLY_REQUEST)
+                .setFriendsDrinksInvitationReplyRequest(friendsDrinksInvitationReplyRequest)
                 .build();
 
         ProducerRecord<String, FriendsDrinksEvent> record =
@@ -387,7 +385,7 @@ public class Handler {
         }
 
         PostUsersResponseBean responseBean = new PostUsersResponseBean();
-        Result result = backendResponse.getCreateFriendsDrinksInvitationReplyResponse().getResult();
+        Result result = backendResponse.getFriendsDrinksInvitationReplyResponse().getResult();
         responseBean.setResult(result.toString());
         return responseBean;
     }
@@ -404,8 +402,8 @@ public class Handler {
                 .setAdminUserId(userId)
                 .setFriendsDrinksId(friendsDrinksId)
                 .build();
-        CreateFriendsDrinksInvitationRequest createFriendsDrinksInvitationRequest =
-                CreateFriendsDrinksInvitationRequest
+        FriendsDrinksInvitationRequest friendsDrinksInvitationRequest =
+                FriendsDrinksInvitationRequest
                         .newBuilder()
                         .setRequestId(requestId)
                         .setFriendsDrinksId(friendsDrinksIdAvro)
@@ -417,9 +415,9 @@ public class Handler {
                         .build();
         friendsDrinksEvent = FriendsDrinksEvent
                 .newBuilder()
-                .setRequestId(createFriendsDrinksInvitationRequest.getRequestId())
-                .setEventType(EventType.CREATE_FRIENDSDRINKS_INVITATION_REQUEST)
-                .setCreateFriendsDrinksInvitationRequest(createFriendsDrinksInvitationRequest)
+                .setRequestId(friendsDrinksInvitationRequest.getRequestId())
+                .setEventType(EventType.FRIENDSDRINKS_INVITATION_REQUEST)
+                .setFriendsDrinksInvitationRequest(friendsDrinksInvitationRequest)
                 .build();
 
         ProducerRecord<String, FriendsDrinksEvent> record = new ProducerRecord<>(topicName, requestId, friendsDrinksEvent);
@@ -444,7 +442,7 @@ public class Handler {
         }
 
         PostUsersResponseBean responseBean = new PostUsersResponseBean();
-        Result result = backendResponse.getCreateFriendsDrinksInvitationResponse().getResult();
+        Result result = backendResponse.getFriendsDrinksInvitationResponse().getResult();
         responseBean.setResult(result.toString());
         return responseBean;
     }
