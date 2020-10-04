@@ -220,6 +220,7 @@ public class InvitationRequestService {
                     .newBuilder()
                     .setEventType(EventType.FRIENDSDRINKS_INVITATION_RESPONSE)
                     .setFriendsDrinksInvitationResponse(response)
+                    .setRequestId(response.getRequestId())
                     .build();
         }).to(apiTopicName, Produced.with(Serdes.String(), avro.apiFriendsDrinksSerde()));
     }
