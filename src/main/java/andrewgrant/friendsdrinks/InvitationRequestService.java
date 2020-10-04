@@ -84,21 +84,6 @@ public class InvitationRequestService {
                 .filter((key, value) -> value.getEventType().equals(EventType.FRIENDSDRINKS_INVITATION_REQUEST))
                 .mapValues(value -> value.getFriendsDrinksInvitationRequest());
 
-        KStream<UserId, FriendsDrinksInvitationRequest> friendsDrinksInvitationsKeyedByUserId =
-                friendsDrinksInvitations.selectKey(((key, value) -> UserId.newBuilder().setUserId(value.getUserId().getUserId()).build()));
-        friendsDrinksInvitationsKeyedByUserId.leftJoin(userState,
-                (request, state) -> {
-                    InvitationTuple invitationTuple = new InvitationTuple();
-                    if (state != null) {
-                        invitationTuple.failed = false;
-                    } else {
-                        invitationTuple.failed = true;
-                    }
-                    return invitationTuple;
-                },
-                Joined.with(userAvro.userIdSerde(), friendsDrinksAvro.friendsDrinksInvitationRequestSerde(),
-                        userAvro.userStateSerde()));
-
         KStream<String, InvitationTuple> resultsAfterValidatingFriendsDrinksState = friendsDrinksInvitations.selectKey((key, value) ->
                 andrewgrant.friendsdrinks.avro.FriendsDrinksId
                         .newBuilder()
@@ -139,9 +124,7 @@ public class InvitationRequestService {
                 friendsDrinksAvro, apiTopicName);
 
         KStream<String, InvitationTuple> resultsAfterValidatingUserState = branchedResultsAfterValidatingFriendsDrinksState[1]
-                .selectKey((key, value) -> {
-                    return UserId.newBuilder().setUserId(value.invitationRequest.getUserId().getUserId()).build();
-                })
+                .selectKey((key, value) -> UserId.newBuilder().setUserId(value.invitationRequest.getUserId().getUserId()).build())
                 .mapValues(value -> value.invitationRequest)
                 .leftJoin(userState,
                         (request, state) -> {
