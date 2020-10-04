@@ -39,7 +39,10 @@ public class Service {
                                         .newBuilder(aggValue)
                                         .setUserState(UserState
                                                 .newBuilder()
-                                                .setUserId(newValue.getUserSignedUp().getUserId()).build())
+                                                .setUserId(newValue.getUserSignedUp().getUserId())
+                                                .setFirstName(newValue.getUserSignedUp().getFirstName())
+                                                .setLastName(newValue.getUserSignedUp().getLastName())
+                                                .build())
                                         .build();
                                 return userStateAggregate;
                             } else if (newValue.getEventType().equals(EventType.CANCELLED_ACCOUNT)) {

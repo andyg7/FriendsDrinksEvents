@@ -3,6 +3,8 @@
   "type": "record",
   "name": "UserSignedUp",
   "fields": [
-      {"name": "userId", "type": "UserId"}
+      {"name": "userId", "type": "UserId"},
+      {"name": "firstName", "type": "string" },
+      {"name": "lastName", "type": "string" }
   ]
 }

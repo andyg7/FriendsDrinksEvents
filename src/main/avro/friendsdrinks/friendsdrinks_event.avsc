@@ -7,6 +7,7 @@
       {"name": "friendsDrinksId", "type": "FriendsDrinksId"},
       {"name": "friendsDrinksCreated", "type": ["null", "FriendsDrinksCreated"], "default": null},
       {"name": "friendsDrinksUpdated", "type": ["null", "FriendsDrinksUpdated"], "default": null},
-      {"name": "friendsDrinksUserAdded", "type": ["null", "FriendsDrinksUserAdded"], "default": null}
+      {"name": "friendsDrinksUserAdded", "type": ["null", "FriendsDrinksUserAdded"], "default": null},
+      {"name": "friendsDrinksUserRemoved", "type": ["null", "FriendsDrinksUserRemoved"], "default": null}
   ]
 }

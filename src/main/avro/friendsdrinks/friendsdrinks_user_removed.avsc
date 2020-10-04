@@ -1,0 +1,9 @@
+{
+  "namespace": "andrewgrant.friendsdrinks.avro",
+  "type": "record",
+  "name": "FriendsDrinksUserRemoved",
+  "fields": [
+      {"name": "friendsDrinksId", "type": "FriendsDrinksId"},
+      {"name": "userId", "type": "string"}
+  ]
+}
