@@ -24,27 +24,27 @@ public class RequestService {
 
     private static final Logger log = LoggerFactory.getLogger(WriterService.class);
 
-    public Topology buildTopology(Properties envProps, FriendsDrinksAvro friendsDrinksAvro) {
+    public Topology buildTopology(Properties envProps, AvroBuilder avroBuilder) {
         StreamsBuilder builder = new StreamsBuilder();
 
         final String apiTopicName = envProps.getProperty("friendsdrinks-api.topic.name");
         KStream<String, FriendsDrinksEvent> apiEvents = builder.stream(apiTopicName,
-                Consumed.with(Serdes.String(), friendsDrinksAvro.apiFriendsDrinksSerde()));
+                Consumed.with(Serdes.String(), avroBuilder.apiFriendsDrinksSerde()));
 
         KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable =
                 builder.table(envProps.getProperty("friendsdrinks-state.topic.name"),
-                        Consumed.with(friendsDrinksAvro.friendsDrinksIdSerde(), friendsDrinksAvro.friendsDrinksStateSerde()));
+                        Consumed.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksStateSerde()));
 
-        handleCreateRequests(apiEvents, friendsDrinksStateKTable, friendsDrinksAvro, apiTopicName);
-        handleDeleteRequests(apiEvents, friendsDrinksStateKTable, friendsDrinksAvro, apiTopicName);
-        handleUpdateRequests(apiEvents, friendsDrinksStateKTable, friendsDrinksAvro, apiTopicName);
+        handleCreateRequests(apiEvents, friendsDrinksStateKTable, avroBuilder, apiTopicName);
+        handleDeleteRequests(apiEvents, friendsDrinksStateKTable, avroBuilder, apiTopicName);
+        handleUpdateRequests(apiEvents, friendsDrinksStateKTable, avroBuilder, apiTopicName);
 
         return builder.build();
     }
 
     private void handleCreateRequests(KStream<String, FriendsDrinksEvent> apiEvents,
                                       KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable,
-                                      FriendsDrinksAvro avro,
+                                      AvroBuilder avro,
                                       String apiTopicName) {
 
         KTable<String, Long> friendsDrinksCount = friendsDrinksStateKTable.groupBy((key, value) ->
@@ -97,7 +97,7 @@ public class RequestService {
 
     private void handleDeleteRequests(KStream<String, FriendsDrinksEvent> apiEvents,
                                       KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable,
-                                      FriendsDrinksAvro avro,
+                                      AvroBuilder avro,
                                       String apiTopicName) {
 
         KStream<String, DeleteFriendsDrinksRequest> deleteRequests =
@@ -145,7 +145,7 @@ public class RequestService {
 
     private void handleUpdateRequests(KStream<String, FriendsDrinksEvent> apiEvents,
                                       KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable,
-                                      FriendsDrinksAvro avro,
+                                      AvroBuilder avro,
                                       String apiTopicName) {
 
         // Updates
@@ -200,7 +200,7 @@ public class RequestService {
         Properties envProps = load(args[0]);
         RequestService service = new RequestService();
         String registryUrl = envProps.getProperty("schema.registry.url");
-        Topology topology = service.buildTopology(envProps, new FriendsDrinksAvro(registryUrl));
+        Topology topology = service.buildTopology(envProps, new AvroBuilder(registryUrl));
         Properties streamProps = service.buildStreamProperties(envProps);
         KafkaStreams streams = new KafkaStreams(topology, streamProps);
 

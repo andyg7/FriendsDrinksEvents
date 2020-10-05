@@ -14,17 +14,17 @@ import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 /**
  * Contains (de)serialization logic for friends drinks avros.
  */
-public class FriendsDrinksAvro {
+public class AvroBuilder {
 
     private SchemaRegistryClient registryClient;
     private String registryUrl;
 
-    public FriendsDrinksAvro(String registryUrl) {
+    public AvroBuilder(String registryUrl) {
         this.registryUrl = registryUrl;
         registryClient = null;
     }
 
-    public FriendsDrinksAvro(String registryUrl, SchemaRegistryClient registryClient) {
+    public AvroBuilder(String registryUrl, SchemaRegistryClient registryClient) {
         this.registryUrl = registryUrl;
         this.registryClient = registryClient;
     }

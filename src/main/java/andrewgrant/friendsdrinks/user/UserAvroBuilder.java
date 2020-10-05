@@ -18,17 +18,17 @@ import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 /**
  * Holds avro related code.
  */
-public class UserAvro {
+public class UserAvroBuilder {
 
     private SchemaRegistryClient registryClient;
     private String registryUrl;
 
-    public UserAvro(String registryUrl) {
+    public UserAvroBuilder(String registryUrl) {
         this.registryUrl = registryUrl;
         registryClient = null;
     }
 
-    public UserAvro(String registryUrl, SchemaRegistryClient registryClient) {
+    public UserAvroBuilder(String registryUrl, SchemaRegistryClient registryClient) {
         this.registryUrl = registryUrl;
         this.registryClient = registryClient;
     }

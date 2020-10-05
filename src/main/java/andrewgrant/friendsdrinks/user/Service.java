@@ -23,7 +23,7 @@ public class Service {
 
     private static final Logger log = LoggerFactory.getLogger(Service.class);
 
-    public Topology buildTopology(Properties envProps, UserAvro avro) {
+    public Topology buildTopology(Properties envProps, UserAvroBuilder avro) {
         StreamsBuilder builder = new StreamsBuilder();
 
         final String apiTopicName = envProps.getProperty("user-event.topic.name");
@@ -75,8 +75,8 @@ public class Service {
         Properties envProps = load(args[0]);
         Service service = new Service();
         String schemaRegistryUrl = envProps.getProperty("schema.registry.url");
-        UserAvro userAvro = new UserAvro(schemaRegistryUrl);
-        Topology topology = service.buildTopology(envProps, userAvro);
+        UserAvroBuilder userAvroBuilder = new UserAvroBuilder(schemaRegistryUrl);
+        Topology topology = service.buildTopology(envProps, userAvroBuilder);
         Properties streamProps = service.buildStreamProperties(envProps);
         KafkaStreams kafkaStreams = new KafkaStreams(topology, streamProps);
 
