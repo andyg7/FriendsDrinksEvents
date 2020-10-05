@@ -321,7 +321,7 @@ public class Handler {
             throws ExecutionException, InterruptedException {
         if (requestBean.getEventType().equals(SIGNED_UP) ||
                 requestBean.getEventType().equals(CANCELLED_ACCOUNT)) {
-            return registerUserEvent(userId, requestBean.getEventType());
+            return registerUserEvent(userId, requestBean);
         }
 
         if (requestBean.getEventType().equals(INVITE_FRIEND)) {
@@ -452,12 +452,17 @@ public class Handler {
         return responseBean;
     }
 
-    public PostUsersResponseBean registerUserEvent(String userId, String eventType) throws ExecutionException, InterruptedException {
+    public PostUsersResponseBean registerUserEvent(String userId, PostUsersRequestBean requestBean) throws ExecutionException, InterruptedException {
+        String eventType = requestBean.getEventType();
         final String topicName = envProps.getProperty("user-event.topic.name");
         UserId userIdAvro = UserId.newBuilder().setUserId(userId).build();
         UserEvent userEvent;
         if (eventType.equals(SIGNED_UP)) {
-            UserSignedUp userSignedUp = UserSignedUp.newBuilder().setUserId(userIdAvro).build();
+            UserSignedUp userSignedUp = UserSignedUp.newBuilder()
+                    .setUserId(userIdAvro)
+                    .setFirstName(requestBean.getFirstName())
+                    .setLastName(requestBean.getLastName())
+                    .build();
             userEvent = UserEvent
                     .newBuilder()
                     .setEventType(andrewgrant.friendsdrinks.user.avro.EventType.SIGNED_UP)

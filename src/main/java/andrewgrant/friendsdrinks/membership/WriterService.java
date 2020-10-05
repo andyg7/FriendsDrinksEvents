@@ -35,10 +35,10 @@ public class WriterService {
 
         KStream<String, FriendsDrinksEvent> apiEvents = builder.stream(envProps.getProperty("friendsdrinks-api.topic.name"),
                 Consumed.with(Serdes.String(), apiAvroBuilder.friendsDrinksSerde()));
-        KStream<String, FriendsDrinksEvent> successApiResponses = streamOfResponses(apiEvents);
+        KStream<String, FriendsDrinksEvent> successfulApiResponses = streamOfSuccessfulResponses(apiEvents);
         KStream<String, FriendsDrinksEvent> apiRequests = streamOfRequests(apiEvents);
 
-        successApiResponses.join(apiRequests,
+        successfulApiResponses.join(apiRequests,
                 (l, r) -> new EventEmitter().emit(r),
                 JoinWindows.of(Duration.ofSeconds(30)),
                 StreamJoined.with(Serdes.String(),
@@ -51,7 +51,7 @@ public class WriterService {
         return builder.build();
     }
 
-    private KStream<String, FriendsDrinksEvent> streamOfResponses(KStream<String, FriendsDrinksEvent> apiEvents) {
+    private KStream<String, FriendsDrinksEvent> streamOfSuccessfulResponses(KStream<String, FriendsDrinksEvent> apiEvents) {
         return apiEvents.filter((friendsDrinksId, friendsDrinksEvent) ->
                 (friendsDrinksEvent.getEventType().equals(EventType.FRIENDSDRINKS_INVITATION_REPLY_RESPONSE) &&
                         friendsDrinksEvent.getFriendsDrinksInvitationReplyResponse().getResult().equals(Result.SUCCESS))
