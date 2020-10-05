@@ -28,14 +28,9 @@ public class WriterService {
 
     private static final Logger log = LoggerFactory.getLogger(WriterService.class);
 
-    public Topology buildTopology(Properties envProps, AvroBuilder avroBuilder,
-                                  andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder apiAvroBuilder,
-                                  andrewgrant.friendsdrinks.membership.AvroBuilder membershipAvroBuilder) {
-        StreamsBuilder builder = new StreamsBuilder();
-        KStream<String, FriendsDrinksEvent> apiEvents = builder.stream(envProps.getProperty("friendsdrinks-api.topic.name"),
-                Consumed.with(Serdes.String(), apiAvroBuilder.friendsDrinksSerde()));
-        KStream<String, FriendsDrinksEvent> successApiResponses = streamOfResponses(apiEvents);
-        KStream<String, FriendsDrinksEvent> apiRequests = streamOfRequests(apiEvents);
+    private void processFriendsDrinksMembershipEvents(StreamsBuilder builder, Properties envProps,
+                                                      andrewgrant.friendsdrinks.membership.AvroBuilder membershipAvroBuilder,
+                                                      AvroBuilder avroBuilder) {
 
         builder.stream(envProps.getProperty("friendsdrinks-membership-event.topic.name"),
                 Consumed.with(membershipAvroBuilder.friendsDrinksMembershipIdSerdes(), membershipAvroBuilder.friendsDrinksMembershipEventSerdes()))
@@ -78,6 +73,18 @@ public class WriterService {
                 .to(envProps.getProperty("friendsdrinks-event.topic.name"),
                         Produced.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksEventSerde()));
 
+    }
+
+    public Topology buildTopology(Properties envProps, AvroBuilder avroBuilder,
+                                  andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder apiAvroBuilder,
+                                  andrewgrant.friendsdrinks.membership.AvroBuilder membershipAvroBuilder) {
+        StreamsBuilder builder = new StreamsBuilder();
+        KStream<String, FriendsDrinksEvent> apiEvents = builder.stream(envProps.getProperty("friendsdrinks-api.topic.name"),
+                Consumed.with(Serdes.String(), apiAvroBuilder.friendsDrinksSerde()));
+        KStream<String, FriendsDrinksEvent> successApiResponses = streamOfResponses(apiEvents);
+        KStream<String, FriendsDrinksEvent> apiRequests = streamOfRequests(apiEvents);
+
+        processFriendsDrinksMembershipEvents(builder, envProps, membershipAvroBuilder, avroBuilder);
 
         successApiResponses.join(apiRequests,
                 (l, r) -> new EventEmitter().emit(r),
