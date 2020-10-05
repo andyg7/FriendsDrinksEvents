@@ -23,9 +23,9 @@ import andrewgrant.friendsdrinks.user.avro.UserState;
 /**
  * Processes invitation requests.
  */
-public class FriendsDrinksMembershipRequestService {
+public class MembershipRequestService {
 
-    private static final Logger log = LoggerFactory.getLogger(FriendsDrinksMembershipRequestService.class);
+    private static final Logger log = LoggerFactory.getLogger(MembershipRequestService.class);
 
     public Topology buildTopology(Properties envProps, FriendsDrinksAvro friendsDrinksAvro,
                                   UserAvro userAvro) {
@@ -385,7 +385,7 @@ public class FriendsDrinksMembershipRequestService {
 
     public static void main(String[] args) throws IOException {
         Properties envProps = load(args[0]);
-        FriendsDrinksMembershipRequestService service = new FriendsDrinksMembershipRequestService();
+        MembershipRequestService service = new MembershipRequestService();
         String registryUrl = envProps.getProperty("schema.registry.url");
         Topology topology = service.buildTopology(envProps, new FriendsDrinksAvro(registryUrl), new UserAvro(registryUrl));
         Properties streamProps = service.buildStreamProperties(envProps);
