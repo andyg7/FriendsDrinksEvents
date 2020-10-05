@@ -13,8 +13,6 @@ import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
 import andrewgrant.friendsdrinks.AvroBuilder;
-import andrewgrant.friendsdrinks.InvitationResult;
-import andrewgrant.friendsdrinks.RemoveUserResult;
 import andrewgrant.friendsdrinks.api.avro.*;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksId;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksState;

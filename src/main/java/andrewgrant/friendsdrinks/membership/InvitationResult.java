@@ -1,4 +1,4 @@
-package andrewgrant.friendsdrinks;
+package andrewgrant.friendsdrinks.membership;
 
 import andrewgrant.friendsdrinks.api.avro.FriendsDrinksInvitationRequest;
 
