@@ -41,15 +41,18 @@ public class Main {
         log.info("Starting Frontend API application");
 
         Properties envProps = load(args[0]);
-        AvroBuilder avroBuilder = new AvroBuilder(envProps.getProperty("schema.registry.url"));
-        UserAvroBuilder userAvroBuilder = new UserAvroBuilder(envProps.getProperty("schema.registry.url"));
+        String schemaRegistryUrl = envProps.getProperty("schema.registry.url");
+        AvroBuilder avroBuilder = new AvroBuilder(schemaRegistryUrl);
+        andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder apiAvroBuilder =
+                new andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder(schemaRegistryUrl);
+        UserAvroBuilder userAvroBuilder = new UserAvroBuilder(schemaRegistryUrl);
 
         String portStr = args[1];
         String streamsUri = "localhost:" + portStr;
-        StreamsService streamsService = new StreamsService(envProps, streamsUri, avroBuilder);
+        StreamsService streamsService = new StreamsService(envProps, streamsUri, avroBuilder, apiAvroBuilder);
         KafkaStreams streams = streamsService.getStreams();
         int port = Integer.parseInt(portStr);
-        Server jettyServer = Main.buildServer(envProps, streams, avroBuilder, userAvroBuilder, port);
+        Server jettyServer = Main.buildServer(envProps, streams, userAvroBuilder, apiAvroBuilder, port);
         // Attach shutdown handler to catch Control-C.
         Runtime.getRuntime().addShutdownHook(new Thread("shutdown-hook") {
             @Override
@@ -79,7 +82,7 @@ public class Main {
 
     private static KafkaProducer<String, FriendsDrinksEvent> buildFriendsDrinksProducer(
             Properties envProps,
-            AvroBuilder avro) {
+            andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder avro) {
         Properties producerProps = new Properties();
         producerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, envProps.getProperty("bootstrap.servers"));
         return new KafkaProducer<>(
@@ -100,8 +103,8 @@ public class Main {
     }
 
     private static Server buildServer(Properties envProps, KafkaStreams streams,
-                                      AvroBuilder avroBuilder,
                                       UserAvroBuilder userAvroBuilder,
+                                      andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder apiAvroBuilder,
                                       int port) {
         // Jetty server context handler.
         final ServletContextHandler context = new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
@@ -109,17 +112,17 @@ public class Main {
         final Server jettyServer = new Server(port);
         jettyServer.setHandler(context);
 
-        context.addServlet(buildFriendsDrinksHolder(streams, avroBuilder, userAvroBuilder, envProps), "/*");
+        context.addServlet(buildFriendsDrinksHolder(streams, userAvroBuilder, apiAvroBuilder, envProps), "/*");
 
         return jettyServer;
     }
 
     private static ServletHolder buildFriendsDrinksHolder(KafkaStreams streams,
-                                                          AvroBuilder avroBuilder,
                                                           UserAvroBuilder userAvroBuilder,
+                                                          andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder apiAvroBuilder,
                                                           Properties envProps) {
         KafkaProducer<String, FriendsDrinksEvent> friendsDrinksProducer =
-                buildFriendsDrinksProducer(envProps, avroBuilder);
+                buildFriendsDrinksProducer(envProps, apiAvroBuilder);
         KafkaProducer<UserId, UserEvent> userProducer =
                 buildUserDrinksProducer(envProps, userAvroBuilder);
         andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.Handler handler =

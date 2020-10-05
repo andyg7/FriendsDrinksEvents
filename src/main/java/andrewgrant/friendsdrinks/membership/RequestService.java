@@ -1,4 +1,4 @@
-package andrewgrant.friendsdrinks;
+package andrewgrant.friendsdrinks.membership;
 
 import static andrewgrant.friendsdrinks.env.Properties.load;
 
@@ -12,6 +12,9 @@ import java.io.IOException;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
+import andrewgrant.friendsdrinks.AvroBuilder;
+import andrewgrant.friendsdrinks.InvitationResult;
+import andrewgrant.friendsdrinks.RemoveUserResult;
 import andrewgrant.friendsdrinks.api.avro.*;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksId;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksState;
@@ -23,18 +26,19 @@ import andrewgrant.friendsdrinks.user.avro.UserState;
 /**
  * Processes invitation requests.
  */
-public class MembershipRequestService {
+public class RequestService {
 
-    private static final Logger log = LoggerFactory.getLogger(MembershipRequestService.class);
+    private static final Logger log = LoggerFactory.getLogger(RequestService.class);
 
-    public Topology buildTopology(Properties envProps, AvroBuilder avroBuilder,
-                                  UserAvroBuilder userAvroBuilder) {
+    public Topology buildTopology(Properties envProps, andrewgrant.friendsdrinks.AvroBuilder avroBuilder,
+                                  UserAvroBuilder userAvroBuilder,
+                                  andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder apiAvroBuilder) {
 
         StreamsBuilder builder = new StreamsBuilder();
 
         final String apiTopicName = envProps.getProperty("friendsdrinks-api.topic.name");
         KStream<String, FriendsDrinksEvent> apiEvents = builder.stream(apiTopicName,
-                Consumed.with(Serdes.String(), avroBuilder.apiFriendsDrinksSerde()));
+                Consumed.with(Serdes.String(), apiAvroBuilder.apiFriendsDrinksSerde()));
 
         KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable =
                 builder.table(envProps.getProperty("friendsdrinks-state.topic.name"),
@@ -47,11 +51,12 @@ public class MembershipRequestService {
         String pendingInvitationsTopicName = envProps.getProperty("friendsdrinks-pending-invitation.topic.name");
         KTable<FriendsDrinksPendingInvitationId, FriendsDrinksPendingInvitation> pendingFriendsDrinksInvitations = builder.table(
                 pendingInvitationsTopicName,
-                Consumed.with(avroBuilder.friendsDrinksPendingInvitationIdSerde(), avroBuilder.friendsDrinksPendingInvitationSerde()));
+                Consumed.with(apiAvroBuilder.friendsDrinksPendingInvitationIdSerde(), apiAvroBuilder.friendsDrinksPendingInvitationSerde()));
         handleInvitations(apiEvents, friendsDrinksStateKTable, pendingFriendsDrinksInvitations, userState, avroBuilder,
-                userAvroBuilder, apiTopicName, pendingInvitationsTopicName);
+                userAvroBuilder, apiAvroBuilder, apiTopicName, pendingInvitationsTopicName);
 
-        handleUserRemovals(apiEvents, friendsDrinksStateKTable, userState, avroBuilder, userAvroBuilder, apiTopicName);
+        handleUserRemovals(apiEvents, friendsDrinksStateKTable, userState, avroBuilder, userAvroBuilder, apiAvroBuilder,
+                apiTopicName);
 
         return builder.build();
     }
@@ -59,7 +64,8 @@ public class MembershipRequestService {
     private void handleUserRemovals(KStream<String, FriendsDrinksEvent> apiEvents,
                                     KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable,
                                     KTable<UserId, UserState> userState,
-                                    AvroBuilder avroBuilder, UserAvroBuilder userAvroBuilder, String apiTopicName) {
+                                    andrewgrant.friendsdrinks.AvroBuilder avroBuilder, UserAvroBuilder userAvroBuilder,
+                                    andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder apiAvroBuilder, String apiTopicName) {
 
         // FriendsDrinks invitation requests
         KStream<String, FriendsDrinksRemoveUserRequest> friendsDrinksRemoveUserRequest = apiEvents
@@ -80,7 +86,7 @@ public class MembershipRequestService {
                             return removeUserResult;
                         },
                         Joined.with(userAvroBuilder.userIdSerde(),
-                                avroBuilder.friendsDrinksRemoveUserRequestSerde(),
+                                apiAvroBuilder.friendsDrinksRemoveUserRequestSerde(),
                                 userAvroBuilder.userStateSerde()))
                 .selectKey((key, value) -> value.friendsDrinksRemoveUserRequest.getRequestId());
 
@@ -91,7 +97,7 @@ public class MembershipRequestService {
                 );
 
         emitFailedRemoveUserRequests(branchedResultsAfterValidatingUserState[0]
-                .mapValues(value -> value.friendsDrinksRemoveUserRequest), apiTopicName, avroBuilder);
+                .mapValues(value -> value.friendsDrinksRemoveUserRequest), apiTopicName, apiAvroBuilder);
 
         KStream<String, RemoveUserResult> resultsAfterValidatingFriendsDrinksState =
                 branchedResultsAfterValidatingUserState[1].selectKey((key, value) ->
@@ -120,7 +126,7 @@ public class MembershipRequestService {
                                     }
                                     return removeUserResult;
                                 },
-                                Joined.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksRemoveUserRequestSerde(),
+                                Joined.with(avroBuilder.friendsDrinksIdSerde(), apiAvroBuilder.friendsDrinksRemoveUserRequestSerde(),
                                         avroBuilder.friendsDrinksStateSerde()))
                         .selectKey((key, value) -> value.friendsDrinksRemoveUserRequest.getRequestId());
 
@@ -131,7 +137,7 @@ public class MembershipRequestService {
                 );
 
         emitFailedRemoveUserRequests(branchedResultsAfterValidatingFriendsDrinksState[0]
-                .mapValues(value -> value.friendsDrinksRemoveUserRequest), apiTopicName, avroBuilder);
+                .mapValues(value -> value.friendsDrinksRemoveUserRequest), apiTopicName, apiAvroBuilder);
 
         branchedResultsAfterValidatingFriendsDrinksState[1].mapValues(value -> {
             FriendsDrinksRemoveUserResponse removeUserResponse = FriendsDrinksRemoveUserResponse
@@ -144,11 +150,12 @@ public class MembershipRequestService {
                     .setEventType(EventType.FRIENDSDRINKS_REMOVE_USER_RESPONSE)
                     .setFriendsDrinksRemoveUserResponse(removeUserResponse)
                     .build();
-        }).to(apiTopicName, Produced.with(Serdes.String(), avroBuilder.apiFriendsDrinksSerde()));
+        }).to(apiTopicName, Produced.with(Serdes.String(), apiAvroBuilder.apiFriendsDrinksSerde()));
     }
 
     private void emitFailedRemoveUserRequests(KStream<String, FriendsDrinksRemoveUserRequest> requests,
-                                              String apiTopicName, AvroBuilder avroBuilder) {
+                                              String apiTopicName,
+                                              andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder apiAvroBuilder) {
         requests.mapValues(value -> {
             FriendsDrinksRemoveUserResponse removeUserResponse = FriendsDrinksRemoveUserResponse
                     .newBuilder()
@@ -160,7 +167,7 @@ public class MembershipRequestService {
                     .setEventType(EventType.FRIENDSDRINKS_REMOVE_USER_RESPONSE)
                     .setFriendsDrinksRemoveUserResponse(removeUserResponse)
                     .build();
-        }).to(apiTopicName, Produced.with(Serdes.String(), avroBuilder.apiFriendsDrinksSerde()));
+        }).to(apiTopicName, Produced.with(Serdes.String(), apiAvroBuilder.apiFriendsDrinksSerde()));
 
     }
 
@@ -168,19 +175,21 @@ public class MembershipRequestService {
                                    KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable,
                                    KTable<FriendsDrinksPendingInvitationId, FriendsDrinksPendingInvitation> pendingFriendsDrinksInvitations,
                                    KTable<andrewgrant.friendsdrinks.user.avro.UserId, UserState> userState,
-                                   AvroBuilder avroBuilder, UserAvroBuilder userAvroBuilder, String apiTopicName,
+                                   andrewgrant.friendsdrinks.AvroBuilder avroBuilder, UserAvroBuilder userAvroBuilder,
+                                   andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder apiAvroBuilder, String apiTopicName,
                                    String pendingInvitationsTopicName) {
 
-        handleInvitationRequests(apiEvents, friendsDrinksStateKTable, userState, avroBuilder, userAvroBuilder, apiTopicName,
+        handleInvitationRequests(apiEvents, friendsDrinksStateKTable, userState, avroBuilder, apiAvroBuilder, userAvroBuilder, apiTopicName,
                 pendingInvitationsTopicName);
-        handleInvitationReplies(apiEvents, pendingFriendsDrinksInvitations, avroBuilder, apiTopicName,
+        handleInvitationReplies(apiEvents, pendingFriendsDrinksInvitations, apiAvroBuilder, apiTopicName,
                 pendingInvitationsTopicName);
 
     }
 
     private void handleInvitationRequests(KStream<String, FriendsDrinksEvent> apiEvents,
                                           KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable,
-                                          KTable<UserId, UserState> userState, AvroBuilder avroBuilder,
+                                          KTable<UserId, UserState> userState, andrewgrant.friendsdrinks.AvroBuilder avroBuilder,
+                                          andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder apiAvroBuilder,
                                           UserAvroBuilder userAvroBuilder, String apiTopicName, String pendingInvitationsTopicName) {
 
         // FriendsDrinks invitation requests
@@ -214,7 +223,7 @@ public class MembershipRequestService {
                             return invitationResult;
                         },
                         Joined.with(avroBuilder.friendsDrinksIdSerde(),
-                                avroBuilder.friendsDrinksInvitationRequestSerde(),
+                                apiAvroBuilder.friendsDrinksInvitationRequestSerde(),
                                 avroBuilder.friendsDrinksStateSerde())
                 )
                 .selectKey((key, value) -> value.invitationRequest.getRequestId());
@@ -226,7 +235,7 @@ public class MembershipRequestService {
                 );
 
         emitFailedInvitationRequests(branchedResultsAfterValidatingFriendsDrinksState[0].mapValues(value -> value.invitationRequest),
-                avroBuilder, apiTopicName);
+                apiAvroBuilder, apiTopicName);
 
         KStream<String, InvitationResult> resultsAfterValidatingUserState = branchedResultsAfterValidatingFriendsDrinksState[1]
                 .selectKey((key, value) -> UserId.newBuilder().setUserId(value.invitationRequest.getUserId().getUserId()).build())
@@ -242,7 +251,7 @@ public class MembershipRequestService {
                             }
                             return invitationResult;
                         },
-                        Joined.with(userAvroBuilder.userIdSerde(), avroBuilder.friendsDrinksInvitationRequestSerde(),
+                        Joined.with(userAvroBuilder.userIdSerde(), apiAvroBuilder.friendsDrinksInvitationRequestSerde(),
                                 userAvroBuilder.userStateSerde()))
                 .selectKey((key, value) -> value.invitationRequest.getRequestId());
 
@@ -253,7 +262,7 @@ public class MembershipRequestService {
                 );
 
         emitFailedInvitationRequests(branchedResultsAfterValidatingUserState[0].mapValues(value -> value.invitationRequest),
-                avroBuilder, apiTopicName);
+                apiAvroBuilder, apiTopicName);
 
         KStream<String, FriendsDrinksInvitationRequest> acceptedInvitationRequests = branchedResultsAfterValidatingUserState[1]
                 .mapValues(value -> value.invitationRequest);
@@ -286,13 +295,13 @@ public class MembershipRequestService {
                             }
                         },
                         Joined.with(avroBuilder.friendsDrinksIdSerde(),
-                                avroBuilder.friendsDrinksInvitationRequestSerde(),
+                                apiAvroBuilder.friendsDrinksInvitationRequestSerde(),
                                 avroBuilder.friendsDrinksStateSerde())
                 )
                 .selectKey((key, value) -> value.getInvitationId())
                 .to(pendingInvitationsTopicName,
-                        Produced.with(avroBuilder.friendsDrinksPendingInvitationIdSerde(),
-                                avroBuilder.friendsDrinksPendingInvitationSerde()));
+                        Produced.with(apiAvroBuilder.friendsDrinksPendingInvitationIdSerde(),
+                                apiAvroBuilder.friendsDrinksPendingInvitationSerde()));
 
         acceptedInvitationRequests.map((key, value) -> {
             FriendsDrinksInvitationResponse response = FriendsDrinksInvitationResponse
@@ -309,11 +318,12 @@ public class MembershipRequestService {
             return new KeyValue<>(
                     friendsDrinksEvent.getFriendsDrinksInvitationResponse().getRequestId(),
                     friendsDrinksEvent);
-        }).to(apiTopicName, Produced.with(Serdes.String(), avroBuilder.apiFriendsDrinksSerde()));
+        }).to(apiTopicName, Produced.with(Serdes.String(), apiAvroBuilder.apiFriendsDrinksSerde()));
     }
 
     private void emitFailedInvitationRequests(KStream<String, FriendsDrinksInvitationRequest> stream,
-                                              AvroBuilder avro, String apiTopicName) {
+                                              andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder apiAvroBuilder,
+                                              String apiTopicName) {
         stream.mapValues(value -> {
             FriendsDrinksInvitationResponse response = FriendsDrinksInvitationResponse
                     .newBuilder()
@@ -326,12 +336,13 @@ public class MembershipRequestService {
                     .setFriendsDrinksInvitationResponse(response)
                     .setRequestId(response.getRequestId())
                     .build();
-        }).to(apiTopicName, Produced.with(Serdes.String(), avro.apiFriendsDrinksSerde()));
+        }).to(apiTopicName, Produced.with(Serdes.String(), apiAvroBuilder.apiFriendsDrinksSerde()));
     }
 
     private void handleInvitationReplies(KStream<String, FriendsDrinksEvent> apiEvents,
                                          KTable<FriendsDrinksPendingInvitationId, FriendsDrinksPendingInvitation> pendingFriendsDrinksInvitations,
-                                         AvroBuilder avro, String apiTopicName, String pendingInvitationsTopicName) {
+                                         andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder apiAvroBuilder,
+                                         String apiTopicName, String pendingInvitationsTopicName) {
 
         // FriendsDrinks replies
         KStream<String, FriendsDrinksInvitationReplyRequest> createFriendsDrinksInvitationReplyRequests = apiEvents
@@ -360,8 +371,9 @@ public class MembershipRequestService {
                                                 .build();
                                     }
                                 },
-                                Joined.with(avro.friendsDrinksPendingInvitationIdSerde(),
-                                        avro.friendsDrinksInvitationReplyRequestSerde(), avro.friendsDrinksPendingInvitationSerde())
+                                Joined.with(apiAvroBuilder.friendsDrinksPendingInvitationIdSerde(),
+                                        apiAvroBuilder.friendsDrinksInvitationReplyRequestSerde(),
+                                        apiAvroBuilder.friendsDrinksPendingInvitationSerde())
                         );
 
         friendsDrinksInvitationReplyResponses.selectKey(((key, value) -> value.getRequestId()))
@@ -371,12 +383,12 @@ public class MembershipRequestService {
                         .setRequestId(value.getRequestId())
                         .setFriendsDrinksInvitationReplyResponse(value)
                         .build())
-                .to(apiTopicName, Produced.with(Serdes.String(), avro.apiFriendsDrinksSerde()));
+                .to(apiTopicName, Produced.with(Serdes.String(), apiAvroBuilder.apiFriendsDrinksSerde()));
 
         friendsDrinksInvitationReplyResponses.filter((key, value) -> value.getResult().equals(Result.SUCCESS))
                 .mapValues(value -> (FriendsDrinksPendingInvitation) null)
                 .to(pendingInvitationsTopicName,
-                        Produced.with(avro.friendsDrinksPendingInvitationIdSerde(), avro.friendsDrinksPendingInvitationSerde()));
+                        Produced.with(apiAvroBuilder.friendsDrinksPendingInvitationIdSerde(), apiAvroBuilder.friendsDrinksPendingInvitationSerde()));
     }
 
     public Properties buildStreamProperties(Properties envProps) {
@@ -388,9 +400,10 @@ public class MembershipRequestService {
 
     public static void main(String[] args) throws IOException {
         Properties envProps = load(args[0]);
-        MembershipRequestService service = new MembershipRequestService();
+        RequestService service = new RequestService();
         String registryUrl = envProps.getProperty("schema.registry.url");
-        Topology topology = service.buildTopology(envProps, new AvroBuilder(registryUrl), new UserAvroBuilder(registryUrl));
+        Topology topology = service.buildTopology(envProps, new AvroBuilder(registryUrl), new UserAvroBuilder(registryUrl),
+                new andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder(registryUrl));
         Properties streamProps = service.buildStreamProperties(envProps);
         KafkaStreams streams = new KafkaStreams(topology, streamProps);
 

@@ -24,20 +24,21 @@ public class RequestService {
 
     private static final Logger log = LoggerFactory.getLogger(WriterService.class);
 
-    public Topology buildTopology(Properties envProps, AvroBuilder avroBuilder) {
+    public Topology buildTopology(Properties envProps, AvroBuilder avroBuilder,
+                                  andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder apiAvroBuilder) {
         StreamsBuilder builder = new StreamsBuilder();
 
         final String apiTopicName = envProps.getProperty("friendsdrinks-api.topic.name");
         KStream<String, FriendsDrinksEvent> apiEvents = builder.stream(apiTopicName,
-                Consumed.with(Serdes.String(), avroBuilder.apiFriendsDrinksSerde()));
+                Consumed.with(Serdes.String(), apiAvroBuilder.apiFriendsDrinksSerde()));
 
         KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable =
                 builder.table(envProps.getProperty("friendsdrinks-state.topic.name"),
                         Consumed.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksStateSerde()));
 
-        handleCreateRequests(apiEvents, friendsDrinksStateKTable, avroBuilder, apiTopicName);
-        handleDeleteRequests(apiEvents, friendsDrinksStateKTable, avroBuilder, apiTopicName);
-        handleUpdateRequests(apiEvents, friendsDrinksStateKTable, avroBuilder, apiTopicName);
+        handleCreateRequests(apiEvents, friendsDrinksStateKTable, avroBuilder, apiAvroBuilder, apiTopicName);
+        handleDeleteRequests(apiEvents, friendsDrinksStateKTable, avroBuilder, apiAvroBuilder, apiTopicName);
+        handleUpdateRequests(apiEvents, friendsDrinksStateKTable, avroBuilder, apiAvroBuilder, apiTopicName);
 
         return builder.build();
     }
@@ -45,6 +46,7 @@ public class RequestService {
     private void handleCreateRequests(KStream<String, FriendsDrinksEvent> apiEvents,
                                       KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable,
                                       AvroBuilder avro,
+                                      andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder apiAvroBuilder,
                                       String apiTopicName) {
 
         KTable<String, Long> friendsDrinksCount = friendsDrinksStateKTable.groupBy((key, value) ->
@@ -88,16 +90,17 @@ public class RequestService {
                             .build();
                     return event;
                 },
-                Joined.with(Serdes.String(), avro.createFriendsDrinksRequestSerde(), Serdes.Long()))
+                Joined.with(Serdes.String(), apiAvroBuilder.createFriendsDrinksRequestSerde(), Serdes.Long()))
                 .selectKey(((key, value) -> value.getCreateFriendsDrinksResponse().getRequestId()));
 
         createResponses.to(apiTopicName,
-                Produced.with(Serdes.String(), avro.apiFriendsDrinksSerde()));
+                Produced.with(Serdes.String(), apiAvroBuilder.apiFriendsDrinksSerde()));
     }
 
     private void handleDeleteRequests(KStream<String, FriendsDrinksEvent> apiEvents,
                                       KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable,
                                       AvroBuilder avro,
+                                      andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder apiAvroBuilder,
                                       String apiTopicName) {
 
         KStream<String, DeleteFriendsDrinksRequest> deleteRequests =
@@ -138,14 +141,15 @@ public class RequestService {
                                 .build();
                     }
                 },
-                Joined.with(avro.friendsDrinksIdSerde(), avro.deleteFriendsDrinksRequestSerde(), avro.friendsDrinksStateSerde()))
+                Joined.with(avro.friendsDrinksIdSerde(), apiAvroBuilder.deleteFriendsDrinksRequestSerde(), avro.friendsDrinksStateSerde()))
                 .selectKey((key, value) -> value.getRequestId())
-                .to(apiTopicName, Produced.with(Serdes.String(), avro.apiFriendsDrinksSerde()));
+                .to(apiTopicName, Produced.with(Serdes.String(), apiAvroBuilder.apiFriendsDrinksSerde()));
     }
 
     private void handleUpdateRequests(KStream<String, FriendsDrinksEvent> apiEvents,
                                       KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable,
                                       AvroBuilder avro,
+                                      andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder apiAvroBuilder,
                                       String apiTopicName) {
 
         // Updates
@@ -181,9 +185,9 @@ public class RequestService {
                                 .build();
                     }
                 },
-                Joined.with(avro.friendsDrinksIdSerde(), avro.updateFriendsDrinksRequestSerde(), avro.friendsDrinksStateSerde()))
+                Joined.with(avro.friendsDrinksIdSerde(), apiAvroBuilder.updateFriendsDrinksRequestSerde(), avro.friendsDrinksStateSerde()))
                 .selectKey(((key, value) -> value.getUpdateFriendsDrinksResponse().getRequestId()));
-        updateResponses.to(apiTopicName, Produced.with(Serdes.String(), avro.apiFriendsDrinksSerde()));
+        updateResponses.to(apiTopicName, Produced.with(Serdes.String(), apiAvroBuilder.apiFriendsDrinksSerde()));
 
     }
 
@@ -200,7 +204,8 @@ public class RequestService {
         Properties envProps = load(args[0]);
         RequestService service = new RequestService();
         String registryUrl = envProps.getProperty("schema.registry.url");
-        Topology topology = service.buildTopology(envProps, new AvroBuilder(registryUrl));
+        Topology topology = service.buildTopology(envProps, new AvroBuilder(registryUrl),
+                new andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder(registryUrl));
         Properties streamProps = service.buildStreamProperties(envProps);
         KafkaStreams streams = new KafkaStreams(topology, streamProps);
 

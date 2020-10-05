@@ -11,10 +11,8 @@ import andrewgrant.friendsdrinks.avro.*;
  */
 public class StateAggregator {
 
-    public FriendsDrinksStateAggregate handleNewEvent(
-            FriendsDrinksId aggKey,
-            FriendsDrinksEvent newValue,
-            FriendsDrinksStateAggregate aggValue) {
+    public FriendsDrinksStateAggregate handleNewEvent(FriendsDrinksId aggKey, FriendsDrinksEvent newValue,
+                                                      FriendsDrinksStateAggregate aggValue) {
 
             if (newValue.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.CREATED)) {
                 FriendsDrinksCreated createdFriendsDrinks = newValue.getFriendsDrinksCreated();

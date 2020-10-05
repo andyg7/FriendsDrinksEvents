@@ -1,0 +1,9 @@
+{
+  "namespace": "andrewgrant.friendsdrinks.membership.avro",
+  "type": "record",
+  "name": "FriendsDrinksId",
+  "fields": [
+    {"name": "adminUserId", "type": "string"},
+    {"name": "uuid", "type": "string"}
+  ]
+}
