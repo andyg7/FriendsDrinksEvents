@@ -33,7 +33,7 @@ public class WriterService {
                                   andrewgrant.friendsdrinks.membership.AvroBuilder membershipAvroBuilder) {
         StreamsBuilder builder = new StreamsBuilder();
         KStream<String, FriendsDrinksEvent> apiEvents = builder.stream(envProps.getProperty("friendsdrinks-api.topic.name"),
-                Consumed.with(Serdes.String(), apiAvroBuilder.apiFriendsDrinksSerde()));
+                Consumed.with(Serdes.String(), apiAvroBuilder.friendsDrinksSerde()));
         KStream<String, FriendsDrinksEvent> successApiResponses = streamOfResponses(apiEvents);
         KStream<String, FriendsDrinksEvent> apiRequests = streamOfRequests(apiEvents);
 
@@ -83,8 +83,8 @@ public class WriterService {
                 (l, r) -> new EventEmitter().emit(r),
                 JoinWindows.of(Duration.ofSeconds(30)),
                 StreamJoined.with(Serdes.String(),
-                        apiAvroBuilder.apiFriendsDrinksSerde(),
-                        apiAvroBuilder.apiFriendsDrinksSerde()))
+                        apiAvroBuilder.friendsDrinksSerde(),
+                        apiAvroBuilder.friendsDrinksSerde()))
                 .selectKey((k, v) -> v.getFriendsDrinksId())
                 .to(envProps.getProperty("friendsdrinks-event.topic.name"),
                         Produced.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksEventSerde()));

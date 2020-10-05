@@ -38,7 +38,7 @@ public class RequestService {
 
         final String apiTopicName = envProps.getProperty("friendsdrinks-api.topic.name");
         KStream<String, FriendsDrinksEvent> apiEvents = builder.stream(apiTopicName,
-                Consumed.with(Serdes.String(), apiAvroBuilder.apiFriendsDrinksSerde()));
+                Consumed.with(Serdes.String(), apiAvroBuilder.friendsDrinksSerde()));
 
         KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable =
                 builder.table(envProps.getProperty("friendsdrinks-state.topic.name"),
@@ -150,7 +150,7 @@ public class RequestService {
                     .setEventType(EventType.FRIENDSDRINKS_REMOVE_USER_RESPONSE)
                     .setFriendsDrinksRemoveUserResponse(removeUserResponse)
                     .build();
-        }).to(apiTopicName, Produced.with(Serdes.String(), apiAvroBuilder.apiFriendsDrinksSerde()));
+        }).to(apiTopicName, Produced.with(Serdes.String(), apiAvroBuilder.friendsDrinksSerde()));
     }
 
     private void emitFailedRemoveUserRequests(KStream<String, FriendsDrinksRemoveUserRequest> requests,
@@ -167,7 +167,7 @@ public class RequestService {
                     .setEventType(EventType.FRIENDSDRINKS_REMOVE_USER_RESPONSE)
                     .setFriendsDrinksRemoveUserResponse(removeUserResponse)
                     .build();
-        }).to(apiTopicName, Produced.with(Serdes.String(), apiAvroBuilder.apiFriendsDrinksSerde()));
+        }).to(apiTopicName, Produced.with(Serdes.String(), apiAvroBuilder.friendsDrinksSerde()));
 
     }
 
@@ -318,7 +318,7 @@ public class RequestService {
             return new KeyValue<>(
                     friendsDrinksEvent.getFriendsDrinksInvitationResponse().getRequestId(),
                     friendsDrinksEvent);
-        }).to(apiTopicName, Produced.with(Serdes.String(), apiAvroBuilder.apiFriendsDrinksSerde()));
+        }).to(apiTopicName, Produced.with(Serdes.String(), apiAvroBuilder.friendsDrinksSerde()));
     }
 
     private void emitFailedInvitationRequests(KStream<String, FriendsDrinksInvitationRequest> stream,
@@ -336,7 +336,7 @@ public class RequestService {
                     .setFriendsDrinksInvitationResponse(response)
                     .setRequestId(response.getRequestId())
                     .build();
-        }).to(apiTopicName, Produced.with(Serdes.String(), apiAvroBuilder.apiFriendsDrinksSerde()));
+        }).to(apiTopicName, Produced.with(Serdes.String(), apiAvroBuilder.friendsDrinksSerde()));
     }
 
     private void handleInvitationReplies(KStream<String, FriendsDrinksEvent> apiEvents,
@@ -383,7 +383,7 @@ public class RequestService {
                         .setRequestId(value.getRequestId())
                         .setFriendsDrinksInvitationReplyResponse(value)
                         .build())
-                .to(apiTopicName, Produced.with(Serdes.String(), apiAvroBuilder.apiFriendsDrinksSerde()));
+                .to(apiTopicName, Produced.with(Serdes.String(), apiAvroBuilder.friendsDrinksSerde()));
 
         friendsDrinksInvitationReplyResponses.filter((key, value) -> value.getResult().equals(Result.SUCCESS))
                 .mapValues(value -> (FriendsDrinksPendingInvitation) null)

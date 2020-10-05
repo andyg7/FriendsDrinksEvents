@@ -30,7 +30,7 @@ public class RequestService {
 
         final String apiTopicName = envProps.getProperty("friendsdrinks-api.topic.name");
         KStream<String, FriendsDrinksEvent> apiEvents = builder.stream(apiTopicName,
-                Consumed.with(Serdes.String(), apiAvroBuilder.apiFriendsDrinksSerde()));
+                Consumed.with(Serdes.String(), apiAvroBuilder.friendsDrinksSerde()));
 
         KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable =
                 builder.table(envProps.getProperty("friendsdrinks-state.topic.name"),
@@ -94,7 +94,7 @@ public class RequestService {
                 .selectKey(((key, value) -> value.getCreateFriendsDrinksResponse().getRequestId()));
 
         createResponses.to(apiTopicName,
-                Produced.with(Serdes.String(), apiAvroBuilder.apiFriendsDrinksSerde()));
+                Produced.with(Serdes.String(), apiAvroBuilder.friendsDrinksSerde()));
     }
 
     private void handleDeleteRequests(KStream<String, FriendsDrinksEvent> apiEvents,
@@ -143,7 +143,7 @@ public class RequestService {
                 },
                 Joined.with(avro.friendsDrinksIdSerde(), apiAvroBuilder.deleteFriendsDrinksRequestSerde(), avro.friendsDrinksStateSerde()))
                 .selectKey((key, value) -> value.getRequestId())
-                .to(apiTopicName, Produced.with(Serdes.String(), apiAvroBuilder.apiFriendsDrinksSerde()));
+                .to(apiTopicName, Produced.with(Serdes.String(), apiAvroBuilder.friendsDrinksSerde()));
     }
 
     private void handleUpdateRequests(KStream<String, FriendsDrinksEvent> apiEvents,
@@ -187,7 +187,7 @@ public class RequestService {
                 },
                 Joined.with(avro.friendsDrinksIdSerde(), apiAvroBuilder.updateFriendsDrinksRequestSerde(), avro.friendsDrinksStateSerde()))
                 .selectKey(((key, value) -> value.getUpdateFriendsDrinksResponse().getRequestId()));
-        updateResponses.to(apiTopicName, Produced.with(Serdes.String(), apiAvroBuilder.apiFriendsDrinksSerde()));
+        updateResponses.to(apiTopicName, Produced.with(Serdes.String(), apiAvroBuilder.friendsDrinksSerde()));
 
     }
 

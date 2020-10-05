@@ -46,7 +46,7 @@ public class StreamsService {
 
         KStream<String, andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent> apiEvents =
                 builder.stream(apiTopicName,
-                        Consumed.with(Serdes.String(), apiAvroBuilder.apiFriendsDrinksSerde()));
+                        Consumed.with(Serdes.String(), apiAvroBuilder.friendsDrinksSerde()));
 
         final String frontendPrivateTopicName = envProps.getProperty("frontend-private.topic.name");
         buildResponsesStore(builder, apiEvents, apiAvroBuilder, frontendPrivateTopicName);
@@ -89,27 +89,27 @@ public class StreamsService {
                     eventType.equals(EventType.FRIENDSDRINKS_INVITATION_RESPONSE) ||
                     eventType.equals(EventType.FRIENDSDRINKS_INVITATION_REPLY_RESPONSE) ||
                     eventType.equals(EventType.DELETE_FRIENDSDRINKS_RESPONSE);
-        })).to(responsesTopicName, Produced.with(Serdes.String(), apiAvroBuilder.apiFriendsDrinksSerde()));
+        })).to(responsesTopicName, Produced.with(Serdes.String(), apiAvroBuilder.friendsDrinksSerde()));
 
         KStream<String, FriendsDrinksEvent> responsesStream =
-                builder.stream(responsesTopicName, Consumed.with(Serdes.String(), apiAvroBuilder.apiFriendsDrinksSerde()));
+                builder.stream(responsesTopicName, Consumed.with(Serdes.String(), apiAvroBuilder.friendsDrinksSerde()));
 
         // KTable for getting response results.
         responsesStream.toTable(Materialized.<String, FriendsDrinksEvent, KeyValueStore<Bytes, byte[]>>
                 as(RESPONSES_STORE)
                 .withKeySerde(Serdes.String())
-                .withValueSerde(apiAvroBuilder.apiFriendsDrinksSerde()));
+                .withValueSerde(apiAvroBuilder.friendsDrinksSerde()));
 
         // Logic to tombstone responses in responsesTopicName so the KTable doesn't grow indefinitely.
         StoreBuilder storeBuilder = Stores.keyValueStoreBuilder(
                 Stores.persistentKeyValueStore(RequestsPurger.RESPONSES_PENDING_DELETION),
                 Serdes.String(),
-                apiAvroBuilder.apiFriendsDrinksSerde());
+                apiAvroBuilder.friendsDrinksSerde());
         builder.addStateStore(storeBuilder);
         responsesStream.transform(() -> new RequestsPurger(), RequestsPurger.RESPONSES_PENDING_DELETION)
                 .filter((key, value) -> value != null && !value.isEmpty()).flatMapValues(value -> value)
                 .selectKey((key, value) -> value).mapValues(value -> (FriendsDrinksEvent) null)
-                .to(responsesTopicName, Produced.with(Serdes.String(), apiAvroBuilder.apiFriendsDrinksSerde()));
+                .to(responsesTopicName, Produced.with(Serdes.String(), apiAvroBuilder.friendsDrinksSerde()));
     }
 
     private static Properties buildStreamsProperties(Properties envProps, String uri) {
