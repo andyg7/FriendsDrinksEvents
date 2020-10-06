@@ -36,7 +36,8 @@ import andrewgrant.friendsdrinks.user.avro.UserSignedUp;
 @Path("")
 public class Handler {
 
-    public static final String INVITE_FRIEND = "INVITE_FRIEND";
+    public static final String ADD_USER = "ADD_USER";
+    public static final String REMOVE_USER = "REMOVE_USER";
     public static final String REPLY_TO_INVITATION = "REPLY_TO_INVITATION";
     public static final String SIGNED_UP = "SIGNED_UP";
     public static final String CANCELLED_ACCOUNT = "CANCELLED_ACCOUNT";
@@ -324,10 +325,12 @@ public class Handler {
             return registerUserEvent(userId, requestBean);
         }
 
-        if (requestBean.getEventType().equals(INVITE_FRIEND)) {
-            return handleInviteFriend(userId, requestBean);
+        if (requestBean.getEventType().equals(ADD_USER)) {
+            return handleAddUser(userId, requestBean);
         } else if (requestBean.getEventType().equals(REPLY_TO_INVITATION)) {
             return handleReplyToInvitation(userId, requestBean);
+        } else if (requestBean.getEventType().equals(REMOVE_USER)) {
+                return handleRemoveUser(userId, requestBean);
         } else {
             throw new RuntimeException(String.format("Unknown update type %s", requestBean.getEventType()));
         }
@@ -395,7 +398,68 @@ public class Handler {
         return responseBean;
     }
 
-    public PostUsersResponseBean handleInviteFriend(String userId, PostUsersRequestBean requestBean) throws InterruptedException, ExecutionException {
+    public PostUsersResponseBean handleRemoveUser(String userId, PostUsersRequestBean requestBean)
+            throws InterruptedException, ExecutionException {
+        final String topicName = envProps.getProperty("friendsdrinks-api.topic.name");
+        String requestId = UUID.randomUUID().toString();
+        String friendsDrinksId = requestBean.getFriendsDrinksUuid();
+        FriendsDrinksEvent friendsDrinksEvent;
+        FriendsDrinksId friendsDrinksIdAvro;
+
+        friendsDrinksIdAvro = FriendsDrinksId
+                .newBuilder()
+                .setAdminUserId(userId)
+                .setUuid(friendsDrinksId)
+                .build();
+        FriendsDrinksRemoveUserRequest removeUserRequest = FriendsDrinksRemoveUserRequest
+                .newBuilder()
+                .setUserIdToRemove(andrewgrant.friendsdrinks.api.avro.UserId
+                        .newBuilder()
+                        .setUserId(requestBean.getUserToRemove())
+                        .build())
+                .setRequestId(requestId)
+                .setFriendsDrinksId(friendsDrinksIdAvro)
+                .setRequester(andrewgrant.friendsdrinks.api.avro.UserId
+                        .newBuilder()
+                        .setUserId(userId)
+                        .build())
+                .build();
+
+        friendsDrinksEvent = FriendsDrinksEvent
+                .newBuilder()
+                .setRequestId(removeUserRequest.getRequestId())
+                .setEventType(EventType.FRIENDSDRINKS_REMOVE_USER_REQUEST)
+                .setFriendsDrinksRemoveUserRequest(removeUserRequest)
+                .build();
+
+        ProducerRecord<String, FriendsDrinksEvent> record = new ProducerRecord<>(topicName, requestId, friendsDrinksEvent);
+        friendsDrinksKafkaProducer.send(record).get();
+        ReadOnlyKeyValueStore<String, FriendsDrinksEvent> kv =
+                kafkaStreams.store(StoreQueryParameters.fromNameAndType(RESPONSES_STORE, QueryableStoreTypes.keyValueStore()));
+
+        FriendsDrinksEvent backendResponse = kv.get(requestId);
+        if (backendResponse == null) {
+            for (int i = 0; i < 10; i++) {
+                if (backendResponse != null) {
+                    break;
+                }
+                // Give the backend some more time.
+                Thread.sleep(100);
+                backendResponse = kv.get(requestId);
+            }
+        }
+        if (backendResponse == null) {
+            throw new RuntimeException(String.format(
+                    "Failed to get backend response for request id %s", requestId));
+        }
+
+        PostUsersResponseBean responseBean = new PostUsersResponseBean();
+        Result result = backendResponse.getFriendsDrinksRemoveUserResponse().getResult();
+        responseBean.setResult(result.toString());
+        return responseBean;
+    }
+
+    public PostUsersResponseBean handleAddUser(String userId, PostUsersRequestBean requestBean) throws InterruptedException, ExecutionException {
         final String topicName = envProps.getProperty("friendsdrinks-api.topic.name");
         String requestId = UUID.randomUUID().toString();
         String friendsDrinksId = requestBean.getFriendsDrinksUuid();

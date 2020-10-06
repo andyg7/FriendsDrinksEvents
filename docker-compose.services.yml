@@ -12,13 +12,23 @@ services:
           -DlogPath=/app/
           '"
 
-  friendsdrinks-invitation-request-service:
+  friendsdrinks-membership-request-service:
     image: friendsdrinks:latest
     networks:
       - kafka-network
     command:
       "bash -c '
-          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.InvitationRequestService /app/dev.properties \
+          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.membership.RequestService /app/dev.properties \
+          -DlogPath=/app/
+          '"
+
+  friendsdrinks-membership-writer-service:
+    image: friendsdrinks:latest
+    networks:
+      - kafka-network
+    command:
+      "bash -c '
+          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.membership.WriterService /app/dev.properties \
           -DlogPath=/app/
           '"
 

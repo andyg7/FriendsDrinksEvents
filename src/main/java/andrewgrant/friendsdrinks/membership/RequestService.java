@@ -229,7 +229,7 @@ public class RequestService {
         KStream<String, InvitationResult>[] branchedResultsAfterValidatingFriendsDrinksState =
                 resultsAfterValidatingFriendsDrinksState.branch(
                         ((key, value) -> value.failed),
-                        ((key, value) -> !value.failed)
+                        ((key, value) -> true)
                 );
 
         emitFailedInvitationRequests(branchedResultsAfterValidatingFriendsDrinksState[0].mapValues(value -> value.invitationRequest),
@@ -256,7 +256,7 @@ public class RequestService {
         KStream<String, InvitationResult>[] branchedResultsAfterValidatingUserState =
                 resultsAfterValidatingUserState.branch(
                         ((key, value) -> value.failed),
-                        ((key, value) -> !value.failed)
+                        ((key, value) -> true)
                 );
 
         emitFailedInvitationRequests(branchedResultsAfterValidatingUserState[0].mapValues(value -> value.invitationRequest),

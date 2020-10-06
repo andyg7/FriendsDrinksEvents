@@ -38,7 +38,6 @@ public class WriterService {
         KStream<String, FriendsDrinksEvent> successfulApiResponses = streamOfSuccessfulResponses(apiEvents);
         KStream<String, FriendsDrinksEvent> apiRequests = streamOfRequests(apiEvents);
 
-
         successfulApiResponses.join(apiRequests,
                 (l, r) -> new RequestResponseJoiner().join(r),
                 JoinWindows.of(Duration.ofSeconds(30)),
@@ -139,9 +138,6 @@ public class WriterService {
                     }
                     return new KeyValue<>(friendsDrinksId, friendsDrinksEvent);
                 });
-                /*
-                 */
-
     }
 
     public Properties buildStreamsProperties(Properties envProps) {

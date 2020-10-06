@@ -5,10 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import andrewgrant.friendsdrinks.api.avro.EventType;
 import andrewgrant.friendsdrinks.api.avro.FriendsDrinksInvitationReplyRequest;
-import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksId;
-import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipEvent;
-import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId;
-import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksUserAdded;
+import andrewgrant.friendsdrinks.membership.avro.*;
 
 /**
  * Emits events.
@@ -22,19 +19,39 @@ public class RequestResponseJoiner {
         if (r.getEventType().equals(EventType.FRIENDSDRINKS_INVITATION_REPLY_REQUEST)) {
             FriendsDrinksInvitationReplyRequest request = r.getFriendsDrinksInvitationReplyRequest();
             FriendsDrinksMembershipId membershipId = FriendsDrinksMembershipId
+                    .newBuilder()
+                    .setFriendsDrinksId(FriendsDrinksId
                             .newBuilder()
-                            .setFriendsDrinksId(FriendsDrinksId
-                                    .newBuilder()
-                                    .setAdminUserId(request.getFriendsDrinksId().getAdminUserId())
-                                    .setUuid(request.getFriendsDrinksId().getUuid())
-                                    .build())
-                            .build();
+                            .setAdminUserId(request.getFriendsDrinksId().getAdminUserId())
+                            .setUuid(request.getFriendsDrinksId().getUuid())
+                            .build())
+                    .build();
             return FriendsDrinksMembershipEvent
                     .newBuilder()
                     .setEventType(andrewgrant.friendsdrinks.membership.avro.EventType.USER_ADDED)
                     .setMembershipId(membershipId)
                     .setFriendsDrinksUserAdded(
                             FriendsDrinksUserAdded
+                                    .newBuilder()
+                                    .setMembershipId(membershipId)
+                                    .build())
+                    .build();
+        } else if (r.getEventType().equals(EventType.FRIENDSDRINKS_REMOVE_USER_REQUEST)) {
+            FriendsDrinksInvitationReplyRequest request = r.getFriendsDrinksInvitationReplyRequest();
+            FriendsDrinksMembershipId membershipId = FriendsDrinksMembershipId
+                    .newBuilder()
+                    .setFriendsDrinksId(FriendsDrinksId
+                            .newBuilder()
+                            .setAdminUserId(request.getFriendsDrinksId().getAdminUserId())
+                            .setUuid(request.getFriendsDrinksId().getUuid())
+                            .build())
+                    .build();
+            return FriendsDrinksMembershipEvent
+                    .newBuilder()
+                    .setEventType(andrewgrant.friendsdrinks.membership.avro.EventType.USER_REMOVED)
+                    .setMembershipId(membershipId)
+                    .setFriendsDrinksUserRemoved(
+                            FriendsDrinksUserRemoved
                                     .newBuilder()
                                     .setMembershipId(membershipId)
                                     .build())
