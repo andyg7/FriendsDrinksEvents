@@ -39,7 +39,7 @@ public class WriterService {
         KStream<String, FriendsDrinksEvent> apiRequests = streamOfRequests(apiEvents);
 
         successfulApiResponses.join(apiRequests,
-                (l, r) -> new RequestResponseJoiner().emit(r),
+                (l, r) -> new RequestResponseJoiner().join(r),
                 JoinWindows.of(Duration.ofSeconds(30)),
                 StreamJoined.with(Serdes.String(),
                         apiAvroBuilder.friendsDrinksSerde(),
