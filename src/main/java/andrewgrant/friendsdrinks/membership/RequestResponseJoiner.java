@@ -13,9 +13,9 @@ import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksUserAdded;
 /**
  * Emits events.
  */
-public class EventEmitter {
+public class RequestResponseJoiner {
 
-    private static final Logger log = LoggerFactory.getLogger(EventEmitter.class);
+    private static final Logger log = LoggerFactory.getLogger(RequestResponseJoiner.class);
 
     public FriendsDrinksMembershipEvent emit(andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent r) {
 

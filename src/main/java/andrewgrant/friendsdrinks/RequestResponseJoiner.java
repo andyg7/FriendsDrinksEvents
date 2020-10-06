@@ -15,9 +15,9 @@ import andrewgrant.friendsdrinks.avro.FriendsDrinksUserAdded;
 /**
  * Emits FriendsDrinks events from API results.
  */
-public class EventEmitter {
+public class RequestResponseJoiner {
 
-    private static final Logger log = LoggerFactory.getLogger(EventEmitter.class);
+    private static final Logger log = LoggerFactory.getLogger(RequestResponseJoiner.class);
 
     public FriendsDrinksEvent emit(andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent r) {
         if (r.getEventType().equals(EventType.CREATE_FRIENDSDRINKS_REQUEST)) {
