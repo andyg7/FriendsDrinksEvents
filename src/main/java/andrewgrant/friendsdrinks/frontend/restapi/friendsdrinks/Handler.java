@@ -168,28 +168,10 @@ public class Handler {
                 .setEventType(EventType.CREATE_FRIENDSDRINKS_REQUEST)
                 .setCreateFriendsDrinksRequest(createFriendsDrinksRequest)
                 .build();
-        ProducerRecord<String, FriendsDrinksEvent> record =
-                new ProducerRecord<>(topicName, requestId, friendsDrinksEvent);
+        ProducerRecord<String, FriendsDrinksEvent> record = new ProducerRecord<>(topicName, requestId, friendsDrinksEvent);
         friendsDrinksKafkaProducer.send(record).get();
 
-        ReadOnlyKeyValueStore<String, FriendsDrinksEvent> kv =
-                kafkaStreams.store(StoreQueryParameters.fromNameAndType(RESPONSES_STORE, QueryableStoreTypes.keyValueStore()));
-
-        FriendsDrinksEvent backendResponse = kv.get(requestId);
-        if (backendResponse == null) {
-            for (int i = 0; i < 10; i++) {
-                if (backendResponse != null) {
-                    break;
-                }
-                // Give the backend some more time.
-                Thread.sleep(100);
-                backendResponse = kv.get(requestId);
-            }
-        }
-        if (backendResponse == null) {
-            throw new RuntimeException(String.format(
-                    "Failed to get CreateFriendsDrinksResponse for request id %s", requestId));
-        }
+        FriendsDrinksEvent backendResponse = getApiResponse(requestId);
         CreateFriendsDrinksResponseBean responseBean = new CreateFriendsDrinksResponseBean();
         Result result = backendResponse.getCreateFriendsDrinksResponse().getResult();
         responseBean.setResult(result.name());
@@ -201,7 +183,7 @@ public class Handler {
     }
 
     @POST
-    @Path("/users/{userId}/friendsdrinks/{friendsDrinksUuid}")
+    @Path("/users/{userId}/adminfriendsdrinks/{friendsDrinksUuid}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public PostFriendsDrinksResponseBean updateFriendsDrinks(@PathParam("userId") String userId,
@@ -231,30 +213,10 @@ public class Handler {
                 .setUpdateFriendsDrinksRequest(updateFriendsDrinksRequest)
                 .build();
 
-        ProducerRecord<String, FriendsDrinksEvent> record =
-                new ProducerRecord<>(
-                        topicName, requestId, friendsDrinksEvent);
+        ProducerRecord<String, FriendsDrinksEvent> record = new ProducerRecord<>(topicName, requestId, friendsDrinksEvent);
         friendsDrinksKafkaProducer.send(record).get();
 
-        ReadOnlyKeyValueStore<String, FriendsDrinksEvent> kv =
-                kafkaStreams.store(StoreQueryParameters.fromNameAndType(RESPONSES_STORE, QueryableStoreTypes.keyValueStore()));
-
-        FriendsDrinksEvent backendResponse = kv.get(requestId);
-        if (backendResponse == null) {
-            for (int i = 0; i < 10; i++) {
-                if (backendResponse != null) {
-                    break;
-                }
-                // Give the backend some more time.
-                Thread.sleep(100);
-                backendResponse = kv.get(requestId);
-            }
-        }
-        if (backendResponse == null) {
-            throw new RuntimeException(String.format(
-                    "Failed to get UpdateFriendsDrinksResponse for request id %s", requestId));
-        }
-
+        FriendsDrinksEvent backendResponse = getApiResponse(requestId);
         PostFriendsDrinksResponseBean responseBean = new PostFriendsDrinksResponseBean();
         responseBean.setResult(backendResponse.getUpdateFriendsDrinksResponse().getResult().name());
         return responseBean;
@@ -285,28 +247,10 @@ public class Handler {
                 .setEventType(EventType.DELETE_FRIENDSDRINKS_REQUEST)
                 .setDeleteFriendsDrinksRequest(deleteFriendsDrinksRequest)
                 .build();
-        ProducerRecord<String, FriendsDrinksEvent> producerRecord =
-                new ProducerRecord<>(topicName, requestId, friendsDrinksEvent);
+        ProducerRecord<String, FriendsDrinksEvent> producerRecord = new ProducerRecord<>(topicName, requestId, friendsDrinksEvent);
         friendsDrinksKafkaProducer.send(producerRecord);
 
-        ReadOnlyKeyValueStore<String, FriendsDrinksEvent> kv =
-                kafkaStreams.store(StoreQueryParameters.fromNameAndType(RESPONSES_STORE, QueryableStoreTypes.keyValueStore()));
-
-        FriendsDrinksEvent backendResponse = kv.get(requestId);
-        if (backendResponse == null) {
-            for (int i = 0; i < 10; i++) {
-                if (backendResponse != null) {
-                    break;
-                }
-                // Give the backend some more time.
-                Thread.sleep(100);
-                backendResponse = kv.get(requestId);
-            }
-        }
-        if (backendResponse == null) {
-            throw new RuntimeException(String.format(
-                    "Failed to get DeleteFriendsDrinksResponse for request id %s", requestId));
-        }
+        FriendsDrinksEvent backendResponse = getApiResponse(requestId);
         DeleteFriendsDrinksResponseBean responseBean = new DeleteFriendsDrinksResponseBean();
         Result result = backendResponse.getDeleteFriendsDrinksResponse().getResult();
         responseBean.setResult(result.name());
@@ -317,8 +261,7 @@ public class Handler {
     @Path("/users/{userId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public PostUsersResponseBean postUsers(@PathParam("userId") String userId,
-                                           PostUsersRequestBean requestBean)
+    public PostUsersResponseBean postUsers(@PathParam("userId") String userId, PostUsersRequestBean requestBean)
             throws ExecutionException, InterruptedException {
         if (requestBean.getEventType().equals(SIGNED_UP) ||
                 requestBean.getEventType().equals(CANCELLED_ACCOUNT)) {
@@ -368,30 +311,10 @@ public class Handler {
                 .setFriendsDrinksInvitationReplyRequest(friendsDrinksInvitationReplyRequest)
                 .build();
 
-        ProducerRecord<String, FriendsDrinksEvent> record =
-                new ProducerRecord<>(
-                        topicName, requestId, friendsDrinksEvent);
+        ProducerRecord<String, FriendsDrinksEvent> record = new ProducerRecord<>(topicName, requestId, friendsDrinksEvent);
         friendsDrinksKafkaProducer.send(record).get();
 
-        ReadOnlyKeyValueStore<String, FriendsDrinksEvent> kv =
-                kafkaStreams.store(StoreQueryParameters.fromNameAndType(RESPONSES_STORE, QueryableStoreTypes.keyValueStore()));
-
-        FriendsDrinksEvent backendResponse = kv.get(requestId);
-        if (backendResponse == null) {
-            for (int i = 0; i < 10; i++) {
-                if (backendResponse != null) {
-                    break;
-                }
-                // Give the backend some more time.
-                Thread.sleep(100);
-                backendResponse = kv.get(requestId);
-            }
-        }
-        if (backendResponse == null) {
-            throw new RuntimeException(String.format(
-                    "Failed to get backend response for request id %s", requestId));
-        }
-
+        FriendsDrinksEvent backendResponse = getApiResponse(requestId);
         PostUsersResponseBean responseBean = new PostUsersResponseBean();
         Result result = backendResponse.getFriendsDrinksInvitationReplyResponse().getResult();
         responseBean.setResult(result.name());
@@ -434,25 +357,8 @@ public class Handler {
 
         ProducerRecord<String, FriendsDrinksEvent> record = new ProducerRecord<>(topicName, requestId, friendsDrinksEvent);
         friendsDrinksKafkaProducer.send(record).get();
-        ReadOnlyKeyValueStore<String, FriendsDrinksEvent> kv =
-                kafkaStreams.store(StoreQueryParameters.fromNameAndType(RESPONSES_STORE, QueryableStoreTypes.keyValueStore()));
 
-        FriendsDrinksEvent backendResponse = kv.get(requestId);
-        if (backendResponse == null) {
-            for (int i = 0; i < 10; i++) {
-                if (backendResponse != null) {
-                    break;
-                }
-                // Give the backend some more time.
-                Thread.sleep(100);
-                backendResponse = kv.get(requestId);
-            }
-        }
-        if (backendResponse == null) {
-            throw new RuntimeException(String.format(
-                    "Failed to get backend response for request id %s", requestId));
-        }
-
+        FriendsDrinksEvent backendResponse = getApiResponse(requestId);
         PostUsersResponseBean responseBean = new PostUsersResponseBean();
         Result result = backendResponse.getFriendsDrinksRemoveUserResponse().getResult();
         responseBean.setResult(result.name());
@@ -491,25 +397,8 @@ public class Handler {
 
         ProducerRecord<String, FriendsDrinksEvent> record = new ProducerRecord<>(topicName, requestId, friendsDrinksEvent);
         friendsDrinksKafkaProducer.send(record).get();
-        ReadOnlyKeyValueStore<String, FriendsDrinksEvent> kv =
-                kafkaStreams.store(StoreQueryParameters.fromNameAndType(RESPONSES_STORE, QueryableStoreTypes.keyValueStore()));
 
-        FriendsDrinksEvent backendResponse = kv.get(requestId);
-        if (backendResponse == null) {
-            for (int i = 0; i < 10; i++) {
-                if (backendResponse != null) {
-                    break;
-                }
-                // Give the backend some more time.
-                Thread.sleep(100);
-                backendResponse = kv.get(requestId);
-            }
-        }
-        if (backendResponse == null) {
-            throw new RuntimeException(String.format(
-                    "Failed to get backend response for request id %s", requestId));
-        }
-
+        FriendsDrinksEvent backendResponse = getApiResponse(requestId);
         PostUsersResponseBean responseBean = new PostUsersResponseBean();
         Result result = backendResponse.getFriendsDrinksInvitationResponse().getResult();
         responseBean.setResult(result.name());
@@ -542,15 +431,33 @@ public class Handler {
         } else {
             throw new RuntimeException(String.format("Unknown event type %s", eventType));
         }
-        ProducerRecord<UserId, UserEvent> record = new ProducerRecord<>(
-                topicName,
-                userEvent.getUserId(),
-                userEvent
-        );
+        ProducerRecord<UserId, UserEvent> record = new ProducerRecord<>(topicName, userEvent.getUserId(), userEvent );
         userKafkaProducer.send(record).get();
         PostUsersResponseBean postUsersResponseBean = new PostUsersResponseBean();
         postUsersResponseBean.setResult("SUCCESS");
         return postUsersResponseBean;
+    }
+
+    private FriendsDrinksEvent getApiResponse(String requestId) throws InterruptedException {
+        ReadOnlyKeyValueStore<String, FriendsDrinksEvent> kv =
+                kafkaStreams.store(StoreQueryParameters.fromNameAndType(RESPONSES_STORE, QueryableStoreTypes.keyValueStore()));
+        FriendsDrinksEvent backendResponse = kv.get(requestId);
+        if (backendResponse == null) {
+            for (int i = 0; i < 10; i++) {
+                if (backendResponse != null) {
+                    break;
+                }
+                // Give the backend some more time.
+                Thread.sleep(100);
+                backendResponse = kv.get(requestId);
+            }
+        }
+        if (backendResponse == null) {
+            throw new RuntimeException(String.format(
+                    "Failed to get UpdateFriendsDrinksResponse for request id %s", requestId));
+        }
+
+        return backendResponse;
     }
 
 }
