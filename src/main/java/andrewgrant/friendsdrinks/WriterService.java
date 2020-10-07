@@ -120,6 +120,7 @@ public class WriterService {
                                         .newBuilder()
                                         .setEventType(andrewgrant.friendsdrinks.avro.EventType.USER_ADDED)
                                         .setFriendsDrinksUserAdded(friendsDrinksUserAdded)
+                                        .setFriendsDrinksId(friendsDrinksId)
                                         .build();
                     } else if (value.getEventType().equals(andrewgrant.friendsdrinks.membership.avro.EventType.USER_REMOVED)) {
                         FriendsDrinksUserRemoved friendsDrinksUserRemoved = FriendsDrinksUserRemoved
@@ -132,6 +133,7 @@ public class WriterService {
                                         .newBuilder()
                                         .setEventType(andrewgrant.friendsdrinks.avro.EventType.USER_REMOVED)
                                         .setFriendsDrinksUserRemoved(friendsDrinksUserRemoved)
+                                        .setFriendsDrinksId(friendsDrinksId)
                                         .build();
                     } else {
                         throw new RuntimeException(String.format("Unknown event type %s", value.getEventType().name()));
