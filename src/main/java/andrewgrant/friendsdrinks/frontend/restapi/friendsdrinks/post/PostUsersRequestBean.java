@@ -12,17 +12,13 @@ public class PostUsersRequestBean {
     // This is always required.
     private String friendsDrinksUuid;
 
-    // Only relevant for ADD_USER.
     private String userId;
-    // Only relevant for REPLY_TO_INVITATION.
     private String invitationReply;
     private String adminUserId;
 
-    // Only relevant for SIGNED_UP.
     private String firstName;
     private String lastName;
 
-    // Only relevant for REMOVE_USER.
     private String userToRemove;
 
     public String getUserToRemove() {
