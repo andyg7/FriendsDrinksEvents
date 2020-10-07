@@ -61,7 +61,7 @@ public class RequestResponseJoiner {
                     .newBuilder()
                     .setUpdateType(
                             andrewgrant.friendsdrinks.avro.UpdateType.valueOf(
-                                    updateFriendsDrinksRequest.getUpdateType().toString()))
+                                    updateFriendsDrinksRequest.getUpdateType().name()))
                     .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
                             .newBuilder()
                             .setAdminUserId(updateFriendsDrinksRequest.getFriendsDrinksId().getAdminUserId())
@@ -101,7 +101,7 @@ public class RequestResponseJoiner {
                     .build();
         } else {
             throw new RuntimeException(
-                    String.format("Received unexpected event type %s", r.getEventType().toString()));
+                    String.format("Received unexpected event type %s", r.getEventType().name()));
         }
 
     }

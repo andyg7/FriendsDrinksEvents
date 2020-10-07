@@ -192,7 +192,7 @@ public class Handler {
         }
         CreateFriendsDrinksResponseBean responseBean = new CreateFriendsDrinksResponseBean();
         Result result = backendResponse.getCreateFriendsDrinksResponse().getResult();
-        responseBean.setResult(result.toString());
+        responseBean.setResult(result.name());
         FriendsDrinksIdBean friendsDrinksIdBean = new FriendsDrinksIdBean();
         friendsDrinksIdBean.setUuid(friendsDrinksUuid);
         friendsDrinksIdBean.setAdminUserId(userId);
@@ -256,7 +256,7 @@ public class Handler {
         }
 
         PostFriendsDrinksResponseBean responseBean = new PostFriendsDrinksResponseBean();
-        responseBean.setResult(backendResponse.getUpdateFriendsDrinksResponse().getResult().toString());
+        responseBean.setResult(backendResponse.getUpdateFriendsDrinksResponse().getResult().name());
         return responseBean;
     }
 
@@ -309,7 +309,7 @@ public class Handler {
         }
         DeleteFriendsDrinksResponseBean responseBean = new DeleteFriendsDrinksResponseBean();
         Result result = backendResponse.getDeleteFriendsDrinksResponse().getResult();
-        responseBean.setResult(result.toString());
+        responseBean.setResult(result.name());
         return responseBean;
     }
 
@@ -394,7 +394,7 @@ public class Handler {
 
         PostUsersResponseBean responseBean = new PostUsersResponseBean();
         Result result = backendResponse.getFriendsDrinksInvitationReplyResponse().getResult();
-        responseBean.setResult(result.toString());
+        responseBean.setResult(result.name());
         return responseBean;
     }
 
@@ -455,7 +455,7 @@ public class Handler {
 
         PostUsersResponseBean responseBean = new PostUsersResponseBean();
         Result result = backendResponse.getFriendsDrinksRemoveUserResponse().getResult();
-        responseBean.setResult(result.toString());
+        responseBean.setResult(result.name());
         return responseBean;
     }
 
@@ -512,7 +512,7 @@ public class Handler {
 
         PostUsersResponseBean responseBean = new PostUsersResponseBean();
         Result result = backendResponse.getFriendsDrinksInvitationResponse().getResult();
-        responseBean.setResult(result.toString());
+        responseBean.setResult(result.name());
         return responseBean;
     }
 

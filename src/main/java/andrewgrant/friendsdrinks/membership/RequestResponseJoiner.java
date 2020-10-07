@@ -60,7 +60,7 @@ public class RequestResponseJoiner {
                     .build();
         } else {
             throw new RuntimeException(
-                    String.format("Received unexpected event type %s", r.getEventType().toString()));
+                    String.format("Received unexpected event type %s", r.getEventType().name()));
         }
 
     }
