@@ -20,6 +20,7 @@ public class RequestResponseJoiner {
             FriendsDrinksInvitationReplyRequest request = r.getFriendsDrinksInvitationReplyRequest();
             FriendsDrinksMembershipId membershipId = FriendsDrinksMembershipId
                     .newBuilder()
+                    .setUserId(UserId.newBuilder().setUserId(request.getUserId().getUserId()).build())
                     .setFriendsDrinksId(FriendsDrinksId
                             .newBuilder()
                             .setAdminUserId(request.getFriendsDrinksId().getAdminUserId())
@@ -40,6 +41,7 @@ public class RequestResponseJoiner {
             FriendsDrinksInvitationReplyRequest request = r.getFriendsDrinksInvitationReplyRequest();
             FriendsDrinksMembershipId membershipId = FriendsDrinksMembershipId
                     .newBuilder()
+                    .setUserId(UserId.newBuilder().setUserId(request.getUserId().getUserId()).build())
                     .setFriendsDrinksId(FriendsDrinksId
                             .newBuilder()
                             .setAdminUserId(request.getFriendsDrinksId().getAdminUserId())
