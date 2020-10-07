@@ -408,7 +408,7 @@ public class Handler {
 
         friendsDrinksIdAvro = FriendsDrinksId
                 .newBuilder()
-                .setAdminUserId(userId)
+                .setAdminUserId(requestBean.getAdminUserId())
                 .setUuid(friendsDrinksId)
                 .build();
         FriendsDrinksRemoveUserRequest removeUserRequest = FriendsDrinksRemoveUserRequest
