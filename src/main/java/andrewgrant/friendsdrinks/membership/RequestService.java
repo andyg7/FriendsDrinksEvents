@@ -60,7 +60,7 @@ public class RequestService {
     }
 
     private void handleUserRemovals(KStream<String, FriendsDrinksEvent> apiEvents,
-                                    KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable,
+                                    KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksState,
                                     KTable<UserId, UserState> userState,
                                     andrewgrant.friendsdrinks.AvroBuilder avroBuilder, UserAvroBuilder userAvroBuilder,
                                     andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder apiAvroBuilder, String apiTopicName) {
@@ -105,7 +105,7 @@ public class RequestService {
                                 .setAdminUserId(value.friendsDrinksRemoveUserRequest.getFriendsDrinksId().getAdminUserId())
                                 .build())
                         .mapValues(value -> value.friendsDrinksRemoveUserRequest)
-                        .leftJoin(friendsDrinksStateKTable,
+                        .leftJoin(friendsDrinksState,
                                 (request, state) -> {
                                     RemoveUserResult removeUserResult = new RemoveUserResult();
                                     if (state != null) {
@@ -170,14 +170,14 @@ public class RequestService {
     }
 
     private void handleInvitations(KStream<String, FriendsDrinksEvent> apiEvents,
-                                   KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable,
+                                   KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksState,
                                    KTable<FriendsDrinksPendingInvitationId, FriendsDrinksPendingInvitation> pendingFriendsDrinksInvitations,
                                    KTable<andrewgrant.friendsdrinks.user.avro.UserId, UserState> userState,
                                    andrewgrant.friendsdrinks.AvroBuilder avroBuilder, UserAvroBuilder userAvroBuilder,
                                    andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder apiAvroBuilder, String apiTopicName,
                                    String pendingInvitationsTopicName) {
 
-        handleInvitationRequests(apiEvents, friendsDrinksStateKTable, userState, avroBuilder, apiAvroBuilder, userAvroBuilder, apiTopicName,
+        handleInvitationRequests(apiEvents, friendsDrinksState, userState, avroBuilder, apiAvroBuilder, userAvroBuilder, apiTopicName,
                 pendingInvitationsTopicName);
         handleInvitationReplies(apiEvents, pendingFriendsDrinksInvitations, apiAvroBuilder, apiTopicName,
                 pendingInvitationsTopicName);

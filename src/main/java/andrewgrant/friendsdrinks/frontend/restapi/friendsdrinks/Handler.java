@@ -431,7 +431,7 @@ public class Handler {
         } else {
             throw new RuntimeException(String.format("Unknown event type %s", eventType));
         }
-        ProducerRecord<UserId, UserEvent> record = new ProducerRecord<>(topicName, userEvent.getUserId(), userEvent );
+        ProducerRecord<UserId, UserEvent> record = new ProducerRecord<>(topicName, userEvent.getUserId(), userEvent);
         userKafkaProducer.send(record).get();
         PostUsersResponseBean postUsersResponseBean = new PostUsersResponseBean();
         postUsersResponseBean.setResult("SUCCESS");

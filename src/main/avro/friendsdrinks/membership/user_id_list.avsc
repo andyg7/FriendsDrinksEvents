@@ -1,0 +1,8 @@
+{
+  "namespace": "andrewgrant.friendsdrinks.membership.avro",
+  "type": "record",
+  "name": "UserIdList",
+  "fields": [
+      {"name": "ids", "type": ["null", {"type": "array", "items": "UserId" }], "default": null}
+  ]
+}
