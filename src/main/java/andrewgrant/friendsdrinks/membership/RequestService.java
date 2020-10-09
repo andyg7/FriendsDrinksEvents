@@ -198,8 +198,12 @@ public class RequestService {
                         .build())
                 .leftJoin(friendsDrinksStateKTable,
                         (request, state) -> {
-                            // Validate request against state of FriendsDrinks
                             InvitationResult invitationResult = new InvitationResult();
+                            if (request.getUserId().getUserId().equals(request.getFriendsDrinksId().getAdminUserId())) {
+                                invitationResult.failed = true;
+                                return invitationResult;
+                            }
+                            // Validate request against state of FriendsDrinks
                             invitationResult.invitationRequest = request;
                             if (state != null) {
                                 invitationResult.failed = false;

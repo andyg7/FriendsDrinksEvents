@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
@@ -59,17 +60,13 @@ public class Handler {
     @GET
     @Path("/friendsdrinks")
     @Produces(MediaType.APPLICATION_JSON)
-    public GetAllFriendsDrinksResponseBean getAllFriendsDrinks(@QueryParam("adminUserId") String adminUserId) {
+    public GetAllFriendsDrinksResponseBean getAllFriendsDrinks() {
         ReadOnlyKeyValueStore<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState> kv =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_STORE, QueryableStoreTypes.keyValueStore()));
         KeyValueIterator<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState> allKvs = kv.all();
         List<FriendsDrinksIdBean> friendsDrinksList = new ArrayList<>();
         while (allKvs.hasNext()) {
             KeyValue<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState> keyValue = allKvs.next();
-            FriendsDrinksState friendsDrinksState = keyValue.value;
-            if (adminUserId != null && !friendsDrinksState.getFriendsDrinksId().getAdminUserId().equals(adminUserId)) {
-                continue;
-            }
             friendsDrinksList.add(new FriendsDrinksIdBean(
                     keyValue.value.getFriendsDrinksId().getAdminUserId(),
                     keyValue.value.getFriendsDrinksId().getUuid()));
@@ -101,9 +98,24 @@ public class Handler {
     @Path("/users/{userId}")
     @Produces(MediaType.APPLICATION_JSON)
     public GetUserResponseBean getUser(@PathParam("userId") String userId) {
-        GetAllFriendsDrinksResponseBean adminFriendsDrinks = getAllFriendsDrinks(userId);
         GetUserResponseBean getUserResponseBean = new GetUserResponseBean();
-        getUserResponseBean.setAdminFriendsDrinksIds(adminFriendsDrinks.getFriendsDrinkList());
+        // TODO(andyg7): add member and admin ids here.
+        ReadOnlyKeyValueStore<String, FriendsDrinksIdList> membershipStore =
+                kafkaStreams.store(StoreQueryParameters.fromNameAndType(MEMBERS_STORE, QueryableStoreTypes.keyValueStore()));
+        FriendsDrinksIdList friendsDrinksIdList = membershipStore.get(userId);
+        if (friendsDrinksIdList != null && friendsDrinksIdList.getIds() != null &&
+                friendsDrinksIdList.getIds().size() > 0) {
+            List<FriendsDrinksIdBean> ids = friendsDrinksIdList.getIds().stream()
+                    .map(x  -> {
+                        FriendsDrinksIdBean id = new FriendsDrinksIdBean();
+                        id.setAdminUserId(x.getAdminUserId());
+                        id.setUuid(x.getUuid());
+                        return id;
+                    }).collect(Collectors.toList());
+            getUserResponseBean.setMemberFriendsDrinksIds(ids);
+        } else {
+            getUserResponseBean.setMemberFriendsDrinksIds(new ArrayList<>());
+        }
 
         ReadOnlyKeyValueStore<FriendsDrinksPendingInvitationId, FriendsDrinksPendingInvitation> kv =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(PENDING_INVITATIONS_STORE, QueryableStoreTypes.keyValueStore()));

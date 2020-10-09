@@ -22,6 +22,7 @@ import andrewgrant.friendsdrinks.api.avro.EventType;
 import andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent;
 import andrewgrant.friendsdrinks.avro.*;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksId;
+import andrewgrant.friendsdrinks.avro.FriendsDrinksIdList;
 
 /**
  * Reads API results and writes to backend topics.
