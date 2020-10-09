@@ -21,7 +21,6 @@ import andrewgrant.friendsdrinks.api.avro.*;
 import andrewgrant.friendsdrinks.api.avro.EventType;
 import andrewgrant.friendsdrinks.membership.avro.*;
 import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksId;
-import andrewgrant.friendsdrinks.membership.avro.UserId;
 
 /**
  * Owns writing to friendsdrinks-membership-event.
@@ -61,7 +60,7 @@ public class WriterService {
         KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState>
                 friendsDrinksEventKStream = builder.stream(envProps.getProperty("friendsdrinks-state.topic.name"),
                 Consumed.with(friendsDrinksAvroBuilder.friendsDrinksIdSerde(), friendsDrinksAvroBuilder.friendsDrinksStateSerde()));
-        handleDeletedFriendsDrinks(friendsDrinksEventKStream, membershipStateKTable, envProps, friendsDrinksAvroBuilder, avroBuilder);
+        handleDeletedFriendsDrinks(friendsDrinksEventKStream, membershipStateKTable, envProps, avroBuilder);
 
         return builder.build();
     }
@@ -70,45 +69,46 @@ public class WriterService {
                                                     friendsDrinksEventKStream,
                                             KTable<FriendsDrinksMembershipId, FriendsDrinksMembershipState> friendsDrinksMembershipStateKTable,
                                             Properties envProp,
-                                            andrewgrant.friendsdrinks.AvroBuilder friendsDrinksAvroBuilder,
                                             AvroBuilder avroBuilder) {
 
-        KTable<FriendsDrinksId, UserIdList> userIdListKTable = friendsDrinksMembershipStateKTable.groupBy((key, value) ->
+        KTable<FriendsDrinksId, FriendsDrinksMembershipIdList> membershipIdListKTable = friendsDrinksMembershipStateKTable.groupBy((key, value) ->
                         KeyValue.pair(value.getMembershipId().getFriendsDrinksId(), value),
                 Grouped.with(avroBuilder.friendsDrinksIdSerdes(), avroBuilder.friendsDrinksMembershipStateSerdes()))
                 .aggregate(
-                        () -> UserIdList
+                        () -> FriendsDrinksMembershipIdList
                                 .newBuilder()
                                 .setIds(new ArrayList<>())
                                 .build(),
                         (aggKey, newValue, aggValue) -> {
-                            List<UserId> ids = aggValue.getIds();
-                            ids.add(newValue.getMembershipId().getUserId());
-                            UserIdList userIdList = UserIdList.newBuilder(aggValue)
+                            List<FriendsDrinksMembershipId> ids = aggValue.getIds();
+                            ids.add(newValue.getMembershipId());
+                            FriendsDrinksMembershipIdList idList = FriendsDrinksMembershipIdList
+                                    .newBuilder(aggValue)
                                     .setIds(ids)
                                     .build();
-                            return userIdList;
+                            return idList;
                         },
                         (aggKey, oldValue, aggValue) -> {
-                            List<UserId> ids = aggValue.getIds();
+                            List<FriendsDrinksMembershipId> ids = aggValue.getIds();
                             for (int i = 0; i < ids.size(); i++) {
-                                if (ids.get(i).getUserId().equals(oldValue.getMembershipId().getUserId().getUserId())) {
+                                if (ids.get(0).equals(oldValue.getMembershipId())) {
                                     ids.remove(i);
                                     break;
                                 }
                             }
-                            UserIdList userIdList = UserIdList.newBuilder(aggValue)
+                            FriendsDrinksMembershipIdList idList = FriendsDrinksMembershipIdList
+                                    .newBuilder(aggValue)
                                     .setIds(ids)
                                     .build();
-                            return userIdList;
+                            return idList;
                         },
-                        Materialized.<FriendsDrinksId, UserIdList, KeyValueStore<Bytes, byte[]>>
+                        Materialized.<FriendsDrinksId, FriendsDrinksMembershipIdList, KeyValueStore<Bytes, byte[]>>
                                 as("friendsdrinks-user-id-list-state-store")
                                 .withKeySerde(avroBuilder.friendsDrinksIdSerdes())
-                                .withValueSerde(avroBuilder.userIdListSerdes())
+                                .withValueSerde(avroBuilder.friendsDrinksMembershipIdListSerdes())
                 );
 
-        KStream<FriendsDrinksId, UserId> streamOfUserIdsToDelete = friendsDrinksEventKStream
+        KStream<FriendsDrinksId, FriendsDrinksMembershipId> streamOfMembershipIdsToDelete = friendsDrinksEventKStream
                 .map((key, value) -> {
                     FriendsDrinksId friendsDrinksId = FriendsDrinksId
                             .newBuilder()
@@ -122,37 +122,27 @@ public class WriterService {
                     }
                 })
                 .filter((key, value) -> value != null)
-                .leftJoin(userIdListKTable,
+                .leftJoin(membershipIdListKTable,
                         (l, r) -> r,
                         Joined.with(
                                 avroBuilder.friendsDrinksIdSerdes(),
                                 avroBuilder.friendsDrinksIdSerdes(),
-                                avroBuilder.userIdListSerdes())
+                                avroBuilder.friendsDrinksMembershipIdListSerdes())
                 )
                 .filter((key, value) -> value != null)
                 .flatMapValues(value -> value.getIds());
 
-        streamOfUserIdsToDelete.map((key, value) -> {
-            FriendsDrinksMembershipId friendsDrinksMembershipId = FriendsDrinksMembershipId
-                    .newBuilder()
-                    .setUserId(UserId.newBuilder().setUserId(value.getUserId()).build())
-                    .setFriendsDrinksId(
-                            FriendsDrinksId
-                                    .newBuilder()
-                                    .setAdminUserId(key.getAdminUserId())
-                                    .setUuid(key.getUuid())
-                                    .build())
-                    .build();
+        streamOfMembershipIdsToDelete.map((key, value) -> {
             FriendsDrinksMembershipEvent event = FriendsDrinksMembershipEvent
                     .newBuilder()
                     .setEventType(andrewgrant.friendsdrinks.membership.avro.EventType.USER_REMOVED)
-                    .setMembershipId(friendsDrinksMembershipId)
+                    .setMembershipId(value)
                     .setFriendsDrinksUserRemoved(FriendsDrinksUserRemoved
                             .newBuilder()
-                            .setMembershipId(friendsDrinksMembershipId)
+                            .setMembershipId(value)
                             .build())
                     .build();
-            return KeyValue.pair(friendsDrinksMembershipId, event);
+            return KeyValue.pair(value, event);
         })
                 .to(envProp.getProperty("friendsdrinks-membership-event.topic.name"),
                         Produced.with(avroBuilder.friendsDrinksMembershipIdSerdes(), avroBuilder.friendsDrinksMembershipEventSerdes()));

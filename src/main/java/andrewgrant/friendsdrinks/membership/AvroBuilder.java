@@ -54,8 +54,8 @@ public class AvroBuilder {
         return serde;
     }
 
-    public SpecificAvroSerde<UserIdList> userIdListSerdes() {
-        SpecificAvroSerde<UserIdList> serde;
+    public SpecificAvroSerde<FriendsDrinksMembershipIdList> friendsDrinksMembershipIdListSerdes() {
+        SpecificAvroSerde<FriendsDrinksMembershipIdList> serde;
         if (registryClient != null) {
             serde = new SpecificAvroSerde<>(registryClient);
         } else {
