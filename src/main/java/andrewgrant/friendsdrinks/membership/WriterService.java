@@ -149,6 +149,9 @@ public class WriterService {
                                     break;
                                 }
                             }
+                            if (ids.size() == 0) {
+                                return null;
+                            }
                             FriendsDrinksMembershipIdList idList = FriendsDrinksMembershipIdList
                                     .newBuilder(aggValue)
                                     .setIds(ids)

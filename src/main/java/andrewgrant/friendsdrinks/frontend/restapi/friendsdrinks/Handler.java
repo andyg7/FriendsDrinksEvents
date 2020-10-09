@@ -99,13 +99,30 @@ public class Handler {
     @Produces(MediaType.APPLICATION_JSON)
     public GetUserResponseBean getUser(@PathParam("userId") String userId) {
         GetUserResponseBean getUserResponseBean = new GetUserResponseBean();
-        // TODO(andyg7): add member and admin ids here.
+
+        ReadOnlyKeyValueStore<String, FriendsDrinksIdList> adminStore =
+                kafkaStreams.store(StoreQueryParameters.fromNameAndType(ADMINS_STORE, QueryableStoreTypes.keyValueStore()));
+        FriendsDrinksIdList friendsDrinksIdList1 = adminStore.get(userId);
+        if (friendsDrinksIdList1 != null && friendsDrinksIdList1.getIds() != null &&
+                friendsDrinksIdList1.getIds().size() > 0) {
+            List<FriendsDrinksIdBean> ids = friendsDrinksIdList1.getIds().stream()
+                    .map(x  -> {
+                        FriendsDrinksIdBean id = new FriendsDrinksIdBean();
+                        id.setAdminUserId(x.getAdminUserId());
+                        id.setUuid(x.getUuid());
+                        return id;
+                    }).collect(Collectors.toList());
+            getUserResponseBean.setAdminFriendsDrinksIds(ids);
+        } else {
+            getUserResponseBean.setAdminFriendsDrinksIds(new ArrayList<>());
+        }
+
         ReadOnlyKeyValueStore<String, FriendsDrinksIdList> membershipStore =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(MEMBERS_STORE, QueryableStoreTypes.keyValueStore()));
-        FriendsDrinksIdList friendsDrinksIdList = membershipStore.get(userId);
-        if (friendsDrinksIdList != null && friendsDrinksIdList.getIds() != null &&
-                friendsDrinksIdList.getIds().size() > 0) {
-            List<FriendsDrinksIdBean> ids = friendsDrinksIdList.getIds().stream()
+        FriendsDrinksIdList friendsDrinksIdList2 = membershipStore.get(userId);
+        if (friendsDrinksIdList2 != null && friendsDrinksIdList2.getIds() != null &&
+                friendsDrinksIdList2.getIds().size() > 0) {
+            List<FriendsDrinksIdBean> ids = friendsDrinksIdList2.getIds().stream()
                     .map(x  -> {
                         FriendsDrinksIdBean id = new FriendsDrinksIdBean();
                         id.setAdminUserId(x.getAdminUserId());

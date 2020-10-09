@@ -28,6 +28,7 @@ public class StreamsService {
     public static final String RESPONSES_STORE = "api-response-store";
     public static final String FRIENDSDRINKS_STORE = "friendsdrinks-store";
     public static final String MEMBERS_STORE = "members-store";
+    public static final String ADMINS_STORE = "admins-store";
     public static final String FRIENDSDRINKS_KEYED_BY_SINGLE_ID_STORE = "friendsdrinks-keyed-by-single-id-store";
     public static final String PENDING_INVITATIONS_STORE = "pending-invitations-store";
     private KafkaStreams streams;
@@ -56,10 +57,25 @@ public class StreamsService {
         final String frontendPrivateTopicName = envProps.getProperty("frontend-private.topic.name");
         buildResponsesStore(builder, apiEvents, apiAvroBuilder, frontendPrivateTopicName);
 
-        final String friendsDrinksStateTopicName = envProps.getProperty("friendsdrinks-state.topic.name");
-        KStream<FriendsDrinksId, FriendsDrinksState> friendsDrinksState =
-                builder.stream(friendsDrinksStateTopicName,
-                        Consumed.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksStateSerde()));
+        builder.stream(envProps.getProperty("friendsdrinks-keyed-by-admin-user-id-state"),
+                Consumed.with(Serdes.String(), avroBuilder.friendsDrinksIdListSerde()))
+                .mapValues(value -> {
+                    FriendsDrinksIdList idList = FriendsDrinksIdList
+                            .newBuilder()
+                            .setIds(value.getIds().stream().map(x -> andrewgrant.friendsdrinks.api.avro.FriendsDrinksId
+                                    .newBuilder()
+                                    .setUuid(x.getUuid())
+                                    .setAdminUserId(x.getAdminUserId())
+                                    .build()).collect(Collectors.toList()))
+                            .build();
+                    return idList;
+                })
+                .toTable(
+                        Materialized.<String, FriendsDrinksIdList, KeyValueStore<Bytes, byte[]>>
+                                as(ADMINS_STORE)
+                                .withKeySerde(Serdes.String())
+                                .withValueSerde(apiAvroBuilder.apiFriendsDrinksIdListSerde()));
+
 
         KStream<String, FriendsDrinksIdList> membersStream = builder.stream(envProps.getProperty("friendsdrinks-membership-keyed-by-user-id-state"),
                 Consumed.with(membershipAvroBuilder.userIdSerdes(), membershipAvroBuilder.friendsDrinksMembershipIdListSerdes()))
@@ -86,6 +102,10 @@ public class StreamsService {
                         .withValueSerde(apiAvroBuilder.apiFriendsDrinksIdListSerde()));
 
 
+        final String friendsDrinksStateTopicName = envProps.getProperty("friendsdrinks-state.topic.name");
+        KStream<FriendsDrinksId, FriendsDrinksState> friendsDrinksState =
+                builder.stream(friendsDrinksStateTopicName,
+                        Consumed.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksStateSerde()));
         friendsDrinksState.toTable(
                 Materialized.<FriendsDrinksId, FriendsDrinksState, KeyValueStore<Bytes, byte[]>>
                         as(FRIENDSDRINKS_STORE)
