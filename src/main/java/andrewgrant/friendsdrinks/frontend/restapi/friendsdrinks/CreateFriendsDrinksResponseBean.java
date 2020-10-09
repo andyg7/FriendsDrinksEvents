@@ -5,7 +5,17 @@ package andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks;
  */
 public class CreateFriendsDrinksResponseBean {
     private String result;
-    private FriendsDrinksIdBean friendsDrinksId;
+    private String friendsDrinksId;
+
+    public void setFriendsDrinksId(String friendsDrinksId) {
+        this.friendsDrinksId = friendsDrinksId;
+    }
+
+
+    public String getFriendsDrinksId() {
+        return friendsDrinksId;
+    }
+
 
     public String getResult() {
         return result;
@@ -15,11 +25,4 @@ public class CreateFriendsDrinksResponseBean {
         this.result = result;
     }
 
-    public FriendsDrinksIdBean getFriendsDrinksId() {
-        return friendsDrinksId;
-    }
-
-    public void setFriendsDrinksId(FriendsDrinksIdBean friendsDrinksId) {
-        this.friendsDrinksId = friendsDrinksId;
-    }
 }

@@ -1,6 +1,9 @@
 package andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks;
 
 import static andrewgrant.friendsdrinks.frontend.restapi.StreamsService.*;
+import static andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.post.PostFriendsDrinksMembershipRequestBean.*;
+import static andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.post.PostUsersRequestBean.CANCELLED_ACCOUNT;
+import static andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.post.PostUsersRequestBean.SIGNED_UP;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -22,10 +25,7 @@ import javax.ws.rs.core.MediaType;
 
 import andrewgrant.friendsdrinks.api.avro.*;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksState;
-import andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.post.PostFriendsDrinksRequestBean;
-import andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.post.PostFriendsDrinksResponseBean;
-import andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.post.PostUsersRequestBean;
-import andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.post.PostUsersResponseBean;
+import andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.post.*;
 import andrewgrant.friendsdrinks.user.avro.UserEvent;
 import andrewgrant.friendsdrinks.user.avro.UserId;
 import andrewgrant.friendsdrinks.user.avro.UserSignedUp;
@@ -35,12 +35,6 @@ import andrewgrant.friendsdrinks.user.avro.UserSignedUp;
  */
 @Path("")
 public class Handler {
-
-    public static final String ADD_USER = "ADD_USER";
-    public static final String REMOVE_USER = "REMOVE_USER";
-    public static final String REPLY_TO_INVITATION = "REPLY_TO_INVITATION";
-    public static final String SIGNED_UP = "SIGNED_UP";
-    public static final String CANCELLED_ACCOUNT = "CANCELLED_ACCOUNT";
 
     private KafkaStreams kafkaStreams;
     private KafkaProducer<String, FriendsDrinksEvent> friendsDrinksKafkaProducer;
@@ -64,12 +58,10 @@ public class Handler {
         ReadOnlyKeyValueStore<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState> kv =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_STORE, QueryableStoreTypes.keyValueStore()));
         KeyValueIterator<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState> allKvs = kv.all();
-        List<FriendsDrinksIdBean> friendsDrinksList = new ArrayList<>();
+        List<String> friendsDrinksList = new ArrayList<>();
         while (allKvs.hasNext()) {
             KeyValue<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState> keyValue = allKvs.next();
-            friendsDrinksList.add(new FriendsDrinksIdBean(
-                    keyValue.value.getFriendsDrinksId().getAdminUserId(),
-                    keyValue.value.getFriendsDrinksId().getUuid()));
+            friendsDrinksList.add(keyValue.value.getFriendsDrinksId().getUuid());
         }
         allKvs.close();
         GetAllFriendsDrinksResponseBean response = new GetAllFriendsDrinksResponseBean();
@@ -78,19 +70,19 @@ public class Handler {
     }
 
     @GET
-    @Path("/friendsdrinks/{friendsDrinksUuid}")
+    @Path("/friendsdrinks/{friendsDrinksId}")
     @Produces(MediaType.APPLICATION_JSON)
-    public GetFriendsDrinksResponseBean getFriendsDrinks(@PathParam("friendsDrinksUuid") String friendsDrinksUuid) {
+    public GetFriendsDrinksResponseBean getFriendsDrinks(@PathParam("friendsDrinksId") String friendsDrinksId) {
         ReadOnlyKeyValueStore<String, andrewgrant.friendsdrinks.avro.FriendsDrinksState> kv =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_KEYED_BY_SINGLE_ID_STORE, QueryableStoreTypes.keyValueStore()));
-        FriendsDrinksState friendsDrinksState = kv.get(friendsDrinksUuid);
+        FriendsDrinksState friendsDrinksState = kv.get(friendsDrinksId);
         if (friendsDrinksState == null) {
-            throw new BadRequestException(String.format("%s does not exist", friendsDrinksUuid));
+            throw new BadRequestException(String.format("%s does not exist", friendsDrinksId));
         }
         GetFriendsDrinksResponseBean response = new GetFriendsDrinksResponseBean();
-        andrewgrant.friendsdrinks.avro.FriendsDrinksId friendsDrinksId = friendsDrinksState.getFriendsDrinksId();
-        response.setFriendsDrinksId(new FriendsDrinksIdBean(friendsDrinksId.getAdminUserId(), friendsDrinksId.getUuid()));
+        response.setFriendsDrinksId(friendsDrinksId);
         response.setName(friendsDrinksState.getName());
+        response.setAdminUserId(friendsDrinksState.getFriendsDrinksId().getAdminUserId());
         return response;
     }
 
@@ -105,13 +97,8 @@ public class Handler {
         FriendsDrinksIdList friendsDrinksIdList1 = adminStore.get(userId);
         if (friendsDrinksIdList1 != null && friendsDrinksIdList1.getIds() != null &&
                 friendsDrinksIdList1.getIds().size() > 0) {
-            List<FriendsDrinksIdBean> ids = friendsDrinksIdList1.getIds().stream()
-                    .map(x  -> {
-                        FriendsDrinksIdBean id = new FriendsDrinksIdBean();
-                        id.setAdminUserId(x.getAdminUserId());
-                        id.setUuid(x.getUuid());
-                        return id;
-                    }).collect(Collectors.toList());
+            List<String> ids = friendsDrinksIdList1.getIds().stream()
+                    .map(x  -> x.getUuid()).collect(Collectors.toList());
             getUserResponseBean.setAdminFriendsDrinksIds(ids);
         } else {
             getUserResponseBean.setAdminFriendsDrinksIds(new ArrayList<>());
@@ -122,13 +109,7 @@ public class Handler {
         FriendsDrinksIdList friendsDrinksIdList2 = membershipStore.get(userId);
         if (friendsDrinksIdList2 != null && friendsDrinksIdList2.getIds() != null &&
                 friendsDrinksIdList2.getIds().size() > 0) {
-            List<FriendsDrinksIdBean> ids = friendsDrinksIdList2.getIds().stream()
-                    .map(x  -> {
-                        FriendsDrinksIdBean id = new FriendsDrinksIdBean();
-                        id.setAdminUserId(x.getAdminUserId());
-                        id.setUuid(x.getUuid());
-                        return id;
-                    }).collect(Collectors.toList());
+            List<String> ids = friendsDrinksIdList2.getIds().stream().map(x  -> x.getUuid()).collect(Collectors.toList());
             getUserResponseBean.setMemberFriendsDrinksIds(ids);
         } else {
             getUserResponseBean.setMemberFriendsDrinksIds(new ArrayList<>());
@@ -142,10 +123,7 @@ public class Handler {
             KeyValue<FriendsDrinksPendingInvitationId, FriendsDrinksPendingInvitation> keyValue = allKvs.next();
             if (keyValue.key.getUserId().getUserId().equals(userId)) {
                 FriendsDrinksInvitationBean invitationBean = new FriendsDrinksInvitationBean();
-                invitationBean.setFriendsDrinksId(
-                        new FriendsDrinksIdBean(
-                                keyValue.value.getFriendsDrinksId().getAdminUserId(),
-                                keyValue.value.getFriendsDrinksId().getUuid()));
+                invitationBean.setFriendsDrinksId(keyValue.value.getFriendsDrinksId().getUuid());
                 invitationBean.setMessage(keyValue.value.getMessage());
                 invitationBeans.add(invitationBean);
             }
@@ -165,13 +143,13 @@ public class Handler {
             throws InterruptedException, ExecutionException {
         final String topicName = envProps.getProperty("friendsdrinks-api.topic.name");
         String requestId = UUID.randomUUID().toString();
-        String friendsDrinksUuid = UUID.randomUUID().toString();
+        String friendsDrinksId = UUID.randomUUID().toString();
         CreateFriendsDrinksRequest createFriendsDrinksRequest = CreateFriendsDrinksRequest
                 .newBuilder()
                 .setFriendsDrinksId(
                         FriendsDrinksId
                                 .newBuilder()
-                                .setUuid(friendsDrinksUuid)
+                                .setUuid(friendsDrinksId)
                                 .setAdminUserId(userId)
                                 .build())
                 .setRequestId(requestId)
@@ -190,19 +168,16 @@ public class Handler {
         CreateFriendsDrinksResponseBean responseBean = new CreateFriendsDrinksResponseBean();
         Result result = backendResponse.getCreateFriendsDrinksResponse().getResult();
         responseBean.setResult(result.name());
-        FriendsDrinksIdBean friendsDrinksIdBean = new FriendsDrinksIdBean();
-        friendsDrinksIdBean.setUuid(friendsDrinksUuid);
-        friendsDrinksIdBean.setAdminUserId(userId);
-        responseBean.setFriendsDrinksId(friendsDrinksIdBean);
+        responseBean.setFriendsDrinksId(friendsDrinksId);
         return responseBean;
     }
 
     @POST
-    @Path("/users/{userId}/adminfriendsdrinks/{friendsDrinksUuid}")
+    @Path("/users/{userId}/adminfriendsdrinks/{friendsDrinksId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public PostFriendsDrinksResponseBean updateFriendsDrinks(@PathParam("userId") String userId,
-                                                             @PathParam("friendsDrinksUuid") String friendsDrinksUuid,
+                                                             @PathParam("friendsDrinksId") String friendsDrinksId,
                                                              PostFriendsDrinksRequestBean requestBean)
             throws InterruptedException, ExecutionException {
 
@@ -212,7 +187,7 @@ public class Handler {
         FriendsDrinksId friendsDrinksIdAvro = FriendsDrinksId
                 .newBuilder()
                 .setAdminUserId(userId)
-                .setUuid(friendsDrinksUuid)
+                .setUuid(friendsDrinksId)
                 .build();
         UpdateFriendsDrinksRequest updateFriendsDrinksRequest = UpdateFriendsDrinksRequest
                 .newBuilder()
@@ -238,11 +213,11 @@ public class Handler {
     }
 
     @DELETE
-    @Path("/users/{userId}/adminfriendsdrinks/{friendsDrinksUuid}")
+    @Path("/users/{userId}/adminfriendsdrinks/{friendsDrinksId}")
     @Produces(MediaType.APPLICATION_JSON)
     public DeleteFriendsDrinksResponseBean deleteFriendsDrinks(
             @PathParam("userId") String userId,
-            @PathParam("friendsDrinksUuid") String friendsDrinksUuid) throws InterruptedException {
+            @PathParam("friendsDrinksId") String friendsDrinksId) throws InterruptedException {
         final String topicName = envProps.getProperty("friendsdrinks-api.topic.name");
         String requestId = UUID.randomUUID().toString();
         DeleteFriendsDrinksRequest deleteFriendsDrinksRequest = DeleteFriendsDrinksRequest
@@ -250,7 +225,7 @@ public class Handler {
                 .setFriendsDrinksId(
                         FriendsDrinksId
                                 .newBuilder()
-                                .setUuid(friendsDrinksUuid)
+                                .setUuid(friendsDrinksId)
                                 .setAdminUserId(userId)
                                 .build())
                 .setRequestId(requestId)
@@ -281,30 +256,49 @@ public class Handler {
         if (requestBean.getEventType().equals(SIGNED_UP) ||
                 requestBean.getEventType().equals(CANCELLED_ACCOUNT)) {
             return registerUserEvent(userId, requestBean);
-        }
-
-        if (requestBean.getEventType().equals(ADD_USER)) {
-            return handleAddUser(userId, requestBean);
-        } else if (requestBean.getEventType().equals(REPLY_TO_INVITATION)) {
-            return handleReplyToInvitation(userId, requestBean);
-        } else if (requestBean.getEventType().equals(REMOVE_USER)) {
-                return handleRemoveUser(userId, requestBean);
         } else {
             throw new RuntimeException(String.format("Unknown update type %s", requestBean.getEventType()));
         }
     }
 
-    public PostUsersResponseBean handleReplyToInvitation(String userId, PostUsersRequestBean requestBean)
+    @POST
+    @Path("/users/{userId}/friendsdrinks/{friendsDrinksId}/membership")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public PostFriendsDrinksMembershipResponseBean postFriendsDrinksMembership(@PathParam("userId") String userId,
+                                                             @PathParam("friendsDrinksId") String friendsDrinksId,
+                                                             PostFriendsDrinksMembershipRequestBean requestBean)
+            throws ExecutionException, InterruptedException {
+        if (requestBean.getEventType().equals(ADD_USER)) {
+            return handleAddUser(userId, friendsDrinksId, requestBean.getAddUserRequest());
+        } else if (requestBean.getEventType().equals(REPLY_TO_INVITATION)) {
+            return handleReplyToInvitation(userId, friendsDrinksId, requestBean.getReplyToInvitationRequest());
+        } else if (requestBean.getEventType().equals(REMOVE_USER)) {
+            return handleRemoveUser(userId, friendsDrinksId, requestBean.getRemoveUserRequest());
+        } else {
+            throw new RuntimeException(String.format("Unknown update type %s", requestBean.getEventType()));
+        }
+    }
+
+    public PostFriendsDrinksMembershipResponseBean handleReplyToInvitation(String userId, String friendsDrinksId,
+                                                         ReplyToInvitationRequestBean requestBean)
             throws InterruptedException, ExecutionException {
+
+        ReadOnlyKeyValueStore<String, andrewgrant.friendsdrinks.avro.FriendsDrinksState> kv =
+                kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_KEYED_BY_SINGLE_ID_STORE, QueryableStoreTypes.keyValueStore()));
+        FriendsDrinksState friendsDrinksState = kv.get(friendsDrinksId);
+        if (friendsDrinksState == null) {
+            throw new BadRequestException(String.format("FriendsDrinksId %s could not be found", friendsDrinksId));
+        }
+
         final String topicName = envProps.getProperty("friendsdrinks-api.topic.name");
         String requestId = UUID.randomUUID().toString();
-        String friendsDrinksId = requestBean.getFriendsDrinksUuid();
         FriendsDrinksEvent friendsDrinksEvent;
         FriendsDrinksId friendsDrinksIdAvro;
 
         friendsDrinksIdAvro = FriendsDrinksId
                 .newBuilder()
-                .setAdminUserId(requestBean.getAdminUserId())
+                .setAdminUserId(friendsDrinksState.getFriendsDrinksId().getAdminUserId())
                 .setUuid(friendsDrinksId)
                 .build();
         FriendsDrinksInvitationReplyRequest friendsDrinksInvitationReplyRequest =
@@ -316,7 +310,7 @@ public class Handler {
                                         .setUserId(userId)
                                         .build()
                         )
-                        .setReply(Reply.valueOf(requestBean.getInvitationReply()))
+                        .setReply(Reply.valueOf(requestBean.getResponse()))
                         .setRequestId(requestId)
                         .build();
         friendsDrinksEvent = FriendsDrinksEvent
@@ -330,30 +324,38 @@ public class Handler {
         friendsDrinksKafkaProducer.send(record).get();
 
         FriendsDrinksEvent backendResponse = getApiResponse(requestId);
-        PostUsersResponseBean responseBean = new PostUsersResponseBean();
+        PostFriendsDrinksMembershipResponseBean responseBean = new PostFriendsDrinksMembershipResponseBean();
         Result result = backendResponse.getFriendsDrinksInvitationReplyResponse().getResult();
         responseBean.setResult(result.name());
         return responseBean;
     }
 
-    public PostUsersResponseBean handleRemoveUser(String userId, PostUsersRequestBean requestBean)
+    public PostFriendsDrinksMembershipResponseBean handleRemoveUser(String userId, String friendsDrinksId,
+                                                  RemoveUserRequestBean requestBean)
             throws InterruptedException, ExecutionException {
+
+        ReadOnlyKeyValueStore<String, andrewgrant.friendsdrinks.avro.FriendsDrinksState> kv =
+                kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_KEYED_BY_SINGLE_ID_STORE, QueryableStoreTypes.keyValueStore()));
+        FriendsDrinksState friendsDrinksState = kv.get(friendsDrinksId);
+        if (friendsDrinksState == null) {
+            throw new BadRequestException(String.format("FriendsDrinksId %s could not be found", friendsDrinksId));
+        }
+
         final String topicName = envProps.getProperty("friendsdrinks-api.topic.name");
         String requestId = UUID.randomUUID().toString();
-        String friendsDrinksId = requestBean.getFriendsDrinksUuid();
         FriendsDrinksEvent friendsDrinksEvent;
         FriendsDrinksId friendsDrinksIdAvro;
 
         friendsDrinksIdAvro = FriendsDrinksId
                 .newBuilder()
-                .setAdminUserId(requestBean.getAdminUserId())
+                .setAdminUserId(friendsDrinksState.getFriendsDrinksId().getAdminUserId())
                 .setUuid(friendsDrinksId)
                 .build();
         FriendsDrinksRemoveUserRequest removeUserRequest = FriendsDrinksRemoveUserRequest
                 .newBuilder()
                 .setUserIdToRemove(andrewgrant.friendsdrinks.api.avro.UserId
                         .newBuilder()
-                        .setUserId(requestBean.getUserToRemove())
+                        .setUserId(requestBean.getUserId())
                         .build())
                 .setRequestId(requestId)
                 .setFriendsDrinksId(friendsDrinksIdAvro)
@@ -374,16 +376,16 @@ public class Handler {
         friendsDrinksKafkaProducer.send(record).get();
 
         FriendsDrinksEvent backendResponse = getApiResponse(requestId);
-        PostUsersResponseBean responseBean = new PostUsersResponseBean();
+        PostFriendsDrinksMembershipResponseBean responseBean = new PostFriendsDrinksMembershipResponseBean();
         Result result = backendResponse.getFriendsDrinksRemoveUserResponse().getResult();
         responseBean.setResult(result.name());
         return responseBean;
     }
 
-    public PostUsersResponseBean handleAddUser(String userId, PostUsersRequestBean requestBean) throws InterruptedException, ExecutionException {
+    public PostFriendsDrinksMembershipResponseBean handleAddUser(String userId, String friendsDrinksId,
+                                                                 AddUserRequestBean requestBean) throws InterruptedException, ExecutionException {
         final String topicName = envProps.getProperty("friendsdrinks-api.topic.name");
         String requestId = UUID.randomUUID().toString();
-        String friendsDrinksId = requestBean.getFriendsDrinksUuid();
         FriendsDrinksEvent friendsDrinksEvent;
         FriendsDrinksId friendsDrinksIdAvro;
 
@@ -414,7 +416,7 @@ public class Handler {
         friendsDrinksKafkaProducer.send(record).get();
 
         FriendsDrinksEvent backendResponse = getApiResponse(requestId);
-        PostUsersResponseBean responseBean = new PostUsersResponseBean();
+        PostFriendsDrinksMembershipResponseBean responseBean = new PostFriendsDrinksMembershipResponseBean();
         Result result = backendResponse.getFriendsDrinksInvitationResponse().getResult();
         responseBean.setResult(result.name());
         return responseBean;

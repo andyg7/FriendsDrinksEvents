@@ -57,7 +57,7 @@ public class StreamsService {
         final String frontendPrivateTopicName = envProps.getProperty("frontend-private.topic.name");
         buildResponsesStore(builder, apiEvents, apiAvroBuilder, frontendPrivateTopicName);
 
-        builder.stream(envProps.getProperty("friendsdrinks-keyed-by-admin-user-id-state"),
+        builder.stream(envProps.getProperty("friendsdrinks-keyed-by-admin-user-id-state.topic.name"),
                 Consumed.with(Serdes.String(), avroBuilder.friendsDrinksIdListSerde()))
                 .mapValues(value -> {
                     FriendsDrinksIdList idList = FriendsDrinksIdList
@@ -77,7 +77,8 @@ public class StreamsService {
                                 .withValueSerde(apiAvroBuilder.apiFriendsDrinksIdListSerde()));
 
 
-        KStream<String, FriendsDrinksIdList> membersStream = builder.stream(envProps.getProperty("friendsdrinks-membership-keyed-by-user-id-state"),
+        KStream<String, FriendsDrinksIdList> membersStream = builder.stream(
+                envProps.getProperty("friendsdrinks-membership-keyed-by-user-id-state.topic.name"),
                 Consumed.with(membershipAvroBuilder.userIdSerdes(), membershipAvroBuilder.friendsDrinksMembershipIdListSerdes()))
                 .map((key, value) -> {
                     if (value == null) {
