@@ -3,7 +3,6 @@
   "type": "record",
   "name": "FriendsDrinksMembershipState",
   "fields": [
-      {"name": "membershipId", "type": "FriendsDrinksMembershipId" },
-      {"name": "status", "type": {"type": "enum", "name": "Status", "symbols": ["ACTIVE"] } }
+      {"name": "membershipId", "type": "FriendsDrinksMembershipId" }
   ]
 }

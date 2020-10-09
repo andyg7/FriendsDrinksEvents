@@ -3,6 +3,8 @@ package andrewgrant.friendsdrinks;
 import java.util.HashMap;
 import java.util.Map;
 
+import andrewgrant.friendsdrinks.avro.*;
+
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
@@ -25,10 +27,8 @@ public class AvroBuilder {
         this.registryClient = registryClient;
     }
 
-
-
-    public SpecificAvroSerde<andrewgrant.friendsdrinks.avro.FriendsDrinksState> friendsDrinksStateSerde() {
-        SpecificAvroSerde<andrewgrant.friendsdrinks.avro.FriendsDrinksState> serde;
+    public SpecificAvroSerde<FriendsDrinksState> friendsDrinksStateSerde() {
+        SpecificAvroSerde<FriendsDrinksState> serde;
         if (registryClient != null) {
             serde = new SpecificAvroSerde<>(registryClient);
         } else {
@@ -40,8 +40,8 @@ public class AvroBuilder {
         return serde;
     }
 
-    public SpecificAvroSerde<andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> friendsDrinksEventSerde() {
-        SpecificAvroSerde<andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> serde;
+    public SpecificAvroSerde<FriendsDrinksEvent> friendsDrinksEventSerde() {
+        SpecificAvroSerde<FriendsDrinksEvent> serde;
         if (registryClient != null) {
             serde = new SpecificAvroSerde<>(registryClient);
         } else {
@@ -53,8 +53,8 @@ public class AvroBuilder {
         return serde;
     }
 
-    public SpecificAvroSerde<andrewgrant.friendsdrinks.avro.FriendsDrinksId> friendsDrinksIdSerde() {
-        SpecificAvroSerde<andrewgrant.friendsdrinks.avro.FriendsDrinksId> serde;
+    public SpecificAvroSerde<FriendsDrinksId> friendsDrinksIdSerde() {
+        SpecificAvroSerde<FriendsDrinksId> serde;
         if (registryClient != null) {
             serde = new SpecificAvroSerde<>(registryClient);
         } else {
@@ -67,8 +67,21 @@ public class AvroBuilder {
     }
 
 
-    public SpecificAvroSerde<andrewgrant.friendsdrinks.avro.FriendsDrinksStateAggregate> friendsDrinksStateAggregateSerde() {
-        SpecificAvroSerde<andrewgrant.friendsdrinks.avro.FriendsDrinksStateAggregate> serde;
+    public SpecificAvroSerde<FriendsDrinksStateAggregate> friendsDrinksStateAggregateSerde() {
+        SpecificAvroSerde<FriendsDrinksStateAggregate> serde;
+        if (registryClient != null) {
+            serde = new SpecificAvroSerde<>(registryClient);
+        } else {
+            serde = new SpecificAvroSerde<>();
+        }
+        Map<String, String> config = new HashMap<>();
+        config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, registryUrl);
+        serde.configure(config, false);
+        return serde;
+    }
+
+    public SpecificAvroSerde<FriendsDrinksIdList> friendsDrinksIdListSerde() {
+        SpecificAvroSerde<FriendsDrinksIdList> serde;
         if (registryClient != null) {
             serde = new SpecificAvroSerde<>(registryClient);
         } else {

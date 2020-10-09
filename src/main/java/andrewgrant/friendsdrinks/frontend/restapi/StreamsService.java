@@ -25,6 +25,7 @@ public class StreamsService {
 
     public static final String RESPONSES_STORE = "api-response-store";
     public static final String FRIENDSDRINKS_STORE = "friendsdrinks-store";
+    public static final String MEMBERS_STORE = "members-store";
     public static final String FRIENDSDRINKS_KEYED_BY_SINGLE_ID_STORE = "friendsdrinks-keyed-by-single-id-store";
     public static final String PENDING_INVITATIONS_STORE = "pending-invitations-store";
     private KafkaStreams streams;

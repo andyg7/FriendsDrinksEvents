@@ -12,6 +12,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
@@ -74,8 +76,51 @@ public class WriterService {
 
         friendsDrinksStateStream.to(envProps.getProperty("friendsdrinks-state.topic.name"),
                 Produced.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksStateSerde()));
+        KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable = builder.table(envProps.getProperty("friendsdrinks-state.topic.name"),
+                Consumed.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksStateSerde()));
+        buildFriendsDrinksStateKeyedByAdminUserIdView(friendsDrinksStateKTable, envProps, avroBuilder);
 
         return builder.build();
+    }
+
+    private void buildFriendsDrinksStateKeyedByAdminUserIdView(KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable,
+                                                               Properties envProps, AvroBuilder avroBuilder) {
+        friendsDrinksStateKTable.groupBy(((key, value) ->
+                        KeyValue.pair(value.getFriendsDrinksId().getAdminUserId(), value)),
+                Grouped.with(Serdes.String(), avroBuilder.friendsDrinksStateSerde()))
+                .aggregate(
+                        () -> FriendsDrinksIdList.newBuilder().setIds(new ArrayList<>()).build(),
+                        (aggKey, newValue, aggValue) -> {
+                            List<FriendsDrinksId> ids = aggValue.getIds();
+                            ids.add(newValue.getFriendsDrinksId());
+                            FriendsDrinksIdList idList = FriendsDrinksIdList
+                                    .newBuilder(aggValue)
+                                    .setIds(ids)
+                                    .build();
+                            return idList;
+                        },
+                        (aggKey, oldValue, aggValue) -> {
+                            List<FriendsDrinksId> ids = aggValue.getIds();
+                            for (int i = 0; i < ids.size(); i++) {
+                                if (ids.get(i).equals(oldValue.getFriendsDrinksId())) {
+                                    ids.remove(i);
+                                    break;
+                                }
+                            }
+                            FriendsDrinksIdList idList = FriendsDrinksIdList
+                                    .newBuilder(aggValue)
+                                    .setIds(ids)
+                                    .build();
+                            return idList;
+                        },
+                        Materialized.<String, FriendsDrinksIdList, KeyValueStore<Bytes, byte[]>>
+                                as("friendsdrinks-keyed-by-admin-user-id-state-store")
+                                .withKeySerde(Serdes.String())
+                                .withValueSerde(avroBuilder.friendsDrinksIdListSerde())
+                )
+                .toStream().to(envProps.getProperty("friendsdrinks-keyed-by-admin-user-id-state"),
+                Produced.with(Serdes.String(), avroBuilder.friendsDrinksIdListSerde()));
+
     }
 
     private KStream<String, FriendsDrinksEvent> streamOfSuccessfulResponses(KStream<String, FriendsDrinksEvent> apiEvents) {
