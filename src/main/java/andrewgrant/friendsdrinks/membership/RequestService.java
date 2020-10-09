@@ -112,12 +112,7 @@ public class RequestService {
                                         if (request.getRequester().getUserId().equals(state.getFriendsDrinksId().getAdminUserId())) {
                                             removeUserResult.failed = false;
                                         } else {
-                                            if (state.getUserIds() != null &&
-                                                    state.getUserIds().contains(request.getUserIdToRemove().getUserId())) {
-                                                removeUserResult.failed = false;
-                                            } else {
-                                                removeUserResult.failed = true;
-                                            }
+                                            removeUserResult.failed = true;
                                         }
                                     } else {
                                         removeUserResult.failed = true;
@@ -207,14 +202,7 @@ public class RequestService {
                             InvitationResult invitationResult = new InvitationResult();
                             invitationResult.invitationRequest = request;
                             if (state != null) {
-                                if (state.getUserIds() != null &&
-                                        state.getUserIds().contains(request.getUserId()) ||
-                                        state.getFriendsDrinksId().getAdminUserId().equals(request.getUserId().getUserId())) {
-                                    invitationResult.failed = true;
-                                } else {
-                                    // Confirms the FriendsDrinks exists.
-                                    invitationResult.failed = false;
-                                }
+                                invitationResult.failed = false;
                             } else {
                                 invitationResult.failed = true;
                             }

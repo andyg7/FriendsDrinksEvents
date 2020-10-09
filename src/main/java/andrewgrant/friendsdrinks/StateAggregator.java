@@ -1,9 +1,5 @@
 package andrewgrant.friendsdrinks;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import andrewgrant.friendsdrinks.avro.*;
 
 /**
@@ -62,19 +58,6 @@ public class StateAggregator {
                         .build();
             } else if (newValue.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.DELETED)) {
                 return null;
-            } else if (newValue.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.USER_ADDED)) {
-                FriendsDrinksState.Builder friendsDrinksStateBuilder =
-                        FriendsDrinksState.newBuilder(aggValue.getFriendsDrinksState());
-                List<String> currentUserIds = friendsDrinksStateBuilder.getUserIds();
-                if (currentUserIds == null) {
-                    currentUserIds = new ArrayList<>();
-                }
-                List<String> newUserIds = currentUserIds.stream().collect(Collectors.toList());
-                newUserIds.add(newValue.getFriendsDrinksUserAdded().getUserId());
-                friendsDrinksStateBuilder.setUserIds(newUserIds);
-                return FriendsDrinksStateAggregate.newBuilder()
-                        .setFriendsDrinksState(friendsDrinksStateBuilder.build())
-                        .build();
             } else {
                 throw new RuntimeException(String.format("Unexpected event type %s", newValue.getEventType().name()));
             }

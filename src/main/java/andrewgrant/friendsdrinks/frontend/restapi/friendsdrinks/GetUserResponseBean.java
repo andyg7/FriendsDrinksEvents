@@ -7,7 +7,6 @@ import java.util.List;
  */
 public class GetUserResponseBean {
     private List<FriendsDrinksIdBean> adminFriendsDrinksIds;
-    private List<FriendsDrinksIdBean> memberFriendsDrinksIds;
     private List<FriendsDrinksInvitationBean> invitations;
 
     public List<FriendsDrinksIdBean> getAdminFriendsDrinksIds() {
@@ -16,14 +15,6 @@ public class GetUserResponseBean {
 
     public void setAdminFriendsDrinksIds(List<FriendsDrinksIdBean> adminFriendsDrinksIds) {
         this.adminFriendsDrinksIds = adminFriendsDrinksIds;
-    }
-
-    public List<FriendsDrinksIdBean> getMemberFriendsDrinksIds() {
-        return memberFriendsDrinksIds;
-    }
-
-    public void setMemberFriendsDrinksIds(List<FriendsDrinksIdBean> memberFriendsDrinksIds) {
-        this.memberFriendsDrinksIds = memberFriendsDrinksIds;
     }
 
     public List<FriendsDrinksInvitationBean> getInvitations() {

@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
@@ -60,8 +59,7 @@ public class Handler {
     @GET
     @Path("/friendsdrinks")
     @Produces(MediaType.APPLICATION_JSON)
-    public GetAllFriendsDrinksResponseBean getAllFriendsDrinks(@QueryParam("adminUserId") String adminUserId,
-                                                               @QueryParam("memberUserId") String memberUserId) {
+    public GetAllFriendsDrinksResponseBean getAllFriendsDrinks(@QueryParam("adminUserId") String adminUserId) {
         ReadOnlyKeyValueStore<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState> kv =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_STORE, QueryableStoreTypes.keyValueStore()));
         KeyValueIterator<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState> allKvs = kv.all();
@@ -71,12 +69,6 @@ public class Handler {
             FriendsDrinksState friendsDrinksState = keyValue.value;
             if (adminUserId != null && !friendsDrinksState.getFriendsDrinksId().getAdminUserId().equals(adminUserId)) {
                 continue;
-            }
-            if (memberUserId != null) {
-                List<String> userIds = friendsDrinksState.getUserIds();
-                if (userIds == null || !userIds.contains(memberUserId)) {
-                    continue;
-                }
             }
             friendsDrinksList.add(new FriendsDrinksIdBean(
                     keyValue.value.getFriendsDrinksId().getAdminUserId(),
@@ -102,10 +94,6 @@ public class Handler {
         andrewgrant.friendsdrinks.avro.FriendsDrinksId friendsDrinksId = friendsDrinksState.getFriendsDrinksId();
         response.setFriendsDrinksId(new FriendsDrinksIdBean(friendsDrinksId.getAdminUserId(), friendsDrinksId.getUuid()));
         response.setName(friendsDrinksState.getName());
-
-        if (friendsDrinksState.getUserIds() != null) {
-            response.setUserIds(friendsDrinksState.getUserIds().stream().collect(Collectors.toList()));
-        }
         return response;
     }
 
@@ -113,11 +101,9 @@ public class Handler {
     @Path("/users/{userId}")
     @Produces(MediaType.APPLICATION_JSON)
     public GetUserResponseBean getUser(@PathParam("userId") String userId) {
-        GetAllFriendsDrinksResponseBean adminFriendsDrinks = getAllFriendsDrinks(userId, null);
+        GetAllFriendsDrinksResponseBean adminFriendsDrinks = getAllFriendsDrinks(userId);
         GetUserResponseBean getUserResponseBean = new GetUserResponseBean();
         getUserResponseBean.setAdminFriendsDrinksIds(adminFriendsDrinks.getFriendsDrinkList());
-        GetAllFriendsDrinksResponseBean memberFriendsDrinks = getAllFriendsDrinks(null, userId);
-        getUserResponseBean.setMemberFriendsDrinksIds(memberFriendsDrinks.getFriendsDrinkList());
 
         ReadOnlyKeyValueStore<FriendsDrinksPendingInvitationId, FriendsDrinksPendingInvitation> kv =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(PENDING_INVITATIONS_STORE, QueryableStoreTypes.keyValueStore()));

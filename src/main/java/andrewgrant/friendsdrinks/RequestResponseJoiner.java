@@ -5,12 +5,10 @@ import org.slf4j.LoggerFactory;
 
 import andrewgrant.friendsdrinks.api.avro.CreateFriendsDrinksRequest;
 import andrewgrant.friendsdrinks.api.avro.EventType;
-import andrewgrant.friendsdrinks.api.avro.FriendsDrinksInvitationReplyRequest;
 import andrewgrant.friendsdrinks.api.avro.UpdateFriendsDrinksRequest;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksCreated;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksEvent;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksUpdated;
-import andrewgrant.friendsdrinks.avro.FriendsDrinksUserAdded;
 
 /**
  * Emits FriendsDrinks events from API results.
@@ -78,26 +76,6 @@ public class RequestResponseJoiner {
                             .setAdminUserId(r.getUpdateFriendsDrinksRequest().getFriendsDrinksId().getAdminUserId())
                             .build())
                     .setFriendsDrinksUpdated(friendsDrinks)
-                    .build();
-        } else if (r.getEventType().equals(EventType.FRIENDSDRINKS_INVITATION_REPLY_REQUEST)) {
-            FriendsDrinksInvitationReplyRequest request = r.getFriendsDrinksInvitationReplyRequest();
-            return andrewgrant.friendsdrinks.avro.FriendsDrinksEvent
-                    .newBuilder()
-                    .setEventType(andrewgrant.friendsdrinks.avro.EventType.USER_ADDED)
-                    .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
-                            .newBuilder()
-                            .setAdminUserId(request.getFriendsDrinksId().getAdminUserId())
-                            .setUuid(request.getFriendsDrinksId().getUuid())
-                            .build())
-                    .setFriendsDrinksUserAdded(FriendsDrinksUserAdded
-                            .newBuilder()
-                            .setUserId(request.getUserId().getUserId())
-                            .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
-                                    .newBuilder()
-                                    .setUuid(request.getFriendsDrinksId().getUuid())
-                                    .setAdminUserId(request.getFriendsDrinksId().getAdminUserId())
-                                    .build())
-                            .build())
                     .build();
         } else {
             throw new RuntimeException(

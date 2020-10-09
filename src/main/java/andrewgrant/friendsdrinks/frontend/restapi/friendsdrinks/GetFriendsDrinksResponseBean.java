@@ -1,12 +1,9 @@
 package andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks;
 
-import java.util.List;
-
 /**
  * DTO for GetFriendsDrinksResponse.
  */
 public class GetFriendsDrinksResponseBean {
-    private List<String> userIds;
     private String name;
     private FriendsDrinksIdBean friendsDrinksId;
 
@@ -27,11 +24,4 @@ public class GetFriendsDrinksResponseBean {
         this.name = name;
     }
 
-    public List<String> getUserIds() {
-        return userIds;
-    }
-
-    public void setUserIds(List<String> userIds) {
-        this.userIds = userIds;
-    }
 }
