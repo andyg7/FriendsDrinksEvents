@@ -51,10 +51,6 @@ public class WriterService {
                 .to(envProps.getProperty("friendsdrinks-event.topic.name"),
                         Produced.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksEventSerde()));
 
-        streamFriendsDrinksMembershipEvents(builder, envProps, membershipAvroBuilder)
-                .to(envProps.getProperty("friendsdrinks-event.topic.name"),
-                        Produced.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksEventSerde()));
-
         KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState> friendsDrinksStateStream =
                 builder.stream(envProps.getProperty("friendsdrinks-event.topic.name"),
                         Consumed.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksEventSerde()))
@@ -143,52 +139,6 @@ public class WriterService {
                 EventType.CREATE_FRIENDSDRINKS_REQUEST) ||
                 v.getEventType().equals(EventType.UPDATE_FRIENDSDRINKS_REQUEST) ||
                 v.getEventType().equals(EventType.DELETE_FRIENDSDRINKS_REQUEST));
-    }
-
-    private KStream<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> streamFriendsDrinksMembershipEvents(
-            StreamsBuilder builder, Properties envProps,
-            andrewgrant.friendsdrinks.membership.AvroBuilder membershipAvroBuilder) {
-
-        return builder.stream(envProps.getProperty("friendsdrinks-membership-event.topic.name"),
-                Consumed.with(membershipAvroBuilder.friendsDrinksMembershipIdSerdes(), membershipAvroBuilder.friendsDrinksMembershipEventSerdes()))
-                .map((key, value) -> {
-                    FriendsDrinksId friendsDrinksId = FriendsDrinksId
-                            .newBuilder()
-                            .setUuid(value.getMembershipId().getFriendsDrinksId().getUuid())
-                            .setAdminUserId(value.getMembershipId().getFriendsDrinksId().getAdminUserId())
-                            .build();
-                    andrewgrant.friendsdrinks.avro.FriendsDrinksEvent friendsDrinksEvent;
-                    if (value.getEventType().equals(andrewgrant.friendsdrinks.membership.avro.EventType.USER_ADDED)) {
-                        FriendsDrinksUserAdded friendsDrinksUserAdded = FriendsDrinksUserAdded
-                                .newBuilder()
-                                .setFriendsDrinksId(friendsDrinksId)
-                                .setUserId(value.getMembershipId().getUserId().getUserId())
-                                .build();
-                        friendsDrinksEvent =
-                                andrewgrant.friendsdrinks.avro.FriendsDrinksEvent
-                                        .newBuilder()
-                                        .setEventType(andrewgrant.friendsdrinks.avro.EventType.USER_ADDED)
-                                        .setFriendsDrinksUserAdded(friendsDrinksUserAdded)
-                                        .setFriendsDrinksId(friendsDrinksId)
-                                        .build();
-                    } else if (value.getEventType().equals(andrewgrant.friendsdrinks.membership.avro.EventType.USER_REMOVED)) {
-                        FriendsDrinksUserRemoved friendsDrinksUserRemoved = FriendsDrinksUserRemoved
-                                .newBuilder()
-                                .setFriendsDrinksId(friendsDrinksId)
-                                .setUserId(value.getMembershipId().getUserId().getUserId())
-                                .build();
-                        friendsDrinksEvent =
-                                andrewgrant.friendsdrinks.avro.FriendsDrinksEvent
-                                        .newBuilder()
-                                        .setEventType(andrewgrant.friendsdrinks.avro.EventType.USER_REMOVED)
-                                        .setFriendsDrinksUserRemoved(friendsDrinksUserRemoved)
-                                        .setFriendsDrinksId(friendsDrinksId)
-                                        .build();
-                    } else {
-                        throw new RuntimeException(String.format("Unknown event type %s", value.getEventType().name()));
-                    }
-                    return new KeyValue<>(friendsDrinksId, friendsDrinksEvent);
-                });
     }
 
     public Properties buildStreamsProperties(Properties envProps) {
