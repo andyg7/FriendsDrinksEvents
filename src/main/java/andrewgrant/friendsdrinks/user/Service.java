@@ -50,6 +50,9 @@ public class Service {
                                 return aggValue;
                             } else if (newValue.getEventType().equals(EventType.SIGNED_OUT_SESSION_EXPIRED)) {
                                 return aggValue;
+                            } else if (newValue.getEventType().equals(EventType.DELETED)) {
+                                // Tombstone deleted user.
+                                return null;
                             } else {
                                 throw new RuntimeException(String.format("Unknown event type %s", newValue.getEventType().name()));
                             }

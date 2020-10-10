@@ -3,7 +3,7 @@
   "type": "record",
   "name": "UserEvent",
   "fields": [
-      {"name": "eventType", "type": {"type": "enum", "name": "EventType", "symbols": ["LOGGED_IN", "LOGGED_OUT", "SIGNED_OUT_SESSION_EXPIRED"] } },
+      {"name": "eventType", "type": {"type": "enum", "name": "EventType", "symbols": ["LOGGED_IN", "LOGGED_OUT", "SIGNED_OUT_SESSION_EXPIRED", "DELETED"] } },
       {"name": "userId", "type": "UserId"},
       {"name": "userLoggedIn", "type": ["null", "UserLoggedIn"], "default": null}
   ]
