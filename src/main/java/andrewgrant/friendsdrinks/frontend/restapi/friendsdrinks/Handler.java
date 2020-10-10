@@ -133,7 +133,7 @@ public class Handler {
 
 
     @GET
-    @Path("/friendsdrinks/users/{userId}/homepage")
+    @Path("/users/{userId}/friendsdrinks/homepage")
     @Produces(MediaType.APPLICATION_JSON)
     public GetUserHomepageResponseBean getUser(@PathParam("userId") String userId) {
         GetUserHomepageResponseBean getUserHomepageResponseBean = new GetUserHomepageResponseBean();
@@ -181,7 +181,7 @@ public class Handler {
     }
 
     @POST
-    @Path("/friendsdrinks/users/{userId}")
+    @Path("/users/{userId}/friendsdrinks")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public CreateFriendsDrinksResponseBean createFriendsDrinks(@PathParam("userId") String userId,
@@ -219,7 +219,7 @@ public class Handler {
     }
 
     @POST
-    @Path("/friendsdrinks/{friendsDrinksId}/users/{userId}")
+    @Path("/users/{userId}/friendsdrinks/{friendsDrinksId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public PostFriendsDrinksResponseBean updateFriendsDrinks(@PathParam("userId") String userId,
@@ -259,7 +259,7 @@ public class Handler {
     }
 
     @DELETE
-    @Path("/friendsdrinks/{friendsDrinksId}/users/{userId}")
+    @Path("/users/{userId}/friendsdrinks/{friendsDrinksId}")
     @Produces(MediaType.APPLICATION_JSON)
     public DeleteFriendsDrinksResponseBean deleteFriendsDrinks(
             @PathParam("userId") String userId,
@@ -294,7 +294,7 @@ public class Handler {
     }
 
     @POST
-    @Path("/friendsdrinks/{friendsDrinksId}/membership/users/{userId}")
+    @Path("/users/{userId}/friendsdrinks/{friendsDrinksId}/membership")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public PostFriendsDrinksMembershipResponseBean postFriendsDrinksMembership(@PathParam("userId") String userId,
