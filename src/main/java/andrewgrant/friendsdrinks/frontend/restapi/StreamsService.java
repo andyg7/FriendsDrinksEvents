@@ -60,6 +60,9 @@ public class StreamsService {
         builder.stream(envProps.getProperty("friendsdrinks-keyed-by-admin-user-id-state.topic.name"),
                 Consumed.with(Serdes.String(), avroBuilder.friendsDrinksIdListSerde()))
                 .mapValues(value -> {
+                    if (value == null || value.getIds() == null) {
+                        return null;
+                    }
                     FriendsDrinksIdList idList = FriendsDrinksIdList
                             .newBuilder()
                             .setIds(value.getIds().stream().map(x -> andrewgrant.friendsdrinks.api.avro.FriendsDrinksId
@@ -81,7 +84,7 @@ public class StreamsService {
                 envProps.getProperty("friendsdrinks-membership-keyed-by-user-id-state.topic.name"),
                 Consumed.with(membershipAvroBuilder.userIdSerdes(), membershipAvroBuilder.friendsDrinksMembershipIdListSerdes()))
                 .map((key, value) -> {
-                    if (value == null) {
+                    if (value == null || value.getIds() == null) {
                         return KeyValue.pair(key.getUserId(), null);
                     }
                     String userId = key.getUserId();

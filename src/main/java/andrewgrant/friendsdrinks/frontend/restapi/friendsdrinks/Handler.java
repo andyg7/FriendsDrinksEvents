@@ -474,7 +474,7 @@ public class Handler {
         }
         if (backendResponse == null) {
             throw new RuntimeException(String.format(
-                    "Failed to get UpdateFriendsDrinksResponse for request id %s", requestId));
+                    "Failed to get API response for request id %s", requestId));
         }
 
         return backendResponse;
