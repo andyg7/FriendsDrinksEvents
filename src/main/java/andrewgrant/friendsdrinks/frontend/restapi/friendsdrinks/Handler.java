@@ -255,12 +255,7 @@ public class Handler {
     @Consumes(MediaType.APPLICATION_JSON)
     public PostUsersResponseBean postUsers(@PathParam("userId") String userId, PostUsersRequestBean requestBean)
             throws ExecutionException, InterruptedException {
-        if (requestBean.getEventType().equals(SIGNED_UP) ||
-                requestBean.getEventType().equals(CANCELLED_ACCOUNT)) {
-            return registerUserEvent(userId, requestBean);
-        } else {
-            throw new RuntimeException(String.format("Unknown update type %s", requestBean.getEventType()));
-        }
+        return registerUserEvent(userId, requestBean);
     }
 
     @POST
@@ -271,14 +266,14 @@ public class Handler {
                                                              @PathParam("friendsDrinksId") String friendsDrinksId,
                                                              PostFriendsDrinksMembershipRequestBean requestBean)
             throws ExecutionException, InterruptedException {
-        if (requestBean.getEventType().equals(ADD_USER)) {
+        if (requestBean.getRequestType().equals(ADD_USER)) {
             return handleAddUser(userId, friendsDrinksId, requestBean.getAddUserRequest());
-        } else if (requestBean.getEventType().equals(REPLY_TO_INVITATION)) {
+        } else if (requestBean.getRequestType().equals(REPLY_TO_INVITATION)) {
             return handleReplyToInvitation(userId, friendsDrinksId, requestBean.getReplyToInvitationRequest());
-        } else if (requestBean.getEventType().equals(REMOVE_USER)) {
+        } else if (requestBean.getRequestType().equals(REMOVE_USER)) {
             return handleRemoveUser(userId, friendsDrinksId, requestBean.getRemoveUserRequest());
         } else {
-            throw new RuntimeException(String.format("Unknown update type %s", requestBean.getEventType()));
+            throw new RuntimeException(String.format("Unknown update type %s", requestBean.getRequestType()));
         }
     }
 

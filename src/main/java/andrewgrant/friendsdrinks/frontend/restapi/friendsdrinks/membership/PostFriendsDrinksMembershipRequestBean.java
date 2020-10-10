@@ -12,7 +12,7 @@ public class PostFriendsDrinksMembershipRequestBean {
     public static final String REMOVE_USER = "REMOVE_USER";
     public static final String REPLY_TO_INVITATION = "REPLY_TO_INVITATION";
 
-    private String eventType;
+    private String requestType;
     private AddUserRequestBean addUserRequest;
     private RemoveUserRequestBean removeUserRequest;
     private ReplyToInvitationRequestBean replyToInvitationRequest;
@@ -41,11 +41,11 @@ public class PostFriendsDrinksMembershipRequestBean {
         this.replyToInvitationRequest = replyToInvitationRequest;
     }
 
-    public String getEventType() {
-        return eventType;
+    public String getRequestType() {
+        return requestType;
     }
 
-    public void setEventType(String eventType) {
-        this.eventType = eventType;
+    public void setRequestType(String requestType) {
+        this.requestType = requestType;
     }
 }
