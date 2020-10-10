@@ -56,6 +56,39 @@ public class Handler {
     }
 
     @GET
+    @Path("/users")
+    @Produces(MediaType.APPLICATION_JSON)
+    public GetUsersResponseBean getAllUsers() {
+        ReadOnlyKeyValueStore<UserId, UserState> kv =
+                kafkaStreams.store(StoreQueryParameters.fromNameAndType(USERS_STORE, QueryableStoreTypes.keyValueStore()));
+        KeyValueIterator<UserId, UserState> allKvs = kv.all();
+        List<UserBean> users = new ArrayList<>();
+        while (allKvs.hasNext()) {
+            KeyValue<UserId, UserState> keyValue = allKvs.next();
+            UserBean userBean = new UserBean();
+            UserState userState = keyValue.value;
+            userBean.setEmail(userState.getEmail());
+            userBean.setUserId(userState.getUserId().getUserId());
+            userBean.setFirstName(userState.getFirstName());
+            userBean.setLastName(userState.getLastName());
+            users.add(userBean);
+        }
+        allKvs.close();
+        GetUsersResponseBean response = new GetUsersResponseBean();
+        response.setUsers(users);
+        return response;
+    }
+
+    @POST
+    @Path("/users/{userId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public PostUsersResponseBean postUsers(@PathParam("userId") String userId, PostUsersRequestBean requestBean)
+            throws ExecutionException, InterruptedException {
+        return registerUserEvent(userId, requestBean);
+    }
+
+    @GET
     @Path("/friendsdrinks")
     @Produces(MediaType.APPLICATION_JSON)
     public GetAllFriendsDrinksResponseBean getAllFriendsDrinks() {
@@ -92,38 +125,15 @@ public class Handler {
         friendsDrinksBean.setAdminUserId(friendsDrinksState.getFriendsDrinksId().getAdminUserId());
         friendsDrinksBean.setFriendsDrinksId(friendsDrinksState.getFriendsDrinksId().getUuid());
         friendsDrinksBean.setName(friendsDrinksState.getName());
-        
+
         GetFriendsDrinksResponseBean response = new GetFriendsDrinksResponseBean();
         response.setFriendsDrinks(friendsDrinksBean);
         return response;
     }
 
-    @GET
-    @Path("/users")
-    @Produces(MediaType.APPLICATION_JSON)
-    public GetUsersResponseBean getAllUsers() {
-        ReadOnlyKeyValueStore<UserId, UserState> kv =
-                kafkaStreams.store(StoreQueryParameters.fromNameAndType(USERS_STORE, QueryableStoreTypes.keyValueStore()));
-        KeyValueIterator<UserId, UserState> allKvs = kv.all();
-        List<UserBean> users = new ArrayList<>();
-        while (allKvs.hasNext()) {
-            KeyValue<UserId, UserState> keyValue = allKvs.next();
-            UserBean userBean = new UserBean();
-            UserState userState = keyValue.value;
-            userBean.setEmail(userState.getEmail());
-            userBean.setUserId(userState.getUserId().getUserId());
-            userBean.setFirstName(userState.getFirstName());
-            userBean.setLastName(userState.getLastName());
-            users.add(userBean);
-        }
-        allKvs.close();
-        GetUsersResponseBean response = new GetUsersResponseBean();
-        response.setUsers(users);
-        return response;
-    }
 
     @GET
-    @Path("/users/homepage/{userId}")
+    @Path("/friendsdrinks/users/{userId}/homepage")
     @Produces(MediaType.APPLICATION_JSON)
     public GetUserHomepageResponseBean getUser(@PathParam("userId") String userId) {
         GetUserHomepageResponseBean getUserHomepageResponseBean = new GetUserHomepageResponseBean();
@@ -171,7 +181,7 @@ public class Handler {
     }
 
     @POST
-    @Path("/users/{userId}/friendsdrinks")
+    @Path("/friendsdrinks/users/{userId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public CreateFriendsDrinksResponseBean createFriendsDrinks(@PathParam("userId") String userId,
@@ -209,7 +219,7 @@ public class Handler {
     }
 
     @POST
-    @Path("/users/{userId}/friendsdrinks/{friendsDrinksId}")
+    @Path("/friendsdrinks/{friendsDrinksId}/users/{userId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public PostFriendsDrinksResponseBean updateFriendsDrinks(@PathParam("userId") String userId,
@@ -249,7 +259,7 @@ public class Handler {
     }
 
     @DELETE
-    @Path("/users/{userId}/friendsdrinks/{friendsDrinksId}")
+    @Path("/friendsdrinks/{friendsDrinksId}/users/{userId}")
     @Produces(MediaType.APPLICATION_JSON)
     public DeleteFriendsDrinksResponseBean deleteFriendsDrinks(
             @PathParam("userId") String userId,
@@ -284,16 +294,7 @@ public class Handler {
     }
 
     @POST
-    @Path("/users/{userId}")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_JSON)
-    public PostUsersResponseBean postUsers(@PathParam("userId") String userId, PostUsersRequestBean requestBean)
-            throws ExecutionException, InterruptedException {
-        return registerUserEvent(userId, requestBean);
-    }
-
-    @POST
-    @Path("/users/{userId}/friendsdrinks/{friendsDrinksId}/membership")
+    @Path("/friendsdrinks/{friendsDrinksId}/membership/users/{userId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public PostFriendsDrinksMembershipResponseBean postFriendsDrinksMembership(@PathParam("userId") String userId,
