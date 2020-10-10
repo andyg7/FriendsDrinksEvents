@@ -22,6 +22,8 @@ import andrewgrant.friendsdrinks.api.avro.EventType;
 import andrewgrant.friendsdrinks.membership.avro.*;
 import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksId;
 import andrewgrant.friendsdrinks.membership.avro.UserId;
+import andrewgrant.friendsdrinks.user.UserAvroBuilder;
+import andrewgrant.friendsdrinks.user.avro.UserState;
 
 /**
  * Owns writing to friendsdrinks-membership-event.
@@ -32,7 +34,8 @@ public class WriterService {
 
     public Topology buildTopology(Properties envProps, AvroBuilder avroBuilder,
                                   andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder apiAvroBuilder,
-                                  andrewgrant.friendsdrinks.AvroBuilder friendsDrinksAvroBuilder) {
+                                  andrewgrant.friendsdrinks.AvroBuilder friendsDrinksAvroBuilder,
+                                  UserAvroBuilder userAvroBuilder) {
         StreamsBuilder builder = new StreamsBuilder();
 
         KStream<String, FriendsDrinksEvent> apiEvents = builder.stream(envProps.getProperty("friendsdrinks-api.topic.name"),
@@ -62,7 +65,7 @@ public class WriterService {
         buildMembershipIdListKeyedByFriendsDrinksIdView(membershipStateKTable, envProps, avroBuilder);
         buildMembershipIdListKeyedByUserIdView(membershipStateKTable, envProps, avroBuilder);
 
-        KTable<FriendsDrinksId, FriendsDrinksMembershipIdList> membershipIdListStateKTable =
+        KTable<FriendsDrinksId, FriendsDrinksMembershipIdList> membershipIdListKeyedByFriendsDrinksIdStateKTable =
                 builder.table(envProps.getProperty("friendsdrinks-membership-keyed-by-friendsdrinks-id-state.topic.name"),
                         Consumed.with(avroBuilder.friendsDrinksIdSerdes(), avroBuilder.friendsDrinksMembershipIdListSerdes()));
 
@@ -70,7 +73,16 @@ public class WriterService {
                 friendsDrinksEventKStream = builder.stream(envProps.getProperty("friendsdrinks-state.topic.name"),
                 Consumed.with(friendsDrinksAvroBuilder.friendsDrinksIdSerde(), friendsDrinksAvroBuilder.friendsDrinksStateSerde()));
 
-        handleDeletedFriendsDrinks(friendsDrinksEventKStream, membershipIdListStateKTable, envProps, avroBuilder);
+        handleDeletedFriendsDrinks(friendsDrinksEventKStream, membershipIdListKeyedByFriendsDrinksIdStateKTable, envProps, avroBuilder);
+
+        KTable<UserId, FriendsDrinksMembershipIdList> membershipIdListKeyedByUserIdStateKTable =
+                builder.table(envProps.getProperty("friendsdrinks-membership-keyed-by-user-id-state.topic.name"),
+                        Consumed.with(avroBuilder.userIdSerdes(), avroBuilder.friendsDrinksMembershipIdListSerdes()));
+
+        KStream<andrewgrant.friendsdrinks.user.avro.UserId, UserState> userEventKStream =
+                builder.stream(envProps.getProperty("user-state.topic.name"),
+                        Consumed.with(userAvroBuilder.userIdSerde(), userAvroBuilder.userStateSerde()));
+        handleDeletedUsers(userEventKStream, membershipIdListKeyedByUserIdStateKTable, envProps, avroBuilder);
 
         return builder.build();
     }
@@ -168,6 +180,46 @@ public class WriterService {
                 Produced.with(avroBuilder.userIdSerdes(), avroBuilder.friendsDrinksMembershipIdListSerdes()));
     }
 
+    private void handleDeletedUsers(KStream<andrewgrant.friendsdrinks.user.avro.UserId, UserState> userStateKStream,
+                                    KTable<UserId, FriendsDrinksMembershipIdList> membershipIdListKTable,
+                                    Properties envProps,
+                                    AvroBuilder avroBuilder) {
+
+        KStream<UserId, FriendsDrinksMembershipId> streamOfMembershipIdsToDelete = userStateKStream
+                .map((key, value) -> {
+                    UserId userId = UserId
+                            .newBuilder()
+                            .setUserId(key.getUserId())
+                            .build();
+                    if (value == null) {
+                        return KeyValue.pair(userId, userId);
+                    } else {
+                        return KeyValue.pair(userId, null);
+                    }
+                })
+                .filter((key, value) -> value != null)
+                .leftJoin(membershipIdListKTable,
+                        (l, r) -> r,
+                        Joined.with(avroBuilder.userIdSerdes(), avroBuilder.userIdSerdes(), avroBuilder.friendsDrinksMembershipIdListSerdes()))
+                .filter((key, value) -> value != null)
+                .flatMapValues(value -> value.getIds());
+
+        streamOfMembershipIdsToDelete.map(((key, value) -> {
+            FriendsDrinksMembershipEvent friendsDrinksMembershipEvent = FriendsDrinksMembershipEvent
+                    .newBuilder()
+                    .setEventType(andrewgrant.friendsdrinks.membership.avro.EventType.USER_REMOVED)
+                    .setMembershipId(value)
+                    .setFriendsDrinksUserRemoved(FriendsDrinksUserRemoved
+                            .newBuilder()
+                            .setMembershipId(value)
+                            .build())
+                    .build();
+            return KeyValue.pair(value, friendsDrinksMembershipEvent);
+        })).to(envProps.getProperty("friendsdrinks-membership-event.topic.name"),
+                Produced.with(avroBuilder.friendsDrinksMembershipIdSerdes(), avroBuilder.friendsDrinksMembershipEventSerdes()));
+    }
+
+
     private void handleDeletedFriendsDrinks(KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState>
                                                     friendsDrinksEventKStream,
                                             KTable<FriendsDrinksId, FriendsDrinksMembershipIdList> membershipIdListKTable,
@@ -256,7 +308,8 @@ public class WriterService {
         AvroBuilder avroBuilder = new AvroBuilder(schemaRegistryUrl);
         Topology topology = writerService.buildTopology(envProps, avroBuilder,
                 new andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder(schemaRegistryUrl),
-                new andrewgrant.friendsdrinks.AvroBuilder(schemaRegistryUrl));
+                new andrewgrant.friendsdrinks.AvroBuilder(schemaRegistryUrl),
+                new UserAvroBuilder(schemaRegistryUrl));
         Properties streamProps = writerService.buildStreamsProperties(envProps);
         KafkaStreams kafkaStreams = new KafkaStreams(topology, streamProps);
         log.info("Starting WriterService application...");
