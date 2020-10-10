@@ -450,6 +450,7 @@ public class Handler {
                             .newBuilder()
                             .setFirstName(requestBean.getLoggedInEvent().getFirstName())
                             .setLastName(requestBean.getLoggedInEvent().getLastName())
+                            .setUserId(userIdAvro)
                             .build())
                     .setUserId(userIdAvro)
                     .build();
