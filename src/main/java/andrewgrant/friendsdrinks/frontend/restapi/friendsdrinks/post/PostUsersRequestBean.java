@@ -7,30 +7,17 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
  */
 @JsonIgnoreProperties
 public class PostUsersRequestBean {
+
     public static final String SIGNED_UP = "SIGNED_UP";
     public static final String CANCELLED_ACCOUNT = "CANCELLED_ACCOUNT";
+    public static final String LOGGED_IN = "LOGGED_IN";
+    public static final String LOGGED_OUT = "LOGGED_OUT";
+    public static final String SIGNED_OUT_SESSION_EXPIRED = "SIGNED_OUT_SESSION_EXPIRED";
 
-    // Options for updateType: INVITE_FRIEND, REPLY_TO_INVITATION.
     private String eventType;
 
-    private String firstName;
-    private String lastName;
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
+    private SignedUpEventBean signedUpEvent;
+    private LoggedInEventBean loggedInEvent;
 
     public PostUsersRequestBean() {
     }
@@ -42,5 +29,22 @@ public class PostUsersRequestBean {
     public void setEventType(String eventType) {
         this.eventType = eventType;
     }
+
+    public SignedUpEventBean getSignedUpEvent() {
+        return signedUpEvent;
+    }
+
+    public void setSignedUpEvent(SignedUpEventBean signedUpEvent) {
+        this.signedUpEvent = signedUpEvent;
+    }
+
+    public LoggedInEventBean getLoggedInEvent() {
+        return loggedInEvent;
+    }
+
+    public void setLoggedInEvent(LoggedInEventBean loggedInEvent) {
+        this.loggedInEvent = loggedInEvent;
+    }
+
 
 }

@@ -45,6 +45,21 @@ public class Service {
                                                 .build())
                                         .build();
                                 return userStateAggregate;
+                            } else if (newValue.getEventType().equals(EventType.LOGGED_IN)) {
+                                UserStateAggregate userStateAggregate = UserStateAggregate
+                                        .newBuilder(aggValue)
+                                        .setUserState(UserState
+                                                .newBuilder()
+                                                .setUserId(newValue.getUserLoggedIn().getUserId())
+                                                .setFirstName(newValue.getUserLoggedIn().getFirstName())
+                                                .setLastName(newValue.getUserLoggedIn().getLastName())
+                                                .build())
+                                        .build();
+                                return userStateAggregate;
+                            } else if (newValue.getEventType().equals(EventType.LOGGED_OUT)) {
+                                return aggValue;
+                            } else if (newValue.getEventType().equals(EventType.SIGNED_OUT_SESSION_EXPIRED)) {
+                                return aggValue;
                             } else if (newValue.getEventType().equals(EventType.CANCELLED_ACCOUNT)) {
                                 return null;
                             } else {

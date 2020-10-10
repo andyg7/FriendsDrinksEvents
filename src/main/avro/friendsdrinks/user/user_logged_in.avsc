@@ -1,0 +1,10 @@
+{
+  "namespace": "andrewgrant.friendsdrinks.user.avro",
+  "type": "record",
+  "name": "UserLoggedIn",
+  "fields": [
+      {"name": "userId", "type": "UserId"},
+      {"name": "firstName", "type": "string" },
+      {"name": "lastName", "type": "string" }
+  ]
+}

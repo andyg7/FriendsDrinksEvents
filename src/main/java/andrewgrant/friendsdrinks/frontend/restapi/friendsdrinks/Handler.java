@@ -2,8 +2,7 @@ package andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks;
 
 import static andrewgrant.friendsdrinks.frontend.restapi.StreamsService.*;
 import static andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.post.PostFriendsDrinksMembershipRequestBean.*;
-import static andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.post.PostUsersRequestBean.CANCELLED_ACCOUNT;
-import static andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.post.PostUsersRequestBean.SIGNED_UP;
+import static andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.post.PostUsersRequestBean.*;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -28,6 +27,7 @@ import andrewgrant.friendsdrinks.avro.FriendsDrinksState;
 import andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.post.*;
 import andrewgrant.friendsdrinks.user.avro.UserEvent;
 import andrewgrant.friendsdrinks.user.avro.UserId;
+import andrewgrant.friendsdrinks.user.avro.UserLoggedIn;
 import andrewgrant.friendsdrinks.user.avro.UserSignedUp;
 
 /**
@@ -430,8 +430,8 @@ public class Handler {
         if (eventType.equals(SIGNED_UP)) {
             UserSignedUp userSignedUp = UserSignedUp.newBuilder()
                     .setUserId(userIdAvro)
-                    .setFirstName(requestBean.getFirstName())
-                    .setLastName(requestBean.getLastName())
+                    .setFirstName(requestBean.getSignedUpEvent().getFirstName())
+                    .setLastName(requestBean.getSignedUpEvent().getLastName())
                     .build();
             userEvent = UserEvent
                     .newBuilder()
@@ -443,6 +443,29 @@ public class Handler {
             userEvent = UserEvent
                     .newBuilder()
                     .setEventType(andrewgrant.friendsdrinks.user.avro.EventType.CANCELLED_ACCOUNT)
+                    .setUserId(userIdAvro)
+                    .build();
+        } else if (eventType.equals(LOGGED_IN)) {
+            userEvent = UserEvent
+                    .newBuilder()
+                    .setEventType(andrewgrant.friendsdrinks.user.avro.EventType.LOGGED_IN)
+                    .setUserLoggedIn(UserLoggedIn
+                            .newBuilder()
+                            .setFirstName(requestBean.getLoggedInEvent().getFirstName())
+                            .setLastName(requestBean.getLoggedInEvent().getLastName())
+                            .build())
+                    .setUserId(userIdAvro)
+                    .build();
+        } else if (eventType.equals(LOGGED_OUT)) {
+            userEvent = UserEvent
+                    .newBuilder()
+                    .setEventType(andrewgrant.friendsdrinks.user.avro.EventType.LOGGED_OUT)
+                    .setUserId(userIdAvro)
+                    .build();
+        } else if (eventType.equals(SIGNED_OUT_SESSION_EXPIRED)) {
+            userEvent = UserEvent
+                    .newBuilder()
+                    .setEventType(andrewgrant.friendsdrinks.user.avro.EventType.SIGNED_OUT_SESSION_EXPIRED)
                     .setUserId(userIdAvro)
                     .build();
         } else {
