@@ -11,6 +11,7 @@ public class PostUsersRequestBean {
     public static final String LOGGED_IN = "LOGGED_IN";
     public static final String LOGGED_OUT = "LOGGED_OUT";
     public static final String SIGNED_OUT_SESSION_EXPIRED = "SIGNED_OUT_SESSION_EXPIRED";
+    public static final String DELETED = "DELETED";
 
     private String eventType;
 

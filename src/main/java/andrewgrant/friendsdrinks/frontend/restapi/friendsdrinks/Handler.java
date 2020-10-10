@@ -448,6 +448,12 @@ public class Handler {
                     .setEventType(andrewgrant.friendsdrinks.user.avro.EventType.SIGNED_OUT_SESSION_EXPIRED)
                     .setUserId(userIdAvro)
                     .build();
+        } else if (eventType.equals(DELETED)) {
+            userEvent = UserEvent
+                    .newBuilder()
+                    .setEventType(andrewgrant.friendsdrinks.user.avro.EventType.DELETED)
+                    .setUserId(userIdAvro)
+                    .build();
         } else {
             throw new RuntimeException(String.format("Unknown event type %s", eventType));
         }
