@@ -6,25 +6,24 @@ import java.util.List;
  * DTO for GetUserResponse.
  */
 public class GetUserResponseBean {
-
-    private List<String> adminFriendsDrinksIds;
-    private List<String> memberFriendsDrinksIds;
+    private List<FriendsDrinksBean> adminFriendsDrinks;
+    private List<FriendsDrinksBean> memberFriendsDrinks;
     private List<FriendsDrinksInvitationBean> invitations;
 
-    public List<String> getAdminFriendsDrinksIds() {
-        return adminFriendsDrinksIds;
+    public List<FriendsDrinksBean> getAdminFriendsDrinks() {
+        return adminFriendsDrinks;
     }
 
-    public void setAdminFriendsDrinksIds(List<String> adminFriendsDrinksIds) {
-        this.adminFriendsDrinksIds = adminFriendsDrinksIds;
+    public void setAdminFriendsDrinks(List<FriendsDrinksBean> adminFriendsDrinks) {
+        this.adminFriendsDrinks = adminFriendsDrinks;
     }
 
-    public List<String> getMemberFriendsDrinksIds() {
-        return memberFriendsDrinksIds;
+    public List<FriendsDrinksBean> getMemberFriendsDrinks() {
+        return memberFriendsDrinks;
     }
 
-    public void setMemberFriendsDrinksIds(List<String> memberFriendsDrinksIds) {
-        this.memberFriendsDrinksIds = memberFriendsDrinksIds;
+    public void setMemberFriendsDrinks(List<FriendsDrinksBean> memberFriendsDrinks) {
+        this.memberFriendsDrinks = memberFriendsDrinks;
     }
 
     public List<FriendsDrinksInvitationBean> getInvitations() {
