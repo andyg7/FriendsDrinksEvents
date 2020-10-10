@@ -76,11 +76,10 @@ public class RequestService {
                         (request, state) -> {
                             RemoveUserResult removeUserResult = new RemoveUserResult();
                             removeUserResult.friendsDrinksRemoveUserRequest = request;
-                            if (state != null) {
-                                removeUserResult.failed = false;
-                            } else {
-                                removeUserResult.failed = true;
+                            if (state == null) {
+                                log.warn(String.format("Failed to find user ID %s", request.getUserIdToRemove().getUserId()));
                             }
+                            removeUserResult.failed = false;
                             return removeUserResult;
                         },
                         Joined.with(userAvroBuilder.userIdSerde(),

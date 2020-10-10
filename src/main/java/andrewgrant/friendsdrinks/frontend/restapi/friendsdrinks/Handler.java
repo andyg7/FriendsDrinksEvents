@@ -25,11 +25,14 @@ import javax.ws.rs.core.MediaType;
 import andrewgrant.friendsdrinks.api.avro.*;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksState;
 import andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.membership.*;
+import andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.user.GetUsersResponseBean;
 import andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.user.PostUsersRequestBean;
 import andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.user.PostUsersResponseBean;
+import andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.user.UserBean;
 import andrewgrant.friendsdrinks.user.avro.UserEvent;
 import andrewgrant.friendsdrinks.user.avro.UserId;
 import andrewgrant.friendsdrinks.user.avro.UserLoggedIn;
+import andrewgrant.friendsdrinks.user.avro.UserState;
 
 /**
  * Implements frontend REST API.
@@ -88,7 +91,31 @@ public class Handler {
     }
 
     @GET
-    @Path("/users/{userId}")
+    @Path("/users")
+    @Produces(MediaType.APPLICATION_JSON)
+    public GetUsersResponseBean getAllUsers() {
+        ReadOnlyKeyValueStore<UserId, UserState> kv =
+                kafkaStreams.store(StoreQueryParameters.fromNameAndType(USERS_STORE, QueryableStoreTypes.keyValueStore()));
+        KeyValueIterator<UserId, UserState> allKvs = kv.all();
+        List<UserBean> users = new ArrayList<>();
+        while (allKvs.hasNext()) {
+            KeyValue<UserId, UserState> keyValue = allKvs.next();
+            UserBean userBean = new UserBean();
+            UserState userState = keyValue.value;
+            userBean.setEmail(userState.getEmail());
+            userBean.setUserId(userState.getUserId().getUserId());
+            userBean.setFirstName(userState.getFirstName());
+            userBean.setLastName(userState.getLastName());
+            users.add(userBean);
+        }
+        allKvs.close();
+        GetUsersResponseBean response = new GetUsersResponseBean();
+        response.setUsers(users);
+        return response;
+    }
+
+    @GET
+    @Path("/users/homepage/{userId}")
     @Produces(MediaType.APPLICATION_JSON)
     public GetUserResponseBean getUser(@PathParam("userId") String userId) {
         GetUserResponseBean getUserResponseBean = new GetUserResponseBean();

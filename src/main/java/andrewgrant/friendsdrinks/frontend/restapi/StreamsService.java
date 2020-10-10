@@ -17,6 +17,7 @@ import andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent;
 import andrewgrant.friendsdrinks.api.avro.FriendsDrinksIdList;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksId;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksState;
+import andrewgrant.friendsdrinks.user.UserAvroBuilder;
 
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 
@@ -29,6 +30,7 @@ public class StreamsService {
     public static final String FRIENDSDRINKS_STORE = "friendsdrinks-store";
     public static final String MEMBERS_STORE = "members-store";
     public static final String ADMINS_STORE = "admins-store";
+    public static final String USERS_STORE = "users-store";
     public static final String FRIENDSDRINKS_KEYED_BY_SINGLE_ID_STORE = "friendsdrinks-keyed-by-single-id-store";
     public static final String PENDING_INVITATIONS_STORE = "pending-invitations-store";
     private KafkaStreams streams;
@@ -37,8 +39,9 @@ public class StreamsService {
                           String uri,
                           AvroBuilder avroBuilder,
                           andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder apiAvroBuilder,
-                          andrewgrant.friendsdrinks.membership.AvroBuilder membershipAvroBuilder) {
-        Topology topology = buildTopology(envProps, avroBuilder, apiAvroBuilder, membershipAvroBuilder);
+                          andrewgrant.friendsdrinks.membership.AvroBuilder membershipAvroBuilder,
+                          UserAvroBuilder userAvroBuilder) {
+        Topology topology = buildTopology(envProps, avroBuilder, apiAvroBuilder, membershipAvroBuilder, userAvroBuilder);
         Properties streamProps = buildStreamsProperties(envProps, uri);
         streams = new KafkaStreams(topology, streamProps);
     }
@@ -46,7 +49,8 @@ public class StreamsService {
     private Topology buildTopology(Properties envProps,
                                    AvroBuilder avroBuilder,
                                    andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder apiAvroBuilder,
-                                   andrewgrant.friendsdrinks.membership.AvroBuilder membershipAvroBuilder) {
+                                   andrewgrant.friendsdrinks.membership.AvroBuilder membershipAvroBuilder,
+                                   UserAvroBuilder userAvroBuilder) {
         final StreamsBuilder builder = new StreamsBuilder();
         final String apiTopicName = envProps.getProperty("friendsdrinks-api.topic.name");
 
@@ -56,6 +60,7 @@ public class StreamsService {
 
         final String frontendPrivateTopicName = envProps.getProperty("frontend-private.topic.name");
         buildResponsesStore(builder, apiEvents, apiAvroBuilder, frontendPrivateTopicName);
+
 
         builder.stream(envProps.getProperty("friendsdrinks-keyed-by-admin-user-id-state.topic.name"),
                 Consumed.with(Serdes.String(), avroBuilder.friendsDrinksIdListSerde()))
@@ -128,6 +133,10 @@ public class StreamsService {
         builder.table(pendingInvitationsTopicName,
                 Consumed.with(apiAvroBuilder.friendsDrinksPendingInvitationIdSerde(), apiAvroBuilder.friendsDrinksPendingInvitationSerde()),
                 Materialized.as(PENDING_INVITATIONS_STORE));
+
+        builder.table(envProps.getProperty("user-state.topic.name"),
+                Consumed.with(userAvroBuilder.userIdSerde(), userAvroBuilder.userStateSerde()),
+                Materialized.as(USERS_STORE));
 
         return builder.build();
     }
