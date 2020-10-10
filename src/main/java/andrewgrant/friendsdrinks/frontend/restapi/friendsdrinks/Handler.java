@@ -1,8 +1,8 @@
 package andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks;
 
 import static andrewgrant.friendsdrinks.frontend.restapi.StreamsService.*;
-import static andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.post.PostFriendsDrinksMembershipRequestBean.*;
-import static andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.post.PostUsersRequestBean.*;
+import static andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.membership.PostFriendsDrinksMembershipRequestBean.*;
+import static andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.user.PostUsersRequestBean.*;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -24,7 +24,9 @@ import javax.ws.rs.core.MediaType;
 
 import andrewgrant.friendsdrinks.api.avro.*;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksState;
-import andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.post.*;
+import andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.membership.*;
+import andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.user.PostUsersRequestBean;
+import andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.user.PostUsersResponseBean;
 import andrewgrant.friendsdrinks.user.avro.UserEvent;
 import andrewgrant.friendsdrinks.user.avro.UserId;
 import andrewgrant.friendsdrinks.user.avro.UserLoggedIn;

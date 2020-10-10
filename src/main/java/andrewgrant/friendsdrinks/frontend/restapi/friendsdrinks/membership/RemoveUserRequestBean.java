@@ -1,4 +1,4 @@
-package andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.post;
+package andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.membership;
 
 /**
  * DTO for RemoveUserRequest.
