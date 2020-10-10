@@ -62,10 +62,15 @@ public class Handler {
         ReadOnlyKeyValueStore<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState> kv =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_STORE, QueryableStoreTypes.keyValueStore()));
         KeyValueIterator<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState> allKvs = kv.all();
-        List<String> friendsDrinksList = new ArrayList<>();
+        List<FriendsDrinksBean> friendsDrinksList = new ArrayList<>();
         while (allKvs.hasNext()) {
             KeyValue<FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState> keyValue = allKvs.next();
-            friendsDrinksList.add(keyValue.value.getFriendsDrinksId().getUuid());
+            FriendsDrinksState friendsDrinksState = keyValue.value;
+            FriendsDrinksBean friendsDrinksBean = new FriendsDrinksBean();
+            friendsDrinksBean.setName(friendsDrinksState.getName());
+            friendsDrinksBean.setFriendsDrinksId(friendsDrinksState.getFriendsDrinksId().getUuid());
+            friendsDrinksBean.setAdminUserId(friendsDrinksState.getFriendsDrinksId().getAdminUserId());
+            friendsDrinksList.add(friendsDrinksBean);
         }
         allKvs.close();
         GetAllFriendsDrinksResponseBean response = new GetAllFriendsDrinksResponseBean();
@@ -83,10 +88,13 @@ public class Handler {
         if (friendsDrinksState == null) {
             throw new BadRequestException(String.format("%s does not exist", friendsDrinksId));
         }
+        FriendsDrinksBean friendsDrinksBean = new FriendsDrinksBean();
+        friendsDrinksBean.setAdminUserId(friendsDrinksState.getFriendsDrinksId().getAdminUserId());
+        friendsDrinksBean.setFriendsDrinksId(friendsDrinksState.getFriendsDrinksId().getUuid());
+        friendsDrinksBean.setName(friendsDrinksState.getName());
+        
         GetFriendsDrinksResponseBean response = new GetFriendsDrinksResponseBean();
-        response.setFriendsDrinksId(friendsDrinksId);
-        response.setName(friendsDrinksState.getName());
-        response.setAdminUserId(friendsDrinksState.getFriendsDrinksId().getAdminUserId());
+        response.setFriendsDrinks(friendsDrinksBean);
         return response;
     }
 

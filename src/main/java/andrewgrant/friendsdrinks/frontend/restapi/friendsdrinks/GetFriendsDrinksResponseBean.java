@@ -4,34 +4,14 @@ package andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks;
  * DTO for GetFriendsDrinksResponse.
  */
 public class GetFriendsDrinksResponseBean {
-    private String name;
-    private String friendsDrinksId;
-    private String adminUserId;
+    private FriendsDrinksBean friendsDrinks;
 
-    public String getAdminUserId() {
-        return adminUserId;
+    public FriendsDrinksBean getFriendsDrinks() {
+        return friendsDrinks;
     }
 
-    public void setAdminUserId(String adminUserId) {
-        this.adminUserId = adminUserId;
-    }
-
-
-    public String getFriendsDrinksId() {
-        return friendsDrinksId;
-    }
-
-    public void setFriendsDrinksId(String friendsDrinksId) {
-        this.friendsDrinksId = friendsDrinksId;
-    }
-
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
+    public void setFriendsDrinks(FriendsDrinksBean friendsDrinks) {
+        this.friendsDrinks = friendsDrinks;
     }
 
 }

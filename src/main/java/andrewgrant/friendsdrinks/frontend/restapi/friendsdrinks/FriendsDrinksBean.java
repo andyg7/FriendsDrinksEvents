@@ -1,14 +1,20 @@
 package andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks;
 
-import java.util.List;
-
 /**
  * DTO for FriendsDrinksBean.
  */
 public class FriendsDrinksBean {
+    private String adminUserId;
     private String friendsDrinksId;
-    private List<String> userIds;
     private String name;
+
+    public String getAdminUserId() {
+        return adminUserId;
+    }
+
+    public void setAdminUserId(String adminUserId) {
+        this.adminUserId = adminUserId;
+    }
 
     public String getName() {
         return name;
@@ -16,14 +22,6 @@ public class FriendsDrinksBean {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public List<String> getUserIds() {
-        return userIds;
-    }
-
-    public void setUserIds(List<String> userIds) {
-        this.userIds = userIds;
     }
 
     public String getFriendsDrinksId() {
