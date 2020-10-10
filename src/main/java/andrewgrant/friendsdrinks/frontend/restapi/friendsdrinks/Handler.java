@@ -117,8 +117,8 @@ public class Handler {
     @GET
     @Path("/users/homepage/{userId}")
     @Produces(MediaType.APPLICATION_JSON)
-    public GetUserResponseBean getUser(@PathParam("userId") String userId) {
-        GetUserResponseBean getUserResponseBean = new GetUserResponseBean();
+    public GetUserHomepageResponseBean getUser(@PathParam("userId") String userId) {
+        GetUserHomepageResponseBean getUserHomepageResponseBean = new GetUserHomepageResponseBean();
 
         ReadOnlyKeyValueStore<String, FriendsDrinksIdList> adminStore =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(ADMINS_STORE, QueryableStoreTypes.keyValueStore()));
@@ -127,9 +127,9 @@ public class Handler {
                 friendsDrinksIdList1.getIds().size() > 0) {
             List<String> ids = friendsDrinksIdList1.getIds().stream()
                     .map(x  -> x.getUuid()).collect(Collectors.toList());
-            getUserResponseBean.setAdminFriendsDrinksIds(ids);
+            getUserHomepageResponseBean.setAdminFriendsDrinksIds(ids);
         } else {
-            getUserResponseBean.setAdminFriendsDrinksIds(new ArrayList<>());
+            getUserHomepageResponseBean.setAdminFriendsDrinksIds(new ArrayList<>());
         }
 
         ReadOnlyKeyValueStore<String, FriendsDrinksIdList> membershipStore =
@@ -138,9 +138,9 @@ public class Handler {
         if (friendsDrinksIdList2 != null && friendsDrinksIdList2.getIds() != null &&
                 friendsDrinksIdList2.getIds().size() > 0) {
             List<String> ids = friendsDrinksIdList2.getIds().stream().map(x  -> x.getUuid()).collect(Collectors.toList());
-            getUserResponseBean.setMemberFriendsDrinksIds(ids);
+            getUserHomepageResponseBean.setMemberFriendsDrinksIds(ids);
         } else {
-            getUserResponseBean.setMemberFriendsDrinksIds(new ArrayList<>());
+            getUserHomepageResponseBean.setMemberFriendsDrinksIds(new ArrayList<>());
         }
 
         ReadOnlyKeyValueStore<FriendsDrinksPendingInvitationId, FriendsDrinksPendingInvitation> kv =
@@ -157,9 +157,9 @@ public class Handler {
             }
         }
         allKvs.close();
-        getUserResponseBean.setInvitations(invitationBeans);
+        getUserHomepageResponseBean.setInvitations(invitationBeans);
 
-        return getUserResponseBean;
+        return getUserHomepageResponseBean;
     }
 
     @POST

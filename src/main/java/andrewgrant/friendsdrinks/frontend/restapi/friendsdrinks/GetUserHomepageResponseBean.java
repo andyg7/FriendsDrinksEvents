@@ -5,7 +5,7 @@ import java.util.List;
 /**
  * DTO for GetUserResponse.
  */
-public class GetUserResponseBean {
+public class GetUserHomepageResponseBean {
 
     private List<String> adminFriendsDrinksIds;
     private List<String> memberFriendsDrinksIds;
