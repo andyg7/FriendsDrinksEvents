@@ -42,6 +42,7 @@ public class Service {
                                                 .setUserId(newValue.getUserLoggedIn().getUserId())
                                                 .setFirstName(newValue.getUserLoggedIn().getFirstName())
                                                 .setLastName(newValue.getUserLoggedIn().getLastName())
+                                                .setEmail(newValue.getUserLoggedIn().getEmail())
                                                 .build())
                                         .build();
                                 return userStateAggregate;

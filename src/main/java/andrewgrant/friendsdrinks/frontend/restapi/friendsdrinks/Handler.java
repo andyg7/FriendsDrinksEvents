@@ -431,6 +431,7 @@ public class Handler {
                             .newBuilder()
                             .setFirstName(requestBean.getLoggedInEvent().getFirstName())
                             .setLastName(requestBean.getLoggedInEvent().getLastName())
+                            .setEmail(requestBean.getLoggedInEvent().getEmail())
                             .setUserId(userIdAvro)
                             .build())
                     .setUserId(userIdAvro)
