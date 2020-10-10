@@ -30,7 +30,6 @@ import andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.user.PostUsersRe
 import andrewgrant.friendsdrinks.user.avro.UserEvent;
 import andrewgrant.friendsdrinks.user.avro.UserId;
 import andrewgrant.friendsdrinks.user.avro.UserLoggedIn;
-import andrewgrant.friendsdrinks.user.avro.UserSignedUp;
 
 /**
  * Implements frontend REST API.
@@ -424,25 +423,7 @@ public class Handler {
         final String topicName = envProps.getProperty("user-event.topic.name");
         UserId userIdAvro = UserId.newBuilder().setUserId(userId).build();
         UserEvent userEvent;
-        if (eventType.equals(SIGNED_UP)) {
-            UserSignedUp userSignedUp = UserSignedUp.newBuilder()
-                    .setUserId(userIdAvro)
-                    .setFirstName(requestBean.getSignedUpEvent().getFirstName())
-                    .setLastName(requestBean.getSignedUpEvent().getLastName())
-                    .build();
-            userEvent = UserEvent
-                    .newBuilder()
-                    .setEventType(andrewgrant.friendsdrinks.user.avro.EventType.SIGNED_UP)
-                    .setUserSignedUp(userSignedUp)
-                    .setUserId(userIdAvro)
-                    .build();
-        } else if (eventType.equals(CANCELLED_ACCOUNT)) {
-            userEvent = UserEvent
-                    .newBuilder()
-                    .setEventType(andrewgrant.friendsdrinks.user.avro.EventType.CANCELLED_ACCOUNT)
-                    .setUserId(userIdAvro)
-                    .build();
-        } else if (eventType.equals(LOGGED_IN)) {
+        if (eventType.equals(LOGGED_IN)) {
             userEvent = UserEvent
                     .newBuilder()
                     .setEventType(andrewgrant.friendsdrinks.user.avro.EventType.LOGGED_IN)

@@ -34,18 +34,7 @@ public class Service {
                 .aggregate(
                         () -> UserStateAggregate.newBuilder().build(),
                         (aggKey, newValue, aggValue) -> {
-                            if (newValue.getEventType().equals(EventType.SIGNED_UP)) {
-                                UserStateAggregate userStateAggregate = UserStateAggregate
-                                        .newBuilder(aggValue)
-                                        .setUserState(UserState
-                                                .newBuilder()
-                                                .setUserId(newValue.getUserSignedUp().getUserId())
-                                                .setFirstName(newValue.getUserSignedUp().getFirstName())
-                                                .setLastName(newValue.getUserSignedUp().getLastName())
-                                                .build())
-                                        .build();
-                                return userStateAggregate;
-                            } else if (newValue.getEventType().equals(EventType.LOGGED_IN)) {
+                            if (newValue.getEventType().equals(EventType.LOGGED_IN)) {
                                 UserStateAggregate userStateAggregate = UserStateAggregate
                                         .newBuilder(aggValue)
                                         .setUserState(UserState
@@ -60,8 +49,6 @@ public class Service {
                                 return aggValue;
                             } else if (newValue.getEventType().equals(EventType.SIGNED_OUT_SESSION_EXPIRED)) {
                                 return aggValue;
-                            } else if (newValue.getEventType().equals(EventType.CANCELLED_ACCOUNT)) {
-                                return null;
                             } else {
                                 throw new RuntimeException(String.format("Unknown event type %s", newValue.getEventType().name()));
                             }

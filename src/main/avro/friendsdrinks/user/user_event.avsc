@@ -3,9 +3,8 @@
   "type": "record",
   "name": "UserEvent",
   "fields": [
-      {"name": "eventType", "type": {"type": "enum", "name": "EventType", "symbols": ["SIGNED_UP", "CANCELLED_ACCOUNT", "LOGGED_IN", "LOGGED_OUT", "SIGNED_OUT_SESSION_EXPIRED"] } },
+      {"name": "eventType", "type": {"type": "enum", "name": "EventType", "symbols": ["LOGGED_IN", "LOGGED_OUT", "SIGNED_OUT_SESSION_EXPIRED"] } },
       {"name": "userId", "type": "UserId"},
-      {"name": "userSignedUp", "type": ["null", "UserSignedUp"], "default": null},
       {"name": "userLoggedIn", "type": ["null", "UserLoggedIn"], "default": null}
   ]
 }
