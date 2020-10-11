@@ -135,7 +135,7 @@ public class Handler {
     @GET
     @Path("/users/{userId}/friendsdrinks/homepage")
     @Produces(MediaType.APPLICATION_JSON)
-    public GetUserHomepageResponseBean getUser(@PathParam("userId") String userId) {
+    public GetUserHomepageResponseBean getUserFriendsDrinksHomepage(@PathParam("userId") String userId) {
         GetUserHomepageResponseBean getUserHomepageResponseBean = new GetUserHomepageResponseBean();
 
         ReadOnlyKeyValueStore<String, FriendsDrinksIdList> adminStore =
