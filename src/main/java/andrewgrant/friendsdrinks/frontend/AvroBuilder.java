@@ -189,7 +189,7 @@ public class AvroBuilder {
         }
         Map<String, String> config = new HashMap<>();
         config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, registryUrl);
-        serde.configure(config, true);
+        serde.configure(config, false);
         return serde;
     }
 
