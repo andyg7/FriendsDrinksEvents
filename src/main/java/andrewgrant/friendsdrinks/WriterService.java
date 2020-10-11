@@ -23,6 +23,7 @@ import andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent;
 import andrewgrant.friendsdrinks.avro.*;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksId;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksIdList;
+import andrewgrant.friendsdrinks.avro.FriendsDrinksState;
 
 /**
  * Reads API results and writes to backend topics.

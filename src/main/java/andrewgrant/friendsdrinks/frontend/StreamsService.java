@@ -12,11 +12,7 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 
 import andrewgrant.friendsdrinks.AvroBuilder;
-import andrewgrant.friendsdrinks.api.avro.EventType;
-import andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent;
-import andrewgrant.friendsdrinks.api.avro.FriendsDrinksIdList;
-import andrewgrant.friendsdrinks.avro.FriendsDrinksId;
-import andrewgrant.friendsdrinks.avro.FriendsDrinksState;
+import andrewgrant.friendsdrinks.api.avro.*;
 import andrewgrant.friendsdrinks.user.UserAvroBuilder;
 
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
@@ -114,20 +110,33 @@ public class StreamsService {
         final String friendsDrinksStateTopicName = envProps.getProperty("friendsdrinks-state.topic.name");
         KStream<FriendsDrinksId, FriendsDrinksState> friendsDrinksState =
                 builder.stream(friendsDrinksStateTopicName,
-                        Consumed.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksStateSerde()));
+                        Consumed.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksStateSerde()))
+                .map((key, value) -> {
+                    FriendsDrinksId friendsDrinksIdApi = FriendsDrinksId
+                            .newBuilder()
+                            .setAdminUserId(key.getAdminUserId())
+                            .setUuid(key.getUuid())
+                            .build();
+                    FriendsDrinksState friendsDrinksStateApi = FriendsDrinksState
+                            .newBuilder()
+                            .setName(value.getName())
+                            .setFriendsDrinksId(friendsDrinksIdApi)
+                            .build();
+                    return KeyValue.pair(friendsDrinksIdApi, friendsDrinksStateApi);
+                });
+
         friendsDrinksState.toTable(
                 Materialized.<FriendsDrinksId, FriendsDrinksState, KeyValueStore<Bytes, byte[]>>
                         as(FRIENDSDRINKS_STORE)
-                        .withKeySerde(avroBuilder.friendsDrinksIdSerde())
-                        .withValueSerde(avroBuilder.friendsDrinksStateSerde()));
+                        .withKeySerde(apiAvroBuilder.apiFriendsDrinksIdSerde())
+                        .withValueSerde(apiAvroBuilder.apiFriendsDrinksStateSerde()));
 
         friendsDrinksState.map((key, value) -> KeyValue.pair(key.getUuid(), value))
                 .toTable(
                         Materialized.<String, FriendsDrinksState, KeyValueStore<Bytes, byte[]>>
                                 as(FRIENDSDRINKS_KEYED_BY_SINGLE_ID_STORE)
                                 .withKeySerde(Serdes.String())
-                                .withValueSerde(avroBuilder.friendsDrinksStateSerde()));
-
+                                .withValueSerde(apiAvroBuilder.apiFriendsDrinksStateSerde()));
 
         final String pendingInvitationsTopicName = envProps.getProperty("friendsdrinks-pending-invitation.topic.name");
         builder.table(pendingInvitationsTopicName,

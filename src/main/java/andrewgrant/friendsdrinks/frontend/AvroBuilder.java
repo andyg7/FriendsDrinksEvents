@@ -180,6 +180,19 @@ public class AvroBuilder {
         return serde;
     }
 
+    public SpecificAvroSerde<andrewgrant.friendsdrinks.api.avro.FriendsDrinksState> apiFriendsDrinksStateSerde() {
+        SpecificAvroSerde<andrewgrant.friendsdrinks.api.avro.FriendsDrinksState> serde;
+        if (registryClient != null) {
+            serde = new SpecificAvroSerde<>(registryClient);
+        } else {
+            serde = new SpecificAvroSerde<>();
+        }
+        Map<String, String> config = new HashMap<>();
+        config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, registryUrl);
+        serde.configure(config, true);
+        return serde;
+    }
+
     public SpecificAvroSerde<andrewgrant.friendsdrinks.api.avro.FriendsDrinksIdList> apiFriendsDrinksIdListSerde() {
         SpecificAvroSerde<andrewgrant.friendsdrinks.api.avro.FriendsDrinksIdList> serde;
         if (registryClient != null) {
