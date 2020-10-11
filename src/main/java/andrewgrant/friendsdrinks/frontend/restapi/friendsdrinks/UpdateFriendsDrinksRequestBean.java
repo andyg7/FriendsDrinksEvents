@@ -3,7 +3,7 @@ package andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks;
 /**
  * DTO for PostFriendsDrinksResponse.
  */
-public class PostFriendsDrinksRequestBean {
+public class UpdateFriendsDrinksRequestBean {
     private String name;
 
     public String getName() {

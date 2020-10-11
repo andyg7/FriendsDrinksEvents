@@ -121,7 +121,7 @@ public class StreamsService {
                         .withKeySerde(avroBuilder.friendsDrinksIdSerde())
                         .withValueSerde(avroBuilder.friendsDrinksStateSerde()));
 
-        friendsDrinksState.selectKey((key, value) -> key.getUuid())
+        friendsDrinksState.map((key, value) -> KeyValue.pair(key.getUuid(), value))
                 .toTable(
                         Materialized.<String, FriendsDrinksState, KeyValueStore<Bytes, byte[]>>
                                 as(FRIENDSDRINKS_KEYED_BY_SINGLE_ID_STORE)

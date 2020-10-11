@@ -135,7 +135,7 @@ public class Handler {
     @GET
     @Path("/users/{userId}/friendsdrinks/homepage")
     @Produces(MediaType.APPLICATION_JSON)
-    public GetUserHomepageResponseBean getUserFriendsDrinksHomepage(@PathParam("userId") String userId) {
+    public GetUserHomepageResponseBean getUser(@PathParam("userId") String userId) {
         GetUserHomepageResponseBean getUserHomepageResponseBean = new GetUserHomepageResponseBean();
 
         ReadOnlyKeyValueStore<String, FriendsDrinksIdList> adminStore =
@@ -222,9 +222,9 @@ public class Handler {
     @Path("/users/{userId}/friendsdrinks/{friendsDrinksId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public PostFriendsDrinksResponseBean updateFriendsDrinks(@PathParam("userId") String userId,
-                                                             @PathParam("friendsDrinksId") String friendsDrinksId,
-                                                             PostFriendsDrinksRequestBean requestBean)
+    public UpdateFriendsDrinksResponseBean updateFriendsDrinks(@PathParam("userId") String userId,
+                                                               @PathParam("friendsDrinksId") String friendsDrinksId,
+                                                               UpdateFriendsDrinksRequestBean requestBean)
             throws InterruptedException, ExecutionException {
 
         final String topicName = envProps.getProperty("friendsdrinks-api.topic.name");
@@ -253,7 +253,7 @@ public class Handler {
         friendsDrinksKafkaProducer.send(record).get();
 
         FriendsDrinksEvent backendResponse = getApiResponse(requestId);
-        PostFriendsDrinksResponseBean responseBean = new PostFriendsDrinksResponseBean();
+        UpdateFriendsDrinksResponseBean responseBean = new UpdateFriendsDrinksResponseBean();
         responseBean.setResult(backendResponse.getUpdateFriendsDrinksResponse().getResult().name());
         return responseBean;
     }
