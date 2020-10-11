@@ -33,7 +33,7 @@ public class WriterService {
     private static final Logger log = LoggerFactory.getLogger(WriterService.class);
 
     public Topology buildTopology(Properties envProps, AvroBuilder avroBuilder,
-                                  andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder apiAvroBuilder,
+                                  andrewgrant.friendsdrinks.frontend.AvroBuilder apiAvroBuilder,
                                   andrewgrant.friendsdrinks.AvroBuilder friendsDrinksAvroBuilder,
                                   UserAvroBuilder userAvroBuilder) {
         StreamsBuilder builder = new StreamsBuilder();
@@ -307,7 +307,7 @@ public class WriterService {
         String schemaRegistryUrl = envProps.getProperty("schema.registry.url");
         AvroBuilder avroBuilder = new AvroBuilder(schemaRegistryUrl);
         Topology topology = writerService.buildTopology(envProps, avroBuilder,
-                new andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder(schemaRegistryUrl),
+                new andrewgrant.friendsdrinks.frontend.AvroBuilder(schemaRegistryUrl),
                 new andrewgrant.friendsdrinks.AvroBuilder(schemaRegistryUrl),
                 new UserAvroBuilder(schemaRegistryUrl));
         Properties streamProps = writerService.buildStreamsProperties(envProps);

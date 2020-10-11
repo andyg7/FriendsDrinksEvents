@@ -25,7 +25,7 @@ public class RequestService {
     private static final Logger log = LoggerFactory.getLogger(WriterService.class);
 
     public Topology buildTopology(Properties envProps, AvroBuilder avroBuilder,
-                                  andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder apiAvroBuilder) {
+                                  andrewgrant.friendsdrinks.frontend.AvroBuilder apiAvroBuilder) {
         StreamsBuilder builder = new StreamsBuilder();
 
         final String apiTopicName = envProps.getProperty("friendsdrinks-api.topic.name");
@@ -46,7 +46,7 @@ public class RequestService {
     private void handleCreateRequests(KStream<String, FriendsDrinksEvent> apiEvents,
                                       KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable,
                                       AvroBuilder avro,
-                                      andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder apiAvroBuilder,
+                                      andrewgrant.friendsdrinks.frontend.AvroBuilder apiAvroBuilder,
                                       String apiTopicName) {
 
         KTable<String, Long> friendsDrinksCount = friendsDrinksStateKTable.groupBy((key, value) ->
@@ -100,7 +100,7 @@ public class RequestService {
     private void handleDeleteRequests(KStream<String, FriendsDrinksEvent> apiEvents,
                                       KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable,
                                       AvroBuilder avro,
-                                      andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder apiAvroBuilder,
+                                      andrewgrant.friendsdrinks.frontend.AvroBuilder apiAvroBuilder,
                                       String apiTopicName) {
 
         KStream<String, DeleteFriendsDrinksRequest> deleteRequests =
@@ -149,7 +149,7 @@ public class RequestService {
     private void handleUpdateRequests(KStream<String, FriendsDrinksEvent> apiEvents,
                                       KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable,
                                       AvroBuilder avro,
-                                      andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder apiAvroBuilder,
+                                      andrewgrant.friendsdrinks.frontend.AvroBuilder apiAvroBuilder,
                                       String apiTopicName) {
 
         // Updates
@@ -205,7 +205,7 @@ public class RequestService {
         RequestService service = new RequestService();
         String registryUrl = envProps.getProperty("schema.registry.url");
         Topology topology = service.buildTopology(envProps, new AvroBuilder(registryUrl),
-                new andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder(registryUrl));
+                new andrewgrant.friendsdrinks.frontend.AvroBuilder(registryUrl));
         Properties streamProps = service.buildStreamProperties(envProps);
         KafkaStreams streams = new KafkaStreams(topology, streamProps);
 

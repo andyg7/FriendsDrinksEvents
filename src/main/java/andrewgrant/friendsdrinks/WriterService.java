@@ -33,7 +33,7 @@ public class WriterService {
 
 
     public Topology buildTopology(Properties envProps, AvroBuilder avroBuilder,
-                                  andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder apiAvroBuilder,
+                                  andrewgrant.friendsdrinks.frontend.AvroBuilder apiAvroBuilder,
                                   andrewgrant.friendsdrinks.membership.AvroBuilder membershipAvroBuilder) {
         StreamsBuilder builder = new StreamsBuilder();
         KStream<String, FriendsDrinksEvent> apiEvents = builder.stream(envProps.getProperty("friendsdrinks-api.topic.name"),
@@ -155,7 +155,7 @@ public class WriterService {
         String schemaRegistryUrl = envProps.getProperty("schema.registry.url");
         AvroBuilder avroBuilder = new AvroBuilder(schemaRegistryUrl);
         Topology topology = writerService.buildTopology(envProps, avroBuilder,
-                new andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder(schemaRegistryUrl),
+                new andrewgrant.friendsdrinks.frontend.AvroBuilder(schemaRegistryUrl),
                 new andrewgrant.friendsdrinks.membership.AvroBuilder(schemaRegistryUrl));
         Properties streamProps = writerService.buildStreamsProperties(envProps);
         KafkaStreams kafkaStreams = new KafkaStreams(topology, streamProps);

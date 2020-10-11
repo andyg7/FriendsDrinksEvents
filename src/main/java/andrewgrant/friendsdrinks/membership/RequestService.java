@@ -30,7 +30,7 @@ public class RequestService {
 
     public Topology buildTopology(Properties envProps, andrewgrant.friendsdrinks.AvroBuilder avroBuilder,
                                   UserAvroBuilder userAvroBuilder,
-                                  andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder apiAvroBuilder) {
+                                  andrewgrant.friendsdrinks.frontend.AvroBuilder apiAvroBuilder) {
 
         StreamsBuilder builder = new StreamsBuilder();
 
@@ -63,7 +63,7 @@ public class RequestService {
                                     KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksState,
                                     KTable<UserId, UserState> userState,
                                     andrewgrant.friendsdrinks.AvroBuilder avroBuilder, UserAvroBuilder userAvroBuilder,
-                                    andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder apiAvroBuilder, String apiTopicName) {
+                                    andrewgrant.friendsdrinks.frontend.AvroBuilder apiAvroBuilder, String apiTopicName) {
 
         // FriendsDrinks invitation requests
         KStream<String, FriendsDrinksRemoveUserRequest> friendsDrinksRemoveUserRequest = apiEvents
@@ -147,7 +147,7 @@ public class RequestService {
 
     private void emitFailedRemoveUserRequests(KStream<String, FriendsDrinksRemoveUserRequest> requests,
                                               String apiTopicName,
-                                              andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder apiAvroBuilder) {
+                                              andrewgrant.friendsdrinks.frontend.AvroBuilder apiAvroBuilder) {
         requests.mapValues(value -> {
             FriendsDrinksRemoveUserResponse removeUserResponse = FriendsDrinksRemoveUserResponse
                     .newBuilder()
@@ -168,7 +168,7 @@ public class RequestService {
                                    KTable<FriendsDrinksPendingInvitationId, FriendsDrinksPendingInvitation> pendingFriendsDrinksInvitations,
                                    KTable<andrewgrant.friendsdrinks.user.avro.UserId, UserState> userState,
                                    andrewgrant.friendsdrinks.AvroBuilder avroBuilder, UserAvroBuilder userAvroBuilder,
-                                   andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder apiAvroBuilder, String apiTopicName,
+                                   andrewgrant.friendsdrinks.frontend.AvroBuilder apiAvroBuilder, String apiTopicName,
                                    String pendingInvitationsTopicName) {
 
         handleInvitationRequests(apiEvents, friendsDrinksState, userState, avroBuilder, apiAvroBuilder, userAvroBuilder, apiTopicName,
@@ -181,7 +181,7 @@ public class RequestService {
     private void handleInvitationRequests(KStream<String, FriendsDrinksEvent> apiEvents,
                                           KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable,
                                           KTable<UserId, UserState> userState, andrewgrant.friendsdrinks.AvroBuilder avroBuilder,
-                                          andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder apiAvroBuilder,
+                                          andrewgrant.friendsdrinks.frontend.AvroBuilder apiAvroBuilder,
                                           UserAvroBuilder userAvroBuilder, String apiTopicName, String pendingInvitationsTopicName) {
 
         // FriendsDrinks invitation requests
@@ -311,7 +311,7 @@ public class RequestService {
     }
 
     private void emitFailedInvitationRequests(KStream<String, FriendsDrinksInvitationRequest> stream,
-                                              andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder apiAvroBuilder,
+                                              andrewgrant.friendsdrinks.frontend.AvroBuilder apiAvroBuilder,
                                               String apiTopicName) {
         stream.mapValues(value -> {
             FriendsDrinksInvitationResponse response = FriendsDrinksInvitationResponse
@@ -330,7 +330,7 @@ public class RequestService {
 
     private void handleInvitationReplies(KStream<String, FriendsDrinksEvent> apiEvents,
                                          KTable<FriendsDrinksPendingInvitationId, FriendsDrinksPendingInvitation> pendingFriendsDrinksInvitations,
-                                         andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder apiAvroBuilder,
+                                         andrewgrant.friendsdrinks.frontend.AvroBuilder apiAvroBuilder,
                                          String apiTopicName, String pendingInvitationsTopicName) {
 
         // FriendsDrinks replies
@@ -392,7 +392,7 @@ public class RequestService {
         RequestService service = new RequestService();
         String registryUrl = envProps.getProperty("schema.registry.url");
         Topology topology = service.buildTopology(envProps, new AvroBuilder(registryUrl), new UserAvroBuilder(registryUrl),
-                new andrewgrant.friendsdrinks.frontend.restapi.AvroBuilder(registryUrl));
+                new andrewgrant.friendsdrinks.frontend.AvroBuilder(registryUrl));
         Properties streamProps = service.buildStreamProperties(envProps);
         KafkaStreams streams = new KafkaStreams(topology, streamProps);
 
