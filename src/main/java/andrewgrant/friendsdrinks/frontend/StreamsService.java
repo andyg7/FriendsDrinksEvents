@@ -22,13 +22,13 @@ import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
  */
 public class StreamsService {
 
-    public static final String RESPONSES_STORE = "api-response-store";
-    public static final String FRIENDSDRINKS_STORE = "friendsdrinks-store";
-    public static final String MEMBERS_STORE = "members-store";
-    public static final String ADMINS_STORE = "admins-store";
-    public static final String USERS_STORE = "users-store";
-    public static final String FRIENDSDRINKS_KEYED_BY_SINGLE_ID_STORE = "friendsdrinks-keyed-by-single-id-store";
-    public static final String PENDING_INVITATIONS_STORE = "pending-invitations-store";
+    public static final String RESPONSES_STORE = "api-response-state-store";
+    public static final String FRIENDSDRINKS_STORE = "friendsdrinks-state-store";
+    public static final String MEMBERS_STORE = "members-state-store";
+    public static final String ADMINS_STORE = "admins-state-store";
+    public static final String USERS_STORE = "users-state-store";
+    public static final String FRIENDSDRINKS_KEYED_BY_SINGLE_ID_STORE = "friendsdrinks-keyed-by-single-id-state-store";
+    public static final String PENDING_INVITATIONS_STORE = "pending-invitations-state-store";
     private KafkaStreams streams;
 
     public StreamsService(Properties envProps,
