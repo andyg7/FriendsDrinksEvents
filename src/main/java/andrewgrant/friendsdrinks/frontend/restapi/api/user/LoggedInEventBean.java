@@ -1,20 +1,19 @@
-package andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.user;
+package andrewgrant.friendsdrinks.frontend.restapi.api.user;
 
 /**
- * DTO for User.
+ * DTO for LoggedInEvent.
  */
-public class UserBean {
-    private String userId;
+public class LoggedInEventBean {
     private String firstName;
     private String lastName;
     private String email;
 
-    public String getUserId() {
-        return userId;
+    public String getEmail() {
+        return email;
     }
 
-    public void setUserId(String userId) {
-        this.userId = userId;
+    public void setEmail(String email) {
+        this.email = email;
     }
 
 
@@ -34,11 +33,4 @@ public class UserBean {
         this.lastName = lastName;
     }
 
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
 }

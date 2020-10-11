@@ -1,9 +1,9 @@
-package andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks;
+package andrewgrant.friendsdrinks.frontend.restapi.api;
 
 /**
- * DTO for DeleteFriendsDrinksResponse.
+ * DTO for PostFriendsDrinksResponse.
  */
-public class DeleteFriendsDrinksResponseBean {
+public class UpdateFriendsDrinksResponseBean {
     private String result;
 
     public String getResult() {

@@ -126,8 +126,8 @@ public class Main {
                 buildFriendsDrinksProducer(envProps, apiAvroBuilder);
         KafkaProducer<UserId, UserEvent> userProducer =
                 buildUserDrinksProducer(envProps, userAvroBuilder);
-        andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.Handler handler =
-                new andrewgrant.friendsdrinks.frontend.restapi.friendsdrinks.Handler(
+        andrewgrant.friendsdrinks.frontend.restapi.api.Handler handler =
+                new andrewgrant.friendsdrinks.frontend.restapi.api.Handler(
                         streams, friendsDrinksProducer, userProducer, envProps);
         final ResourceConfig rc = new ResourceConfig();
         rc.register(handler);
