@@ -143,11 +143,11 @@ public class Handler {
 
         ReadOnlyKeyValueStore<String, FriendsDrinksIdList> adminStore =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(ADMINS_STORE, QueryableStoreTypes.keyValueStore()));
-        FriendsDrinksIdList friendsDrinksIdList1 = adminStore.get(userId);
-        if (friendsDrinksIdList1 != null && friendsDrinksIdList1.getIds() != null &&
-                friendsDrinksIdList1.getIds().size() > 0) {
+        FriendsDrinksIdList adminFriendsDrinksIdList = adminStore.get(userId);
+        if (adminFriendsDrinksIdList != null && adminFriendsDrinksIdList.getIds() != null &&
+                adminFriendsDrinksIdList.getIds().size() > 0) {
             List<FriendsDrinksBean> friendsDrinksBeans = new ArrayList<>();
-            for (FriendsDrinksId friendsDrinksId : friendsDrinksIdList1.getIds()) {
+            for (FriendsDrinksId friendsDrinksId : adminFriendsDrinksIdList.getIds()) {
                 FriendsDrinksState friendsDrinksState = friendsDrinksStore.get(friendsDrinksId);
                 if (friendsDrinksState == null || friendsDrinksState.getFriendsDrinksId() == null) {
                     throw new RuntimeException(String.format("FriendsDrinks with adminUserId %s and uuid %s could not be found",
@@ -159,18 +159,18 @@ public class Handler {
                 friendsDrinksBean.setName(friendsDrinksState.getName());
                 friendsDrinksBeans.add(friendsDrinksBean);
             }
-            getUserHomepageResponseBean.setAdminFriendsDrinks(friendsDrinksBeans);
+            getUserHomepageResponseBean.setAdminFriendsDrinksList(friendsDrinksBeans);
         } else {
-            getUserHomepageResponseBean.setAdminFriendsDrinks(new ArrayList<>());
+            getUserHomepageResponseBean.setAdminFriendsDrinksList(new ArrayList<>());
         }
 
         ReadOnlyKeyValueStore<String, FriendsDrinksIdList> membershipStore =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(MEMBERS_STORE, QueryableStoreTypes.keyValueStore()));
-        FriendsDrinksIdList friendsDrinksIdList2 = membershipStore.get(userId);
-        if (friendsDrinksIdList2 != null && friendsDrinksIdList2.getIds() != null &&
-                friendsDrinksIdList2.getIds().size() > 0) {
+        FriendsDrinksIdList memberFriendsDrinksList = membershipStore.get(userId);
+        if (memberFriendsDrinksList != null && memberFriendsDrinksList.getIds() != null &&
+                memberFriendsDrinksList.getIds().size() > 0) {
             List<FriendsDrinksBean> friendsDrinksBeans = new ArrayList<>();
-            for (FriendsDrinksId friendsDrinksId : friendsDrinksIdList2.getIds()) {
+            for (FriendsDrinksId friendsDrinksId : memberFriendsDrinksList.getIds()) {
                 FriendsDrinksState friendsDrinksState = friendsDrinksStore.get(friendsDrinksId);
                 if (friendsDrinksState == null || friendsDrinksState.getFriendsDrinksId() == null) {
                     throw new RuntimeException(String.format("FriendsDrinks with adminUserId %s and uuid %s could not be found",
@@ -182,9 +182,9 @@ public class Handler {
                 friendsDrinksBean.setName(friendsDrinksState.getName());
                 friendsDrinksBeans.add(friendsDrinksBean);
             }
-            getUserHomepageResponseBean.setMemberFriendsDrinks(friendsDrinksBeans);
+            getUserHomepageResponseBean.setMemberFriendsDrinksList(friendsDrinksBeans);
         } else {
-            getUserHomepageResponseBean.setMemberFriendsDrinks(new ArrayList<>());
+            getUserHomepageResponseBean.setMemberFriendsDrinksList(new ArrayList<>());
         }
 
         ReadOnlyKeyValueStore<FriendsDrinksPendingInvitationId, FriendsDrinksPendingInvitation> kv =

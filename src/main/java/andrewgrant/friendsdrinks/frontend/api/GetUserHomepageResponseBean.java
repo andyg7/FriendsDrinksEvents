@@ -9,24 +9,24 @@ import andrewgrant.friendsdrinks.frontend.api.membership.FriendsDrinksInvitation
  * DTO for GetUserResponse.
  */
 public class GetUserHomepageResponseBean {
-    private List<FriendsDrinksBean> adminFriendsDrinks;
-    private List<FriendsDrinksBean> memberFriendsDrinks;
+    private List<FriendsDrinksBean> adminFriendsDrinksList;
+    private List<FriendsDrinksBean> memberFriendsDrinksList;
     private List<FriendsDrinksInvitationBean> invitations;
 
-    public List<FriendsDrinksBean> getAdminFriendsDrinks() {
-        return adminFriendsDrinks;
+    public List<FriendsDrinksBean> getAdminFriendsDrinksList() {
+        return adminFriendsDrinksList;
     }
 
-    public void setAdminFriendsDrinks(List<FriendsDrinksBean> adminFriendsDrinks) {
-        this.adminFriendsDrinks = adminFriendsDrinks;
+    public void setAdminFriendsDrinksList(List<FriendsDrinksBean> adminFriendsDrinksList) {
+        this.adminFriendsDrinksList = adminFriendsDrinksList;
     }
 
-    public List<FriendsDrinksBean> getMemberFriendsDrinks() {
-        return memberFriendsDrinks;
+    public List<FriendsDrinksBean> getMemberFriendsDrinksList() {
+        return memberFriendsDrinksList;
     }
 
-    public void setMemberFriendsDrinks(List<FriendsDrinksBean> memberFriendsDrinks) {
-        this.memberFriendsDrinks = memberFriendsDrinks;
+    public void setMemberFriendsDrinksList(List<FriendsDrinksBean> memberFriendsDrinksList) {
+        this.memberFriendsDrinksList = memberFriendsDrinksList;
     }
 
     public List<FriendsDrinksInvitationBean> getInvitations() {
