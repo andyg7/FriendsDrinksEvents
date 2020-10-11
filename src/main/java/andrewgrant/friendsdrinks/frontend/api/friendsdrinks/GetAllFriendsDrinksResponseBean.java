@@ -1,4 +1,4 @@
-package andrewgrant.friendsdrinks.frontend.api;
+package andrewgrant.friendsdrinks.frontend.api.friendsdrinks;
 
 import java.util.List;
 

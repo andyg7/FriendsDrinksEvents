@@ -2,6 +2,8 @@ package andrewgrant.friendsdrinks.frontend.api;
 
 import java.util.List;
 
+import andrewgrant.friendsdrinks.frontend.api.membership.FriendsDrinksInvitationBean;
+
 /**
  * DTO for GetUserResponse.
  */
