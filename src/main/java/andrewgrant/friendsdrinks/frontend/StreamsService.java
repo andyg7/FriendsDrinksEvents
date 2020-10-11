@@ -18,7 +18,7 @@ import andrewgrant.friendsdrinks.user.UserAvroBuilder;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 
 /**
- * Responsible for building Topology needed by Frontend.
+ * Responsible for building state stores needed by frontend.
  */
 public class StreamsService {
 
