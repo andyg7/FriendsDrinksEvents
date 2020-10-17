@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
@@ -134,6 +135,30 @@ public class Handler {
         return response;
     }
 
+    @GET
+    @Path("/friendsdrinksdetailpage/{friendsDrinksId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public GetFriendsDrinksDetailPageResponseBean getFriendsDrinksDetailPage(@PathParam("friendsDrinksId") String friendsDrinksId) {
+        ReadOnlyKeyValueStore<String, FriendsDrinksAggregate> kv =
+                kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_DETAIL_PAGE_STORE, QueryableStoreTypes.keyValueStore()));
+        FriendsDrinksAggregate friendsDrinksAggregate = kv.get(friendsDrinksId);
+        if (friendsDrinksAggregate == null) {
+            throw new BadRequestException(String.format("%s does not exist", friendsDrinksId));
+        }
+
+        GetFriendsDrinksDetailPageResponseBean response = new GetFriendsDrinksDetailPageResponseBean();
+        response.setAdminUserId(friendsDrinksAggregate.getFriendsDrinksId().getAdminUserId());
+        response.setFriendsDrinksId(friendsDrinksAggregate.getFriendsDrinksId().getUuid());
+        if (friendsDrinksAggregate.getMembers() != null) {
+            response.setMembers(friendsDrinksAggregate.getMembers().stream().map(x -> x.getFirstName()).collect(Collectors.toList()));
+        } else {
+            response.setMembers(new ArrayList<>());
+        }
+        response.setName(friendsDrinksAggregate.getName());
+
+        return response;
+    }
+
 
     @GET
     @Path("/users/{userId}/friendsdrinks/homepage")
@@ -143,12 +168,6 @@ public class Handler {
 
         ReadOnlyKeyValueStore<FriendsDrinksId, FriendsDrinksState> friendsDrinksStore =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_STORE, QueryableStoreTypes.keyValueStore()));
-        KeyValueIterator<FriendsDrinksId, FriendsDrinksState> all = friendsDrinksStore.all();
-        while (all.hasNext()) {
-            KeyValue<FriendsDrinksId, FriendsDrinksState> state = all.next();
-            log.debug(String.format("Got %s %s", state.key.getAdminUserId(), state.key.getUuid()));
-        }
-        all.close();
 
         ReadOnlyKeyValueStore<String, FriendsDrinksIdList> adminStore =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(ADMINS_STORE, QueryableStoreTypes.keyValueStore()));

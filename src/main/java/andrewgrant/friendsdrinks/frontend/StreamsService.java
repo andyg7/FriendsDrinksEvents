@@ -8,12 +8,17 @@ import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
 import andrewgrant.friendsdrinks.AvroBuilder;
 import andrewgrant.friendsdrinks.api.avro.*;
+import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId;
+import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipState;
 import andrewgrant.friendsdrinks.user.UserAvroBuilder;
+import andrewgrant.friendsdrinks.user.avro.UserState;
 
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 
@@ -24,6 +29,7 @@ public class StreamsService {
 
     public static final String RESPONSES_STORE = "api-response-state-store";
     public static final String FRIENDSDRINKS_STORE = "friendsdrinks-state-store";
+    public static final String FRIENDSDRINKS_DETAIL_PAGE_STORE = "friendsdrinks-detail-page-state-store";
     public static final String MEMBERS_STORE = "members-state-store";
     public static final String ADMINS_STORE = "admins-state-store";
     public static final String USERS_STORE = "users-state-store";
@@ -56,7 +62,6 @@ public class StreamsService {
 
         final String frontendPrivateTopicName = envProps.getProperty("frontend-responses.topic.name");
         buildResponsesStore(builder, apiEvents, apiAvroBuilder, frontendPrivateTopicName);
-
 
         builder.stream(envProps.getProperty("friendsdrinks-keyed-by-admin-user-id-state.topic.name"),
                 Consumed.with(Serdes.String(), avroBuilder.friendsDrinksIdListSerde()))
@@ -108,9 +113,10 @@ public class StreamsService {
 
 
         final String friendsDrinksStateTopicName = envProps.getProperty("friendsdrinks-state.topic.name");
-        KStream<FriendsDrinksId, FriendsDrinksState> friendsDrinksState =
-                builder.stream(friendsDrinksStateTopicName,
-                        Consumed.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksStateSerde()))
+        KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState>
+                friendsDrinksKStream = builder.stream(friendsDrinksStateTopicName,
+                Consumed.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksStateSerde()));
+        KStream<FriendsDrinksId, FriendsDrinksState> apiFriendsDrinksState = friendsDrinksKStream
                 .map((key, value) -> {
                     FriendsDrinksId friendsDrinksIdApi = FriendsDrinksId
                             .newBuilder()
@@ -125,13 +131,13 @@ public class StreamsService {
                     return KeyValue.pair(friendsDrinksIdApi, friendsDrinksStateApi);
                 });
 
-        friendsDrinksState.toTable(
+        apiFriendsDrinksState.toTable(
                 Materialized.<FriendsDrinksId, FriendsDrinksState, KeyValueStore<Bytes, byte[]>>
                         as(FRIENDSDRINKS_STORE)
                         .withKeySerde(apiAvroBuilder.apiFriendsDrinksIdSerde())
                         .withValueSerde(apiAvroBuilder.apiFriendsDrinksStateSerde()));
 
-        friendsDrinksState.map((key, value) -> KeyValue.pair(key.getUuid(), value))
+        apiFriendsDrinksState.map((key, value) -> KeyValue.pair(key.getUuid(), value))
                 .toTable(
                         Materialized.<String, FriendsDrinksState, KeyValueStore<Bytes, byte[]>>
                                 as(FRIENDSDRINKS_KEYED_BY_SINGLE_ID_STORE)
@@ -140,13 +146,17 @@ public class StreamsService {
 
         final String pendingInvitationsTopicName = envProps.getProperty("friendsdrinks-pending-invitation.topic.name");
         builder.table(pendingInvitationsTopicName,
-                Consumed.with(apiAvroBuilder.friendsDrinksPendingInvitationIdSerde(), apiAvroBuilder.friendsDrinksPendingInvitationSerde()),
+                Consumed.with(apiAvroBuilder.friendsDrinksPendingInvitationIdSerde(),
+                        apiAvroBuilder.friendsDrinksPendingInvitationSerde()),
                 Materialized.as(PENDING_INVITATIONS_STORE));
 
-        builder.table(envProps.getProperty("user-state.topic.name"),
-                Consumed.with(userAvroBuilder.userIdSerde(), userAvroBuilder.userStateSerde()),
-                Materialized.as(USERS_STORE));
+        KTable<andrewgrant.friendsdrinks.user.avro.UserId, UserState> userState =
+                builder.table(envProps.getProperty("user-state.topic.name"),
+                        Consumed.with(userAvroBuilder.userIdSerde(), userAvroBuilder.userStateSerde()),
+                        Materialized.as(USERS_STORE));
 
+        buildFriendsDrinksDetailPageView(builder, envProps, membershipAvroBuilder, avroBuilder, userAvroBuilder,
+                apiAvroBuilder, friendsDrinksKStream.toTable(), userState);
         return builder.build();
     }
 
@@ -182,6 +192,140 @@ public class StreamsService {
                 .filter((key, value) -> value != null && !value.isEmpty()).flatMapValues(value -> value)
                 .selectKey((key, value) -> value).mapValues(value -> (FriendsDrinksEvent) null)
                 .to(responsesTopicName, Produced.with(Serdes.String(), apiAvroBuilder.friendsDrinksSerde()));
+    }
+
+    private void buildFriendsDrinksDetailPageView(
+            StreamsBuilder builder, Properties envProps,
+            andrewgrant.friendsdrinks.membership.AvroBuilder membershipAvroBuilder,
+            AvroBuilder friendsDrinksAvroBuilder,
+            UserAvroBuilder userAvroBuilder,
+            andrewgrant.friendsdrinks.frontend.AvroBuilder apiAvroBuilder,
+            KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState>
+                    friendsDrinksStateKTable,
+            KTable<andrewgrant.friendsdrinks.user.avro.UserId, UserState> userStateKTable) {
+
+        KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipState> membershipStateKStream =
+                builder.stream(envProps.getProperty("friendsdrinks-membership-state.topic.name"),
+                        Consumed.with(membershipAvroBuilder.friendsDrinksMembershipIdSerdes(),
+                                membershipAvroBuilder.friendsDrinksMembershipStateSerdes()));
+
+        membershipStateKStream.map((key, value) -> {
+            andrewgrant.friendsdrinks.api.avro.FriendsDrinksMembershipId friendsDrinksMembershipId =
+                    andrewgrant.friendsdrinks.api.avro.FriendsDrinksMembershipId
+                            .newBuilder()
+                            .setFriendsDrinksId(FriendsDrinksId
+                                    .newBuilder()
+                                    .setAdminUserId(key.getFriendsDrinksId().getAdminUserId())
+                                    .setUuid(key.getFriendsDrinksId().getUuid())
+                                    .build())
+                            .setUserId(UserId
+                                    .newBuilder()
+                                    .setUserId(key.getUserId().getUserId())
+                                    .build())
+                            .build();
+            FriendsDrinksEnrichedMembershipState.Builder friendsDrinksEnrichedMembershipStateBuilder = FriendsDrinksEnrichedMembershipState
+                    .newBuilder()
+                    .setMembershipId(friendsDrinksMembershipId);
+            if (value == null) {
+                friendsDrinksEnrichedMembershipStateBuilder.setIsTombstone(true);
+                return KeyValue.pair(friendsDrinksMembershipId, friendsDrinksEnrichedMembershipStateBuilder.build());
+            }
+            friendsDrinksEnrichedMembershipStateBuilder.setIsTombstone(false);
+            return KeyValue.pair(friendsDrinksMembershipId, friendsDrinksEnrichedMembershipStateBuilder.build());
+        }).map((key, value) -> {
+            andrewgrant.friendsdrinks.avro.FriendsDrinksId friendsDrinksId = andrewgrant.friendsdrinks.avro.FriendsDrinksId
+                    .newBuilder()
+                    .setUuid(key.getFriendsDrinksId().getUuid())
+                    .setAdminUserId(key.getFriendsDrinksId().getAdminUserId())
+                    .build();
+            return KeyValue.pair(friendsDrinksId, value);
+        }).leftJoin(friendsDrinksStateKTable,
+                (enrichedMembershipState, friendsDrinksState) -> {
+                    if (enrichedMembershipState.getIsTombstone().booleanValue() == true) {
+                        return enrichedMembershipState;
+                    }
+                    FriendsDrinksEnrichedMembershipState.Builder enrichedStateBuilder = FriendsDrinksEnrichedMembershipState
+                            .newBuilder(enrichedMembershipState);
+                    if (friendsDrinksState != null) {
+                        enrichedStateBuilder.setFriendsDrinksName(friendsDrinksState.getName());
+                    }
+                    return enrichedStateBuilder.build();
+                },
+                Joined.with(
+                        friendsDrinksAvroBuilder.friendsDrinksIdSerde(),
+                        apiAvroBuilder.apiFriendsDrinksEnrichedMembershipStateSerde(),
+                        friendsDrinksAvroBuilder.friendsDrinksStateSerde())
+        ).map((key, value) -> {
+            andrewgrant.friendsdrinks.user.avro.UserId userId = andrewgrant.friendsdrinks.user.avro.UserId.newBuilder()
+                    .setUserId(value.getMembershipId().getUserId().getUserId()).build();
+            return KeyValue.pair(userId, value);
+        }).leftJoin(userStateKTable,
+                (enrichedMembershipState, userState) -> {
+                    if (enrichedMembershipState.getIsTombstone().booleanValue() == true) {
+                        return enrichedMembershipState;
+                    }
+                    if (userState != null) {
+                        FriendsDrinksEnrichedMembershipState newFriendsDrinksEnrichedMembershipState =
+                                FriendsDrinksEnrichedMembershipState.newBuilder(enrichedMembershipState)
+                                        .setUserFirstName(userState.getFirstName())
+                                        .setUserLastName(userState.getLastName())
+                                        .build();
+                        return newFriendsDrinksEnrichedMembershipState;
+                    } else {
+                        return enrichedMembershipState;
+                    }
+                },
+                Joined.with(
+                        userAvroBuilder.userIdSerde(),
+                        apiAvroBuilder.apiFriendsDrinksEnrichedMembershipStateSerde(),
+                        userAvroBuilder.userStateSerde())
+        ).map((key, value) -> {
+                    if (value.getIsTombstone().booleanValue() == true) {
+                        return KeyValue.pair(value.getMembershipId(), null);
+                    } else {
+                        return KeyValue.pair(value.getMembershipId(), value);
+                    }
+                }
+        ).toTable()
+                .groupBy((key, value) -> KeyValue.pair(value.getMembershipId().getFriendsDrinksId().getUuid(), value),
+                        Grouped.with(Serdes.String(), apiAvroBuilder.apiFriendsDrinksEnrichedMembershipStateSerde()))
+                .aggregate(
+                        () -> FriendsDrinksAggregate
+                                .newBuilder()
+                                .setMembers(new ArrayList<>())
+                                .build(),
+                        (aggKey, newValue, aggValue) -> {
+                            FriendsDrinksAggregate.Builder friendsDrinksAggregateBuilder = FriendsDrinksAggregate
+                                    .newBuilder(aggValue)
+                                    .setName(newValue.getFriendsDrinksName())
+                                    .setFriendsDrinksId(newValue.getMembershipId().getFriendsDrinksId());
+                            List<andrewgrant.friendsdrinks.api.avro.UserState> members = friendsDrinksAggregateBuilder.getMembers();
+                            members.add(andrewgrant.friendsdrinks.api.avro.UserState.newBuilder()
+                                    .setFirstName(newValue.getUserFirstName())
+                                    .setLastName(newValue.getUserLastName())
+                                    .setEmail(newValue.getUserEmail())
+                                    .build());
+                            friendsDrinksAggregateBuilder.setMembers(members);
+                            return friendsDrinksAggregateBuilder.build();
+                        },
+                        (aggKey, oldValue, aggValue) -> {
+                            FriendsDrinksAggregate.Builder friendsDrinksAggregateBuilder = FriendsDrinksAggregate
+                                    .newBuilder(aggValue);
+                            List<andrewgrant.friendsdrinks.api.avro.UserState> members = friendsDrinksAggregateBuilder.getMembers();
+                            for (int i = 0; i < members.size(); i++) {
+                                if (members.get(i).getUserId().equals(oldValue.getMembershipId().getUserId())) {
+                                    members.remove(i);
+                                    break;
+                                }
+                            }
+                            friendsDrinksAggregateBuilder.setMembers(members);
+                            return friendsDrinksAggregateBuilder.build();
+                        },
+                        Materialized.<String, FriendsDrinksAggregate, KeyValueStore<Bytes, byte[]>>
+                                as(FRIENDSDRINKS_DETAIL_PAGE_STORE)
+                                .withKeySerde(Serdes.String())
+                                .withValueSerde(apiAvroBuilder.apiFriendsDrinksAggregateSerdes())
+                );
     }
 
     private static Properties buildStreamsProperties(Properties envProps, String uri) {

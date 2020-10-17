@@ -1,0 +1,10 @@
+{
+  "namespace": "andrewgrant.friendsdrinks.api.avro",
+  "type": "record",
+  "name": "FriendsDrinksAggregate",
+  "fields": [
+      {"name": "friendsDrinksId", "type": "FriendsDrinksId", "default": null},
+      {"name": "name", "type": "string", "default": null},
+      {"name": "members", "type": ["null", {"type": "array", "items": "UserState" }]}
+  ]
+}

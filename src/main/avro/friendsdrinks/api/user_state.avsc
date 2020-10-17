@@ -1,0 +1,11 @@
+{
+  "namespace": "andrewgrant.friendsdrinks.api.avro",
+  "type": "record",
+  "name": "UserState",
+  "fields": [
+      {"name": "userId", "type": "UserId"},
+      {"name": "firstName", "type": "string" },
+      {"name": "lastName", "type": "string" },
+      {"name": "email", "type": "string" }
+  ]
+}
