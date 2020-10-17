@@ -54,7 +54,7 @@ public class StreamsService {
                 builder.stream(apiTopicName,
                         Consumed.with(Serdes.String(), apiAvroBuilder.friendsDrinksSerde()));
 
-        final String frontendPrivateTopicName = envProps.getProperty("frontend-private.topic.name");
+        final String frontendPrivateTopicName = envProps.getProperty("frontend-responses.topic.name");
         buildResponsesStore(builder, apiEvents, apiAvroBuilder, frontendPrivateTopicName);
 
 
