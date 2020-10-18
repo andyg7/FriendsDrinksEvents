@@ -34,7 +34,6 @@ import andrewgrant.friendsdrinks.frontend.api.user.UserBean;
 import andrewgrant.friendsdrinks.user.avro.UserEvent;
 import andrewgrant.friendsdrinks.user.avro.UserId;
 import andrewgrant.friendsdrinks.user.avro.UserLoggedIn;
-import andrewgrant.friendsdrinks.user.avro.UserState;
 
 /**
  * Implements frontend REST API.
@@ -63,12 +62,12 @@ public class Handler {
     @Path("/users")
     @Produces(MediaType.APPLICATION_JSON)
     public GetUsersResponseBean getAllUsers() {
-        ReadOnlyKeyValueStore<UserId, UserState> kv =
+        ReadOnlyKeyValueStore<String, UserState> kv =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(USERS_STORE, QueryableStoreTypes.keyValueStore()));
-        KeyValueIterator<UserId, UserState> allKvs = kv.all();
+        KeyValueIterator<String, UserState> allKvs = kv.all();
         List<UserBean> users = new ArrayList<>();
         while (allKvs.hasNext()) {
-            KeyValue<UserId, UserState> keyValue = allKvs.next();
+            KeyValue<String, UserState> keyValue = allKvs.next();
             UserBean userBean = new UserBean();
             UserState userState = keyValue.value;
             userBean.setEmail(userState.getEmail());
