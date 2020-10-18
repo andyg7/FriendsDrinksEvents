@@ -22,7 +22,7 @@ import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 /**
  * Responsible for building state stores needed by frontend.
  */
-public class StreamsService {
+public class MaterializedViewsService {
 
     public static final String RESPONSES_STORE = "api-response-state-store";
     public static final String FRIENDSDRINKS_STORE = "friendsdrinks-state-store";
@@ -34,12 +34,12 @@ public class StreamsService {
     public static final String PENDING_INVITATIONS_STORE = "pending-invitations-state-store";
     private KafkaStreams streams;
 
-    public StreamsService(Properties envProps,
-                          String uri,
-                          AvroBuilder avroBuilder,
-                          andrewgrant.friendsdrinks.frontend.AvroBuilder apiAvroBuilder,
-                          andrewgrant.friendsdrinks.membership.AvroBuilder membershipAvroBuilder,
-                          UserAvroBuilder userAvroBuilder) {
+    public MaterializedViewsService(Properties envProps,
+                                    String uri,
+                                    AvroBuilder avroBuilder,
+                                    andrewgrant.friendsdrinks.frontend.AvroBuilder apiAvroBuilder,
+                                    andrewgrant.friendsdrinks.membership.AvroBuilder membershipAvroBuilder,
+                                    UserAvroBuilder userAvroBuilder) {
         Topology topology = buildTopology(envProps, avroBuilder, apiAvroBuilder, membershipAvroBuilder, userAvroBuilder);
         Properties streamProps = buildStreamsProperties(envProps, uri);
         streams = new KafkaStreams(topology, streamProps);

@@ -1,6 +1,6 @@
 package andrewgrant.friendsdrinks.frontend.api;
 
-import static andrewgrant.friendsdrinks.frontend.StreamsService.*;
+import static andrewgrant.friendsdrinks.frontend.MaterializedViewsService.*;
 import static andrewgrant.friendsdrinks.frontend.api.membership.PostFriendsDrinksMembershipRequestBean.*;
 import static andrewgrant.friendsdrinks.frontend.api.user.PostUsersRequestBean.*;
 

@@ -49,7 +49,7 @@ public class Main {
 
         String portStr = args[1];
         String streamsUri = "localhost:" + portStr;
-        StreamsService streamsService = new StreamsService(envProps, streamsUri, avroBuilder, apiAvroBuilder,
+        MaterializedViewsService streamsService = new MaterializedViewsService(envProps, streamsUri, avroBuilder, apiAvroBuilder,
                 new andrewgrant.friendsdrinks.membership.AvroBuilder(schemaRegistryUrl), new UserAvroBuilder(schemaRegistryUrl));
         KafkaStreams streams = streamsService.getStreams();
         int port = Integer.parseInt(portStr);
