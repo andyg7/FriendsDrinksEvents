@@ -248,12 +248,7 @@ public class StreamsService {
                                 return KeyValue.pair(apiId, enrichedMembershipState);
                             }
                         })
-                        .toTable(
-                                Materialized.<FriendsDrinksMembershipId, FriendsDrinksEnrichedMembershipState, KeyValueStore<Bytes, byte[]>>
-                                        as("api-friendsdrinks-membership-state-store")
-                                        .withKeySerde(apiAvroBuilder.apiFriendsDrinksMembershipIdSerde())
-                                        .withValueSerde(apiAvroBuilder.apiFriendsDrinksEnrichedMembershipStateSerde())
-                        );
+                        .toTable();
 
         KTable<FriendsDrinksMembershipId, FriendsDrinksEnrichedMembershipState> enrichedMembershipStateKTable =
                 membershipStateKTable.join(userStateKTable,
