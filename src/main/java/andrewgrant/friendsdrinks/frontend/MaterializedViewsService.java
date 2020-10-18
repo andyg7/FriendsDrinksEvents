@@ -323,6 +323,27 @@ public class MaterializedViewsService {
                             .build();
                 },
                 Materialized.<String, FriendsDrinksAggregate, KeyValueStore<Bytes, byte[]>>
+                        as("friendsdrinks-detail-page-state-store-tmp-1")
+                        .withKeySerde(Serdes.String())
+                        .withValueSerde(apiAvroBuilder.apiFriendsDrinksAggregateSerdes())
+        ).leftJoin(userStateKTable,
+                (friendsDrinksAggregate -> friendsDrinksAggregate.getFriendsDrinksId().getAdminUserId()),
+                (l, r) -> {
+                    List<UserState> members = l.getMembers();
+                    UserState adminUserState = UserState
+                            .newBuilder()
+                            .setUserId(r.getUserId())
+                            .setFirstName(r.getFirstName())
+                            .setLastName(r.getLastName())
+                            .setEmail(r.getEmail())
+                            .build();
+                    members.add(adminUserState);
+                    return FriendsDrinksAggregate
+                            .newBuilder(l)
+                            .setMembers(members)
+                            .build();
+                },
+                Materialized.<String, FriendsDrinksAggregate, KeyValueStore<Bytes, byte[]>>
                         as(FRIENDSDRINKS_DETAIL_PAGE_STORE)
                         .withKeySerde(Serdes.String())
                         .withValueSerde(apiAvroBuilder.apiFriendsDrinksAggregateSerdes())
