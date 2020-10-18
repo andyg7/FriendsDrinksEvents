@@ -121,6 +121,9 @@ public class StreamsService {
                             .setAdminUserId(key.getAdminUserId())
                             .setUuid(key.getUuid())
                             .build();
+                    if (value == null) {
+                        return KeyValue.pair(friendsDrinksIdApi, null);
+                    }
                     FriendsDrinksState friendsDrinksStateApi = FriendsDrinksState
                             .newBuilder()
                             .setName(value.getName())
@@ -154,6 +157,9 @@ public class StreamsService {
                         Consumed.with(userAvroBuilder.userIdSerde(), userAvroBuilder.userStateSerde()))
                         .map(((key, value) -> {
                             String newKey = key.getUserId();
+                            if (value == null) {
+                                return KeyValue.pair(newKey, null);
+                            }
                             andrewgrant.friendsdrinks.api.avro.UserState apiUserState =
                                     andrewgrant.friendsdrinks.api.avro.UserState.newBuilder()
                                             .setUserId(UserId.newBuilder().setUserId(value.getUserId().getUserId()).build())
