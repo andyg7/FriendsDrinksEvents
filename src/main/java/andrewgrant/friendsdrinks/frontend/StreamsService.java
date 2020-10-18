@@ -301,7 +301,7 @@ public class StreamsService {
         friendsDrinksStateKTable.leftJoin(enrichedMemberList,
                 (l, r) -> {
                     List<UserState> userStates = new ArrayList<>();
-                    if (r.getUserStates() != null) {
+                    if (r != null && r.getUserStates() != null) {
                         userStates = r.getUserStates();
                     }
                     return FriendsDrinksAggregate
