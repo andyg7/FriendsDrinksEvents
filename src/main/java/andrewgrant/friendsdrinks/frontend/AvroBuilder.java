@@ -219,7 +219,7 @@ public class AvroBuilder {
         return serde;
     }
 
-    public SpecificAvroSerde<andrewgrant.friendsdrinks.api.avro.UserState> apiUserStateerde() {
+    public SpecificAvroSerde<andrewgrant.friendsdrinks.api.avro.UserState> apiUserStateSerde() {
         SpecificAvroSerde<andrewgrant.friendsdrinks.api.avro.UserState> serde;
         if (registryClient != null) {
             serde = new SpecificAvroSerde<>(registryClient);

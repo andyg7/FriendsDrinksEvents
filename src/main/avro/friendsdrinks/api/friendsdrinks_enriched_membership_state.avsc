@@ -7,7 +7,6 @@
       {"name": "friendsDrinksName", "type": "string", "default": null },
       {"name": "userFirstName", "type": "string", "default": null },
       {"name": "userLastName", "type": "string", "default": null },
-      {"name": "userEmail", "type": "string", "default": null },
-      {"name": "isTombstone", "type": "boolean"}
+      {"name": "userEmail", "type": "string", "default": null }
   ]
 }
