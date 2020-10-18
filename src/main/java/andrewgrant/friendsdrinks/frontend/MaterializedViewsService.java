@@ -251,7 +251,11 @@ public class MaterializedViewsService {
                                 return KeyValue.pair(apiId, enrichedMembershipState);
                             }
                         })
-                        .toTable();
+                        .toTable(
+                                Materialized.<FriendsDrinksMembershipId, FriendsDrinksEnrichedMembershipState, KeyValueStore<Bytes, byte[]>>
+                                        as("friendsdrinks-membership-enriched-bootstrap-state-store")
+                                        .withKeySerde(apiAvroBuilder.apiFriendsDrinksMembershipIdSerde())
+                                        .withValueSerde(apiAvroBuilder.apiFriendsDrinksEnrichedMembershipStateSerde()));
 
         KTable<FriendsDrinksMembershipId, FriendsDrinksEnrichedMembershipState> enrichedMembershipStateKTable =
                 membershipStateKTable.leftJoin(userStateKTable,
