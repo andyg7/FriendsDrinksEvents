@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 
 import andrewgrant.friendsdrinks.AvroBuilder;
 import andrewgrant.friendsdrinks.api.avro.*;
+import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipState;
 import andrewgrant.friendsdrinks.user.UserAvroBuilder;
 
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
@@ -176,7 +177,12 @@ public class MaterializedViewsService {
                                         .withValueSerde(apiAvroBuilder.apiUserStateSerde())
                         );
 
-        buildFriendsDrinksDetailPageStateStore(builder, envProps, membershipAvroBuilder, apiAvroBuilder,
+        KStream<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId, FriendsDrinksMembershipState> membershipStateKTable =
+                builder.stream(envProps.getProperty("friendsdrinks-membership-state.topic.name"),
+                        Consumed.with(membershipAvroBuilder.friendsDrinksMembershipIdSerdes(),
+                                membershipAvroBuilder.friendsDrinksMembershipStateSerdes()));
+
+        buildFriendsDrinksDetailPageStateStore(apiAvroBuilder, membershipStateKTable,
                 apiFriendsDrinksStateKTable, userState);
         return builder.build();
     }
@@ -216,33 +222,30 @@ public class MaterializedViewsService {
     }
 
     private void buildFriendsDrinksDetailPageStateStore(
-            StreamsBuilder builder, Properties envProps,
-            andrewgrant.friendsdrinks.membership.AvroBuilder membershipAvroBuilder,
             andrewgrant.friendsdrinks.frontend.AvroBuilder apiAvroBuilder,
+            KStream<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId, FriendsDrinksMembershipState> membershipStateKStream,
             KTable<String, FriendsDrinksState> friendsDrinksStateKTable,
             KTable<String, andrewgrant.friendsdrinks.api.avro.UserState> userStateKTable) {
 
-        KTable<andrewgrant.friendsdrinks.api.avro.FriendsDrinksMembershipId, FriendsDrinksEnrichedMembershipState> membershipStateKTable =
-                builder.stream(envProps.getProperty("friendsdrinks-membership-state.topic.name"),
-                        Consumed.with(membershipAvroBuilder.friendsDrinksMembershipIdSerdes(),
-                                membershipAvroBuilder.friendsDrinksMembershipStateSerdes()))
-                        .map((key, value) -> {
-                            andrewgrant.friendsdrinks.api.avro.FriendsDrinksMembershipId apiId =
-                                    andrewgrant.friendsdrinks.api.avro.FriendsDrinksMembershipId.newBuilder()
-                                            .setFriendsDrinksId(FriendsDrinksId
-                                                    .newBuilder()
-                                                    .setUuid(key.getFriendsDrinksId().getUuid())
-                                                    .setAdminUserId(key.getFriendsDrinksId().getAdminUserId())
-                                                    .build())
-                                            .setUserId(UserId.newBuilder()
-                                                    .setUserId(key.getUserId().getUserId())
-                                                    .build())
-                                            .build();
-                            if (value == null) {
-                                return KeyValue.pair(apiId, null);
-                            } else {
-                                FriendsDrinksEnrichedMembershipState enrichedMembershipState =
-                                        FriendsDrinksEnrichedMembershipState.newBuilder()
+        KTable<andrewgrant.friendsdrinks.api.avro.FriendsDrinksMembershipId, FriendsDrinksEnrichedMembershipState>
+                membershipStateKTable = membershipStateKStream
+                .map((key, value) -> {
+                    andrewgrant.friendsdrinks.api.avro.FriendsDrinksMembershipId apiId =
+                            andrewgrant.friendsdrinks.api.avro.FriendsDrinksMembershipId.newBuilder()
+                                    .setFriendsDrinksId(FriendsDrinksId
+                                            .newBuilder()
+                                            .setUuid(key.getFriendsDrinksId().getUuid())
+                                            .setAdminUserId(key.getFriendsDrinksId().getAdminUserId())
+                                            .build())
+                                    .setUserId(UserId.newBuilder()
+                                            .setUserId(key.getUserId().getUserId())
+                                            .build())
+                                    .build();
+                    if (value == null) {
+                        return KeyValue.pair(apiId, null);
+                    } else {
+                        FriendsDrinksEnrichedMembershipState enrichedMembershipState =
+                                FriendsDrinksEnrichedMembershipState.newBuilder()
                                                 .setMembershipId(apiId)
                                                 .build();
                                 return KeyValue.pair(apiId, enrichedMembershipState);

@@ -6,6 +6,6 @@
       {"name": "membershipId", "type": "FriendsDrinksMembershipId" },
       {"name": "userFirstName", "type": "string", "default": null },
       {"name": "userLastName", "type": "string", "default": null },
-      {"name": "userEmail", "type": "string", "default": null }
+      {"name": "userEmail", "type": ["null", "string"], "default": null }
   ]
 }
