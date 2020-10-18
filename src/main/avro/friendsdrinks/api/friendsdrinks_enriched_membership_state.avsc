@@ -4,7 +4,6 @@
   "name": "FriendsDrinksEnrichedMembershipState",
   "fields": [
       {"name": "membershipId", "type": "FriendsDrinksMembershipId" },
-      {"name": "friendsDrinksName", "type": "string", "default": null },
       {"name": "userFirstName", "type": "string", "default": null },
       {"name": "userLastName", "type": "string", "default": null },
       {"name": "userEmail", "type": "string", "default": null }

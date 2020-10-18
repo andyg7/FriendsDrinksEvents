@@ -250,61 +250,72 @@ public class StreamsService {
                         );
 
         KTable<FriendsDrinksMembershipId, FriendsDrinksEnrichedMembershipState> enrichedMembershipStateKTable =
-                membershipStateKTable.join(friendsDrinksStateKTable,
-                        (enrichedMembershipState -> enrichedMembershipState.getMembershipId().getFriendsDrinksId().getUuid()),
-                        (l, r) -> FriendsDrinksEnrichedMembershipState
-                                .newBuilder(l)
-                                .setFriendsDrinksName(r.getName())
-                                .build()
-                ).join(userStateKTable,
+                membershipStateKTable.join(userStateKTable,
                         (enrichedMembershipState -> enrichedMembershipState.getMembershipId().getUserId().getUserId()),
                         (l, r) -> FriendsDrinksEnrichedMembershipState
                                 .newBuilder(l)
                                 .setUserEmail(r.getEmail())
                                 .setUserFirstName(r.getFirstName())
-                                .setUserFirstName(r.getLastName())
+                                .setUserLastName(r.getLastName())
                                 .build()
                 );
 
-        enrichedMembershipStateKTable.groupBy((key, value) -> KeyValue.pair(value.getMembershipId().getFriendsDrinksId().getUuid(), value),
+        KTable<String, UserStateList> enrichedMemberList = enrichedMembershipStateKTable.groupBy((key, value) ->
+                        KeyValue.pair(value.getMembershipId().getFriendsDrinksId().getUuid(), value),
                 Grouped.with(Serdes.String(), apiAvroBuilder.apiFriendsDrinksEnrichedMembershipStateSerde()))
                 .aggregate(
-                        () -> FriendsDrinksAggregate
-                                .newBuilder()
-                                .setMembers(new ArrayList<>())
-                                .build(),
+                        () -> UserStateList.newBuilder().setUserStates(new ArrayList<>()).build(),
                         (aggKey, newValue, aggValue) -> {
-                            FriendsDrinksAggregate.Builder friendsDrinksAggregateBuilder = FriendsDrinksAggregate
-                                    .newBuilder(aggValue)
-                                    .setName(newValue.getFriendsDrinksName())
-                                    .setFriendsDrinksId(newValue.getMembershipId().getFriendsDrinksId());
-                            List<UserState> members = friendsDrinksAggregateBuilder.getMembers();
-                            members.add(andrewgrant.friendsdrinks.api.avro.UserState.newBuilder()
+                            List<UserState> userStates = aggValue.getUserStates();
+                            userStates.add(UserState
+                                    .newBuilder()
+                                    .setEmail(newValue.getUserEmail())
                                     .setFirstName(newValue.getUserFirstName())
                                     .setLastName(newValue.getUserLastName())
-                                    .setEmail(newValue.getUserEmail())
                                     .build());
-                            friendsDrinksAggregateBuilder.setMembers(members);
-                            return friendsDrinksAggregateBuilder.build();
+                            return UserStateList
+                                    .newBuilder()
+                                    .setUserStates(userStates)
+                                    .build();
                         },
-                        (aggKey, oldValue, aggValue) -> {
-                            FriendsDrinksAggregate.Builder friendsDrinksAggregateBuilder = FriendsDrinksAggregate
-                                    .newBuilder(aggValue);
-                            List<andrewgrant.friendsdrinks.api.avro.UserState> members = friendsDrinksAggregateBuilder.getMembers();
-                            for (int i = 0; i < members.size(); i++) {
-                                if (members.get(i).getUserId().equals(oldValue.getMembershipId().getUserId())) {
-                                    members.remove(i);
+                        (aggKey, oldValue, aggValue) ->  {
+                            List<UserState> userStates = aggValue.getUserStates();
+                            for (int i = 0; i < userStates.size(); i++) {
+                                if (userStates.get(i).getUserId().getUserId().equals(
+                                        oldValue.getMembershipId().getUserId().getUserId())) {
+                                    userStates.remove(i);
                                     break;
                                 }
                             }
-                            friendsDrinksAggregateBuilder.setMembers(members);
-                            return friendsDrinksAggregateBuilder.build();
+                            return UserStateList
+                                    .newBuilder()
+                                    .setUserStates(userStates)
+                                    .build();
                         },
-                        Materialized.<String, FriendsDrinksAggregate, KeyValueStore<Bytes, byte[]>>
-                                as(FRIENDSDRINKS_DETAIL_PAGE_STORE)
+                        Materialized.<String, UserStateList, KeyValueStore<Bytes, byte[]>>
+                                as("friendsdrinks-enriched-membership-list")
                                 .withKeySerde(Serdes.String())
-                                .withValueSerde(apiAvroBuilder.apiFriendsDrinksAggregateSerdes())
+                                .withValueSerde(apiAvroBuilder.apiUserStateListSerde())
                 );
+
+        friendsDrinksStateKTable.leftJoin(enrichedMemberList,
+                (l, r) -> {
+                    List<UserState> userStates = new ArrayList<>();
+                    if (r.getUserStates() != null) {
+                        userStates = r.getUserStates();
+                    }
+                    return FriendsDrinksAggregate
+                            .newBuilder()
+                            .setName(l.getName())
+                            .setFriendsDrinksId(l.getFriendsDrinksId())
+                            .setMembers(userStates)
+                            .build();
+                },
+                Materialized.<String, FriendsDrinksAggregate, KeyValueStore<Bytes, byte[]>>
+                        as(FRIENDSDRINKS_DETAIL_PAGE_STORE)
+                        .withKeySerde(Serdes.String())
+                        .withValueSerde(apiAvroBuilder.apiFriendsDrinksAggregateSerdes())
+        );
     }
 
     private static Properties buildStreamsProperties(Properties envProps, String uri) {
