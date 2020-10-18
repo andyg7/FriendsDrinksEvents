@@ -282,6 +282,7 @@ public class MaterializedViewsService {
                                     .setEmail(newValue.getUserEmail())
                                     .setFirstName(newValue.getUserFirstName())
                                     .setLastName(newValue.getUserLastName())
+                                    .setUserId(newValue.getMembershipId().getUserId())
                                     .build());
                             return UserStateList
                                     .newBuilder()
