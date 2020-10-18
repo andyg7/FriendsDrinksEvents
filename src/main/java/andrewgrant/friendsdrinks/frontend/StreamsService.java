@@ -170,7 +170,7 @@ public class StreamsService {
                                         .withValueSerde(apiAvroBuilder.apiUserStateSerde())
                         );
 
-        buildFriendsDrinksDetailPageView(builder, envProps, membershipAvroBuilder, apiAvroBuilder,
+        buildFriendsDrinksDetailPageStateStore(builder, envProps, membershipAvroBuilder, apiAvroBuilder,
                 apiFriendsDrinksStateKTable, userState);
         return builder.build();
     }
@@ -209,7 +209,7 @@ public class StreamsService {
                 .to(responsesTopicName, Produced.with(Serdes.String(), apiAvroBuilder.friendsDrinksSerde()));
     }
 
-    private void buildFriendsDrinksDetailPageView(
+    private void buildFriendsDrinksDetailPageStateStore(
             StreamsBuilder builder, Properties envProps,
             andrewgrant.friendsdrinks.membership.AvroBuilder membershipAvroBuilder,
             andrewgrant.friendsdrinks.frontend.AvroBuilder apiAvroBuilder,
