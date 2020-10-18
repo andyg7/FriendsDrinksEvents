@@ -87,7 +87,7 @@ public class StreamsService {
                 envProps.getProperty("friendsdrinks-membership-keyed-by-user-id-state.topic.name"),
                 Consumed.with(membershipAvroBuilder.userIdSerdes(), membershipAvroBuilder.friendsDrinksMembershipIdListSerdes()))
                 .map((key, value) -> {
-                    if (value == null || value.getIds() == null) {
+                    if (value == null) {
                         return KeyValue.pair(key.getUserId(), null);
                     }
                     String userId = key.getUserId();
