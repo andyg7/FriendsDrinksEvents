@@ -254,7 +254,7 @@ public class MaterializedViewsService {
                         .toTable();
 
         KTable<FriendsDrinksMembershipId, FriendsDrinksEnrichedMembershipState> enrichedMembershipStateKTable =
-                membershipStateKTable.join(userStateKTable,
+                membershipStateKTable.leftJoin(userStateKTable,
                         (enrichedMembershipState -> enrichedMembershipState.getMembershipId().getUserId().getUserId()),
                         (l, r) -> FriendsDrinksEnrichedMembershipState
                                 .newBuilder(l)
