@@ -265,7 +265,9 @@ public class MaterializedViewsService {
                                 .setUserEmail(r.getEmail())
                                 .setUserFirstName(r.getFirstName())
                                 .setUserLastName(r.getLastName())
-                                .build()
+                                .build(),
+                        Materialized.with(apiAvroBuilder.apiFriendsDrinksMembershipIdSerde(),
+                                apiAvroBuilder.apiFriendsDrinksEnrichedMembershipStateSerde())
                 );
 
         KTable<String, UserStateList> enrichedMemberList = enrichedMembershipStateKTable.groupBy((key, value) ->
