@@ -160,7 +160,7 @@ public class Handler {
 
 
     @GET
-    @Path("/users/{userId}/friendsdrinks/homepage")
+    @Path("/users/{userId}/friendsdrinkshomepage")
     @Produces(MediaType.APPLICATION_JSON)
     public GetUserHomepageResponseBean getUserFriendsDrinksHomepage(@PathParam("userId") String userId) {
         GetUserHomepageResponseBean getUserHomepageResponseBean = new GetUserHomepageResponseBean();
