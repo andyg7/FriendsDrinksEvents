@@ -33,7 +33,13 @@ public class MaterializedViewsService {
     public static final String USERS_STORE = "users-state-store";
     public static final String FRIENDSDRINKS_KEYED_BY_SINGLE_ID_STORE = "friendsdrinks-keyed-by-single-id-state-store";
     public static final String PENDING_INVITATIONS_STORE = "pending-invitations-state-store";
+
     private KafkaStreams streams;
+    private Properties envProps;
+    private AvroBuilder avroBuilder;
+    private andrewgrant.friendsdrinks.frontend.AvroBuilder apiAvroBuilder;
+    private andrewgrant.friendsdrinks.membership.AvroBuilder membershipAvroBuilder;
+    private UserAvroBuilder userAvroBuilder;
 
     public MaterializedViewsService(Properties envProps,
                                     String uri,
@@ -41,16 +47,17 @@ public class MaterializedViewsService {
                                     andrewgrant.friendsdrinks.frontend.AvroBuilder apiAvroBuilder,
                                     andrewgrant.friendsdrinks.membership.AvroBuilder membershipAvroBuilder,
                                     UserAvroBuilder userAvroBuilder) {
-        Topology topology = buildTopology(envProps, avroBuilder, apiAvroBuilder, membershipAvroBuilder, userAvroBuilder);
+        Topology topology = buildTopology();
         Properties streamProps = buildStreamsProperties(envProps, uri);
         streams = new KafkaStreams(topology, streamProps);
+        this.envProps = envProps;
+        this.avroBuilder = avroBuilder;
+        this.apiAvroBuilder = apiAvroBuilder;
+        this.membershipAvroBuilder = membershipAvroBuilder;
+        this.userAvroBuilder = userAvroBuilder;
     }
 
-    private Topology buildTopology(Properties envProps,
-                                   AvroBuilder avroBuilder,
-                                   andrewgrant.friendsdrinks.frontend.AvroBuilder apiAvroBuilder,
-                                   andrewgrant.friendsdrinks.membership.AvroBuilder membershipAvroBuilder,
-                                   UserAvroBuilder userAvroBuilder) {
+    private Topology buildTopology() {
         final StreamsBuilder builder = new StreamsBuilder();
         final String apiTopicName = envProps.getProperty("friendsdrinks-api.topic.name");
 
@@ -59,7 +66,7 @@ public class MaterializedViewsService {
                         Consumed.with(Serdes.String(), apiAvroBuilder.friendsDrinksSerde()));
 
         final String frontendPrivateTopicName = envProps.getProperty("frontend-responses.topic.name");
-        buildResponsesStore(builder, apiEvents, apiAvroBuilder, frontendPrivateTopicName);
+        buildResponsesStore(builder, apiEvents, frontendPrivateTopicName);
 
         builder.stream(envProps.getProperty("friendsdrinks-keyed-by-admin-user-id-state.topic.name"),
                 Consumed.with(Serdes.String(), avroBuilder.friendsDrinksIdListSerde()))
@@ -182,14 +189,13 @@ public class MaterializedViewsService {
                         Consumed.with(membershipAvroBuilder.friendsDrinksMembershipIdSerdes(),
                                 membershipAvroBuilder.friendsDrinksMembershipStateSerdes()));
 
-        buildFriendsDrinksDetailPageStateStore(apiAvroBuilder, membershipStateKTable,
+        buildFriendsDrinksDetailPageStateStore(membershipStateKTable,
                 apiFriendsDrinksStateKTable, userState);
         return builder.build();
     }
 
     private void buildResponsesStore(StreamsBuilder builder,
                                      KStream<String, andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent> stream,
-                                     andrewgrant.friendsdrinks.frontend.AvroBuilder apiAvroBuilder,
                                      String responsesTopicName) {
         stream.filter(((key, value) -> {
             EventType eventType = value.getEventType();
@@ -222,7 +228,6 @@ public class MaterializedViewsService {
     }
 
     private void buildFriendsDrinksDetailPageStateStore(
-            andrewgrant.friendsdrinks.frontend.AvroBuilder apiAvroBuilder,
             KStream<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId, FriendsDrinksMembershipState> membershipStateKStream,
             KTable<String, FriendsDrinksState> friendsDrinksStateKTable,
             KTable<String, andrewgrant.friendsdrinks.api.avro.UserState> userStateKTable) {

@@ -23,14 +23,22 @@ public class Service {
 
     private static final Logger log = LoggerFactory.getLogger(Service.class);
 
-    public Topology buildTopology(Properties envProps, UserAvroBuilder avro) {
+    private Properties envProps;
+    private UserAvroBuilder avroBuilder;
+
+    public Service(Properties envProps, UserAvroBuilder avroBuilder) {
+        this.envProps = envProps;
+        this.avroBuilder = avroBuilder;
+    }
+
+    public Topology buildTopology() {
         StreamsBuilder builder = new StreamsBuilder();
 
         final String apiTopicName = envProps.getProperty("user-event.topic.name");
         KStream<UserId, UserEvent> userEvents = builder.stream(apiTopicName,
-                Consumed.with(avro.userIdSerde(), avro.userEventSerde()));
+                Consumed.with(avroBuilder.userIdSerde(), avroBuilder.userEventSerde()));
         userEvents
-                .groupByKey(Grouped.with(avro.userIdSerde(), avro.userEventSerde()))
+                .groupByKey(Grouped.with(avroBuilder.userIdSerde(), avroBuilder.userEventSerde()))
                 .aggregate(
                         () -> UserStateAggregate.newBuilder().build(),
                         (aggKey, newValue, aggValue) -> {
@@ -57,7 +65,7 @@ public class Service {
                                 throw new RuntimeException(String.format("Unknown event type %s", newValue.getEventType().name()));
                             }
                         },
-                        Materialized.with(avro.userIdSerde(), avro.userStateAggregateSerde())
+                        Materialized.with(avroBuilder.userIdSerde(), avroBuilder.userStateAggregateSerde())
                 ).toStream().mapValues(value -> {
             if (value == null) {
                 return null;
@@ -65,7 +73,7 @@ public class Service {
                 return value.getUserState();
             }
         })
-                .to(envProps.getProperty("user-state.topic.name"), Produced.with(avro.userIdSerde(), avro.userStateSerde()));
+                .to(envProps.getProperty("user-state.topic.name"), Produced.with(avroBuilder.userIdSerde(), avroBuilder.userStateSerde()));
 
         return builder.build();
     }
@@ -79,10 +87,9 @@ public class Service {
 
     public static void main(String[] args) throws IOException {
         Properties envProps = load(args[0]);
-        Service service = new Service();
         String schemaRegistryUrl = envProps.getProperty("schema.registry.url");
-        UserAvroBuilder userAvroBuilder = new UserAvroBuilder(schemaRegistryUrl);
-        Topology topology = service.buildTopology(envProps, userAvroBuilder);
+        Service service = new Service(envProps, new UserAvroBuilder(schemaRegistryUrl));
+        Topology topology = service.buildTopology();
         Properties streamProps = service.buildStreamProperties(envProps);
         KafkaStreams kafkaStreams = new KafkaStreams(topology, streamProps);
 
