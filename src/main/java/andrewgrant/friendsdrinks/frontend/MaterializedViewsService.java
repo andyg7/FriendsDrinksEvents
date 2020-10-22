@@ -3,8 +3,7 @@ package andrewgrant.friendsdrinks.frontend;
 import static andrewgrant.friendsdrinks.TopicNameConfigKey.FRIENDSDRINKS_KEYED_BY_ADMIN_USER_ID_STATE;
 import static andrewgrant.friendsdrinks.TopicNameConfigKey.FRIENDSDRINKS_STATE;
 import static andrewgrant.friendsdrinks.frontend.TopicNameConfigKey.FRIENDSDRINKS_API;
-import static andrewgrant.friendsdrinks.membership.TopicNameConfigKey.FRIENDSDRINKS_MEMBERSHIP_KEYED_BY_USER_ID_STATE;
-import static andrewgrant.friendsdrinks.membership.TopicNameConfigKey.FRIENDSDRINKS_MEMBERSHIP_STATE;
+import static andrewgrant.friendsdrinks.membership.TopicNameConfigKey.*;
 import static andrewgrant.friendsdrinks.user.TopicNameConfigKey.USER_STATE;
 
 import org.apache.kafka.common.serialization.Serdes;
@@ -161,7 +160,7 @@ public class MaterializedViewsService {
                                         .withKeySerde(Serdes.String())
                                         .withValueSerde(apiAvroBuilder.apiFriendsDrinksStateSerde()));
 
-        final String pendingInvitationsTopicName = envProps.getProperty("friendsdrinks-pending-invitation.topic.name");
+        final String pendingInvitationsTopicName = envProps.getProperty(FRIENDSDRINKS_PENDING_INVITATION);
         builder.table(pendingInvitationsTopicName,
                 Consumed.with(apiAvroBuilder.friendsDrinksPendingInvitationIdSerde(),
                         apiAvroBuilder.friendsDrinksPendingInvitationSerde()),

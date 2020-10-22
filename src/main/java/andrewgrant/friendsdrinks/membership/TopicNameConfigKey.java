@@ -10,4 +10,5 @@ public class TopicNameConfigKey {
             "friendsdrinks-membership-keyed-by-friendsdrinks-id-state.topic.name";
     public static final String FRIENDSDRINKS_MEMBERSHIP_KEYED_BY_USER_ID_STATE =
             "friendsdrinks-membership-keyed-by-user-id-state.topic.name";
+    public static final String FRIENDSDRINKS_PENDING_INVITATION = "friendsdrinks-pending-invitation.topic.name";
 }
