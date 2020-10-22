@@ -84,7 +84,7 @@ public class WriterService {
         KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable =
                 builder.table(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_STATE),
                         Consumed.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksStateSerde()));
-        buildFriendsDrinksIdListKeyedByAdminUserIdView(friendsDrinksStateKTable, avroBuilder)
+        buildFriendsDrinksIdListKeyedByAdminUserIdView(friendsDrinksStateKTable)
                 .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_KEYED_BY_ADMIN_USER_ID_STATE),
                         Produced.with(Serdes.String(), avroBuilder.friendsDrinksIdListSerde()));
 
@@ -92,8 +92,7 @@ public class WriterService {
     }
 
     private KStream<String, FriendsDrinksIdList> buildFriendsDrinksIdListKeyedByAdminUserIdView(
-            KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable,
-            AvroBuilder avroBuilder) {
+            KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable) {
         return friendsDrinksStateKTable.groupBy(((key, value) ->
                         KeyValue.pair(value.getFriendsDrinksId().getAdminUserId(), value)),
                 Grouped.with(Serdes.String(), avroBuilder.friendsDrinksStateSerde()))

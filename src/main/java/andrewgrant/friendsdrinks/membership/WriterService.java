@@ -205,7 +205,7 @@ public class WriterService {
 
     private KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipEvent> handleDeletedUsers(
             KStream<andrewgrant.friendsdrinks.user.avro.UserId, UserState> userStateKStream,
-                                    KTable<UserId, FriendsDrinksMembershipIdList> membershipIdListKTable) {
+            KTable<UserId, FriendsDrinksMembershipIdList> membershipIdListKTable) {
 
         KStream<UserId, FriendsDrinksMembershipId> streamOfMembershipIdsToDelete = userStateKStream
                 .map((key, value) -> {
