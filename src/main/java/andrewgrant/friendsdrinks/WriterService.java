@@ -61,28 +61,26 @@ public class WriterService {
                 .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_EVENT),
                         Produced.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksEventSerde()));
 
-        KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState> friendsDrinksStateStream =
-                builder.stream(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_EVENT),
-                        Consumed.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksEventSerde()))
-                        .groupByKey(Grouped.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksEventSerde()))
-                        .aggregate(
-                                () -> FriendsDrinksStateAggregate.newBuilder().build(),
-                                (aggKey, newValue, aggValue) -> new StateAggregator().handleNewEvent(aggKey, newValue, aggValue),
-                                Materialized.<
-                                        andrewgrant.friendsdrinks.avro.FriendsDrinksId,
-                                        FriendsDrinksStateAggregate, KeyValueStore<Bytes, byte[]>>
-                                        as("internal_writer_service_friendsdrinks-state_tracker")
-                                        .withKeySerde(avroBuilder.friendsDrinksIdSerde())
-                                        .withValueSerde(avroBuilder.friendsDrinksStateAggregateSerde())
-                        ).toStream().mapValues(value -> {
-                    if (value == null) {
-                        return null;
-                    }
-                    return value.getFriendsDrinksState();
-                });
-
-        friendsDrinksStateStream.to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_STATE),
+        builder.stream(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_EVENT),
+                Consumed.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksEventSerde()))
+                .groupByKey(Grouped.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksEventSerde()))
+                .aggregate(
+                        () -> FriendsDrinksStateAggregate.newBuilder().build(),
+                        (aggKey, newValue, aggValue) -> new StateAggregator().handleNewEvent(aggKey, newValue, aggValue),
+                        Materialized.<
+                                andrewgrant.friendsdrinks.avro.FriendsDrinksId,
+                                FriendsDrinksStateAggregate, KeyValueStore<Bytes, byte[]>>
+                                as("internal_writer_service_friendsdrinks-state_tracker")
+                                .withKeySerde(avroBuilder.friendsDrinksIdSerde())
+                                .withValueSerde(avroBuilder.friendsDrinksStateAggregateSerde())
+                ).toStream().mapValues(value -> {
+            if (value == null) {
+                return null;
+            }
+            return value.getFriendsDrinksState();
+        }).to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_STATE),
                 Produced.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksStateSerde()));
+
         KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable =
                 builder.table(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_STATE),
                         Consumed.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksStateSerde()));
