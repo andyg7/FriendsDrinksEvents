@@ -34,7 +34,7 @@ public class Service {
     public Topology buildTopology() {
         StreamsBuilder builder = new StreamsBuilder();
 
-        final String apiTopicName = envProps.getProperty("user-event.topic.name");
+        final String apiTopicName = envProps.getProperty(TopicNameConfigKey.USER_EVENT);
         KStream<UserId, UserEvent> userEvents = builder.stream(apiTopicName,
                 Consumed.with(avroBuilder.userIdSerde(), avroBuilder.userEventSerde()));
         userEvents
@@ -73,7 +73,7 @@ public class Service {
                 return value.getUserState();
             }
         })
-                .to(envProps.getProperty("user-state.topic.name"), Produced.with(avroBuilder.userIdSerde(), avroBuilder.userStateSerde()));
+                .to(envProps.getProperty(TopicNameConfigKey.USER_STATE), Produced.with(avroBuilder.userIdSerde(), avroBuilder.userStateSerde()));
 
         return builder.build();
     }

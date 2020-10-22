@@ -1,6 +1,9 @@
 package andrewgrant.friendsdrinks.membership;
 
+import static andrewgrant.friendsdrinks.TopicNameConfigKey.FRIENDSDRINKS_STATE;
 import static andrewgrant.friendsdrinks.env.Properties.load;
+import static andrewgrant.friendsdrinks.frontend.TopicNameConfigKey.FRIENDSDRINKS_API;
+import static andrewgrant.friendsdrinks.user.TopicNameConfigKey.USER_STATE;
 
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.*;
@@ -45,16 +48,16 @@ public class RequestService {
     public Topology buildTopology() {
         StreamsBuilder builder = new StreamsBuilder();
 
-        final String apiTopicName = envProps.getProperty("friendsdrinks-api.topic.name");
+        final String apiTopicName = envProps.getProperty(FRIENDSDRINKS_API);
         KStream<String, FriendsDrinksEvent> apiEvents = builder.stream(apiTopicName,
                 Consumed.with(Serdes.String(), frontendAvroBuilder.friendsDrinksSerde()));
 
         KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable =
-                builder.table(envProps.getProperty("friendsdrinks-state.topic.name"),
+                builder.table(envProps.getProperty(FRIENDSDRINKS_STATE),
                         Consumed.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksStateSerde()));
 
         KTable<andrewgrant.friendsdrinks.user.avro.UserId, UserState> userState =
-                builder.table(envProps.getProperty("user-state.topic.name"),
+                builder.table(envProps.getProperty(USER_STATE),
                         Consumed.with(userAvroBuilder.userIdSerde(), userAvroBuilder.userStateSerde()));
 
         String pendingInvitationsTopicName = envProps.getProperty("friendsdrinks-pending-invitation.topic.name");

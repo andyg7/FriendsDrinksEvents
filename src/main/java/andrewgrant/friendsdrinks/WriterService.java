@@ -1,6 +1,7 @@
 package andrewgrant.friendsdrinks;
 
 import static andrewgrant.friendsdrinks.env.Properties.load;
+import static andrewgrant.friendsdrinks.frontend.TopicNameConfigKey.FRIENDSDRINKS_API;
 
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
@@ -34,21 +35,18 @@ public class WriterService {
 
     private Properties envProps;
     private AvroBuilder avroBuilder;
-    private andrewgrant.friendsdrinks.membership.AvroBuilder membershipAvroBuilder;
     private andrewgrant.friendsdrinks.frontend.AvroBuilder frontendAvroBuilder;
 
     public WriterService(Properties envProps, AvroBuilder avroBuilder,
-                         andrewgrant.friendsdrinks.membership.AvroBuilder membershipAvroBuilder,
                          andrewgrant.friendsdrinks.frontend.AvroBuilder frontendAvroBuilder) {
         this.envProps = envProps;
         this.avroBuilder = avroBuilder;
-        this.membershipAvroBuilder = membershipAvroBuilder;
         this.frontendAvroBuilder = frontendAvroBuilder;
     }
 
     public Topology buildTopology() {
         StreamsBuilder builder = new StreamsBuilder();
-        KStream<String, FriendsDrinksEvent> apiEvents = builder.stream(envProps.getProperty("friendsdrinks-api.topic.name"),
+        KStream<String, FriendsDrinksEvent> apiEvents = builder.stream(envProps.getProperty(FRIENDSDRINKS_API),
                 Consumed.with(Serdes.String(), frontendAvroBuilder.friendsDrinksSerde()));
         KStream<String, FriendsDrinksEvent> successfulApiResponses = streamOfSuccessfulResponses(apiEvents);
         KStream<String, FriendsDrinksEvent> apiRequests = streamOfRequests(apiEvents);
@@ -60,11 +58,11 @@ public class WriterService {
                         frontendAvroBuilder.friendsDrinksSerde(),
                         frontendAvroBuilder.friendsDrinksSerde()))
                 .selectKey((k, v) -> v.getFriendsDrinksId())
-                .to(envProps.getProperty("friendsdrinks-event.topic.name"),
+                .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_EVENT),
                         Produced.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksEventSerde()));
 
         KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState> friendsDrinksStateStream =
-                builder.stream(envProps.getProperty("friendsdrinks-event.topic.name"),
+                builder.stream(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_EVENT),
                         Consumed.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksEventSerde()))
                         .groupByKey(Grouped.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksEventSerde()))
                         .aggregate(
@@ -83,10 +81,11 @@ public class WriterService {
                     return value.getFriendsDrinksState();
                 });
 
-        friendsDrinksStateStream.to(envProps.getProperty("friendsdrinks-state.topic.name"),
+        friendsDrinksStateStream.to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_STATE),
                 Produced.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksStateSerde()));
-        KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable = builder.table(envProps.getProperty("friendsdrinks-state.topic.name"),
-                Consumed.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksStateSerde()));
+        KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable =
+                builder.table(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_STATE),
+                        Consumed.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksStateSerde()));
         buildFriendsDrinksIdListKeyedByAdminUserIdView(friendsDrinksStateKTable, avroBuilder);
 
         return builder.build();
@@ -130,7 +129,7 @@ public class WriterService {
                                 .withKeySerde(Serdes.String())
                                 .withValueSerde(avroBuilder.friendsDrinksIdListSerde())
                 )
-                .toStream().to(envProps.getProperty("friendsdrinks-keyed-by-admin-user-id-state.topic.name"),
+                .toStream().to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_KEYED_BY_ADMIN_USER_ID_STATE),
                 Produced.with(Serdes.String(), avroBuilder.friendsDrinksIdListSerde()));
     }
 
@@ -166,7 +165,6 @@ public class WriterService {
         WriterService writerService = new WriterService(
                 envProps,
                 new AvroBuilder(schemaRegistryUrl),
-                new andrewgrant.friendsdrinks.membership.AvroBuilder(schemaRegistryUrl),
                 new andrewgrant.friendsdrinks.frontend.AvroBuilder(schemaRegistryUrl));
         Topology topology = writerService.buildTopology();
         Properties streamProps = writerService.buildStreamsProperties(envProps);

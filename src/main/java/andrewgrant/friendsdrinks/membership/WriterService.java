@@ -1,6 +1,9 @@
 package andrewgrant.friendsdrinks.membership;
 
+import static andrewgrant.friendsdrinks.TopicNameConfigKey.FRIENDSDRINKS_STATE;
 import static andrewgrant.friendsdrinks.env.Properties.load;
+import static andrewgrant.friendsdrinks.frontend.TopicNameConfigKey.FRIENDSDRINKS_API;
+import static andrewgrant.friendsdrinks.user.TopicNameConfigKey.USER_STATE;
 
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
@@ -53,7 +56,7 @@ public class WriterService {
     public Topology buildTopology() {
         StreamsBuilder builder = new StreamsBuilder();
 
-        KStream<String, FriendsDrinksEvent> apiEvents = builder.stream(envProps.getProperty("friendsdrinks-api.topic.name"),
+        KStream<String, FriendsDrinksEvent> apiEvents = builder.stream(envProps.getProperty(FRIENDSDRINKS_API),
                 Consumed.with(Serdes.String(), frontendAvroBuilder.friendsDrinksSerde()));
         KStream<String, FriendsDrinksEvent> successfulApiResponses = streamOfSuccessfulResponses(apiEvents);
         KStream<String, FriendsDrinksEvent> apiRequests = streamOfRequests(apiEvents);
@@ -65,37 +68,37 @@ public class WriterService {
                         frontendAvroBuilder.friendsDrinksSerde(),
                         frontendAvroBuilder.friendsDrinksSerde()))
                 .selectKey((k, v) -> v.getMembershipId())
-                .to(envProps.getProperty("friendsdrinks-membership-event.topic.name"),
+                .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_MEMBERSHIP_EVENT),
                         Produced.with(avroBuilder.friendsDrinksMembershipIdSerdes(), avroBuilder.friendsDrinksMembershipEventSerdes()));
 
         KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipEvent> friendsDrinksMembershipEventKStream
-                = builder.stream(envProps.getProperty("friendsdrinks-membership-event.topic.name"),
+                = builder.stream(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_MEMBERSHIP_EVENT),
                 Consumed.with(avroBuilder.friendsDrinksMembershipIdSerdes(), avroBuilder.friendsDrinksMembershipEventSerdes()));
         buildMembershipStateKTable(friendsDrinksMembershipEventKStream);
 
         KTable<FriendsDrinksMembershipId, FriendsDrinksMembershipState> membershipStateKTable =
-                builder.table(envProps.getProperty("friendsdrinks-membership-state.topic.name"),
+                builder.table(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_MEMBERSHIP_STATE),
                         Consumed.with(avroBuilder.friendsDrinksMembershipIdSerdes(), avroBuilder.friendsDrinksMembershipStateSerdes()));
 
         buildMembershipIdListKeyedByFriendsDrinksIdView(membershipStateKTable);
         buildMembershipIdListKeyedByUserIdView(membershipStateKTable);
 
         KTable<FriendsDrinksId, FriendsDrinksMembershipIdList> membershipIdListKeyedByFriendsDrinksIdStateKTable =
-                builder.table(envProps.getProperty("friendsdrinks-membership-keyed-by-friendsdrinks-id-state.topic.name"),
+                builder.table(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_MEMBERSHIP_KEYED_BY_FRIENDSDRINKS_ID_STATE),
                         Consumed.with(avroBuilder.friendsDrinksIdSerdes(), avroBuilder.friendsDrinksMembershipIdListSerdes()));
 
         KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState>
-                friendsDrinksEventKStream = builder.stream(envProps.getProperty("friendsdrinks-state.topic.name"),
+                friendsDrinksEventKStream = builder.stream(envProps.getProperty(FRIENDSDRINKS_STATE),
                 Consumed.with(friendsDrinksAvroBuilder.friendsDrinksIdSerde(), friendsDrinksAvroBuilder.friendsDrinksStateSerde()));
 
         handleDeletedFriendsDrinks(friendsDrinksEventKStream, membershipIdListKeyedByFriendsDrinksIdStateKTable);
 
         KTable<UserId, FriendsDrinksMembershipIdList> membershipIdListKeyedByUserIdStateKTable =
-                builder.table(envProps.getProperty("friendsdrinks-membership-keyed-by-user-id-state.topic.name"),
+                builder.table(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_MEMBERSHIP_KEYED_BY_USER_ID_STATE),
                         Consumed.with(avroBuilder.userIdSerdes(), avroBuilder.friendsDrinksMembershipIdListSerdes()));
 
         KStream<andrewgrant.friendsdrinks.user.avro.UserId, UserState> userEventKStream =
-                builder.stream(envProps.getProperty("user-state.topic.name"),
+                builder.stream(envProps.getProperty(USER_STATE),
                         Consumed.with(userAvroBuilder.userIdSerde(), userAvroBuilder.userStateSerde()));
         handleDeletedUsers(userEventKStream, membershipIdListKeyedByUserIdStateKTable);
 
@@ -141,7 +144,7 @@ public class WriterService {
                                 .withKeySerde(avroBuilder.friendsDrinksIdSerdes())
                                 .withValueSerde(avroBuilder.friendsDrinksMembershipIdListSerdes())
                 )
-                .toStream().to(envProps.getProperty("friendsdrinks-membership-keyed-by-friendsdrinks-id-state.topic.name"),
+                .toStream().to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_MEMBERSHIP_KEYED_BY_FRIENDSDRINKS_ID_STATE),
                 Produced.with(avroBuilder.friendsDrinksIdSerdes(), avroBuilder.friendsDrinksMembershipIdListSerdes()));
     }
 
@@ -187,7 +190,7 @@ public class WriterService {
                                 .withKeySerde(avroBuilder.userIdSerdes())
                                 .withValueSerde(avroBuilder.friendsDrinksMembershipIdListSerdes())
                 )
-                .toStream().to(envProps.getProperty("friendsdrinks-membership-keyed-by-user-id-state.topic.name"),
+                .toStream().to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_MEMBERSHIP_KEYED_BY_USER_ID_STATE),
                 Produced.with(avroBuilder.userIdSerdes(), avroBuilder.friendsDrinksMembershipIdListSerdes()));
     }
 
@@ -224,7 +227,7 @@ public class WriterService {
                             .build())
                     .build();
             return KeyValue.pair(value, friendsDrinksMembershipEvent);
-        })).to(envProps.getProperty("friendsdrinks-membership-event.topic.name"),
+        })).to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_MEMBERSHIP_EVENT),
                 Produced.with(avroBuilder.friendsDrinksMembershipIdSerdes(), avroBuilder.friendsDrinksMembershipEventSerdes()));
     }
 
@@ -269,7 +272,7 @@ public class WriterService {
                     .build();
             return KeyValue.pair(value, event);
         })
-                .to(envProps.getProperty("friendsdrinks-membership-event.topic.name"),
+                .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_MEMBERSHIP_EVENT),
                         Produced.with(avroBuilder.friendsDrinksMembershipIdSerdes(), avroBuilder.friendsDrinksMembershipEventSerdes()));
     }
 
@@ -282,7 +285,7 @@ public class WriterService {
                         .setMembershipId(value.getMembershipId())
                         .build();
             }
-        }).to(envProps.getProperty("friendsdrinks-membership-state.topic.name"),
+        }).to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_MEMBERSHIP_STATE),
                 Produced.with(avroBuilder.friendsDrinksMembershipIdSerdes(), avroBuilder.friendsDrinksMembershipStateSerdes()));
     }
 

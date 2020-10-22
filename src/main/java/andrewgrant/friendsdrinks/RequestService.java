@@ -1,6 +1,7 @@
 package andrewgrant.friendsdrinks;
 
 import static andrewgrant.friendsdrinks.env.Properties.load;
+import static andrewgrant.friendsdrinks.frontend.TopicNameConfigKey.FRIENDSDRINKS_API;
 
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
@@ -38,12 +39,12 @@ public class RequestService {
     public Topology buildTopology() {
         StreamsBuilder builder = new StreamsBuilder();
 
-        final String apiTopicName = envProps.getProperty("friendsdrinks-api.topic.name");
+        final String apiTopicName = envProps.getProperty(FRIENDSDRINKS_API);
         KStream<String, FriendsDrinksEvent> apiEvents = builder.stream(apiTopicName,
                 Consumed.with(Serdes.String(), frontendAvroBuilder.friendsDrinksSerde()));
 
         KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable =
-                builder.table(envProps.getProperty("friendsdrinks-state.topic.name"),
+                builder.table(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_STATE),
                         Consumed.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksStateSerde()));
 
         handleCreateRequests(apiEvents, friendsDrinksStateKTable, avroBuilder, frontendAvroBuilder, apiTopicName);

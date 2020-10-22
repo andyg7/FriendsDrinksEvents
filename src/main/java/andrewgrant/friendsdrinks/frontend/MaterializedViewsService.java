@@ -1,5 +1,12 @@
 package andrewgrant.friendsdrinks.frontend;
 
+import static andrewgrant.friendsdrinks.TopicNameConfigKey.FRIENDSDRINKS_KEYED_BY_ADMIN_USER_ID_STATE;
+import static andrewgrant.friendsdrinks.TopicNameConfigKey.FRIENDSDRINKS_STATE;
+import static andrewgrant.friendsdrinks.frontend.TopicNameConfigKey.FRIENDSDRINKS_API;
+import static andrewgrant.friendsdrinks.membership.TopicNameConfigKey.FRIENDSDRINKS_MEMBERSHIP_KEYED_BY_USER_ID_STATE;
+import static andrewgrant.friendsdrinks.membership.TopicNameConfigKey.FRIENDSDRINKS_MEMBERSHIP_STATE;
+import static andrewgrant.friendsdrinks.user.TopicNameConfigKey.USER_STATE;
+
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.*;
@@ -59,16 +66,16 @@ public class MaterializedViewsService {
 
     private Topology buildTopology() {
         final StreamsBuilder builder = new StreamsBuilder();
-        final String apiTopicName = envProps.getProperty("friendsdrinks-api.topic.name");
+        final String apiTopicName = envProps.getProperty(FRIENDSDRINKS_API);
 
         KStream<String, andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent> apiEvents =
                 builder.stream(apiTopicName,
                         Consumed.with(Serdes.String(), apiAvroBuilder.friendsDrinksSerde()));
 
-        final String frontendPrivateTopicName = envProps.getProperty("frontend-responses.topic.name");
+        final String frontendPrivateTopicName = envProps.getProperty(TopicNameConfigKey.FRONTEND_RESPONSES_TOPIC_NAME);
         buildResponsesStore(builder, apiEvents, frontendPrivateTopicName);
 
-        builder.stream(envProps.getProperty("friendsdrinks-keyed-by-admin-user-id-state.topic.name"),
+        builder.stream(envProps.getProperty(FRIENDSDRINKS_KEYED_BY_ADMIN_USER_ID_STATE),
                 Consumed.with(Serdes.String(), avroBuilder.friendsDrinksIdListSerde()))
                 .mapValues(value -> {
                     if (value == null || value.getIds() == null) {
@@ -92,7 +99,7 @@ public class MaterializedViewsService {
 
 
         KStream<String, FriendsDrinksIdList> membersStream = builder.stream(
-                envProps.getProperty("friendsdrinks-membership-keyed-by-user-id-state.topic.name"),
+                envProps.getProperty(FRIENDSDRINKS_MEMBERSHIP_KEYED_BY_USER_ID_STATE),
                 Consumed.with(membershipAvroBuilder.userIdSerdes(), membershipAvroBuilder.friendsDrinksMembershipIdListSerdes()))
                 .map((key, value) -> {
                     if (value == null) {
@@ -117,7 +124,7 @@ public class MaterializedViewsService {
                         .withValueSerde(apiAvroBuilder.apiFriendsDrinksIdListSerde()));
 
 
-        final String friendsDrinksStateTopicName = envProps.getProperty("friendsdrinks-state.topic.name");
+        final String friendsDrinksStateTopicName = envProps.getProperty(FRIENDSDRINKS_STATE);
         KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState>
                 friendsDrinksKStream = builder.stream(friendsDrinksStateTopicName,
                 Consumed.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksStateSerde()));
@@ -161,7 +168,7 @@ public class MaterializedViewsService {
                 Materialized.as(PENDING_INVITATIONS_STORE));
 
         KTable<String, andrewgrant.friendsdrinks.api.avro.UserState> userState =
-                builder.stream(envProps.getProperty("user-state.topic.name"),
+                builder.stream(envProps.getProperty(USER_STATE),
                         Consumed.with(userAvroBuilder.userIdSerde(), userAvroBuilder.userStateSerde()))
                         .map(((key, value) -> {
                             String newKey = key.getUserId();
@@ -185,7 +192,7 @@ public class MaterializedViewsService {
                         );
 
         KStream<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId, FriendsDrinksMembershipState> membershipStateKTable =
-                builder.stream(envProps.getProperty("friendsdrinks-membership-state.topic.name"),
+                builder.stream(envProps.getProperty(FRIENDSDRINKS_MEMBERSHIP_STATE),
                         Consumed.with(membershipAvroBuilder.friendsDrinksMembershipIdSerdes(),
                                 membershipAvroBuilder.friendsDrinksMembershipStateSerdes()));
 
