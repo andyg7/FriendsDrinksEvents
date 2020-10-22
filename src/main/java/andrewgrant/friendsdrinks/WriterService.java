@@ -86,14 +86,17 @@ public class WriterService {
         KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable =
                 builder.table(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_STATE),
                         Consumed.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksStateSerde()));
-        buildFriendsDrinksIdListKeyedByAdminUserIdView(friendsDrinksStateKTable, avroBuilder);
+        buildFriendsDrinksIdListKeyedByAdminUserIdView(friendsDrinksStateKTable, avroBuilder)
+                .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_KEYED_BY_ADMIN_USER_ID_STATE),
+                        Produced.with(Serdes.String(), avroBuilder.friendsDrinksIdListSerde()));
 
         return builder.build();
     }
 
-    private void buildFriendsDrinksIdListKeyedByAdminUserIdView(KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable,
-                                                                AvroBuilder avroBuilder) {
-        friendsDrinksStateKTable.groupBy(((key, value) ->
+    private KStream<String, FriendsDrinksIdList> buildFriendsDrinksIdListKeyedByAdminUserIdView(
+            KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable,
+            AvroBuilder avroBuilder) {
+        return friendsDrinksStateKTable.groupBy(((key, value) ->
                         KeyValue.pair(value.getFriendsDrinksId().getAdminUserId(), value)),
                 Grouped.with(Serdes.String(), avroBuilder.friendsDrinksStateSerde()))
                 .aggregate(
@@ -129,8 +132,7 @@ public class WriterService {
                                 .withKeySerde(Serdes.String())
                                 .withValueSerde(avroBuilder.friendsDrinksIdListSerde())
                 )
-                .toStream().to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_KEYED_BY_ADMIN_USER_ID_STATE),
-                Produced.with(Serdes.String(), avroBuilder.friendsDrinksIdListSerde()));
+                .toStream();
     }
 
     private KStream<String, FriendsDrinksEvent> streamOfSuccessfulResponses(KStream<String, FriendsDrinksEvent> apiEvents) {
