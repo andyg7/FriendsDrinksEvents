@@ -240,6 +240,8 @@ public class Handler {
                 FriendsDrinksInvitationBean invitationBean = new FriendsDrinksInvitationBean();
                 invitationBean.setFriendsDrinksId(keyValue.value.getFriendsDrinksId().getUuid());
                 invitationBean.setMessage(keyValue.value.getMessage());
+                FriendsDrinksState friendsDrinksState = friendsDrinksStore.get(keyValue.value.getFriendsDrinksId());
+                invitationBean.setFriendsDrinksName(friendsDrinksState.getName());
                 invitationBeans.add(invitationBean);
             }
         }
