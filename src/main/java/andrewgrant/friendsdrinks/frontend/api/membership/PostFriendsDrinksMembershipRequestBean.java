@@ -12,6 +12,8 @@ public class PostFriendsDrinksMembershipRequestBean {
     public static final String REMOVE_USER = "REMOVE_USER";
     public static final String REPLY_TO_INVITATION = "REPLY_TO_INVITATION";
 
+    private String userId;
+    private String friendsDrinksId;
     private String requestType;
     private AddUserRequestBean addUserRequest;
     private RemoveUserRequestBean removeUserRequest;
@@ -47,5 +49,21 @@ public class PostFriendsDrinksMembershipRequestBean {
 
     public void setRequestType(String requestType) {
         this.requestType = requestType;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    public String getFriendsDrinksId() {
+        return friendsDrinksId;
+    }
+
+    public void setFriendsDrinksId(String friendsDrinksId) {
+        this.friendsDrinksId = friendsDrinksId;
     }
 }

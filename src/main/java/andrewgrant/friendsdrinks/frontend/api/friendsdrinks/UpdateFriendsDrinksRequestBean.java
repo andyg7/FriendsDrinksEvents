@@ -5,6 +5,16 @@ package andrewgrant.friendsdrinks.frontend.api.friendsdrinks;
  */
 public class UpdateFriendsDrinksRequestBean {
     private String name;
+    private String adminUserId;
+
+    public String getAdminUserId() {
+        return adminUserId;
+    }
+
+    public void setAdminUserId(String adminUserId) {
+        this.adminUserId = adminUserId;
+    }
+
 
     public String getName() {
         return name;
