@@ -82,6 +82,21 @@ public class Handler {
         return response;
     }
 
+    @GET
+    @Path("/users/{userId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public UserBean getUser(@PathParam("userId") String userId) {
+        ReadOnlyKeyValueStore<String, UserState> kv =
+                kafkaStreams.store(StoreQueryParameters.fromNameAndType(USERS_STORE, QueryableStoreTypes.keyValueStore()));
+        UserState userState = kv.get(userId);
+        UserBean response = new UserBean();
+        response.setEmail(userState.getEmail());
+        response.setFirstName(userState.getFirstName());
+        response.setLastName(userState.getLastName());
+        response.setUserId(userState.getUserId().getUserId());
+        return response;
+    }
+
     @POST
     @Path("/users/{userId}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -92,7 +107,7 @@ public class Handler {
     }
 
     @GET
-    @Path("/friendsdrinks")
+    @Path("/friendsdrinkses")
     @Produces(MediaType.APPLICATION_JSON)
     public GetAllFriendsDrinksResponseBean getAllFriendsDrinks() {
         ReadOnlyKeyValueStore<FriendsDrinksId, FriendsDrinksState> kv =
@@ -115,7 +130,7 @@ public class Handler {
     }
 
     @GET
-    @Path("/friendsdrinks/{friendsDrinksId}")
+    @Path("/friendsdrinkses/{friendsDrinksId}")
     @Produces(MediaType.APPLICATION_JSON)
     public GetFriendsDrinksResponseBean getFriendsDrinks(@PathParam("friendsDrinksId") String friendsDrinksId) {
         ReadOnlyKeyValueStore<String, FriendsDrinksState> kv =
@@ -235,7 +250,7 @@ public class Handler {
     }
 
     @POST
-    @Path("/friendsdrinks")
+    @Path("/friendsdrinkses")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public CreateFriendsDrinksResponseBean createFriendsDrinks(CreateFriendsDrinksRequestBean requestBean)
@@ -274,7 +289,7 @@ public class Handler {
     }
 
     @POST
-    @Path("/friendsdrinks/{friendsDrinksId}")
+    @Path("/friendsdrinkses/{friendsDrinksId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public UpdateFriendsDrinksResponseBean updateFriendsDrinks(@PathParam("friendsDrinksId") String friendsDrinksId,
@@ -322,7 +337,7 @@ public class Handler {
     }
 
     @DELETE
-    @Path("/friendsdrinks/{friendsDrinksId}")
+    @Path("/friendsdrinkses/{friendsDrinksId}")
     @Produces(MediaType.APPLICATION_JSON)
     public DeleteFriendsDrinksResponseBean deleteFriendsDrinks(@PathParam("friendsDrinksId") String friendsDrinksId)
             throws InterruptedException {
