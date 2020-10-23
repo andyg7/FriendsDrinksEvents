@@ -6,6 +6,7 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.Topology;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -49,9 +50,13 @@ public class Main {
 
         String portStr = args[1];
         String streamsUri = "localhost:" + portStr;
-        MaterializedViewsService streamsService = new MaterializedViewsService(envProps, streamsUri, avroBuilder, apiAvroBuilder,
+
+        MaterializedViewsService streamsService = new MaterializedViewsService(envProps, avroBuilder, apiAvroBuilder,
                 new andrewgrant.friendsdrinks.membership.AvroBuilder(schemaRegistryUrl), new UserAvroBuilder(schemaRegistryUrl));
-        KafkaStreams streams = streamsService.getStreams();
+        Topology topology = streamsService.buildTopology();
+        Properties streamProps = streamsService.buildStreamsProperties(streamsUri);
+        KafkaStreams streams = new KafkaStreams(topology, streamProps);
+
         int port = Integer.parseInt(portStr);
         Server jettyServer = Main.buildServer(envProps, streams, userAvroBuilder, apiAvroBuilder, port);
         // Attach shutdown handler to catch Control-C.

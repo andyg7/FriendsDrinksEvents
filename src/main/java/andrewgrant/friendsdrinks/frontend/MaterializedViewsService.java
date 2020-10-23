@@ -40,7 +40,6 @@ public class MaterializedViewsService {
     public static final String FRIENDSDRINKS_KEYED_BY_SINGLE_ID_STORE = "friendsdrinks-keyed-by-single-id-state-store";
     public static final String PENDING_INVITATIONS_STORE = "pending-invitations-state-store";
 
-    private KafkaStreams streams;
     private Properties envProps;
     private AvroBuilder avroBuilder;
     private andrewgrant.friendsdrinks.frontend.AvroBuilder apiAvroBuilder;
@@ -48,14 +47,10 @@ public class MaterializedViewsService {
     private UserAvroBuilder userAvroBuilder;
 
     public MaterializedViewsService(Properties envProps,
-                                    String uri,
                                     AvroBuilder avroBuilder,
                                     andrewgrant.friendsdrinks.frontend.AvroBuilder apiAvroBuilder,
                                     andrewgrant.friendsdrinks.membership.AvroBuilder membershipAvroBuilder,
                                     UserAvroBuilder userAvroBuilder) {
-        Topology topology = buildTopology();
-        Properties streamProps = buildStreamsProperties(envProps, uri);
-        streams = new KafkaStreams(topology, streamProps);
         this.envProps = envProps;
         this.avroBuilder = avroBuilder;
         this.apiAvroBuilder = apiAvroBuilder;
@@ -63,7 +58,7 @@ public class MaterializedViewsService {
         this.userAvroBuilder = userAvroBuilder;
     }
 
-    private Topology buildTopology() {
+    public Topology buildTopology() {
         final StreamsBuilder builder = new StreamsBuilder();
         final String apiTopicName = envProps.getProperty(FRIENDSDRINKS_API);
 
@@ -257,16 +252,16 @@ public class MaterializedViewsService {
                     } else {
                         FriendsDrinksEnrichedMembershipState enrichedMembershipState =
                                 FriendsDrinksEnrichedMembershipState.newBuilder()
-                                                .setMembershipId(apiId)
-                                                .build();
-                                return KeyValue.pair(apiId, enrichedMembershipState);
-                            }
-                        })
-                        .toTable(
-                                Materialized.<FriendsDrinksMembershipId, FriendsDrinksEnrichedMembershipState, KeyValueStore<Bytes, byte[]>>
-                                        as("friendsdrinks-membership-enriched-bootstrap-state-store")
-                                        .withKeySerde(apiAvroBuilder.apiFriendsDrinksMembershipIdSerde())
-                                        .withValueSerde(apiAvroBuilder.apiFriendsDrinksEnrichedMembershipStateSerde()));
+                                        .setMembershipId(apiId)
+                                        .build();
+                        return KeyValue.pair(apiId, enrichedMembershipState);
+                    }
+                })
+                .toTable(
+                        Materialized.<FriendsDrinksMembershipId, FriendsDrinksEnrichedMembershipState, KeyValueStore<Bytes, byte[]>>
+                                as("friendsdrinks-membership-enriched-bootstrap-state-store")
+                                .withKeySerde(apiAvroBuilder.apiFriendsDrinksMembershipIdSerde())
+                                .withValueSerde(apiAvroBuilder.apiFriendsDrinksEnrichedMembershipStateSerde()));
 
         KTable<FriendsDrinksMembershipId, FriendsDrinksEnrichedMembershipState> enrichedMembershipStateKTable =
                 membershipStateKTable.leftJoin(userStateKTable,
@@ -361,7 +356,7 @@ public class MaterializedViewsService {
         );
     }
 
-    private static Properties buildStreamsProperties(Properties envProps, String uri) {
+    public Properties buildStreamsProperties(String uri) {
         Properties props = new Properties();
         props.put(StreamsConfig.APPLICATION_ID_CONFIG, envProps.getProperty("frontend-api-application.id"));
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG,
@@ -371,10 +366,6 @@ public class MaterializedViewsService {
         props.put(StreamsConfig.APPLICATION_SERVER_CONFIG, uri);
         props.put(StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG, 0);
         return props;
-    }
-
-    public KafkaStreams getStreams() {
-        return streams;
     }
 
 }
