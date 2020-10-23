@@ -281,7 +281,14 @@ public class Handler {
                                                                UpdateFriendsDrinksRequestBean requestBean)
             throws InterruptedException, ExecutionException {
 
-        String adminUserId = requestBean.getAdminUserId();
+        ReadOnlyKeyValueStore<String, FriendsDrinksState> kv =
+                kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_KEYED_BY_SINGLE_ID_STORE, QueryableStoreTypes.keyValueStore()));
+        FriendsDrinksState friendsDrinksState = kv.get(friendsDrinksId);
+        if (friendsDrinksState == null) {
+            throw new BadRequestException(String.format("FriendsDrinksId %s could not be found", friendsDrinksId));
+        }
+
+        String adminUserId = friendsDrinksState.getFriendsDrinksId().getAdminUserId();
 
         final String topicName = envProps.getProperty("friendsdrinks-api.topic.name");
         String requestId = UUID.randomUUID().toString();
