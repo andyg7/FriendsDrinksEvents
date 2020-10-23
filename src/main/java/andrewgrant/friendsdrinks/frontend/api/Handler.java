@@ -251,6 +251,44 @@ public class Handler {
         return getUserHomepageResponseBean;
     }
 
+    @GET
+    @Path("/pendingfriendsdrinksinvitations/users/{userId}/friendsdrinkses/{friendsDrinksId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public FriendsDrinksInvitationBean getInvitation(@PathParam("userId") String userId,
+                                                     @PathParam("friendsDrinksId") String friendsDrinksId) {
+        ReadOnlyKeyValueStore<String, FriendsDrinksState> fdKv =
+                kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_KEYED_BY_SINGLE_ID_STORE, QueryableStoreTypes.keyValueStore()));
+        FriendsDrinksState friendsDrinksState = fdKv.get(friendsDrinksId);
+        if (friendsDrinksState == null) {
+            throw new BadRequestException(String.format("friendsDrinksId %s could not be found", friendsDrinksId));
+        }
+
+        ReadOnlyKeyValueStore<FriendsDrinksPendingInvitationId, FriendsDrinksPendingInvitation> kv =
+                kafkaStreams.store(StoreQueryParameters.fromNameAndType(PENDING_INVITATIONS_STORE, QueryableStoreTypes.keyValueStore()));
+        FriendsDrinksPendingInvitationId pendingInvitationId = FriendsDrinksPendingInvitationId
+                .newBuilder()
+                .setFriendsDrinksId(FriendsDrinksId
+                        .newBuilder()
+                        .setUuid(friendsDrinksId)
+                        .setAdminUserId(friendsDrinksState.getFriendsDrinksId().getAdminUserId())
+                        .build())
+                .setUserId(andrewgrant.friendsdrinks.api.avro.UserId.newBuilder().setUserId(userId).build())
+                .build();
+
+        FriendsDrinksPendingInvitation pendingInvitation = kv.get(pendingInvitationId);
+        if (pendingInvitation == null) {
+            throw new BadRequestException(String.format("Pending invitation for userId %s and friendsDrinksId %s could not be found",
+                    userId, friendsDrinksId));
+        }
+
+        FriendsDrinksInvitationBean response = new FriendsDrinksInvitationBean();
+        response.setFriendsDrinksId(friendsDrinksState.getFriendsDrinksId().getUuid());
+        response.setFriendsDrinksName(friendsDrinksState.getName());
+        response.setMessage(pendingInvitation.getMessage());
+
+        return response;
+    }
+
     @POST
     @Path("/friendsdrinkses")
     @Produces(MediaType.APPLICATION_JSON)
