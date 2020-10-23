@@ -135,7 +135,7 @@ public class Handler {
     }
 
     @GET
-    @Path("/friendsdrinksdetailpage/{friendsDrinksId}")
+    @Path("/friendsdrinksdetailpages/{friendsDrinksId}")
     @Produces(MediaType.APPLICATION_JSON)
     public GetFriendsDrinksDetailPageResponseBean getFriendsDrinksDetailPage(@PathParam("friendsDrinksId") String friendsDrinksId) {
         ReadOnlyKeyValueStore<String, FriendsDrinksAggregate> kv =
