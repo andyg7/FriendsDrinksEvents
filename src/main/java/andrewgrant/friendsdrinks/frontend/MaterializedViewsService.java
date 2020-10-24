@@ -336,14 +336,16 @@ public class MaterializedViewsService {
                 (friendsDrinksAggregate -> friendsDrinksAggregate.getFriendsDrinksId().getAdminUserId()),
                 (l, r) -> {
                     List<UserState> members = l.getMembers();
-                    UserState adminUserState = UserState
-                            .newBuilder()
-                            .setUserId(r.getUserId())
-                            .setFirstName(r.getFirstName())
-                            .setLastName(r.getLastName())
-                            .setEmail(r.getEmail())
-                            .build();
-                    members.add(adminUserState);
+                    if (r != null) {
+                        UserState adminUserState = UserState
+                                .newBuilder()
+                                .setUserId(r.getUserId())
+                                .setFirstName(r.getFirstName())
+                                .setLastName(r.getLastName())
+                                .setEmail(r.getEmail())
+                                .build();
+                        members.add(adminUserState);
+                    }
                     return FriendsDrinksAggregate
                             .newBuilder(l)
                             .setMembers(members)
