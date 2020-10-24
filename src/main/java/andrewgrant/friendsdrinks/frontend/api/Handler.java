@@ -164,7 +164,14 @@ public class Handler {
         response.setAdminUserId(friendsDrinksAggregate.getFriendsDrinksId().getAdminUserId());
         response.setFriendsDrinksId(friendsDrinksAggregate.getFriendsDrinksId().getUuid());
         if (friendsDrinksAggregate.getMembers() != null) {
-            response.setMembers(friendsDrinksAggregate.getMembers().stream().map(x -> x.getFirstName()).collect(Collectors.toList()));
+            response.setMembers(friendsDrinksAggregate.getMembers().stream().map(x -> {
+                UserBean userBean = new UserBean();
+                userBean.setUserId(x.getUserId().getUserId());
+                userBean.setFirstName(x.getFirstName());
+                userBean.setLastName(x.getLastName());
+                userBean.setEmail(x.getEmail());
+                return userBean;
+            }).collect(Collectors.toList()));
         } else {
             response.setMembers(new ArrayList<>());
         }

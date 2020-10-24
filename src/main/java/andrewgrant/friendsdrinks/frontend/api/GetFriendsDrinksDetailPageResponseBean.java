@@ -2,6 +2,8 @@ package andrewgrant.friendsdrinks.frontend.api;
 
 import java.util.List;
 
+import andrewgrant.friendsdrinks.frontend.api.user.UserBean;
+
 /**
  * DTO for GetFriendsDrinksDetailPageResponse.
  */
@@ -9,7 +11,16 @@ public class GetFriendsDrinksDetailPageResponseBean {
     private String adminUserId;
     private String friendsDrinksId;
     private String name;
-    private List<String> members;
+    private List<UserBean> members;
+
+    public List<UserBean> getMembers() {
+        return members;
+    }
+
+    public void setMembers(List<UserBean> members) {
+        this.members = members;
+    }
+
 
     public String getAdminUserId() {
         return adminUserId;
@@ -35,11 +46,4 @@ public class GetFriendsDrinksDetailPageResponseBean {
         this.name = name;
     }
 
-    public List<String> getMembers() {
-        return members;
-    }
-
-    public void setMembers(List<String> members) {
-        this.members = members;
-    }
 }
