@@ -95,10 +95,10 @@ public class MembershipWriterService {
                         Consumed.with(avroBuilder.friendsDrinksIdSerdes(), avroBuilder.friendsDrinksMembershipIdListSerdes()));
 
         KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState>
-                friendsDrinksEventKStream = builder.stream(envProps.getProperty(FRIENDSDRINKS_STATE),
+                friendsDrinksStateKStream = builder.stream(envProps.getProperty(FRIENDSDRINKS_STATE),
                 Consumed.with(friendsDrinksAvroBuilder.friendsDrinksIdSerde(), friendsDrinksAvroBuilder.friendsDrinksStateSerde()));
 
-        handleDeletedFriendsDrinks(friendsDrinksEventKStream, membershipIdListKeyedByFriendsDrinksIdStateKTable)
+        handleDeletedFriendsDrinks(friendsDrinksStateKStream, membershipIdListKeyedByFriendsDrinksIdStateKTable)
                 .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_MEMBERSHIP_EVENT),
                         Produced.with(avroBuilder.friendsDrinksMembershipIdSerdes(), avroBuilder.friendsDrinksMembershipEventSerdes()));
 
@@ -106,10 +106,10 @@ public class MembershipWriterService {
                 builder.table(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_MEMBERSHIP_KEYED_BY_USER_ID_STATE),
                         Consumed.with(avroBuilder.userIdSerdes(), avroBuilder.friendsDrinksMembershipIdListSerdes()));
 
-        KStream<andrewgrant.friendsdrinks.user.avro.UserId, UserState> userEventKStream =
+        KStream<andrewgrant.friendsdrinks.user.avro.UserId, UserState> userStateKStream =
                 builder.stream(envProps.getProperty(USER_STATE),
                         Consumed.with(userAvroBuilder.userIdSerde(), userAvroBuilder.userStateSerde()));
-        handleDeletedUsers(userEventKStream, membershipIdListKeyedByUserIdStateKTable)
+        handleDeletedUsers(userStateKStream, membershipIdListKeyedByUserIdStateKTable)
                 .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_MEMBERSHIP_EVENT),
                         Produced.with(avroBuilder.friendsDrinksMembershipIdSerdes(), avroBuilder.friendsDrinksMembershipEventSerdes()));
 
@@ -243,10 +243,10 @@ public class MembershipWriterService {
 
     private KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipEvent> handleDeletedFriendsDrinks(
             KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState>
-                    friendsDrinksEventKStream,
+                    friendsDrinksStateKStream,
             KTable<FriendsDrinksId, FriendsDrinksMembershipIdList> membershipIdListKTable) {
 
-        KStream<FriendsDrinksId, FriendsDrinksMembershipId> streamOfMembershipIdsToDelete = friendsDrinksEventKStream
+        KStream<FriendsDrinksId, FriendsDrinksMembershipId> streamOfMembershipIdsToDelete = friendsDrinksStateKStream
                 .map((key, value) -> {
                     FriendsDrinksId friendsDrinksId = FriendsDrinksId
                             .newBuilder()
