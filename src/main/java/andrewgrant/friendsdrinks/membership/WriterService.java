@@ -26,7 +26,7 @@ import andrewgrant.friendsdrinks.membership.avro.*;
 import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksId;
 import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId;
 import andrewgrant.friendsdrinks.membership.avro.UserId;
-import andrewgrant.friendsdrinks.user.UserAvroBuilder;
+import andrewgrant.friendsdrinks.user.AvroBuilder;
 import andrewgrant.friendsdrinks.user.avro.UserState;
 
 /**
@@ -37,15 +37,15 @@ public class WriterService {
     private static final Logger log = LoggerFactory.getLogger(WriterService.class);
 
     private Properties envProps;
-    private AvroBuilder avroBuilder;
+    private andrewgrant.friendsdrinks.membership.AvroBuilder avroBuilder;
     private andrewgrant.friendsdrinks.frontend.AvroBuilder frontendAvroBuilder;
     private andrewgrant.friendsdrinks.AvroBuilder friendsDrinksAvroBuilder;
-    private UserAvroBuilder userAvroBuilder;
+    private AvroBuilder userAvroBuilder;
 
-    public WriterService(Properties envProps, AvroBuilder avroBuilder,
+    public WriterService(Properties envProps, andrewgrant.friendsdrinks.membership.AvroBuilder avroBuilder,
                          andrewgrant.friendsdrinks.frontend.AvroBuilder frontendAvroBuilder,
                          andrewgrant.friendsdrinks.AvroBuilder friendsDrinksAvroBuilder,
-                         UserAvroBuilder userAvroBuilder) {
+                         AvroBuilder userAvroBuilder) {
         this.envProps = envProps;
         this.avroBuilder = avroBuilder;
         this.frontendAvroBuilder = frontendAvroBuilder;
@@ -323,10 +323,10 @@ public class WriterService {
         String schemaRegistryUrl = envProps.getProperty("schema.registry.url");
         WriterService writerService = new WriterService(
                 envProps,
-                new AvroBuilder(schemaRegistryUrl),
+                new andrewgrant.friendsdrinks.membership.AvroBuilder(schemaRegistryUrl),
                 new andrewgrant.friendsdrinks.frontend.AvroBuilder(schemaRegistryUrl),
                 new andrewgrant.friendsdrinks.AvroBuilder(schemaRegistryUrl),
-                new UserAvroBuilder(schemaRegistryUrl));
+                new AvroBuilder(schemaRegistryUrl));
         Topology topology = writerService.buildTopology();
         Properties streamProps = writerService.buildStreamsProperties(envProps);
         KafkaStreams kafkaStreams = new KafkaStreams(topology, streamProps);

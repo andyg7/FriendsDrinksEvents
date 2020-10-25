@@ -24,9 +24,9 @@ public class Service {
     private static final Logger log = LoggerFactory.getLogger(Service.class);
 
     private Properties envProps;
-    private UserAvroBuilder avroBuilder;
+    private AvroBuilder avroBuilder;
 
-    public Service(Properties envProps, UserAvroBuilder avroBuilder) {
+    public Service(Properties envProps, AvroBuilder avroBuilder) {
         this.envProps = envProps;
         this.avroBuilder = avroBuilder;
     }
@@ -86,7 +86,7 @@ public class Service {
     public static void main(String[] args) throws IOException {
         Properties envProps = load(args[0]);
         String schemaRegistryUrl = envProps.getProperty("schema.registry.url");
-        Service service = new Service(envProps, new UserAvroBuilder(schemaRegistryUrl));
+        Service service = new Service(envProps, new AvroBuilder(schemaRegistryUrl));
         Topology topology = service.buildTopology();
         Properties streamProps = service.buildStreamProperties(envProps);
         KafkaStreams kafkaStreams = new KafkaStreams(topology, streamProps);

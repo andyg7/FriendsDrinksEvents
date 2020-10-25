@@ -15,11 +15,10 @@ import java.io.IOException;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
-import andrewgrant.friendsdrinks.AvroBuilder;
 import andrewgrant.friendsdrinks.api.avro.*;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksId;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksState;
-import andrewgrant.friendsdrinks.user.UserAvroBuilder;
+import andrewgrant.friendsdrinks.user.AvroBuilder;
 import andrewgrant.friendsdrinks.user.avro.UserId;
 import andrewgrant.friendsdrinks.user.avro.UserState;
 
@@ -33,11 +32,11 @@ public class RequestService {
 
     private Properties envProps;
     private andrewgrant.friendsdrinks.AvroBuilder avroBuilder;
-    private UserAvroBuilder userAvroBuilder;
+    private AvroBuilder userAvroBuilder;
     private andrewgrant.friendsdrinks.frontend.AvroBuilder frontendAvroBuilder;
 
-    public RequestService(Properties envProps, AvroBuilder avroBuilder,
-                          UserAvroBuilder userAvroBuilder,
+    public RequestService(Properties envProps, andrewgrant.friendsdrinks.AvroBuilder avroBuilder,
+                          AvroBuilder userAvroBuilder,
                           andrewgrant.friendsdrinks.frontend.AvroBuilder frontendAvroBuilder) {
         this.envProps = envProps;
         this.avroBuilder = avroBuilder;
@@ -68,8 +67,8 @@ public class RequestService {
         handleInvitationRequests(apiEvents, friendsDrinksStateKTable, userState, invitationTopicName);
         handleInvitationReplies(apiEvents,  friendsDrinksInvitations, invitationTopicName);
 
-        KStream<String, FriendsDrinksRemoveUserRequest> removeUserRequests = apiEvents
-                .filter((key, value) -> value.getEventType().equals(EventType.FRIENDSDRINKS_REMOVE_USER_REQUEST))
+        KStream<String, FriendsDrinksRemoveUserRequest> removeUserRequests = apiEvents.filter((key, value) ->
+                value.getEventType().equals(EventType.FRIENDSDRINKS_REMOVE_USER_REQUEST))
                 .mapValues(value -> value.getFriendsDrinksRemoveUserRequest());
 
         handleUserRemovals(removeUserRequests, friendsDrinksStateKTable, userState);
@@ -382,7 +381,7 @@ public class RequestService {
     public static void main(String[] args) throws IOException {
         Properties envProps = load(args[0]);
         String registryUrl = envProps.getProperty("schema.registry.url");
-        RequestService service = new RequestService(envProps, new AvroBuilder(registryUrl), new UserAvroBuilder(registryUrl),
+        RequestService service = new RequestService(envProps, new andrewgrant.friendsdrinks.AvroBuilder(registryUrl), new AvroBuilder(registryUrl),
                 new andrewgrant.friendsdrinks.frontend.AvroBuilder(registryUrl));
         Topology topology = service.buildTopology();
         Properties streamProps = service.buildStreamProperties(envProps);

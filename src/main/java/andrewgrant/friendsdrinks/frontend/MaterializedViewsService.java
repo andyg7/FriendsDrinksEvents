@@ -19,10 +19,9 @@ import java.util.List;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
-import andrewgrant.friendsdrinks.AvroBuilder;
 import andrewgrant.friendsdrinks.api.avro.*;
 import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipState;
-import andrewgrant.friendsdrinks.user.UserAvroBuilder;
+import andrewgrant.friendsdrinks.user.AvroBuilder;
 
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 
@@ -41,16 +40,16 @@ public class MaterializedViewsService {
     public static final String INVITATIONS_STORE = "invitations-state-store";
 
     private Properties envProps;
-    private AvroBuilder avroBuilder;
+    private andrewgrant.friendsdrinks.AvroBuilder avroBuilder;
     private andrewgrant.friendsdrinks.frontend.AvroBuilder apiAvroBuilder;
     private andrewgrant.friendsdrinks.membership.AvroBuilder membershipAvroBuilder;
-    private UserAvroBuilder userAvroBuilder;
+    private AvroBuilder userAvroBuilder;
 
     public MaterializedViewsService(Properties envProps,
-                                    AvroBuilder avroBuilder,
+                                    andrewgrant.friendsdrinks.AvroBuilder avroBuilder,
                                     andrewgrant.friendsdrinks.frontend.AvroBuilder apiAvroBuilder,
                                     andrewgrant.friendsdrinks.membership.AvroBuilder membershipAvroBuilder,
-                                    UserAvroBuilder userAvroBuilder) {
+                                    AvroBuilder userAvroBuilder) {
         this.envProps = envProps;
         this.avroBuilder = avroBuilder;
         this.apiAvroBuilder = apiAvroBuilder;
