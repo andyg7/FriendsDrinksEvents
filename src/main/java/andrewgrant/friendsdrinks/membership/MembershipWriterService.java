@@ -32,9 +32,9 @@ import andrewgrant.friendsdrinks.user.avro.UserState;
 /**
  * Owns writing to friendsdrinks-membership-event.
  */
-public class WriterService {
+public class MembershipWriterService {
 
-    private static final Logger log = LoggerFactory.getLogger(WriterService.class);
+    private static final Logger log = LoggerFactory.getLogger(MembershipWriterService.class);
 
     private Properties envProps;
     private andrewgrant.friendsdrinks.membership.AvroBuilder avroBuilder;
@@ -42,10 +42,10 @@ public class WriterService {
     private andrewgrant.friendsdrinks.AvroBuilder friendsDrinksAvroBuilder;
     private AvroBuilder userAvroBuilder;
 
-    public WriterService(Properties envProps, andrewgrant.friendsdrinks.membership.AvroBuilder avroBuilder,
-                         andrewgrant.friendsdrinks.frontend.AvroBuilder frontendAvroBuilder,
-                         andrewgrant.friendsdrinks.AvroBuilder friendsDrinksAvroBuilder,
-                         AvroBuilder userAvroBuilder) {
+    public MembershipWriterService(Properties envProps, andrewgrant.friendsdrinks.membership.AvroBuilder avroBuilder,
+                                   andrewgrant.friendsdrinks.frontend.AvroBuilder frontendAvroBuilder,
+                                   andrewgrant.friendsdrinks.AvroBuilder friendsDrinksAvroBuilder,
+                                   AvroBuilder userAvroBuilder) {
         this.envProps = envProps;
         this.avroBuilder = avroBuilder;
         this.frontendAvroBuilder = frontendAvroBuilder;
@@ -321,7 +321,7 @@ public class WriterService {
     public static void main(String[] args) throws IOException {
         Properties envProps = load(args[0]);
         String schemaRegistryUrl = envProps.getProperty("schema.registry.url");
-        WriterService writerService = new WriterService(
+        MembershipWriterService writerService = new MembershipWriterService(
                 envProps,
                 new andrewgrant.friendsdrinks.membership.AvroBuilder(schemaRegistryUrl),
                 new andrewgrant.friendsdrinks.frontend.AvroBuilder(schemaRegistryUrl),
