@@ -18,6 +18,8 @@ import java.util.concurrent.CountDownLatch;
 import andrewgrant.friendsdrinks.api.avro.*;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksId;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksState;
+import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksInvitation;
+import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksInvitationId;
 
 /**
  * Owns writing to friendsdrinks-invitation topic.
@@ -54,8 +56,8 @@ public class InvitationWriterService {
 
         streamOfPendingInvitations(invitationResponses, invitationRequests, friendsDrinksStateKTable)
                 .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_INVITATION),
-                        Produced.with(frontendAvroBuilder.friendsDrinksInvitationIdSerde(),
-                                frontendAvroBuilder.friendsDrinksInvitationSerde()));
+                        Produced.with(avroBuilder.friendsDrinksInvitationIdSerde(),
+                                avroBuilder.friendsDrinksInvitationSerde()));
 
         KStream<String, FriendsDrinksInvitationReplyResponse> invitationReplyResponses =
                 streamOfSuccessfulInvitationReplyResponses(apiEvents);
@@ -63,8 +65,8 @@ public class InvitationWriterService {
                 streamOfInvitationReplyRequests(apiEvents);
         streamOfResolvedInvitations(invitationReplyResponses, invitationReplyRequests)
                 .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_INVITATION),
-                        Produced.with(frontendAvroBuilder.friendsDrinksInvitationIdSerde(),
-                                frontendAvroBuilder.friendsDrinksInvitationSerde()));
+                        Produced.with(avroBuilder.friendsDrinksInvitationIdSerde(),
+                                avroBuilder.friendsDrinksInvitationSerde()));
 
         return builder.build();
     }
@@ -82,15 +84,18 @@ public class InvitationWriterService {
                 .map((k, v) -> {
                     FriendsDrinksInvitationId id = FriendsDrinksInvitationId
                             .newBuilder()
-                            .setFriendsDrinksId(andrewgrant.friendsdrinks.api.avro.FriendsDrinksId
+                            .setFriendsDrinksId(andrewgrant.friendsdrinks.membership.avro.FriendsDrinksId
                                     .newBuilder()
                                     .setAdminUserId(v.getFriendsDrinksId().getAdminUserId())
                                     .setUuid(v.getFriendsDrinksId().getUuid())
                                     .build()
                             )
-                            .setUserId(UserId.newBuilder().setUserId(v.getUserId().getUserId()).build())
+                            .setUserId(andrewgrant.friendsdrinks.membership.avro.UserId
+                                    .newBuilder()
+                                    .setUserId(v.getUserId().getUserId())
+                                    .build())
                             .build();
-                    return KeyValue.pair(id, (FriendsDrinksInvitation) null);
+                    return KeyValue.pair(id, null);
                 });
     }
 
@@ -118,13 +123,31 @@ public class InvitationWriterService {
                             if (state != null) {
                                 return FriendsDrinksInvitation
                                         .newBuilder()
-                                        .setFriendsDrinksId(request.getFriendsDrinksId())
-                                        .setUserId(request.getUserId())
+                                        .setFriendsDrinksId(
+                                                andrewgrant.friendsdrinks.membership.avro.FriendsDrinksId
+                                                        .newBuilder()
+                                                        .setUuid(request.getFriendsDrinksId().getUuid())
+                                                        .setAdminUserId(request.getFriendsDrinksId().getAdminUserId())
+                                                        .build())
+                                        .setUserId(
+                                                andrewgrant.friendsdrinks.membership.avro.UserId
+                                                        .newBuilder()
+                                                        .setUserId(request.getUserId().getUserId())
+                                                        .build())
                                         .setInvitationId(
                                                 FriendsDrinksInvitationId
                                                         .newBuilder()
-                                                        .setFriendsDrinksId(request.getFriendsDrinksId())
-                                                        .setUserId(request.getUserId())
+                                                        .setFriendsDrinksId(
+                                                                andrewgrant.friendsdrinks.membership.avro.FriendsDrinksId
+                                                                        .newBuilder()
+                                                                        .setUuid(request.getFriendsDrinksId().getUuid())
+                                                                        .setAdminUserId(request.getFriendsDrinksId().getAdminUserId())
+                                                                        .build())
+                                                        .setUserId(
+                                                                andrewgrant.friendsdrinks.membership.avro.UserId
+                                                                        .newBuilder()
+                                                                        .setUserId(request.getUserId().getUserId())
+                                                                        .build())
                                                         .build())
                                         .setMessage(String.format("Want to join %s?!", state.getName()))
                                         .build();

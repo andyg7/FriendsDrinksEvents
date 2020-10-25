@@ -31,6 +31,8 @@ import andrewgrant.friendsdrinks.frontend.api.user.GetUsersResponseBean;
 import andrewgrant.friendsdrinks.frontend.api.user.PostUsersRequestBean;
 import andrewgrant.friendsdrinks.frontend.api.user.PostUsersResponseBean;
 import andrewgrant.friendsdrinks.frontend.api.user.UserBean;
+import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksInvitation;
+import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksInvitationId;
 import andrewgrant.friendsdrinks.user.avro.UserEvent;
 import andrewgrant.friendsdrinks.user.avro.UserId;
 import andrewgrant.friendsdrinks.user.avro.UserLoggedIn;
@@ -247,7 +249,11 @@ public class Handler {
                 FriendsDrinksInvitationBean invitationBean = new FriendsDrinksInvitationBean();
                 invitationBean.setFriendsDrinksId(keyValue.value.getFriendsDrinksId().getUuid());
                 invitationBean.setMessage(keyValue.value.getMessage());
-                FriendsDrinksState friendsDrinksState = friendsDrinksStore.get(keyValue.value.getFriendsDrinksId());
+                FriendsDrinksState friendsDrinksState = friendsDrinksStore.get(FriendsDrinksId
+                        .newBuilder()
+                        .setUuid(keyValue.value.getFriendsDrinksId().getUuid())
+                        .setAdminUserId(keyValue.value.getFriendsDrinksId().getAdminUserId())
+                        .build());
                 invitationBean.setFriendsDrinksName(friendsDrinksState.getName());
                 invitationBeans.add(invitationBean);
             }
@@ -274,12 +280,12 @@ public class Handler {
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(INVITATIONS_STORE, QueryableStoreTypes.keyValueStore()));
         FriendsDrinksInvitationId invitationId = FriendsDrinksInvitationId
                 .newBuilder()
-                .setFriendsDrinksId(FriendsDrinksId
+                .setFriendsDrinksId(andrewgrant.friendsdrinks.membership.avro.FriendsDrinksId
                         .newBuilder()
                         .setUuid(friendsDrinksId)
                         .setAdminUserId(friendsDrinksState.getFriendsDrinksId().getAdminUserId())
                         .build())
-                .setUserId(andrewgrant.friendsdrinks.api.avro.UserId.newBuilder().setUserId(userId).build())
+                .setUserId(andrewgrant.friendsdrinks.membership.avro.UserId.newBuilder().setUserId(userId).build())
                 .build();
 
         FriendsDrinksInvitation invitation = kv.get(invitationId);

@@ -1,5 +1,5 @@
 {
-  "namespace": "andrewgrant.friendsdrinks.api.avro",
+  "namespace": "andrewgrant.friendsdrinks.membership.avro",
   "type": "record",
   "name": "FriendsDrinksInvitationId",
   "fields": [

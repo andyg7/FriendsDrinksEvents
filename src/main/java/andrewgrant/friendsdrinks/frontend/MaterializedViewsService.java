@@ -156,8 +156,8 @@ public class MaterializedViewsService {
 
         final String invitationTopicName = envProps.getProperty(FRIENDSDRINKS_INVITATION);
         builder.table(invitationTopicName,
-                Consumed.with(apiAvroBuilder.friendsDrinksInvitationIdSerde(),
-                        apiAvroBuilder.friendsDrinksInvitationSerde()),
+                Consumed.with(membershipAvroBuilder.friendsDrinksInvitationIdSerde(),
+                        membershipAvroBuilder.friendsDrinksInvitationSerde()),
                 Materialized.as(INVITATIONS_STORE));
 
         KTable<String, andrewgrant.friendsdrinks.api.avro.UserState> userState =
