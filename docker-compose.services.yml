@@ -28,7 +28,17 @@ services:
       - kafka-network
     command:
       "bash -c '
-          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.membership.WriterService /app/dev.properties \
+          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.membership.MembershipWriterService /app/dev.properties \
+          -DlogPath=/app/
+          '"
+
+  friendsdrinks-invitation-writer-service:
+    image: friendsdrinks:latest
+    networks:
+      - kafka-network
+    command:
+      "bash -c '
+          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.membership.InvitationWriterService /app/dev.properties \
           -DlogPath=/app/
           '"
 

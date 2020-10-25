@@ -326,13 +326,6 @@ public class RequestService {
                         .setFriendsDrinksInvitationReplyResponse(value)
                         .build())
                 .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.friendsDrinksSerde()));
-
-        friendsDrinksInvitationReplyResponses.filter((key, value) -> value.getResult().equals(Result.SUCCESS))
-                .mapValues(value -> (FriendsDrinksInvitation) null)
-                .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_INVITATION),
-                        Produced.with(
-                                frontendAvroBuilder.friendsDrinksInvitationIdSerde(),
-                                frontendAvroBuilder.friendsDrinksInvitationSerde()));
     }
 
     public Properties buildStreamProperties(Properties envProps) {

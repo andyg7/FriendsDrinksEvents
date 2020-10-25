@@ -57,8 +57,41 @@ public class InvitationWriterService {
                         Produced.with(frontendAvroBuilder.friendsDrinksInvitationIdSerde(),
                                 frontendAvroBuilder.friendsDrinksInvitationSerde()));
 
+        KStream<String, FriendsDrinksInvitationReplyResponse> invitationReplyResponses =
+                streamOfSuccessfulInvitationReplyResponses(apiEvents);
+        KStream<String, FriendsDrinksInvitationReplyRequest> invitationReplyRequests =
+                streamOfInvitationReplyRequests(apiEvents);
+        streamOfResolvedInvitations(invitationReplyResponses, invitationReplyRequests)
+                .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_INVITATION),
+                        Produced.with(frontendAvroBuilder.friendsDrinksInvitationIdSerde(),
+                                frontendAvroBuilder.friendsDrinksInvitationSerde()));
 
         return builder.build();
+    }
+
+    private KStream<FriendsDrinksInvitationId, FriendsDrinksInvitation> streamOfResolvedInvitations(
+            KStream<String, FriendsDrinksInvitationReplyResponse> invitationReplyResponses,
+            KStream<String, FriendsDrinksInvitationReplyRequest> invitationReplyRequests) {
+
+        return invitationReplyResponses.leftJoin(invitationReplyRequests,
+                (l, r) -> r,
+                JoinWindows.of(Duration.ofSeconds(30)),
+                StreamJoined.with(Serdes.String(),
+                        frontendAvroBuilder.friendsDrinksInvitationReplyResponseSerde(),
+                        frontendAvroBuilder.friendsDrinksInvitationReplyRequestSerde()))
+                .map((k, v) -> {
+                    FriendsDrinksInvitationId id = FriendsDrinksInvitationId
+                            .newBuilder()
+                            .setFriendsDrinksId(andrewgrant.friendsdrinks.api.avro.FriendsDrinksId
+                                    .newBuilder()
+                                    .setAdminUserId(v.getFriendsDrinksId().getAdminUserId())
+                                    .setUuid(v.getFriendsDrinksId().getUuid())
+                                    .build()
+                            )
+                            .setUserId(UserId.newBuilder().setUserId(v.getUserId().getUserId()).build())
+                            .build();
+                    return KeyValue.pair(id, (FriendsDrinksInvitation) null);
+                });
     }
 
     private KStream<FriendsDrinksInvitationId, FriendsDrinksInvitation> streamOfPendingInvitations(
@@ -114,9 +147,22 @@ public class InvitationWriterService {
                 .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getFriendsDrinksInvitationResponse());
     }
 
+    private KStream<String, FriendsDrinksInvitationReplyResponse> streamOfSuccessfulInvitationReplyResponses(
+            KStream<String, FriendsDrinksEvent> apiEvents) {
+        return apiEvents.filter((friendsDrinksId, friendsDrinksEvent) ->
+                (friendsDrinksEvent.getEventType().equals(EventType.FRIENDSDRINKS_INVITATION_REPLY_RESPONSE) &&
+                        friendsDrinksEvent.getFriendsDrinksInvitationResponse().getResult().equals(Result.SUCCESS)))
+                .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getFriendsDrinksInvitationReplyResponse());
+    }
+
     private KStream<String, FriendsDrinksInvitationRequest> streamOfInvitationRequests(KStream<String, FriendsDrinksEvent> apiEvents) {
         return apiEvents.filter((k, v) -> (v.getEventType().equals(EventType.FRIENDSDRINKS_INVITATION_REQUEST)))
                 .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getFriendsDrinksInvitationRequest());
+    }
+
+    private KStream<String, FriendsDrinksInvitationReplyRequest> streamOfInvitationReplyRequests(KStream<String, FriendsDrinksEvent> apiEvents) {
+        return apiEvents.filter((k, v) -> (v.getEventType().equals(EventType.FRIENDSDRINKS_INVITATION_REPLY_REQUEST)))
+                .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getFriendsDrinksInvitationReplyRequest());
     }
 
     public Properties buildStreamsProperties(Properties envProps) {
