@@ -73,7 +73,8 @@ public class RequestService {
         KStream<String, FriendsDrinksInvitationReplyRequest> friendsDrinksInvitationReplyRequests = apiEvents
                 .filter((key, value) -> value.getEventType().equals(EventType.FRIENDSDRINKS_INVITATION_REPLY_REQUEST))
                 .mapValues(value -> value.getFriendsDrinksInvitationReplyRequest());
-        handleInvitationReplies(friendsDrinksInvitationReplyRequests,  friendsDrinksInvitations);
+        handleInvitationReplies(friendsDrinksInvitationReplyRequests,  friendsDrinksInvitations)
+                .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.friendsDrinksSerde()));
 
         KStream<String, FriendsDrinksRemoveUserRequest> removeUserRequests = apiEvents.filter((key, value) ->
                 value.getEventType().equals(EventType.FRIENDSDRINKS_REMOVE_USER_REQUEST))
@@ -286,10 +287,9 @@ public class RequestService {
         });
     }
 
-    private void handleInvitationReplies(KStream<String, FriendsDrinksInvitationReplyRequest> invitationReplyRequestKStream,
-                                         KTable<FriendsDrinksInvitationId, FriendsDrinksInvitation> friendsDrinksInvitations) {
-
-
+    private KStream<String, FriendsDrinksEvent> handleInvitationReplies(
+            KStream<String, FriendsDrinksInvitationReplyRequest> invitationReplyRequestKStream,
+            KTable<FriendsDrinksInvitationId, FriendsDrinksInvitation> friendsDrinksInvitations) {
         KStream<FriendsDrinksInvitationId, FriendsDrinksInvitationReplyResponse> friendsDrinksInvitationReplyResponses =
                 invitationReplyRequestKStream.selectKey((key, value) -> FriendsDrinksInvitationId
                         .newBuilder()
@@ -318,14 +318,13 @@ public class RequestService {
                                         frontendAvroBuilder.friendsDrinksInvitationSerde())
                         );
 
-        friendsDrinksInvitationReplyResponses.selectKey(((key, value) -> value.getRequestId()))
+        return friendsDrinksInvitationReplyResponses.selectKey(((key, value) -> value.getRequestId()))
                 .mapValues(value -> FriendsDrinksEvent
                         .newBuilder()
                         .setEventType(EventType.FRIENDSDRINKS_INVITATION_REPLY_RESPONSE)
                         .setRequestId(value.getRequestId())
                         .setFriendsDrinksInvitationReplyResponse(value)
-                        .build())
-                .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.friendsDrinksSerde()));
+                        .build());
     }
 
     public Properties buildStreamProperties(Properties envProps) {
