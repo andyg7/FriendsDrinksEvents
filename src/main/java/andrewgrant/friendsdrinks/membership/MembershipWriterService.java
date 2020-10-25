@@ -229,9 +229,9 @@ public class MembershipWriterService {
         return streamOfMembershipIdsToDelete.map(((key, value) -> {
             FriendsDrinksMembershipEvent friendsDrinksMembershipEvent = FriendsDrinksMembershipEvent
                     .newBuilder()
-                    .setEventType(andrewgrant.friendsdrinks.membership.avro.EventType.USER_REMOVED)
+                    .setEventType(andrewgrant.friendsdrinks.membership.avro.EventType.MEMBERSHIP_REMOVED)
                     .setMembershipId(value)
-                    .setFriendsDrinksUserRemoved(FriendsDrinksUserRemoved
+                    .setFriendsDrinksMembershipRemoved(FriendsDrinksMembershipRemoved
                             .newBuilder()
                             .setMembershipId(value)
                             .build())
@@ -273,9 +273,9 @@ public class MembershipWriterService {
         return streamOfMembershipIdsToDelete.map((key, value) -> {
             FriendsDrinksMembershipEvent event = FriendsDrinksMembershipEvent
                     .newBuilder()
-                    .setEventType(andrewgrant.friendsdrinks.membership.avro.EventType.USER_REMOVED)
+                    .setEventType(andrewgrant.friendsdrinks.membership.avro.EventType.MEMBERSHIP_REMOVED)
                     .setMembershipId(value)
-                    .setFriendsDrinksUserRemoved(FriendsDrinksUserRemoved
+                    .setFriendsDrinksMembershipRemoved(FriendsDrinksMembershipRemoved
                             .newBuilder()
                             .setMembershipId(value)
                             .build())
@@ -287,7 +287,7 @@ public class MembershipWriterService {
     private KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipState> buildMembershipStateKTable(
             KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipEvent> membershipEventKStream) {
         return membershipEventKStream.mapValues(value -> {
-            if (value.getEventType().equals(andrewgrant.friendsdrinks.membership.avro.EventType.USER_REMOVED)) {
+            if (value.getEventType().equals(andrewgrant.friendsdrinks.membership.avro.EventType.MEMBERSHIP_REMOVED)) {
                 return null;
             } else {
                 return FriendsDrinksMembershipState.newBuilder()

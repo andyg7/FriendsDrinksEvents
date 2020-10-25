@@ -3,9 +3,9 @@
   "type": "record",
   "name": "FriendsDrinksMembershipEvent",
   "fields": [
-      {"name": "eventType", "type": {"type": "enum", "name": "EventType", "symbols": ["USER_ADDED", "USER_REMOVED"] } },
+      {"name": "eventType", "type": {"type": "enum", "name": "EventType", "symbols": ["MEMBERSHIP_ADDED", "MEMBERSHIP_REMOVED"] } },
       {"name": "membershipId", "type": "FriendsDrinksMembershipId" },
-      {"name": "friendsDrinksUserAdded", "type": ["null", "FriendsDrinksUserAdded"], "default": null},
-      {"name": "friendsDrinksUserRemoved", "type": ["null", "FriendsDrinksUserRemoved"], "default": null}
+      {"name": "friendsDrinksMembershipAdded", "type": ["null", "FriendsDrinksMembershipAdded"], "default": null},
+      {"name": "friendsDrinksMembershipRemoved", "type": ["null", "FriendsDrinksMembershipRemoved"], "default": null}
   ]
 }

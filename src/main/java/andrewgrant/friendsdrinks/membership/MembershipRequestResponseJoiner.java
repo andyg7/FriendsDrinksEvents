@@ -28,10 +28,10 @@ public class MembershipRequestResponseJoiner {
                     .build();
             return FriendsDrinksMembershipEvent
                     .newBuilder()
-                    .setEventType(andrewgrant.friendsdrinks.membership.avro.EventType.USER_ADDED)
+                    .setEventType(andrewgrant.friendsdrinks.membership.avro.EventType.MEMBERSHIP_ADDED)
                     .setMembershipId(membershipId)
-                    .setFriendsDrinksUserAdded(
-                            FriendsDrinksUserAdded
+                    .setFriendsDrinksMembershipAdded(
+                            FriendsDrinksMembershipAdded
                                     .newBuilder()
                                     .setMembershipId(membershipId)
                                     .build())
@@ -49,10 +49,10 @@ public class MembershipRequestResponseJoiner {
                     .build();
             return FriendsDrinksMembershipEvent
                     .newBuilder()
-                    .setEventType(andrewgrant.friendsdrinks.membership.avro.EventType.USER_REMOVED)
+                    .setEventType(andrewgrant.friendsdrinks.membership.avro.EventType.MEMBERSHIP_REMOVED)
                     .setMembershipId(membershipId)
-                    .setFriendsDrinksUserRemoved(
-                            FriendsDrinksUserRemoved
+                    .setFriendsDrinksMembershipRemoved(
+                            FriendsDrinksMembershipRemoved
                                     .newBuilder()
                                     .setMembershipId(membershipId)
                                     .build())
