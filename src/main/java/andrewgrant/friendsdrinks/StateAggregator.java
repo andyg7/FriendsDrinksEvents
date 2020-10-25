@@ -14,22 +14,20 @@ public class StateAggregator {
                 FriendsDrinksCreated createdFriendsDrinks = newValue.getFriendsDrinksCreated();
                 FriendsDrinksState.Builder friendsDrinksStateBuilder;
                 if (aggValue.getFriendsDrinksState() == null) {
-                    friendsDrinksStateBuilder = FriendsDrinksState
-                            .newBuilder();
+                    friendsDrinksStateBuilder = FriendsDrinksState.newBuilder();
                 } else {
                     friendsDrinksStateBuilder = FriendsDrinksState
                             .newBuilder(aggValue.getFriendsDrinksState());
                 }
 
-                FriendsDrinksState friendsDrinksState =
-                        friendsDrinksStateBuilder.setName(createdFriendsDrinks.getName())
-                                .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
-                                        .newBuilder()
-                                        .setUuid(
-                                                newValue.getFriendsDrinksId().getUuid())
-                                        .setAdminUserId(newValue.getFriendsDrinksId().getAdminUserId())
-                                        .build())
-                                .build();
+                FriendsDrinksState friendsDrinksState = friendsDrinksStateBuilder
+                        .setName(createdFriendsDrinks.getName())
+                        .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
+                                .newBuilder()
+                                .setUuid(newValue.getFriendsDrinksId().getUuid())
+                                .setAdminUserId(newValue.getFriendsDrinksId().getAdminUserId())
+                                .build())
+                        .build();
                 return FriendsDrinksStateAggregate.newBuilder()
                         .setFriendsDrinksState(friendsDrinksState)
                         .build();
