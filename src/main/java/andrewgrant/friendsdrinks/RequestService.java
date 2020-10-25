@@ -82,16 +82,8 @@ public class RequestService {
                 Grouped.with(Serdes.String(), avroBuilder.friendsDrinksStateSerde()))
                 .aggregate(
                         () -> 0L,
-                        (aggKey, newValue, aggValue) -> {
-                            Long newAggValue = aggValue + 1;
-                            log.info("new value {}. New aggValue {}", newValue, newAggValue);
-                            return newAggValue;
-                        },
-                        (aggKey, oldValue, aggValue) -> {
-                            Long newAggValue = aggValue - 1;
-                            log.info("old value {}. New aggValue {}", oldValue, newAggValue);
-                            return newAggValue;
-                        },
+                        (aggKey, newValue, aggValue) -> aggValue + 1,
+                        (aggKey, oldValue, aggValue) -> aggValue - 1,
                         Materialized.<String, Long, KeyValueStore<Bytes, byte[]>>as("friendsdrinks-count-state-store")
                                 .withKeySerde(Serdes.String())
                                 .withValueSerde(Serdes.Long())
@@ -129,30 +121,20 @@ public class RequestService {
 
         return deleteRequestsKeyed.leftJoin(friendsDrinksStateKTable,
                 (request, state) -> {
-                    if (state != null) {
-                        return FriendsDrinksEvent
-                                .newBuilder()
-                                .setEventType(EventType.DELETE_FRIENDSDRINKS_RESPONSE)
-                                .setRequestId(request.getRequestId())
-                                .setDeleteFriendsDrinksResponse(DeleteFriendsDrinksResponse
-                                        .newBuilder()
-                                        .setResult(Result.SUCCESS)
-                                        .setRequestId(request.getRequestId())
-                                        .build())
-                                .build();
-
-                    } else {
-                        return FriendsDrinksEvent
-                                .newBuilder()
-                                .setEventType(EventType.DELETE_FRIENDSDRINKS_RESPONSE)
-                                .setRequestId(request.getRequestId())
-                                .setDeleteFriendsDrinksResponse(DeleteFriendsDrinksResponse
-                                        .newBuilder()
-                                        .setResult(Result.FAIL)
-                                        .setRequestId(request.getRequestId())
-                                        .build())
-                                .build();
+                    FriendsDrinksEvent friendsDrinksEvent = FriendsDrinksEvent
+                            .newBuilder()
+                            .setEventType(EventType.DELETE_FRIENDSDRINKS_RESPONSE)
+                            .setRequestId(request.getRequestId())
+                            .setDeleteFriendsDrinksResponse(DeleteFriendsDrinksResponse
+                                    .newBuilder()
+                                    .setResult(Result.SUCCESS)
+                                    .setRequestId(request.getRequestId())
+                                    .build())
+                            .build();
+                    if (state == null) {
+                        log.warn(String.format("Failed to find FriendsDrinks state for requestId %s", request.getRequestId()));
                     }
+                    return friendsDrinksEvent;
                 },
                 Joined.with(
                         avroBuilder.friendsDrinksIdSerde(),
