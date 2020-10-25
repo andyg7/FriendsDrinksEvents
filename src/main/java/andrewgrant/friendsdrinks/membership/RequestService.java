@@ -94,7 +94,7 @@ public class RequestService {
                 value.getEventType().equals(EventType.FRIENDSDRINKS_REMOVE_USER_REQUEST))
                 .mapValues(value -> value.getFriendsDrinksRemoveUserRequest());
 
-        RemoveUserRequestResult removeUserRequestResult = handleUserRemovals(removeUserRequests, friendsDrinksStateKTable, userState);
+        RemoveUserRequestResult removeUserRequestResult = handleRemoveUserRequests(removeUserRequests, friendsDrinksStateKTable, userState);
         removeUserRequestResult.getSuccessfulResponses()
                 .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.friendsDrinksSerde()));
         for (KStream<String, FriendsDrinksEvent> friendsDrinksEventKStream : removeUserRequestResult.getFailedResponses()) {
@@ -105,9 +105,10 @@ public class RequestService {
         return builder.build();
     }
 
-    private RemoveUserRequestResult handleUserRemovals(KStream<String, FriendsDrinksRemoveUserRequest> friendsDrinksRemoveUserRequest,
-                                    KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksState,
-                                    KTable<UserId, UserState> userState) {
+    private RemoveUserRequestResult handleRemoveUserRequests(
+            KStream<String, FriendsDrinksRemoveUserRequest> friendsDrinksRemoveUserRequest,
+            KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksState,
+            KTable<UserId, UserState> userState) {
 
         KStream<String, RemoveUserResult> resultsAfterValidatingUserState = friendsDrinksRemoveUserRequest
                 .selectKey((key, value) -> UserId.newBuilder().setUserId(value.getUserIdToRemove().getUserId()).build())
