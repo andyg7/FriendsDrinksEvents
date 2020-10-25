@@ -34,11 +34,9 @@ public class Service {
     public Topology buildTopology() {
         StreamsBuilder builder = new StreamsBuilder();
 
-        final String apiTopicName = envProps.getProperty(TopicNameConfigKey.USER_EVENT);
-        KStream<UserId, UserEvent> userEvents = builder.stream(apiTopicName,
+        KStream<UserId, UserEvent> userEvents = builder.stream(envProps.getProperty(TopicNameConfigKey.USER_EVENT),
                 Consumed.with(avroBuilder.userIdSerde(), avroBuilder.userEventSerde()));
-        userEvents
-                .groupByKey(Grouped.with(avroBuilder.userIdSerde(), avroBuilder.userEventSerde()))
+        userEvents.groupByKey(Grouped.with(avroBuilder.userIdSerde(), avroBuilder.userEventSerde()))
                 .aggregate(
                         () -> UserStateAggregate.newBuilder().build(),
                         (aggKey, newValue, aggValue) -> {
