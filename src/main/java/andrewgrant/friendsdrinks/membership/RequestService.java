@@ -76,9 +76,9 @@ public class RequestService {
         InvitationRequestResult invitationRequestResult =
                 handleInvitationRequests(friendsDrinksInvitationRequests, friendsDrinksStateKTable, userState);
 
-        invitationRequestResult.getSuccessfulResponses()
+        invitationRequestResult.getSuccessfulResponseKStream()
                 .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.friendsDrinksSerde()));
-        for (KStream<String, FriendsDrinksEvent> friendsDrinksEventKStream : invitationRequestResult.getFailedResponses()) {
+        for (KStream<String, FriendsDrinksEvent> friendsDrinksEventKStream : invitationRequestResult.getFailedResponseKStreams()) {
             friendsDrinksEventKStream
                     .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.friendsDrinksSerde()));
         }
@@ -95,9 +95,9 @@ public class RequestService {
                 .mapValues(value -> value.getFriendsDrinksRemoveUserRequest());
 
         RemoveUserRequestResult removeUserRequestResult = handleRemoveUserRequests(removeUserRequests, friendsDrinksStateKTable, userState);
-        removeUserRequestResult.getSuccessfulResponses()
+        removeUserRequestResult.getSuccessfulResponseKStream()
                 .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.friendsDrinksSerde()));
-        for (KStream<String, FriendsDrinksEvent> friendsDrinksEventKStream : removeUserRequestResult.getFailedResponses()) {
+        for (KStream<String, FriendsDrinksEvent> friendsDrinksEventKStream : removeUserRequestResult.getFailedResponseKStreams()) {
             friendsDrinksEventKStream
                     .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.friendsDrinksSerde()));
         }
@@ -174,7 +174,7 @@ public class RequestService {
                 convertToFailedRemoveUserResponse(
                         branchedResultsAfterValidatingFriendsDrinksState[0].mapValues(value -> value.friendsDrinksRemoveUserRequest)));
 
-        result.setSuccessfulResponses(branchedResultsAfterValidatingFriendsDrinksState[1].mapValues(value -> {
+        result.setSuccessfulResponseKStream(branchedResultsAfterValidatingFriendsDrinksState[1].mapValues(value -> {
             FriendsDrinksRemoveUserResponse removeUserResponse = FriendsDrinksRemoveUserResponse
                     .newBuilder()
                     .setRequestId(value.friendsDrinksRemoveUserRequest.getRequestId())
@@ -278,7 +278,7 @@ public class RequestService {
         KStream<String, FriendsDrinksInvitationRequest> acceptedInvitationRequests = branchedResultsAfterValidatingUserState[1]
                 .mapValues(value -> value.invitationRequest);
 
-        result.setSuccessfulResponses(acceptedInvitationRequests.map((key, value) -> {
+        result.setSuccessfulResponseKStream(acceptedInvitationRequests.map((key, value) -> {
             FriendsDrinksInvitationResponse response = FriendsDrinksInvitationResponse
                     .newBuilder()
                     .setRequestId(value.getRequestId())
@@ -300,55 +300,55 @@ public class RequestService {
 
     private static class InvitationRequestResult {
 
-        private List<KStream<String, FriendsDrinksEvent>> failedResponses;
-        private KStream<String, FriendsDrinksEvent> successfulResponses;
+        private List<KStream<String, FriendsDrinksEvent>> failedResponseKStreams;
+        private KStream<String, FriendsDrinksEvent> successfulResponseKStream;
 
         public InvitationRequestResult() {
-            this.failedResponses = new ArrayList<>();
-            this.successfulResponses = null;
+            this.failedResponseKStreams = new ArrayList<>();
+            this.successfulResponseKStream = null;
         }
 
-        public List<KStream<String, FriendsDrinksEvent>> getFailedResponses() {
-            return failedResponses;
+        public List<KStream<String, FriendsDrinksEvent>> getFailedResponseKStreams() {
+            return failedResponseKStreams;
         }
 
-        public KStream<String, FriendsDrinksEvent> getSuccessfulResponses() {
-            return successfulResponses;
+        public KStream<String, FriendsDrinksEvent> getSuccessfulResponseKStream() {
+            return successfulResponseKStream;
         }
 
         public void addFailedResponse(KStream<String, FriendsDrinksEvent> failedResponse) {
-            failedResponses.add(failedResponse);
+            failedResponseKStreams.add(failedResponse);
         }
 
-        public void setSuccessfulResponses(KStream<String, FriendsDrinksEvent> successfulResponses) {
-            this.successfulResponses = successfulResponses;
+        public void setSuccessfulResponseKStream(KStream<String, FriendsDrinksEvent> successfulResponseKStream) {
+            this.successfulResponseKStream = successfulResponseKStream;
         }
     }
 
     private static class RemoveUserRequestResult {
 
-        private List<KStream<String, FriendsDrinksEvent>> failedResponses;
-        private KStream<String, FriendsDrinksEvent> successfulResponses;
+        private List<KStream<String, FriendsDrinksEvent>> failedResponseKStreams;
+        private KStream<String, FriendsDrinksEvent> successfulResponseKStream;
 
         public RemoveUserRequestResult() {
-            this.failedResponses = new ArrayList<>();
-            this.successfulResponses = null;
+            this.failedResponseKStreams = new ArrayList<>();
+            this.successfulResponseKStream = null;
         }
 
-        public List<KStream<String, FriendsDrinksEvent>> getFailedResponses() {
-            return failedResponses;
+        public List<KStream<String, FriendsDrinksEvent>> getFailedResponseKStreams() {
+            return failedResponseKStreams;
         }
 
-        public KStream<String, FriendsDrinksEvent> getSuccessfulResponses() {
-            return successfulResponses;
+        public KStream<String, FriendsDrinksEvent> getSuccessfulResponseKStream() {
+            return successfulResponseKStream;
         }
 
         public void addFailedResponse(KStream<String, FriendsDrinksEvent> failedResponse) {
-            failedResponses.add(failedResponse);
+            failedResponseKStreams.add(failedResponse);
         }
 
-        public void setSuccessfulResponses(KStream<String, FriendsDrinksEvent> successfulResponses) {
-            this.successfulResponses = successfulResponses;
+        public void setSuccessfulResponseKStream(KStream<String, FriendsDrinksEvent> successfulResponseKStream) {
+            this.successfulResponseKStream = successfulResponseKStream;
         }
     }
 
