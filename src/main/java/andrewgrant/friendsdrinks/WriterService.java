@@ -70,7 +70,7 @@ public class WriterService {
                         Materialized.<
                                 andrewgrant.friendsdrinks.avro.FriendsDrinksId,
                                 FriendsDrinksStateAggregate, KeyValueStore<Bytes, byte[]>>
-                                as("internal_writer_service_friendsdrinks-state_tracker")
+                                as("friendsdrinks-aggregate-state-store")
                                 .withKeySerde(avroBuilder.friendsDrinksIdSerde())
                                 .withValueSerde(avroBuilder.friendsDrinksStateAggregateSerde())
                 ).toStream().mapValues(value -> {

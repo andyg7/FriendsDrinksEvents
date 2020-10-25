@@ -330,7 +330,7 @@ public class MembershipWriterService {
         Topology topology = writerService.buildTopology();
         Properties streamProps = writerService.buildStreamsProperties(envProps);
         KafkaStreams kafkaStreams = new KafkaStreams(topology, streamProps);
-        log.info("Starting WriterService application...");
+        log.info("Starting MembershipWriterService application...");
 
         final CountDownLatch latch = new CountDownLatch(1);
         Runtime.getRuntime().addShutdownHook(new Thread("streams-shutdown-hook") {
