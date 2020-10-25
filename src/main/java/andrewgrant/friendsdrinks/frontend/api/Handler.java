@@ -237,12 +237,12 @@ public class Handler {
             getUserHomepageResponseBean.setMemberFriendsDrinksList(new ArrayList<>());
         }
 
-        ReadOnlyKeyValueStore<FriendsDrinksPendingInvitationId, FriendsDrinksPendingInvitation> kv =
-                kafkaStreams.store(StoreQueryParameters.fromNameAndType(PENDING_INVITATIONS_STORE, QueryableStoreTypes.keyValueStore()));
-        KeyValueIterator<FriendsDrinksPendingInvitationId, FriendsDrinksPendingInvitation> allKvs = kv.all();
+        ReadOnlyKeyValueStore<FriendsDrinksInvitationId, FriendsDrinksInvitation> kv =
+                kafkaStreams.store(StoreQueryParameters.fromNameAndType(INVITATIONS_STORE, QueryableStoreTypes.keyValueStore()));
+        KeyValueIterator<FriendsDrinksInvitationId, FriendsDrinksInvitation> allKvs = kv.all();
         List<FriendsDrinksInvitationBean> invitationBeans = new ArrayList<>();
         while (allKvs.hasNext()) {
-            KeyValue<FriendsDrinksPendingInvitationId, FriendsDrinksPendingInvitation> keyValue = allKvs.next();
+            KeyValue<FriendsDrinksInvitationId, FriendsDrinksInvitation> keyValue = allKvs.next();
             if (keyValue.key.getUserId().getUserId().equals(userId)) {
                 FriendsDrinksInvitationBean invitationBean = new FriendsDrinksInvitationBean();
                 invitationBean.setFriendsDrinksId(keyValue.value.getFriendsDrinksId().getUuid());
@@ -270,9 +270,9 @@ public class Handler {
             throw new BadRequestException(String.format("friendsDrinksId %s could not be found", friendsDrinksId));
         }
 
-        ReadOnlyKeyValueStore<FriendsDrinksPendingInvitationId, FriendsDrinksPendingInvitation> kv =
-                kafkaStreams.store(StoreQueryParameters.fromNameAndType(PENDING_INVITATIONS_STORE, QueryableStoreTypes.keyValueStore()));
-        FriendsDrinksPendingInvitationId pendingInvitationId = FriendsDrinksPendingInvitationId
+        ReadOnlyKeyValueStore<FriendsDrinksInvitationId, FriendsDrinksInvitation> kv =
+                kafkaStreams.store(StoreQueryParameters.fromNameAndType(INVITATIONS_STORE, QueryableStoreTypes.keyValueStore()));
+        FriendsDrinksInvitationId invitationId = FriendsDrinksInvitationId
                 .newBuilder()
                 .setFriendsDrinksId(FriendsDrinksId
                         .newBuilder()
@@ -282,8 +282,8 @@ public class Handler {
                 .setUserId(andrewgrant.friendsdrinks.api.avro.UserId.newBuilder().setUserId(userId).build())
                 .build();
 
-        FriendsDrinksPendingInvitation pendingInvitation = kv.get(pendingInvitationId);
-        if (pendingInvitation == null) {
+        FriendsDrinksInvitation invitation = kv.get(invitationId);
+        if (invitation == null) {
             throw new BadRequestException(String.format("Pending invitation for userId %s and friendsDrinksId %s could not be found",
                     userId, friendsDrinksId));
         }
@@ -291,7 +291,7 @@ public class Handler {
         FriendsDrinksInvitationBean response = new FriendsDrinksInvitationBean();
         response.setFriendsDrinksId(friendsDrinksState.getFriendsDrinksId().getUuid());
         response.setFriendsDrinksName(friendsDrinksState.getName());
-        response.setMessage(pendingInvitation.getMessage());
+        response.setMessage(invitation.getMessage());
 
         return response;
     }

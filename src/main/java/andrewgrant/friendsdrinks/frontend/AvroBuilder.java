@@ -141,8 +141,8 @@ public class AvroBuilder {
         return serde;
     }
 
-    public SpecificAvroSerde<FriendsDrinksPendingInvitationId> friendsDrinksPendingInvitationIdSerde() {
-        SpecificAvroSerde<FriendsDrinksPendingInvitationId> serde;
+    public SpecificAvroSerde<FriendsDrinksInvitationId> friendsDrinksInvitationIdSerde() {
+        SpecificAvroSerde<FriendsDrinksInvitationId> serde;
         if (registryClient != null) {
             serde = new SpecificAvroSerde<>(registryClient);
         } else {
@@ -154,8 +154,8 @@ public class AvroBuilder {
         return serde;
     }
 
-    public SpecificAvroSerde<FriendsDrinksPendingInvitation> friendsDrinksPendingInvitationSerde() {
-        SpecificAvroSerde<FriendsDrinksPendingInvitation> serde;
+    public SpecificAvroSerde<FriendsDrinksInvitation> friendsDrinksInvitationSerde() {
+        SpecificAvroSerde<FriendsDrinksInvitation> serde;
         if (registryClient != null) {
             serde = new SpecificAvroSerde<>(registryClient);
         } else {

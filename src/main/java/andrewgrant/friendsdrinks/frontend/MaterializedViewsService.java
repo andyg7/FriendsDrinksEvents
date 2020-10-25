@@ -38,7 +38,7 @@ public class MaterializedViewsService {
     public static final String ADMINS_STORE = "admins-state-store";
     public static final String USERS_STORE = "users-state-store";
     public static final String FRIENDSDRINKS_KEYED_BY_SINGLE_ID_STORE = "friendsdrinks-keyed-by-single-id-state-store";
-    public static final String PENDING_INVITATIONS_STORE = "pending-invitations-state-store";
+    public static final String INVITATIONS_STORE = "invitations-state-store";
 
     private Properties envProps;
     private AvroBuilder avroBuilder;
@@ -155,11 +155,11 @@ public class MaterializedViewsService {
                                         .withKeySerde(Serdes.String())
                                         .withValueSerde(apiAvroBuilder.apiFriendsDrinksStateSerde()));
 
-        final String pendingInvitationsTopicName = envProps.getProperty(FRIENDSDRINKS_PENDING_INVITATION);
-        builder.table(pendingInvitationsTopicName,
-                Consumed.with(apiAvroBuilder.friendsDrinksPendingInvitationIdSerde(),
-                        apiAvroBuilder.friendsDrinksPendingInvitationSerde()),
-                Materialized.as(PENDING_INVITATIONS_STORE));
+        final String invitationTopicName = envProps.getProperty(FRIENDSDRINKS_INVITATION);
+        builder.table(invitationTopicName,
+                Consumed.with(apiAvroBuilder.friendsDrinksInvitationIdSerde(),
+                        apiAvroBuilder.friendsDrinksInvitationSerde()),
+                Materialized.as(INVITATIONS_STORE));
 
         KTable<String, andrewgrant.friendsdrinks.api.avro.UserState> userState =
                 builder.stream(envProps.getProperty(USER_STATE),
