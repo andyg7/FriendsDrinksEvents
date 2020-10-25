@@ -12,6 +12,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
@@ -71,7 +73,15 @@ public class RequestService {
         KStream<String, FriendsDrinksInvitationRequest> friendsDrinksInvitationRequests = apiEvents
                 .filter((key, value) -> value.getEventType().equals(EventType.FRIENDSDRINKS_INVITATION_REQUEST))
                 .mapValues(value -> value.getFriendsDrinksInvitationRequest());
-        handleInvitationRequests(friendsDrinksInvitationRequests, friendsDrinksStateKTable, userState);
+        InvitationRequestResult invitationRequestResult =
+                handleInvitationRequests(friendsDrinksInvitationRequests, friendsDrinksStateKTable, userState);
+
+        invitationRequestResult.getSuccessfulResponses()
+                .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.friendsDrinksSerde()));
+        for (KStream<String, FriendsDrinksEvent> friendsDrinksEventKStream : invitationRequestResult.getFailedResponses()) {
+            friendsDrinksEventKStream
+                    .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.friendsDrinksSerde()));
+        }
 
         // FriendsDrinks replies
         KStream<String, FriendsDrinksInvitationReplyRequest> friendsDrinksInvitationReplyRequests = apiEvents
@@ -84,12 +94,18 @@ public class RequestService {
                 value.getEventType().equals(EventType.FRIENDSDRINKS_REMOVE_USER_REQUEST))
                 .mapValues(value -> value.getFriendsDrinksRemoveUserRequest());
 
-        handleUserRemovals(removeUserRequests, friendsDrinksStateKTable, userState);
+        RemoveUserRequestResult removeUserRequestResult = handleUserRemovals(removeUserRequests, friendsDrinksStateKTable, userState);
+        removeUserRequestResult.getSuccessfulResponses()
+                .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.friendsDrinksSerde()));
+        for (KStream<String, FriendsDrinksEvent> friendsDrinksEventKStream : removeUserRequestResult.getFailedResponses()) {
+            friendsDrinksEventKStream
+                    .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.friendsDrinksSerde()));
+        }
 
         return builder.build();
     }
 
-    private void handleUserRemovals(KStream<String, FriendsDrinksRemoveUserRequest> friendsDrinksRemoveUserRequest,
+    private RemoveUserRequestResult handleUserRemovals(KStream<String, FriendsDrinksRemoveUserRequest> friendsDrinksRemoveUserRequest,
                                     KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksState,
                                     KTable<UserId, UserState> userState) {
 
@@ -116,9 +132,10 @@ public class RequestService {
                         ((key, value) -> true)
                 );
 
-        convertToFailedRemoveUserResponse(branchedResultsAfterValidatingUserState[0]
-                .mapValues(value -> value.friendsDrinksRemoveUserRequest))
-                .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.friendsDrinksSerde()));
+        RemoveUserRequestResult result = new RemoveUserRequestResult();
+        result.addFailedResponse(
+                convertToFailedRemoveUserResponse(
+                        branchedResultsAfterValidatingUserState[0].mapValues(value -> value.friendsDrinksRemoveUserRequest)));
 
         KStream<String, RemoveUserResult> resultsAfterValidatingFriendsDrinksState =
                 branchedResultsAfterValidatingUserState[1].selectKey((key, value) ->
@@ -152,11 +169,11 @@ public class RequestService {
                         ((key, value) -> true)
                 );
 
-        convertToFailedRemoveUserResponse(branchedResultsAfterValidatingFriendsDrinksState[0]
-                .mapValues(value -> value.friendsDrinksRemoveUserRequest))
-                .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.friendsDrinksSerde()));
+        result.addFailedResponse(
+                convertToFailedRemoveUserResponse(
+                        branchedResultsAfterValidatingFriendsDrinksState[0].mapValues(value -> value.friendsDrinksRemoveUserRequest)));
 
-        branchedResultsAfterValidatingFriendsDrinksState[1].mapValues(value -> {
+        result.setSuccessfulResponses(branchedResultsAfterValidatingFriendsDrinksState[1].mapValues(value -> {
             FriendsDrinksRemoveUserResponse removeUserResponse = FriendsDrinksRemoveUserResponse
                     .newBuilder()
                     .setRequestId(value.friendsDrinksRemoveUserRequest.getRequestId())
@@ -167,7 +184,8 @@ public class RequestService {
                     .setEventType(EventType.FRIENDSDRINKS_REMOVE_USER_RESPONSE)
                     .setFriendsDrinksRemoveUserResponse(removeUserResponse)
                     .build();
-        }).to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.friendsDrinksSerde()));
+        }));
+        return result;
     }
 
     private KStream<String, FriendsDrinksEvent> convertToFailedRemoveUserResponse(KStream<String, FriendsDrinksRemoveUserRequest> requests) {
@@ -186,7 +204,7 @@ public class RequestService {
 
     }
 
-    private void handleInvitationRequests(KStream<String, FriendsDrinksInvitationRequest> friendsDrinksInvitations ,
+    private InvitationRequestResult handleInvitationRequests(KStream<String, FriendsDrinksInvitationRequest> friendsDrinksInvitations ,
                                           KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable,
                                           KTable<UserId, UserState> userState) {
 
@@ -224,8 +242,10 @@ public class RequestService {
                         ((key, value) -> true)
                 );
 
-        convertToFailedInvitationResponse(branchedResultsAfterValidatingFriendsDrinksState[0].mapValues(value -> value.invitationRequest))
-                .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.friendsDrinksSerde()));
+
+        InvitationRequestResult result = new InvitationRequestResult();
+        result.addFailedResponse(
+                convertToFailedInvitationResponse(branchedResultsAfterValidatingFriendsDrinksState[0].mapValues(value -> value.invitationRequest)));
 
         KStream<String, InvitationResult> resultsAfterValidatingUserState = branchedResultsAfterValidatingFriendsDrinksState[1]
                 .selectKey((key, value) -> UserId.newBuilder().setUserId(value.invitationRequest.getUserId().getUserId()).build())
@@ -251,13 +271,13 @@ public class RequestService {
                         ((key, value) -> true)
                 );
 
-        convertToFailedInvitationResponse(branchedResultsAfterValidatingUserState[0].mapValues(value -> value.invitationRequest))
-                .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.friendsDrinksSerde()));
+        result.addFailedResponse(
+                convertToFailedInvitationResponse(branchedResultsAfterValidatingUserState[0].mapValues(value -> value.invitationRequest)));
 
         KStream<String, FriendsDrinksInvitationRequest> acceptedInvitationRequests = branchedResultsAfterValidatingUserState[1]
                 .mapValues(value -> value.invitationRequest);
 
-        acceptedInvitationRequests.map((key, value) -> {
+        result.setSuccessfulResponses(acceptedInvitationRequests.map((key, value) -> {
             FriendsDrinksInvitationResponse response = FriendsDrinksInvitationResponse
                     .newBuilder()
                     .setRequestId(value.getRequestId())
@@ -272,7 +292,63 @@ public class RequestService {
             return new KeyValue<>(
                     friendsDrinksEvent.getFriendsDrinksInvitationResponse().getRequestId(),
                     friendsDrinksEvent);
-        }).to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.friendsDrinksSerde()));
+        }));
+
+        return result;
+    }
+
+    private static class InvitationRequestResult {
+
+        private List<KStream<String, FriendsDrinksEvent>> failedResponses;
+        private KStream<String, FriendsDrinksEvent> successfulResponses;
+
+        public InvitationRequestResult() {
+            this.failedResponses = new ArrayList<>();
+            this.successfulResponses = null;
+        }
+
+        public List<KStream<String, FriendsDrinksEvent>> getFailedResponses() {
+            return failedResponses;
+        }
+
+        public KStream<String, FriendsDrinksEvent> getSuccessfulResponses() {
+            return successfulResponses;
+        }
+
+        public void addFailedResponse(KStream<String, FriendsDrinksEvent> failedResponse) {
+            failedResponses.add(failedResponse);
+        }
+
+        public void setSuccessfulResponses(KStream<String, FriendsDrinksEvent> successfulResponses) {
+            this.successfulResponses = successfulResponses;
+        }
+    }
+
+    private static class RemoveUserRequestResult {
+
+        private List<KStream<String, FriendsDrinksEvent>> failedResponses;
+        private KStream<String, FriendsDrinksEvent> successfulResponses;
+
+        public RemoveUserRequestResult() {
+            this.failedResponses = new ArrayList<>();
+            this.successfulResponses = null;
+        }
+
+        public List<KStream<String, FriendsDrinksEvent>> getFailedResponses() {
+            return failedResponses;
+        }
+
+        public KStream<String, FriendsDrinksEvent> getSuccessfulResponses() {
+            return successfulResponses;
+        }
+
+        public void addFailedResponse(KStream<String, FriendsDrinksEvent> failedResponse) {
+            failedResponses.add(failedResponse);
+        }
+
+        public void setSuccessfulResponses(KStream<String, FriendsDrinksEvent> successfulResponses) {
+            this.successfulResponses = successfulResponses;
+        }
     }
 
     private KStream<String, FriendsDrinksEvent> convertToFailedInvitationResponse(KStream<String, FriendsDrinksInvitationRequest> stream) {
