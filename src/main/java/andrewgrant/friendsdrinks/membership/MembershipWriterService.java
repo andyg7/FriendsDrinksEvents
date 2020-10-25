@@ -62,7 +62,7 @@ public class MembershipWriterService {
         KStream<String, FriendsDrinksEvent> apiRequests = streamOfRequests(apiEvents);
 
         successfulApiResponses.join(apiRequests,
-                (l, r) -> new RequestResponseJoiner().join(r),
+                (l, r) -> new MembershipRequestResponseJoiner().join(r),
                 JoinWindows.of(Duration.ofSeconds(30)),
                 StreamJoined.with(Serdes.String(),
                         frontendAvroBuilder.friendsDrinksSerde(),

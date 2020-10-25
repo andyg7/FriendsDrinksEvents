@@ -252,41 +252,6 @@ public class RequestService {
         KStream<String, FriendsDrinksInvitationRequest> acceptedInvitationRequests = branchedResultsAfterValidatingUserState[1]
                 .mapValues(value -> value.invitationRequest);
 
-        acceptedInvitationRequests.selectKey((key, value) ->
-                andrewgrant.friendsdrinks.avro.FriendsDrinksId
-                        .newBuilder()
-                        .setAdminUserId(value.getFriendsDrinksId().getAdminUserId())
-                        .setUuid(value.getFriendsDrinksId().getUuid())
-                        .build())
-                .leftJoin(friendsDrinksStateKTable,
-                        (request, state) -> {
-                            if (state != null) {
-                                return FriendsDrinksInvitation
-                                        .newBuilder()
-                                        .setFriendsDrinksId(request.getFriendsDrinksId())
-                                        .setUserId(request.getUserId())
-                                        .setInvitationId(
-                                                FriendsDrinksInvitationId
-                                                        .newBuilder()
-                                                        .setFriendsDrinksId(request.getFriendsDrinksId())
-                                                        .setUserId(request.getUserId())
-                                                        .build())
-                                        .setMessage(String.format("Want to join %s?!", state.getName()))
-                                        .build();
-                            } else {
-                                throw new RuntimeException(String.format("Failed to find FriendsDrinks state %s",
-                                        request.getRequestId()));
-                            }
-                        },
-                        Joined.with(avroBuilder.friendsDrinksIdSerde(),
-                                frontendAvroBuilder.friendsDrinksInvitationRequestSerde(),
-                                avroBuilder.friendsDrinksStateSerde())
-                )
-                .selectKey((key, value) -> value.getInvitationId())
-                .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_INVITATION),
-                        Produced.with(frontendAvroBuilder.friendsDrinksInvitationIdSerde(),
-                                frontendAvroBuilder.friendsDrinksInvitationSerde()));
-
         acceptedInvitationRequests.map((key, value) -> {
             FriendsDrinksInvitationResponse response = FriendsDrinksInvitationResponse
                     .newBuilder()
@@ -321,12 +286,12 @@ public class RequestService {
         });
     }
 
-    private void handleInvitationReplies(KStream<String, FriendsDrinksInvitationReplyRequest> createFriendsDrinksInvitationReplyRequests,
+    private void handleInvitationReplies(KStream<String, FriendsDrinksInvitationReplyRequest> invitationReplyRequestKStream,
                                          KTable<FriendsDrinksInvitationId, FriendsDrinksInvitation> friendsDrinksInvitations) {
 
 
         KStream<FriendsDrinksInvitationId, FriendsDrinksInvitationReplyResponse> friendsDrinksInvitationReplyResponses =
-                createFriendsDrinksInvitationReplyRequests.selectKey((key, value) -> FriendsDrinksInvitationId
+                invitationReplyRequestKStream.selectKey((key, value) -> FriendsDrinksInvitationId
                         .newBuilder()
                         .setFriendsDrinksId(value.getFriendsDrinksId())
                         .setUserId(value.getUserId())
