@@ -53,8 +53,14 @@ public class RequestService {
                 .selectKey((key, value) -> value.getCreateFriendsDrinksRequest().getFriendsDrinksId().getAdminUserId())
                 .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getCreateFriendsDrinksRequest());
         handleCreateRequests(createRequests, friendsDrinksStateKTable)
-                .to(apiTopicName,
-                        Produced.with(Serdes.String(), frontendAvroBuilder.friendsDrinksSerde()));
+                .to(apiTopicName, Produced.with(Serdes.String(), frontendAvroBuilder.friendsDrinksSerde()));
+
+        // Updates.
+        KStream<String, UpdateFriendsDrinksRequest> updateRequests = apiEvents
+                .filter(((s, friendsDrinksEvent) -> friendsDrinksEvent.getEventType().equals(EventType.UPDATE_FRIENDSDRINKS_REQUEST)))
+                .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getUpdateFriendsDrinksRequest());
+        handleUpdateRequests(updateRequests, friendsDrinksStateKTable)
+                .to(apiTopicName, Produced.with(Serdes.String(), frontendAvroBuilder.friendsDrinksSerde()));
 
         // Deletes.
         KStream<String, DeleteFriendsDrinksRequest> deleteRequests =
@@ -62,16 +68,7 @@ public class RequestService {
                         friendsDrinksEvent.getEventType().equals(EventType.DELETE_FRIENDSDRINKS_REQUEST)))
                         .mapValues((friendsDrinksEvent) -> friendsDrinksEvent.getDeleteFriendsDrinksRequest());
         handleDeleteRequests(deleteRequests, friendsDrinksStateKTable)
-                .to(apiTopicName,
-                        Produced.with(Serdes.String(), frontendAvroBuilder.friendsDrinksSerde()));
-
-        // Updates.
-        KStream<String, UpdateFriendsDrinksRequest> updateRequests = apiEvents
-                .filter(((s, friendsDrinksEvent) -> friendsDrinksEvent.getEventType().equals(EventType.UPDATE_FRIENDSDRINKS_REQUEST)))
-                .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getUpdateFriendsDrinksRequest());
-        handleUpdateRequests(updateRequests, friendsDrinksStateKTable)
-                .to(apiTopicName,
-                        Produced.with(Serdes.String(), frontendAvroBuilder.friendsDrinksSerde()));
+                .to(apiTopicName, Produced.with(Serdes.String(), frontendAvroBuilder.friendsDrinksSerde()));
 
         return builder.build();
     }
@@ -95,12 +92,12 @@ public class RequestService {
                             log.info("old value {}. New aggValue {}", oldValue, newAggValue);
                             return newAggValue;
                         },
-                        Materialized.<String, Long, KeyValueStore<Bytes, byte[]>>as("internal_request_service_friendsdrinks-count_tracker")
+                        Materialized.<String, Long, KeyValueStore<Bytes, byte[]>>as("friendsdrinks-count-state-store")
                                 .withKeySerde(Serdes.String())
                                 .withValueSerde(Serdes.Long())
                 );
 
-        KStream<String, FriendsDrinksEvent> createResponses = createRequests.leftJoin(friendsDrinksCount,
+        return createRequests.leftJoin(friendsDrinksCount,
                 (request, count) -> {
                     CreateFriendsDrinksResponse.Builder response = CreateFriendsDrinksResponse.newBuilder();
                     response.setRequestId(request.getRequestId());
@@ -118,8 +115,6 @@ public class RequestService {
                 },
                 Joined.with(Serdes.String(), frontendAvroBuilder.createFriendsDrinksRequestSerde(), Serdes.Long()))
                 .selectKey(((key, value) -> value.getCreateFriendsDrinksResponse().getRequestId()));
-
-        return createResponses;
     }
 
     private KStream<String, FriendsDrinksEvent> handleDeleteRequests(
@@ -175,7 +170,7 @@ public class RequestService {
                         .newBuilder()
                         .setAdminUserId(value.getFriendsDrinksId().getAdminUserId())
                         .setUuid(value.getFriendsDrinksId().getUuid()).build()));
-        KStream<String, FriendsDrinksEvent> updateResponses = updateRequestsKeyed.leftJoin(friendsDrinksStateKTable,
+        return updateRequestsKeyed.leftJoin(friendsDrinksStateKTable,
                 (updateRequest, state) -> {
                     if (state != null) {
                         return FriendsDrinksEvent.newBuilder()
@@ -204,7 +199,6 @@ public class RequestService {
                         frontendAvroBuilder.updateFriendsDrinksRequestSerde(),
                         avroBuilder.friendsDrinksStateSerde()))
                 .selectKey(((key, value) -> value.getUpdateFriendsDrinksResponse().getRequestId()));
-        return updateResponses;
     }
 
 
