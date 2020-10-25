@@ -259,7 +259,7 @@ public class Handler {
     }
 
     @GET
-    @Path("/pendingfriendsdrinksinvitations/users/{userId}/friendsdrinkses/{friendsDrinksId}")
+    @Path("/friendsdrinksinvitations/users/{userId}/friendsdrinkses/{friendsDrinksId}")
     @Produces(MediaType.APPLICATION_JSON)
     public FriendsDrinksInvitationBean getInvitation(@PathParam("userId") String userId,
                                                      @PathParam("friendsDrinksId") String friendsDrinksId) {
@@ -284,7 +284,7 @@ public class Handler {
 
         FriendsDrinksInvitation invitation = kv.get(invitationId);
         if (invitation == null) {
-            throw new BadRequestException(String.format("Pending invitation for userId %s and friendsDrinksId %s could not be found",
+            throw new BadRequestException(String.format("Invitation for userId %s and friendsDrinksId %s could not be found",
                     userId, friendsDrinksId));
         }
 
