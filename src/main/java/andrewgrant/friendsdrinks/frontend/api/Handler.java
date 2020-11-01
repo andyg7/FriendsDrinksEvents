@@ -516,6 +516,13 @@ public class Handler {
                 .setFriendsDrinksMembershipEvent(FriendsDrinksMembershipEvent.newBuilder()
                         .setEventType(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_REPLY_REQUEST)
                         .setFriendsDrinksInvitationReplyRequest(friendsDrinksInvitationReplyRequest)
+                        .setFriendsDrinksId(friendsDrinksIdAvro)
+                        .setUserId(
+                                andrewgrant.friendsdrinks.api.avro.UserId
+                                        .newBuilder()
+                                        .setUserId(userId)
+                                        .build()
+                        )
                         .build())
                 .build();
 
@@ -571,6 +578,11 @@ public class Handler {
                 .setFriendsDrinksMembershipEvent(FriendsDrinksMembershipEvent.newBuilder()
                         .setEventType(FriendsDrinksMembershipEventType.FRIENDSDRINKS_REMOVE_USER_REQUEST)
                         .setFriendsDrinksRemoveUserRequest(removeUserRequest)
+                        .setFriendsDrinksId(friendsDrinksIdAvro)
+                        .setUserId(andrewgrant.friendsdrinks.api.avro.UserId
+                                .newBuilder()
+                                .setUserId(requestBean.getUserId())
+                                .build())
                         .build())
                 .build();
 
@@ -614,6 +626,12 @@ public class Handler {
                 .setFriendsDrinksMembershipEvent(FriendsDrinksMembershipEvent.newBuilder()
                         .setEventType(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_REQUEST)
                         .setFriendsDrinksInvitationRequest(friendsDrinksInvitationRequest)
+                        .setFriendsDrinksId(friendsDrinksIdAvro)
+                        .setUserId(
+                                andrewgrant.friendsdrinks.api.avro.UserId
+                                        .newBuilder()
+                                        .setUserId(requestBean.getUserId())
+                                        .build())
                         .build())
                 .build();
 

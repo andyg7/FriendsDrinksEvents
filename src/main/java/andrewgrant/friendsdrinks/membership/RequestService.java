@@ -192,6 +192,8 @@ public class RequestService {
                     .setFriendsDrinksMembershipEvent(FriendsDrinksMembershipEvent.newBuilder()
                             .setEventType(FriendsDrinksMembershipEventType.FRIENDSDRINKS_REMOVE_USER_RESPONSE)
                             .setFriendsDrinksRemoveUserResponse(removeUserResponse)
+                            .setUserId(value.friendsDrinksRemoveUserRequest.getUserIdToRemove())
+                            .setFriendsDrinksId(value.friendsDrinksRemoveUserRequest.getFriendsDrinksId())
                             .build())
                     .build();
         }));
@@ -212,6 +214,8 @@ public class RequestService {
                     .setFriendsDrinksMembershipEvent(FriendsDrinksMembershipEvent.newBuilder()
                             .setEventType(FriendsDrinksMembershipEventType.FRIENDSDRINKS_REMOVE_USER_RESPONSE)
                             .setFriendsDrinksRemoveUserResponse(removeUserResponse)
+                            .setFriendsDrinksId(value.getFriendsDrinksId())
+                            .setUserId(value.getUserIdToRemove())
                             .build())
                     .build();
         });
@@ -305,6 +309,7 @@ public class RequestService {
                             .setEventType(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_RESPONSE)
                             .setRequestId(value.getRequestId())
                             .setFriendsDrinksInvitationResponse(response)
+                            .setUserId(value.getUserId())
                             .build())
                     .build();
             return new KeyValue<>(
@@ -384,6 +389,8 @@ public class RequestService {
                             .setEventType(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_RESPONSE)
                             .setFriendsDrinksInvitationResponse(response)
                             .setRequestId(response.getRequestId())
+                            .setFriendsDrinksId(value.getFriendsDrinksId())
+                            .setUserId(value.getUserId())
                             .build())
                     .setRequestId(response.getRequestId())
                     .build();
@@ -393,7 +400,7 @@ public class RequestService {
     private KStream<String, ApiEvent> handleInvitationReplies(
             KStream<String, FriendsDrinksInvitationReplyRequest> invitationReplyRequestKStream,
             KTable<FriendsDrinksInvitationId, FriendsDrinksInvitation> friendsDrinksInvitations) {
-        KStream<FriendsDrinksInvitationId, FriendsDrinksInvitationReplyResponse> friendsDrinksInvitationReplyResponses =
+        KStream<FriendsDrinksInvitationId, ApiEvent> friendsDrinksInvitationReplyResponses =
                 invitationReplyRequestKStream.selectKey((key, value) -> FriendsDrinksInvitationId
                         .newBuilder()
                         .setFriendsDrinksId(andrewgrant.friendsdrinks.membership.avro.FriendsDrinksId
@@ -408,19 +415,34 @@ public class RequestService {
                         .build())
                         .leftJoin(friendsDrinksInvitations,
                                 (request, state) -> {
+                                    ApiEvent.Builder apiEvent = ApiEvent
+                                            .newBuilder()
+                                            .setEventType(ApiEventType.FRIENDSDRINKS_MEMBERSHIP_EVENT)
+                                            .setRequestId(request.getRequestId());
+
+                                    FriendsDrinksMembershipEvent.Builder friendsDrinksMembershipEvent =
+                                            FriendsDrinksMembershipEvent.newBuilder()
+                                            .setRequestId(request.getRequestId())
+                                            .setFriendsDrinksId(request.getFriendsDrinksId())
+                                            .setUserId(request.getUserId());
                                     if (state != null) {
-                                        return FriendsDrinksInvitationReplyResponse
+                                        friendsDrinksMembershipEvent.setFriendsDrinksInvitationReplyResponse(FriendsDrinksInvitationReplyResponse
                                                 .newBuilder()
                                                 .setRequestId(request.getRequestId())
                                                 .setResult(Result.SUCCESS)
-                                                .build();
+                                                .build());
+                                        apiEvent.setFriendsDrinksMembershipEvent(friendsDrinksMembershipEvent.build());
+                                        return apiEvent.build();
                                     } else {
                                         log.info("Rejecting invitation reply for {}", request.getRequestId());
-                                        return FriendsDrinksInvitationReplyResponse
-                                                .newBuilder()
-                                                .setRequestId(request.getRequestId())
-                                                .setResult(Result.FAIL)
-                                                .build();
+                                        friendsDrinksMembershipEvent.setFriendsDrinksInvitationReplyResponse(
+                                                FriendsDrinksInvitationReplyResponse
+                                                        .newBuilder()
+                                                        .setRequestId(request.getRequestId())
+                                                        .setResult(Result.FAIL)
+                                                        .build());
+                                        apiEvent.setFriendsDrinksMembershipEvent(friendsDrinksMembershipEvent.build());
+                                        return apiEvent.build();
                                     }
                                 },
                                 Joined.with(membershipAvroBuilder.friendsDrinksInvitationIdSerde(),
@@ -428,16 +450,7 @@ public class RequestService {
                                         membershipAvroBuilder.friendsDrinksInvitationSerde())
                         );
 
-        return friendsDrinksInvitationReplyResponses.selectKey(((key, value) -> value.getRequestId()))
-                .mapValues(value -> ApiEvent
-                        .newBuilder()
-                        .setEventType(ApiEventType.FRIENDSDRINKS_MEMBERSHIP_EVENT)
-                        .setFriendsDrinksMembershipEvent(FriendsDrinksMembershipEvent.newBuilder()
-                                .setEventType(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_REPLY_RESPONSE)
-                                .setRequestId(value.getRequestId())
-                                .setFriendsDrinksInvitationReplyResponse(value)
-                                .build())
-                        .build());
+        return friendsDrinksInvitationReplyResponses.selectKey((k, v) -> v.getRequestId());
     }
 
     public Properties buildStreamProperties(Properties envProps) {
