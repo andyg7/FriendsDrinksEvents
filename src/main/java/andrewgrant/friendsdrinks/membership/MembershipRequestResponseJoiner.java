@@ -3,7 +3,7 @@ package andrewgrant.friendsdrinks.membership;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import andrewgrant.friendsdrinks.api.avro.EventType;
+import andrewgrant.friendsdrinks.api.avro.ApiEventType;
 import andrewgrant.friendsdrinks.api.avro.FriendsDrinksInvitationReplyRequest;
 import andrewgrant.friendsdrinks.membership.avro.*;
 
@@ -15,7 +15,7 @@ public class MembershipRequestResponseJoiner {
     private static final Logger log = LoggerFactory.getLogger(MembershipRequestResponseJoiner.class);
 
     public FriendsDrinksMembershipEvent join(andrewgrant.friendsdrinks.api.avro.ApiEvent r) {
-        if (r.getEventType().equals(EventType.FRIENDSDRINKS_INVITATION_REPLY_REQUEST)) {
+        if (r.getEventType().equals(ApiEventType.FRIENDSDRINKS_INVITATION_REPLY_REQUEST)) {
             FriendsDrinksInvitationReplyRequest request = r.getFriendsDrinksInvitationReplyRequest();
             FriendsDrinksMembershipId membershipId = FriendsDrinksMembershipId
                     .newBuilder()
@@ -36,7 +36,7 @@ public class MembershipRequestResponseJoiner {
                                     .setMembershipId(membershipId)
                                     .build())
                     .build();
-        } else if (r.getEventType().equals(EventType.FRIENDSDRINKS_REMOVE_USER_REQUEST)) {
+        } else if (r.getEventType().equals(ApiEventType.FRIENDSDRINKS_REMOVE_USER_REQUEST)) {
             FriendsDrinksInvitationReplyRequest request = r.getFriendsDrinksInvitationReplyRequest();
             FriendsDrinksMembershipId membershipId = FriendsDrinksMembershipId
                     .newBuilder()

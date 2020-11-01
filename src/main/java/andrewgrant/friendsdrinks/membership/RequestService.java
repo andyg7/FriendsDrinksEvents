@@ -54,7 +54,7 @@ public class RequestService {
         StreamsBuilder builder = new StreamsBuilder();
 
         KStream<String, ApiEvent> apiEvents = builder.stream(envProps.getProperty(FRIENDSDRINKS_API),
-                Consumed.with(Serdes.String(), frontendAvroBuilder.friendsDrinksSerde()));
+                Consumed.with(Serdes.String(), frontendAvroBuilder.apiSerde()));
 
         KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable =
                 builder.table(envProps.getProperty(FRIENDSDRINKS_STATE),
@@ -71,35 +71,35 @@ public class RequestService {
 
         // FriendsDrinks invitation requests
         KStream<String, FriendsDrinksInvitationRequest> friendsDrinksInvitationRequests = apiEvents
-                .filter((key, value) -> value.getEventType().equals(EventType.FRIENDSDRINKS_INVITATION_REQUEST))
+                .filter((key, value) -> value.getEventType().equals(ApiEventType.FRIENDSDRINKS_INVITATION_REQUEST))
                 .mapValues(value -> value.getFriendsDrinksInvitationRequest());
         InvitationRequestResult invitationRequestResult =
                 handleInvitationRequests(friendsDrinksInvitationRequests, friendsDrinksStateKTable, userState);
 
         invitationRequestResult.getSuccessfulResponseKStream()
-                .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.friendsDrinksSerde()));
+                .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.apiSerde()));
         for (KStream<String, ApiEvent> friendsDrinksEventKStream : invitationRequestResult.getFailedResponseKStreams()) {
             friendsDrinksEventKStream
-                    .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.friendsDrinksSerde()));
+                    .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.apiSerde()));
         }
 
         // FriendsDrinks replies
         KStream<String, FriendsDrinksInvitationReplyRequest> friendsDrinksInvitationReplyRequests = apiEvents
-                .filter((key, value) -> value.getEventType().equals(EventType.FRIENDSDRINKS_INVITATION_REPLY_REQUEST))
+                .filter((key, value) -> value.getEventType().equals(ApiEventType.FRIENDSDRINKS_INVITATION_REPLY_REQUEST))
                 .mapValues(value -> value.getFriendsDrinksInvitationReplyRequest());
         handleInvitationReplies(friendsDrinksInvitationReplyRequests,  friendsDrinksInvitations)
-                .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.friendsDrinksSerde()));
+                .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.apiSerde()));
 
         KStream<String, FriendsDrinksRemoveUserRequest> removeUserRequests = apiEvents.filter((key, value) ->
-                value.getEventType().equals(EventType.FRIENDSDRINKS_REMOVE_USER_REQUEST))
+                value.getEventType().equals(ApiEventType.FRIENDSDRINKS_REMOVE_USER_REQUEST))
                 .mapValues(value -> value.getFriendsDrinksRemoveUserRequest());
 
         RemoveUserRequestResult removeUserRequestResult = handleRemoveUserRequests(removeUserRequests, friendsDrinksStateKTable, userState);
         removeUserRequestResult.getSuccessfulResponseKStream()
-                .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.friendsDrinksSerde()));
+                .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.apiSerde()));
         for (KStream<String, ApiEvent> friendsDrinksEventKStream : removeUserRequestResult.getFailedResponseKStreams()) {
             friendsDrinksEventKStream
-                    .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.friendsDrinksSerde()));
+                    .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.apiSerde()));
         }
 
         return builder.build();
@@ -182,7 +182,7 @@ public class RequestService {
                     .build();
             return ApiEvent
                     .newBuilder()
-                    .setEventType(EventType.FRIENDSDRINKS_REMOVE_USER_RESPONSE)
+                    .setEventType(ApiEventType.FRIENDSDRINKS_REMOVE_USER_RESPONSE)
                     .setFriendsDrinksRemoveUserResponse(removeUserResponse)
                     .build();
         }));
@@ -198,7 +198,7 @@ public class RequestService {
                     .build();
             return ApiEvent
                     .newBuilder()
-                    .setEventType(EventType.FRIENDSDRINKS_REMOVE_USER_RESPONSE)
+                    .setEventType(ApiEventType.FRIENDSDRINKS_REMOVE_USER_RESPONSE)
                     .setFriendsDrinksRemoveUserResponse(removeUserResponse)
                     .build();
         });
@@ -286,7 +286,7 @@ public class RequestService {
                     .build();
             ApiEvent friendsDrinksEvent = ApiEvent
                     .newBuilder()
-                    .setEventType(EventType.FRIENDSDRINKS_INVITATION_RESPONSE)
+                    .setEventType(ApiEventType.FRIENDSDRINKS_INVITATION_RESPONSE)
                     .setRequestId(value.getRequestId())
                     .setFriendsDrinksInvitationResponse(response)
                     .build();
@@ -361,7 +361,7 @@ public class RequestService {
                     .build();
             return ApiEvent
                     .newBuilder()
-                    .setEventType(EventType.FRIENDSDRINKS_INVITATION_RESPONSE)
+                    .setEventType(ApiEventType.FRIENDSDRINKS_INVITATION_RESPONSE)
                     .setFriendsDrinksInvitationResponse(response)
                     .setRequestId(response.getRequestId())
                     .build();
@@ -409,7 +409,7 @@ public class RequestService {
         return friendsDrinksInvitationReplyResponses.selectKey(((key, value) -> value.getRequestId()))
                 .mapValues(value -> ApiEvent
                         .newBuilder()
-                        .setEventType(EventType.FRIENDSDRINKS_INVITATION_REPLY_RESPONSE)
+                        .setEventType(ApiEventType.FRIENDSDRINKS_INVITATION_REPLY_RESPONSE)
                         .setRequestId(value.getRequestId())
                         .setFriendsDrinksInvitationReplyResponse(value)
                         .build());

@@ -20,7 +20,7 @@ import java.util.concurrent.CountDownLatch;
 
 import andrewgrant.friendsdrinks.api.avro.*;
 import andrewgrant.friendsdrinks.api.avro.ApiEvent;
-import andrewgrant.friendsdrinks.api.avro.EventType;
+import andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent;
 import andrewgrant.friendsdrinks.avro.*;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksId;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksIdList;
@@ -47,16 +47,16 @@ public class WriterService {
     public Topology buildTopology() {
         StreamsBuilder builder = new StreamsBuilder();
         KStream<String, ApiEvent> apiEvents = builder.stream(envProps.getProperty(FRIENDSDRINKS_API),
-                Consumed.with(Serdes.String(), frontendAvroBuilder.friendsDrinksSerde()));
-        KStream<String, ApiEvent> successfulApiResponses = streamOfSuccessfulResponses(apiEvents);
-        KStream<String, ApiEvent> apiRequests = streamOfRequests(apiEvents);
+                Consumed.with(Serdes.String(), frontendAvroBuilder.apiSerde()));
+        KStream<String, FriendsDrinksEvent> successfulApiResponses = streamOfSuccessfulResponses(apiEvents);
+        KStream<String, FriendsDrinksEvent> apiRequests = streamOfRequests(apiEvents);
 
         successfulApiResponses.join(apiRequests,
                 (l, r) -> new RequestResponseJoiner().join(r),
                 JoinWindows.of(Duration.ofSeconds(30)),
                 StreamJoined.with(Serdes.String(),
-                        frontendAvroBuilder.friendsDrinksSerde(),
-                        frontendAvroBuilder.friendsDrinksSerde()))
+                        frontendAvroBuilder.friendsDrinksApiSerde(),
+                        frontendAvroBuilder.friendsDrinksApiSerde()))
                 .selectKey((k, v) -> v.getFriendsDrinksId())
                 .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_EVENT),
                         Produced.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksEventSerde()));
@@ -132,22 +132,25 @@ public class WriterService {
                 .toStream();
     }
 
-    private KStream<String, ApiEvent> streamOfSuccessfulResponses(KStream<String, ApiEvent> apiEvents) {
-        return apiEvents.filter((friendsDrinksId, friendsDrinksEvent) ->
-                (friendsDrinksEvent.getEventType().equals(EventType.CREATE_FRIENDSDRINKS_RESPONSE) &&
-                        friendsDrinksEvent.getCreateFriendsDrinksResponse().getResult().equals(Result.SUCCESS)) ||
-                        (friendsDrinksEvent.getEventType().equals(EventType.UPDATE_FRIENDSDRINKS_RESPONSE) &&
-                                friendsDrinksEvent.getUpdateFriendsDrinksResponse().getResult().equals(Result.SUCCESS)) ||
-                        (friendsDrinksEvent.getEventType().equals(EventType.DELETE_FRIENDSDRINKS_RESPONSE) &&
-                                friendsDrinksEvent.getDeleteFriendsDrinksResponse().getResult().equals(Result.SUCCESS))
-        );
+    private KStream<String, FriendsDrinksEvent> streamOfSuccessfulResponses(KStream<String, ApiEvent> apiEvents) {
+        return apiEvents.filter((k, v) -> v.getEventType().equals(ApiEventType.FRIENDSDRINKS_EVENT))
+        .filter((friendsDrinksId, friendsDrinksEvent) ->
+                (friendsDrinksEvent.getEventType().equals(FriendsDrinksEventType.CREATE_FRIENDSDRINKS_RESPONSE) &&
+                        friendsDrinksEvent.getFriendsDrinksEvent().getCreateFriendsDrinksResponse().getResult().equals(Result.SUCCESS)) ||
+                        (friendsDrinksEvent.getEventType().equals(FriendsDrinksEventType.UPDATE_FRIENDSDRINKS_RESPONSE) &&
+                                friendsDrinksEvent.getFriendsDrinksEvent().getUpdateFriendsDrinksResponse().getResult().equals(Result.SUCCESS)) ||
+                        (friendsDrinksEvent.getEventType().equals(FriendsDrinksEventType.DELETE_FRIENDSDRINKS_RESPONSE) &&
+                                friendsDrinksEvent.getFriendsDrinksEvent().getDeleteFriendsDrinksResponse().getResult().equals(Result.SUCCESS))
+        ).mapValues(v -> v.getFriendsDrinksEvent());
     }
 
-    private KStream<String, ApiEvent> streamOfRequests(KStream<String, ApiEvent> apiEvents) {
-        return apiEvents.filter((k, v) -> v.getEventType().equals(
-                EventType.CREATE_FRIENDSDRINKS_REQUEST) ||
-                v.getEventType().equals(EventType.UPDATE_FRIENDSDRINKS_REQUEST) ||
-                v.getEventType().equals(EventType.DELETE_FRIENDSDRINKS_REQUEST));
+    private KStream<String, FriendsDrinksEvent> streamOfRequests(KStream<String, ApiEvent> apiEvents) {
+        return apiEvents.filter((k, v) -> v.getEventType().equals(ApiEventType.FRIENDSDRINKS_EVENT))
+                .filter((k, v) -> v.getEventType().equals(
+                        FriendsDrinksEventType.CREATE_FRIENDSDRINKS_REQUEST) ||
+                        v.getEventType().equals(FriendsDrinksEventType.UPDATE_FRIENDSDRINKS_REQUEST) ||
+                        v.getEventType().equals(FriendsDrinksEventType.DELETE_FRIENDSDRINKS_REQUEST))
+                .mapValues(v -> v.getFriendsDrinksEvent());
     }
 
     public Properties buildStreamsProperties(Properties envProps) {

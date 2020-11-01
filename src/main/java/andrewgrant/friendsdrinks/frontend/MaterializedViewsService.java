@@ -63,7 +63,7 @@ public class MaterializedViewsService {
 
         KStream<String, andrewgrant.friendsdrinks.api.avro.ApiEvent> apiEvents =
                 builder.stream(apiTopicName,
-                        Consumed.with(Serdes.String(), apiAvroBuilder.friendsDrinksSerde()));
+                        Consumed.with(Serdes.String(), apiAvroBuilder.apiSerde()));
 
         final String frontendPrivateTopicName = envProps.getProperty(TopicNameConfigKey.FRONTEND_RESPONSES_TOPIC_NAME);
         buildResponsesStore(builder, apiEvents, frontendPrivateTopicName);
@@ -198,33 +198,37 @@ public class MaterializedViewsService {
                                      KStream<String, andrewgrant.friendsdrinks.api.avro.ApiEvent> stream,
                                      String responsesTopicName) {
         stream.filter(((key, value) -> {
-            EventType eventType = value.getEventType();
-            return eventType.equals(EventType.CREATE_FRIENDSDRINKS_RESPONSE) ||
-                    eventType.equals(EventType.UPDATE_FRIENDSDRINKS_RESPONSE) ||
-                    eventType.equals(EventType.FRIENDSDRINKS_INVITATION_RESPONSE) ||
-                    eventType.equals(EventType.FRIENDSDRINKS_INVITATION_REPLY_RESPONSE) ||
-                    eventType.equals(EventType.DELETE_FRIENDSDRINKS_RESPONSE);
-        })).to(responsesTopicName, Produced.with(Serdes.String(), apiAvroBuilder.friendsDrinksSerde()));
+            ApiEventType apiEventType = value.getEventType();
+            if (!apiEventType.equals(ApiEventType.FRIENDSDRINKS_EVENT)) {
+                return value.getEventType().equals(ApiEventType.FRIENDSDRINKS_INVITATION_REPLY_RESPONSE) ||
+                        value.getEventType().equals(ApiEventType.FRIENDSDRINKS_REMOVE_USER_RESPONSE) ||
+                        value.getEventType().equals(ApiEventType.FRIENDSDRINKS_INVITATION_RESPONSE);
+            }
+            FriendsDrinksEventType eventType = value.getFriendsDrinksEvent().getEventType();
+            return eventType.equals(FriendsDrinksEventType.CREATE_FRIENDSDRINKS_RESPONSE) ||
+                    eventType.equals(FriendsDrinksEventType.UPDATE_FRIENDSDRINKS_RESPONSE) ||
+                    eventType.equals(FriendsDrinksEventType.DELETE_FRIENDSDRINKS_RESPONSE);
+        })).to(responsesTopicName, Produced.with(Serdes.String(), apiAvroBuilder.apiSerde()));
 
         KStream<String, ApiEvent> responsesStream =
-                builder.stream(responsesTopicName, Consumed.with(Serdes.String(), apiAvroBuilder.friendsDrinksSerde()));
+                builder.stream(responsesTopicName, Consumed.with(Serdes.String(), apiAvroBuilder.apiSerde()));
 
         // KTable for getting response results.
         responsesStream.toTable(Materialized.<String, ApiEvent, KeyValueStore<Bytes, byte[]>>
                 as(RESPONSES_STORE)
                 .withKeySerde(Serdes.String())
-                .withValueSerde(apiAvroBuilder.friendsDrinksSerde()));
+                .withValueSerde(apiAvroBuilder.apiSerde()));
 
         // Logic to tombstone responses in responsesTopicName so the KTable doesn't grow indefinitely.
         StoreBuilder storeBuilder = Stores.keyValueStoreBuilder(
                 Stores.persistentKeyValueStore(RequestsPurger.RESPONSES_PENDING_DELETION),
                 Serdes.String(),
-                apiAvroBuilder.friendsDrinksSerde());
+                apiAvroBuilder.apiSerde());
         builder.addStateStore(storeBuilder);
         responsesStream.transform(() -> new RequestsPurger(), RequestsPurger.RESPONSES_PENDING_DELETION)
                 .filter((key, value) -> value != null && !value.isEmpty()).flatMapValues(value -> value)
                 .selectKey((key, value) -> value).mapValues(value -> (ApiEvent) null)
-                .to(responsesTopicName, Produced.with(Serdes.String(), apiAvroBuilder.friendsDrinksSerde()));
+                .to(responsesTopicName, Produced.with(Serdes.String(), apiAvroBuilder.apiSerde()));
     }
 
     private void buildFriendsDrinksDetailPageStateStore(

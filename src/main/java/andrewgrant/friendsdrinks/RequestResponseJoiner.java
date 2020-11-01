@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import andrewgrant.friendsdrinks.api.avro.CreateFriendsDrinksRequest;
-import andrewgrant.friendsdrinks.api.avro.EventType;
+import andrewgrant.friendsdrinks.api.avro.FriendsDrinksEventType;
 import andrewgrant.friendsdrinks.api.avro.UpdateFriendsDrinksRequest;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksCreated;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksEvent;
@@ -17,8 +17,8 @@ public class RequestResponseJoiner {
 
     private static final Logger log = LoggerFactory.getLogger(RequestResponseJoiner.class);
 
-    public FriendsDrinksEvent join(andrewgrant.friendsdrinks.api.avro.ApiEvent r) {
-        if (r.getEventType().equals(EventType.CREATE_FRIENDSDRINKS_REQUEST)) {
+    public FriendsDrinksEvent join(andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent r) {
+        if (r.getEventType().equals(FriendsDrinksEventType.CREATE_FRIENDSDRINKS_REQUEST)) {
             log.info("Got create join {}", r.getCreateFriendsDrinksRequest().getRequestId());
             CreateFriendsDrinksRequest createFriendsDrinksRequest =
                     r.getCreateFriendsDrinksRequest();
@@ -40,7 +40,7 @@ public class RequestResponseJoiner {
                             .build())
                     .setFriendsDrinksCreated(friendsDrinks)
                     .build();
-        } else if (r.getEventType().equals(EventType.DELETE_FRIENDSDRINKS_REQUEST)) {
+        } else if (r.getEventType().equals(FriendsDrinksEventType.DELETE_FRIENDSDRINKS_REQUEST)) {
             log.info("Got delete join {}", r.getDeleteFriendsDrinksRequest().getRequestId());
             return andrewgrant.friendsdrinks.avro.FriendsDrinksEvent
                     .newBuilder()
@@ -51,7 +51,7 @@ public class RequestResponseJoiner {
                             .setAdminUserId(r.getDeleteFriendsDrinksRequest().getFriendsDrinksId().getAdminUserId())
                             .build())
                     .build();
-        } else if (r.getEventType().equals(EventType.UPDATE_FRIENDSDRINKS_REQUEST)) {
+        } else if (r.getEventType().equals(FriendsDrinksEventType.UPDATE_FRIENDSDRINKS_REQUEST)) {
             log.info("Got update join {}", r.getUpdateFriendsDrinksRequest().getRequestId());
             UpdateFriendsDrinksRequest updateFriendsDrinksRequest = r.getUpdateFriendsDrinksRequest();
 

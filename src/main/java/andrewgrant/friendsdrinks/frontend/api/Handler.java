@@ -327,15 +327,18 @@ public class Handler {
         ApiEvent friendsDrinksEvent = ApiEvent
                 .newBuilder()
                 .setRequestId(createFriendsDrinksRequest.getRequestId())
-                .setEventType(EventType.CREATE_FRIENDSDRINKS_REQUEST)
-                .setCreateFriendsDrinksRequest(createFriendsDrinksRequest)
+                .setEventType(ApiEventType.FRIENDSDRINKS_EVENT)
+                .setFriendsDrinksEvent(FriendsDrinksEvent.newBuilder()
+                        .setEventType(FriendsDrinksEventType.CREATE_FRIENDSDRINKS_REQUEST)
+                        .setCreateFriendsDrinksRequest(createFriendsDrinksRequest)
+                        .build())
                 .build();
         ProducerRecord<String, ApiEvent> record = new ProducerRecord<>(topicName, requestId, friendsDrinksEvent);
         friendsDrinksKafkaProducer.send(record).get();
 
         ApiEvent backendResponse = getApiResponse(requestId);
         CreateFriendsDrinksResponseBean responseBean = new CreateFriendsDrinksResponseBean();
-        Result result = backendResponse.getCreateFriendsDrinksResponse().getResult();
+        Result result = backendResponse.getFriendsDrinksEvent().getCreateFriendsDrinksResponse().getResult();
         responseBean.setResult(result.name());
         responseBean.setFriendsDrinksId(friendsDrinksId);
         return responseBean;
@@ -376,8 +379,11 @@ public class Handler {
         friendsDrinksEvent = ApiEvent
                 .newBuilder()
                 .setRequestId(updateFriendsDrinksRequest.getRequestId())
-                .setEventType(EventType.UPDATE_FRIENDSDRINKS_REQUEST)
-                .setUpdateFriendsDrinksRequest(updateFriendsDrinksRequest)
+                .setEventType(ApiEventType.FRIENDSDRINKS_EVENT)
+                .setFriendsDrinksEvent(FriendsDrinksEvent.newBuilder()
+                        .setEventType(FriendsDrinksEventType.UPDATE_FRIENDSDRINKS_REQUEST)
+                        .setUpdateFriendsDrinksRequest(updateFriendsDrinksRequest)
+                        .build())
                 .build();
 
         ProducerRecord<String, ApiEvent> record = new ProducerRecord<>(topicName, requestId, friendsDrinksEvent);
@@ -385,7 +391,7 @@ public class Handler {
 
         ApiEvent backendResponse = getApiResponse(requestId);
         UpdateFriendsDrinksResponseBean responseBean = new UpdateFriendsDrinksResponseBean();
-        responseBean.setResult(backendResponse.getUpdateFriendsDrinksResponse().getResult().name());
+        responseBean.setResult(backendResponse.getFriendsDrinksEvent().getUpdateFriendsDrinksResponse().getResult().name());
         return responseBean;
     }
 
@@ -419,15 +425,18 @@ public class Handler {
         ApiEvent friendsDrinksEvent = ApiEvent
                 .newBuilder()
                 .setRequestId(deleteFriendsDrinksRequest.getRequestId())
-                .setEventType(EventType.DELETE_FRIENDSDRINKS_REQUEST)
-                .setDeleteFriendsDrinksRequest(deleteFriendsDrinksRequest)
+                .setEventType(ApiEventType.FRIENDSDRINKS_EVENT)
+                .setFriendsDrinksEvent(FriendsDrinksEvent.newBuilder()
+                        .setEventType(FriendsDrinksEventType.DELETE_FRIENDSDRINKS_REQUEST)
+                        .setDeleteFriendsDrinksRequest(deleteFriendsDrinksRequest)
+                        .build())
                 .build();
         ProducerRecord<String, ApiEvent> producerRecord = new ProducerRecord<>(topicName, requestId, friendsDrinksEvent);
         friendsDrinksKafkaProducer.send(producerRecord);
 
         ApiEvent backendResponse = getApiResponse(requestId);
         DeleteFriendsDrinksResponseBean responseBean = new DeleteFriendsDrinksResponseBean();
-        Result result = backendResponse.getDeleteFriendsDrinksResponse().getResult();
+        Result result = backendResponse.getFriendsDrinksEvent().getDeleteFriendsDrinksResponse().getResult();
         responseBean.setResult(result.name());
         return responseBean;
     }
@@ -487,7 +496,7 @@ public class Handler {
         friendsDrinksEvent = ApiEvent
                 .newBuilder()
                 .setRequestId(friendsDrinksInvitationReplyRequest.getRequestId())
-                .setEventType(EventType.FRIENDSDRINKS_INVITATION_REPLY_REQUEST)
+                .setEventType(ApiEventType.FRIENDSDRINKS_INVITATION_REPLY_REQUEST)
                 .setFriendsDrinksInvitationReplyRequest(friendsDrinksInvitationReplyRequest)
                 .build();
 
@@ -539,7 +548,7 @@ public class Handler {
         friendsDrinksEvent = ApiEvent
                 .newBuilder()
                 .setRequestId(removeUserRequest.getRequestId())
-                .setEventType(EventType.FRIENDSDRINKS_REMOVE_USER_REQUEST)
+                .setEventType(ApiEventType.FRIENDSDRINKS_REMOVE_USER_REQUEST)
                 .setFriendsDrinksRemoveUserRequest(removeUserRequest)
                 .build();
 
@@ -579,7 +588,7 @@ public class Handler {
         friendsDrinksEvent = ApiEvent
                 .newBuilder()
                 .setRequestId(friendsDrinksInvitationRequest.getRequestId())
-                .setEventType(EventType.FRIENDSDRINKS_INVITATION_REQUEST)
+                .setEventType(ApiEventType.FRIENDSDRINKS_INVITATION_REQUEST)
                 .setFriendsDrinksInvitationRequest(friendsDrinksInvitationRequest)
                 .build();
 
