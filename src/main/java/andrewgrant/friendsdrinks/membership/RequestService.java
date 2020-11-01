@@ -96,7 +96,8 @@ public class RequestService {
 
         KStream<String, FriendsDrinksRemoveUserRequest> removeUserRequests = apiEvents.filter((key, value) ->
                 value.getEventType().equals(ApiEventType.FRIENDSDRINKS_MEMBERSHIP_EVENT) &&
-                        value.getFriendsDrinksMembershipEvent().getEventType().equals(FriendsDrinksMembershipEventType.FRIENDSDRINKS_REMOVE_USER_REQUEST))
+                        value.getFriendsDrinksMembershipEvent().getEventType()
+                                .equals(FriendsDrinksMembershipEventType.FRIENDSDRINKS_REMOVE_USER_REQUEST))
                 .mapValues(value -> value.getFriendsDrinksMembershipEvent().getFriendsDrinksRemoveUserRequest());
 
         RemoveUserRequestResult removeUserRequestResult = handleRemoveUserRequests(removeUserRequests, friendsDrinksStateKTable, userState);
