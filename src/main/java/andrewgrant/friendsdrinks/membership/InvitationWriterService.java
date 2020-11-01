@@ -166,7 +166,8 @@ public class InvitationWriterService {
     private KStream<String, FriendsDrinksInvitationResponse> streamOfSuccessfulInvitationResponses(KStream<String, ApiEvent> apiEvents) {
         return apiEvents.filter((friendsDrinksId, friendsDrinksEvent) -> friendsDrinksEvent.getEventType()
                 .equals(ApiEventType.FRIENDSDRINKS_MEMBERSHIP_EVENT) &&
-                (friendsDrinksEvent.getEventType().equals(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_RESPONSE) &&
+                (friendsDrinksEvent.getFriendsDrinksMembershipEvent().getEventType()
+                        .equals(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_RESPONSE) &&
                         friendsDrinksEvent.getFriendsDrinksMembershipEvent()
                                 .getFriendsDrinksInvitationResponse().getResult().equals(Result.SUCCESS)))
                 .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getFriendsDrinksMembershipEvent().getFriendsDrinksInvitationResponse());
