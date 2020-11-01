@@ -19,8 +19,8 @@ import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
 import andrewgrant.friendsdrinks.api.avro.*;
+import andrewgrant.friendsdrinks.api.avro.ApiEvent;
 import andrewgrant.friendsdrinks.api.avro.EventType;
-import andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent;
 import andrewgrant.friendsdrinks.avro.*;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksId;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksIdList;
@@ -46,10 +46,10 @@ public class WriterService {
 
     public Topology buildTopology() {
         StreamsBuilder builder = new StreamsBuilder();
-        KStream<String, FriendsDrinksEvent> apiEvents = builder.stream(envProps.getProperty(FRIENDSDRINKS_API),
+        KStream<String, ApiEvent> apiEvents = builder.stream(envProps.getProperty(FRIENDSDRINKS_API),
                 Consumed.with(Serdes.String(), frontendAvroBuilder.friendsDrinksSerde()));
-        KStream<String, FriendsDrinksEvent> successfulApiResponses = streamOfSuccessfulResponses(apiEvents);
-        KStream<String, FriendsDrinksEvent> apiRequests = streamOfRequests(apiEvents);
+        KStream<String, ApiEvent> successfulApiResponses = streamOfSuccessfulResponses(apiEvents);
+        KStream<String, ApiEvent> apiRequests = streamOfRequests(apiEvents);
 
         successfulApiResponses.join(apiRequests,
                 (l, r) -> new RequestResponseJoiner().join(r),
@@ -132,7 +132,7 @@ public class WriterService {
                 .toStream();
     }
 
-    private KStream<String, FriendsDrinksEvent> streamOfSuccessfulResponses(KStream<String, FriendsDrinksEvent> apiEvents) {
+    private KStream<String, ApiEvent> streamOfSuccessfulResponses(KStream<String, ApiEvent> apiEvents) {
         return apiEvents.filter((friendsDrinksId, friendsDrinksEvent) ->
                 (friendsDrinksEvent.getEventType().equals(EventType.CREATE_FRIENDSDRINKS_RESPONSE) &&
                         friendsDrinksEvent.getCreateFriendsDrinksResponse().getResult().equals(Result.SUCCESS)) ||
@@ -143,7 +143,7 @@ public class WriterService {
         );
     }
 
-    private KStream<String, FriendsDrinksEvent> streamOfRequests(KStream<String, FriendsDrinksEvent> apiEvents) {
+    private KStream<String, ApiEvent> streamOfRequests(KStream<String, ApiEvent> apiEvents) {
         return apiEvents.filter((k, v) -> v.getEventType().equals(
                 EventType.CREATE_FRIENDSDRINKS_REQUEST) ||
                 v.getEventType().equals(EventType.UPDATE_FRIENDSDRINKS_REQUEST) ||

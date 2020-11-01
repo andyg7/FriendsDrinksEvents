@@ -1,7 +1,7 @@
 {
   "namespace": "andrewgrant.friendsdrinks.api.avro",
   "type": "record",
-  "name": "FriendsDrinksEvent",
+  "name": "ApiEvent",
   "fields": [
     {"name": "eventType", "type": {"type": "enum", "name": "EventType", "symbols" : ["CREATE_FRIENDSDRINKS_REQUEST", "CREATE_FRIENDSDRINKS_RESPONSE", "UPDATE_FRIENDSDRINKS_REQUEST", "UPDATE_FRIENDSDRINKS_RESPONSE", "DELETE_FRIENDSDRINKS_REQUEST", "DELETE_FRIENDSDRINKS_RESPONSE", "FRIENDSDRINKS_INVITATION_REQUEST", "FRIENDSDRINKS_INVITATION_RESPONSE" ,"FRIENDSDRINKS_INVITATION_REPLY_REQUEST", "FRIENDSDRINKS_INVITATION_REPLY_RESPONSE", "FRIENDSDRINKS_REMOVE_USER_REQUEST", "FRIENDSDRINKS_REMOVE_USER_RESPONSE"] } },
     {"name": "requestId", "type": "string"},

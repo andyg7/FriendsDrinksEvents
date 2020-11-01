@@ -14,7 +14,7 @@ public class MembershipRequestResponseJoiner {
 
     private static final Logger log = LoggerFactory.getLogger(MembershipRequestResponseJoiner.class);
 
-    public FriendsDrinksMembershipEvent join(andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent r) {
+    public FriendsDrinksMembershipEvent join(andrewgrant.friendsdrinks.api.avro.ApiEvent r) {
         if (r.getEventType().equals(EventType.FRIENDSDRINKS_INVITATION_REPLY_REQUEST)) {
             FriendsDrinksInvitationReplyRequest request = r.getFriendsDrinksInvitationReplyRequest();
             FriendsDrinksMembershipId membershipId = FriendsDrinksMembershipId

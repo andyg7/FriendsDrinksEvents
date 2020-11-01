@@ -46,12 +46,12 @@ public class Handler {
     private static final Logger log = LoggerFactory.getLogger(Handler.class);
 
     private KafkaStreams kafkaStreams;
-    private KafkaProducer<String, FriendsDrinksEvent> friendsDrinksKafkaProducer;
+    private KafkaProducer<String, ApiEvent> friendsDrinksKafkaProducer;
     private KafkaProducer<UserId, UserEvent> userKafkaProducer;
     private Properties envProps;
 
     public Handler(KafkaStreams kafkaStreams,
-                   KafkaProducer<String, FriendsDrinksEvent> friendsDrinksKafkaProducer,
+                   KafkaProducer<String, ApiEvent> friendsDrinksKafkaProducer,
                    KafkaProducer<UserId, UserEvent> userKafkaProducer,
                    Properties envProps) {
         this.kafkaStreams = kafkaStreams;
@@ -324,16 +324,16 @@ public class Handler {
                 .setName(requestBean.getName())
                 .build();
 
-        FriendsDrinksEvent friendsDrinksEvent = FriendsDrinksEvent
+        ApiEvent friendsDrinksEvent = ApiEvent
                 .newBuilder()
                 .setRequestId(createFriendsDrinksRequest.getRequestId())
                 .setEventType(EventType.CREATE_FRIENDSDRINKS_REQUEST)
                 .setCreateFriendsDrinksRequest(createFriendsDrinksRequest)
                 .build();
-        ProducerRecord<String, FriendsDrinksEvent> record = new ProducerRecord<>(topicName, requestId, friendsDrinksEvent);
+        ProducerRecord<String, ApiEvent> record = new ProducerRecord<>(topicName, requestId, friendsDrinksEvent);
         friendsDrinksKafkaProducer.send(record).get();
 
-        FriendsDrinksEvent backendResponse = getApiResponse(requestId);
+        ApiEvent backendResponse = getApiResponse(requestId);
         CreateFriendsDrinksResponseBean responseBean = new CreateFriendsDrinksResponseBean();
         Result result = backendResponse.getCreateFriendsDrinksResponse().getResult();
         responseBean.setResult(result.name());
@@ -360,7 +360,7 @@ public class Handler {
 
         final String topicName = envProps.getProperty("friendsdrinks-api.topic.name");
         String requestId = UUID.randomUUID().toString();
-        FriendsDrinksEvent friendsDrinksEvent;
+        ApiEvent friendsDrinksEvent;
         FriendsDrinksId friendsDrinksIdAvro = FriendsDrinksId
                 .newBuilder()
                 .setAdminUserId(adminUserId)
@@ -373,17 +373,17 @@ public class Handler {
                 .setRequestId(requestId)
                 .setName(requestBean.getName())
                 .build();
-        friendsDrinksEvent = FriendsDrinksEvent
+        friendsDrinksEvent = ApiEvent
                 .newBuilder()
                 .setRequestId(updateFriendsDrinksRequest.getRequestId())
                 .setEventType(EventType.UPDATE_FRIENDSDRINKS_REQUEST)
                 .setUpdateFriendsDrinksRequest(updateFriendsDrinksRequest)
                 .build();
 
-        ProducerRecord<String, FriendsDrinksEvent> record = new ProducerRecord<>(topicName, requestId, friendsDrinksEvent);
+        ProducerRecord<String, ApiEvent> record = new ProducerRecord<>(topicName, requestId, friendsDrinksEvent);
         friendsDrinksKafkaProducer.send(record).get();
 
-        FriendsDrinksEvent backendResponse = getApiResponse(requestId);
+        ApiEvent backendResponse = getApiResponse(requestId);
         UpdateFriendsDrinksResponseBean responseBean = new UpdateFriendsDrinksResponseBean();
         responseBean.setResult(backendResponse.getUpdateFriendsDrinksResponse().getResult().name());
         return responseBean;
@@ -416,16 +416,16 @@ public class Handler {
                 .setRequestId(requestId)
                 .build();
 
-        FriendsDrinksEvent friendsDrinksEvent = FriendsDrinksEvent
+        ApiEvent friendsDrinksEvent = ApiEvent
                 .newBuilder()
                 .setRequestId(deleteFriendsDrinksRequest.getRequestId())
                 .setEventType(EventType.DELETE_FRIENDSDRINKS_REQUEST)
                 .setDeleteFriendsDrinksRequest(deleteFriendsDrinksRequest)
                 .build();
-        ProducerRecord<String, FriendsDrinksEvent> producerRecord = new ProducerRecord<>(topicName, requestId, friendsDrinksEvent);
+        ProducerRecord<String, ApiEvent> producerRecord = new ProducerRecord<>(topicName, requestId, friendsDrinksEvent);
         friendsDrinksKafkaProducer.send(producerRecord);
 
-        FriendsDrinksEvent backendResponse = getApiResponse(requestId);
+        ApiEvent backendResponse = getApiResponse(requestId);
         DeleteFriendsDrinksResponseBean responseBean = new DeleteFriendsDrinksResponseBean();
         Result result = backendResponse.getDeleteFriendsDrinksResponse().getResult();
         responseBean.setResult(result.name());
@@ -464,7 +464,7 @@ public class Handler {
 
         final String topicName = envProps.getProperty("friendsdrinks-api.topic.name");
         String requestId = UUID.randomUUID().toString();
-        FriendsDrinksEvent friendsDrinksEvent;
+        ApiEvent friendsDrinksEvent;
         FriendsDrinksId friendsDrinksIdAvro;
 
         friendsDrinksIdAvro = FriendsDrinksId
@@ -484,17 +484,17 @@ public class Handler {
                         .setReply(Reply.valueOf(requestBean.getResponse()))
                         .setRequestId(requestId)
                         .build();
-        friendsDrinksEvent = FriendsDrinksEvent
+        friendsDrinksEvent = ApiEvent
                 .newBuilder()
                 .setRequestId(friendsDrinksInvitationReplyRequest.getRequestId())
                 .setEventType(EventType.FRIENDSDRINKS_INVITATION_REPLY_REQUEST)
                 .setFriendsDrinksInvitationReplyRequest(friendsDrinksInvitationReplyRequest)
                 .build();
 
-        ProducerRecord<String, FriendsDrinksEvent> record = new ProducerRecord<>(topicName, requestId, friendsDrinksEvent);
+        ProducerRecord<String, ApiEvent> record = new ProducerRecord<>(topicName, requestId, friendsDrinksEvent);
         friendsDrinksKafkaProducer.send(record).get();
 
-        FriendsDrinksEvent backendResponse = getApiResponse(requestId);
+        ApiEvent backendResponse = getApiResponse(requestId);
         PostFriendsDrinksMembershipResponseBean responseBean = new PostFriendsDrinksMembershipResponseBean();
         Result result = backendResponse.getFriendsDrinksInvitationReplyResponse().getResult();
         responseBean.setResult(result.name());
@@ -514,7 +514,7 @@ public class Handler {
 
         final String topicName = envProps.getProperty("friendsdrinks-api.topic.name");
         String requestId = UUID.randomUUID().toString();
-        FriendsDrinksEvent friendsDrinksEvent;
+        ApiEvent friendsDrinksEvent;
         FriendsDrinksId friendsDrinksIdAvro;
 
         friendsDrinksIdAvro = FriendsDrinksId
@@ -536,17 +536,17 @@ public class Handler {
                         .build())
                 .build();
 
-        friendsDrinksEvent = FriendsDrinksEvent
+        friendsDrinksEvent = ApiEvent
                 .newBuilder()
                 .setRequestId(removeUserRequest.getRequestId())
                 .setEventType(EventType.FRIENDSDRINKS_REMOVE_USER_REQUEST)
                 .setFriendsDrinksRemoveUserRequest(removeUserRequest)
                 .build();
 
-        ProducerRecord<String, FriendsDrinksEvent> record = new ProducerRecord<>(topicName, requestId, friendsDrinksEvent);
+        ProducerRecord<String, ApiEvent> record = new ProducerRecord<>(topicName, requestId, friendsDrinksEvent);
         friendsDrinksKafkaProducer.send(record).get();
 
-        FriendsDrinksEvent backendResponse = getApiResponse(requestId);
+        ApiEvent backendResponse = getApiResponse(requestId);
         PostFriendsDrinksMembershipResponseBean responseBean = new PostFriendsDrinksMembershipResponseBean();
         Result result = backendResponse.getFriendsDrinksRemoveUserResponse().getResult();
         responseBean.setResult(result.name());
@@ -557,7 +557,7 @@ public class Handler {
                                                                  AddUserRequestBean requestBean) throws InterruptedException, ExecutionException {
         final String topicName = envProps.getProperty("friendsdrinks-api.topic.name");
         String requestId = UUID.randomUUID().toString();
-        FriendsDrinksEvent friendsDrinksEvent;
+        ApiEvent friendsDrinksEvent;
         FriendsDrinksId friendsDrinksIdAvro;
 
         friendsDrinksIdAvro = FriendsDrinksId
@@ -576,17 +576,17 @@ public class Handler {
                                         .setUserId(requestBean.getUserId())
                                         .build())
                         .build();
-        friendsDrinksEvent = FriendsDrinksEvent
+        friendsDrinksEvent = ApiEvent
                 .newBuilder()
                 .setRequestId(friendsDrinksInvitationRequest.getRequestId())
                 .setEventType(EventType.FRIENDSDRINKS_INVITATION_REQUEST)
                 .setFriendsDrinksInvitationRequest(friendsDrinksInvitationRequest)
                 .build();
 
-        ProducerRecord<String, FriendsDrinksEvent> record = new ProducerRecord<>(topicName, requestId, friendsDrinksEvent);
+        ProducerRecord<String, ApiEvent> record = new ProducerRecord<>(topicName, requestId, friendsDrinksEvent);
         friendsDrinksKafkaProducer.send(record).get();
 
-        FriendsDrinksEvent backendResponse = getApiResponse(requestId);
+        ApiEvent backendResponse = getApiResponse(requestId);
         PostFriendsDrinksMembershipResponseBean responseBean = new PostFriendsDrinksMembershipResponseBean();
         Result result = backendResponse.getFriendsDrinksInvitationResponse().getResult();
         responseBean.setResult(result.name());
@@ -639,10 +639,10 @@ public class Handler {
         return postUsersResponseBean;
     }
 
-    private FriendsDrinksEvent getApiResponse(String requestId) throws InterruptedException {
-        ReadOnlyKeyValueStore<String, FriendsDrinksEvent> kv =
+    private ApiEvent getApiResponse(String requestId) throws InterruptedException {
+        ReadOnlyKeyValueStore<String, ApiEvent> kv =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(RESPONSES_STORE, QueryableStoreTypes.keyValueStore()));
-        FriendsDrinksEvent backendResponse = kv.get(requestId);
+        ApiEvent backendResponse = kv.get(requestId);
         if (backendResponse == null) {
             for (int i = 0; i < 10; i++) {
                 if (backendResponse != null) {

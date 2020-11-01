@@ -11,18 +11,18 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
-import andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent;
+import andrewgrant.friendsdrinks.api.avro.ApiEvent;
 
 /**
  * Purges old requests.
  */
-public class RequestsPurger implements Transformer<String, FriendsDrinksEvent, KeyValue<String, List<String>>> {
+public class RequestsPurger implements Transformer<String, ApiEvent, KeyValue<String, List<String>>> {
 
     public static final String RESPONSES_PENDING_DELETION = "responses-pending-deletion";
 
     private static final Logger log = LoggerFactory.getLogger(RequestsPurger.class);
 
-    private KeyValueStore<String, FriendsDrinksEvent> stateStore;
+    private KeyValueStore<String, ApiEvent> stateStore;
 
     @Override
     public void init(ProcessorContext context) {
@@ -31,7 +31,7 @@ public class RequestsPurger implements Transformer<String, FriendsDrinksEvent, K
     }
 
     @Override
-    public KeyValue<String, List<String>> transform(String key, FriendsDrinksEvent value) {
+    public KeyValue<String, List<String>> transform(String key, ApiEvent value) {
         log.info("Received request {}", key);
         if (value == null) {
             log.info("Deleting {}", key);
@@ -43,10 +43,10 @@ public class RequestsPurger implements Transformer<String, FriendsDrinksEvent, K
         long numEntries = stateStore.approximateNumEntries();
         log.info("State store approx num entries is {}", numEntries);
         if (numEntries > 2) {
-            final KeyValueIterator<String, FriendsDrinksEvent> iterator = stateStore.all();
+            final KeyValueIterator<String, ApiEvent> iterator = stateStore.all();
             List<String> requestsToPurge = new ArrayList<>();
             while (iterator.hasNext()) {
-                final KeyValue<String, FriendsDrinksEvent> record = iterator.next();
+                final KeyValue<String, ApiEvent> record = iterator.next();
                 requestsToPurge.add(record.key);
             }
             iterator.close();

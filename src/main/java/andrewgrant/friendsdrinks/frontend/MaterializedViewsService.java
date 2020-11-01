@@ -61,7 +61,7 @@ public class MaterializedViewsService {
         final StreamsBuilder builder = new StreamsBuilder();
         final String apiTopicName = envProps.getProperty(FRIENDSDRINKS_API);
 
-        KStream<String, andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent> apiEvents =
+        KStream<String, andrewgrant.friendsdrinks.api.avro.ApiEvent> apiEvents =
                 builder.stream(apiTopicName,
                         Consumed.with(Serdes.String(), apiAvroBuilder.friendsDrinksSerde()));
 
@@ -195,7 +195,7 @@ public class MaterializedViewsService {
     }
 
     private void buildResponsesStore(StreamsBuilder builder,
-                                     KStream<String, andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent> stream,
+                                     KStream<String, andrewgrant.friendsdrinks.api.avro.ApiEvent> stream,
                                      String responsesTopicName) {
         stream.filter(((key, value) -> {
             EventType eventType = value.getEventType();
@@ -206,11 +206,11 @@ public class MaterializedViewsService {
                     eventType.equals(EventType.DELETE_FRIENDSDRINKS_RESPONSE);
         })).to(responsesTopicName, Produced.with(Serdes.String(), apiAvroBuilder.friendsDrinksSerde()));
 
-        KStream<String, FriendsDrinksEvent> responsesStream =
+        KStream<String, ApiEvent> responsesStream =
                 builder.stream(responsesTopicName, Consumed.with(Serdes.String(), apiAvroBuilder.friendsDrinksSerde()));
 
         // KTable for getting response results.
-        responsesStream.toTable(Materialized.<String, FriendsDrinksEvent, KeyValueStore<Bytes, byte[]>>
+        responsesStream.toTable(Materialized.<String, ApiEvent, KeyValueStore<Bytes, byte[]>>
                 as(RESPONSES_STORE)
                 .withKeySerde(Serdes.String())
                 .withValueSerde(apiAvroBuilder.friendsDrinksSerde()));
@@ -223,7 +223,7 @@ public class MaterializedViewsService {
         builder.addStateStore(storeBuilder);
         responsesStream.transform(() -> new RequestsPurger(), RequestsPurger.RESPONSES_PENDING_DELETION)
                 .filter((key, value) -> value != null && !value.isEmpty()).flatMapValues(value -> value)
-                .selectKey((key, value) -> value).mapValues(value -> (FriendsDrinksEvent) null)
+                .selectKey((key, value) -> value).mapValues(value -> (ApiEvent) null)
                 .to(responsesTopicName, Produced.with(Serdes.String(), apiAvroBuilder.friendsDrinksSerde()));
     }
 

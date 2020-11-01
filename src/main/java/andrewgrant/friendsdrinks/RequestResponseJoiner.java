@@ -17,7 +17,7 @@ public class RequestResponseJoiner {
 
     private static final Logger log = LoggerFactory.getLogger(RequestResponseJoiner.class);
 
-    public FriendsDrinksEvent join(andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent r) {
+    public FriendsDrinksEvent join(andrewgrant.friendsdrinks.api.avro.ApiEvent r) {
         if (r.getEventType().equals(EventType.CREATE_FRIENDSDRINKS_REQUEST)) {
             log.info("Got create join {}", r.getCreateFriendsDrinksRequest().getRequestId());
             CreateFriendsDrinksRequest createFriendsDrinksRequest =

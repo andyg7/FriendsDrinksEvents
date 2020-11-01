@@ -20,7 +20,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Properties;
 
-import andrewgrant.friendsdrinks.api.avro.FriendsDrinksEvent;
+import andrewgrant.friendsdrinks.api.avro.ApiEvent;
 import andrewgrant.friendsdrinks.user.AvroBuilder;
 import andrewgrant.friendsdrinks.user.avro.UserEvent;
 import andrewgrant.friendsdrinks.user.avro.UserId;
@@ -85,7 +85,7 @@ public class Main {
         Thread.currentThread().join();
     }
 
-    private static KafkaProducer<String, FriendsDrinksEvent> buildFriendsDrinksProducer(
+    private static KafkaProducer<String, ApiEvent> buildFriendsDrinksProducer(
             Properties envProps,
             andrewgrant.friendsdrinks.frontend.AvroBuilder avro) {
         Properties producerProps = new Properties();
@@ -126,7 +126,7 @@ public class Main {
                                                           AvroBuilder userAvroBuilder,
                                                           andrewgrant.friendsdrinks.frontend.AvroBuilder apiAvroBuilder,
                                                           Properties envProps) {
-        KafkaProducer<String, FriendsDrinksEvent> friendsDrinksProducer =
+        KafkaProducer<String, ApiEvent> friendsDrinksProducer =
                 buildFriendsDrinksProducer(envProps, apiAvroBuilder);
         KafkaProducer<UserId, UserEvent> userProducer =
                 buildUserDrinksProducer(envProps, userAvroBuilder);

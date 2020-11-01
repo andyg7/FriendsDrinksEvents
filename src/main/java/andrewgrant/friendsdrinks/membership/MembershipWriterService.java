@@ -56,10 +56,10 @@ public class MembershipWriterService {
     public Topology buildTopology() {
         StreamsBuilder builder = new StreamsBuilder();
 
-        KStream<String, FriendsDrinksEvent> apiEvents = builder.stream(envProps.getProperty(FRIENDSDRINKS_API),
+        KStream<String, ApiEvent> apiEvents = builder.stream(envProps.getProperty(FRIENDSDRINKS_API),
                 Consumed.with(Serdes.String(), frontendAvroBuilder.friendsDrinksSerde()));
-        KStream<String, FriendsDrinksEvent> successfulApiResponses = streamOfSuccessfulResponses(apiEvents);
-        KStream<String, FriendsDrinksEvent> apiRequests = streamOfRequests(apiEvents);
+        KStream<String, ApiEvent> successfulApiResponses = streamOfSuccessfulResponses(apiEvents);
+        KStream<String, ApiEvent> apiRequests = streamOfRequests(apiEvents);
 
         successfulApiResponses.join(apiRequests,
                 (l, r) -> new MembershipRequestResponseJoiner().join(r),
@@ -297,14 +297,14 @@ public class MembershipWriterService {
         });
     }
 
-    private KStream<String, FriendsDrinksEvent> streamOfSuccessfulResponses(KStream<String, FriendsDrinksEvent> apiEvents) {
+    private KStream<String, ApiEvent> streamOfSuccessfulResponses(KStream<String, ApiEvent> apiEvents) {
         return apiEvents.filter((friendsDrinksId, friendsDrinksEvent) ->
                 (friendsDrinksEvent.getEventType().equals(EventType.FRIENDSDRINKS_INVITATION_REPLY_RESPONSE) &&
                         friendsDrinksEvent.getFriendsDrinksInvitationReplyResponse().getResult().equals(Result.SUCCESS))
         );
     }
 
-    private KStream<String, FriendsDrinksEvent> streamOfRequests(KStream<String, FriendsDrinksEvent> apiEvents) {
+    private KStream<String, ApiEvent> streamOfRequests(KStream<String, ApiEvent> apiEvents) {
         return apiEvents.filter((k, v) -> (v.getEventType().equals(EventType.FRIENDSDRINKS_INVITATION_REPLY_REQUEST))
                 && v.getFriendsDrinksInvitationReplyRequest().getReply().equals(Reply.ACCEPTED));
     }
