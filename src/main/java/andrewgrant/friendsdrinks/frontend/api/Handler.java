@@ -496,8 +496,11 @@ public class Handler {
         friendsDrinksEvent = ApiEvent
                 .newBuilder()
                 .setRequestId(friendsDrinksInvitationReplyRequest.getRequestId())
-                .setEventType(ApiEventType.FRIENDSDRINKS_INVITATION_REPLY_REQUEST)
-                .setFriendsDrinksInvitationReplyRequest(friendsDrinksInvitationReplyRequest)
+                .setEventType(ApiEventType.FRIENDSDRINKS_MEMBERSHIP_EVENT)
+                .setFriendsDrinksMembershipEvent(FriendsDrinksMembershipEvent.newBuilder()
+                        .setEventType(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_REPLY_REQUEST)
+                        .setFriendsDrinksInvitationReplyRequest(friendsDrinksInvitationReplyRequest)
+                        .build())
                 .build();
 
         ProducerRecord<String, ApiEvent> record = new ProducerRecord<>(topicName, requestId, friendsDrinksEvent);
@@ -505,7 +508,7 @@ public class Handler {
 
         ApiEvent backendResponse = getApiResponse(requestId);
         PostFriendsDrinksMembershipResponseBean responseBean = new PostFriendsDrinksMembershipResponseBean();
-        Result result = backendResponse.getFriendsDrinksInvitationReplyResponse().getResult();
+        Result result = backendResponse.getFriendsDrinksMembershipEvent().getFriendsDrinksInvitationReplyResponse().getResult();
         responseBean.setResult(result.name());
         return responseBean;
     }
@@ -548,8 +551,11 @@ public class Handler {
         friendsDrinksEvent = ApiEvent
                 .newBuilder()
                 .setRequestId(removeUserRequest.getRequestId())
-                .setEventType(ApiEventType.FRIENDSDRINKS_REMOVE_USER_REQUEST)
-                .setFriendsDrinksRemoveUserRequest(removeUserRequest)
+                .setEventType(ApiEventType.FRIENDSDRINKS_MEMBERSHIP_EVENT)
+                .setFriendsDrinksMembershipEvent(FriendsDrinksMembershipEvent.newBuilder()
+                        .setEventType(FriendsDrinksMembershipEventType.FRIENDSDRINKS_REMOVE_USER_REQUEST)
+                        .setFriendsDrinksRemoveUserRequest(removeUserRequest)
+                        .build())
                 .build();
 
         ProducerRecord<String, ApiEvent> record = new ProducerRecord<>(topicName, requestId, friendsDrinksEvent);
@@ -557,7 +563,7 @@ public class Handler {
 
         ApiEvent backendResponse = getApiResponse(requestId);
         PostFriendsDrinksMembershipResponseBean responseBean = new PostFriendsDrinksMembershipResponseBean();
-        Result result = backendResponse.getFriendsDrinksRemoveUserResponse().getResult();
+        Result result = backendResponse.getFriendsDrinksMembershipEvent().getFriendsDrinksRemoveUserResponse().getResult();
         responseBean.setResult(result.name());
         return responseBean;
     }
@@ -588,8 +594,11 @@ public class Handler {
         friendsDrinksEvent = ApiEvent
                 .newBuilder()
                 .setRequestId(friendsDrinksInvitationRequest.getRequestId())
-                .setEventType(ApiEventType.FRIENDSDRINKS_INVITATION_REQUEST)
-                .setFriendsDrinksInvitationRequest(friendsDrinksInvitationRequest)
+                .setEventType(ApiEventType.FRIENDSDRINKS_MEMBERSHIP_EVENT)
+                .setFriendsDrinksMembershipEvent(FriendsDrinksMembershipEvent.newBuilder()
+                        .setEventType(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_REQUEST)
+                        .setFriendsDrinksInvitationRequest(friendsDrinksInvitationRequest)
+                        .build())
                 .build();
 
         ProducerRecord<String, ApiEvent> record = new ProducerRecord<>(topicName, requestId, friendsDrinksEvent);
@@ -597,7 +606,7 @@ public class Handler {
 
         ApiEvent backendResponse = getApiResponse(requestId);
         PostFriendsDrinksMembershipResponseBean responseBean = new PostFriendsDrinksMembershipResponseBean();
-        Result result = backendResponse.getFriendsDrinksInvitationResponse().getResult();
+        Result result = backendResponse.getFriendsDrinksMembershipEvent().getFriendsDrinksInvitationResponse().getResult();
         responseBean.setResult(result.name());
         return responseBean;
     }

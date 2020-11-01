@@ -1,10 +1,7 @@
 package andrewgrant.friendsdrinks.membership;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import andrewgrant.friendsdrinks.api.avro.ApiEventType;
 import andrewgrant.friendsdrinks.api.avro.FriendsDrinksInvitationReplyRequest;
+import andrewgrant.friendsdrinks.api.avro.FriendsDrinksMembershipEventType;
 import andrewgrant.friendsdrinks.membership.avro.*;
 
 /**
@@ -12,11 +9,10 @@ import andrewgrant.friendsdrinks.membership.avro.*;
  */
 public class MembershipRequestResponseJoiner {
 
-    private static final Logger log = LoggerFactory.getLogger(MembershipRequestResponseJoiner.class);
-
     public FriendsDrinksMembershipEvent join(andrewgrant.friendsdrinks.api.avro.ApiEvent r) {
-        if (r.getEventType().equals(ApiEventType.FRIENDSDRINKS_INVITATION_REPLY_REQUEST)) {
-            FriendsDrinksInvitationReplyRequest request = r.getFriendsDrinksInvitationReplyRequest();
+        if (r.getFriendsDrinksMembershipEvent().getEventType().equals(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_REPLY_REQUEST)) {
+            FriendsDrinksInvitationReplyRequest request = r.getFriendsDrinksMembershipEvent()
+                    .getFriendsDrinksInvitationReplyRequest();
             FriendsDrinksMembershipId membershipId = FriendsDrinksMembershipId
                     .newBuilder()
                     .setUserId(UserId.newBuilder().setUserId(request.getUserId().getUserId()).build())
@@ -36,8 +32,8 @@ public class MembershipRequestResponseJoiner {
                                     .setMembershipId(membershipId)
                                     .build())
                     .build();
-        } else if (r.getEventType().equals(ApiEventType.FRIENDSDRINKS_REMOVE_USER_REQUEST)) {
-            FriendsDrinksInvitationReplyRequest request = r.getFriendsDrinksInvitationReplyRequest();
+        } else if (r.getFriendsDrinksMembershipEvent().getEventType().equals(FriendsDrinksMembershipEventType.FRIENDSDRINKS_REMOVE_USER_REQUEST)) {
+            FriendsDrinksInvitationReplyRequest request = r.getFriendsDrinksMembershipEvent().getFriendsDrinksInvitationReplyRequest();
             FriendsDrinksMembershipId membershipId = FriendsDrinksMembershipId
                     .newBuilder()
                     .setUserId(UserId.newBuilder().setUserId(request.getUserId().getUserId()).build())

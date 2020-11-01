@@ -24,6 +24,7 @@ import andrewgrant.friendsdrinks.api.avro.*;
 import andrewgrant.friendsdrinks.api.avro.ApiEventType;
 import andrewgrant.friendsdrinks.membership.avro.*;
 import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksId;
+import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipEvent;
 import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId;
 import andrewgrant.friendsdrinks.membership.avro.UserId;
 import andrewgrant.friendsdrinks.user.AvroBuilder;
@@ -298,15 +299,18 @@ public class MembershipWriterService {
     }
 
     private KStream<String, ApiEvent> streamOfSuccessfulResponses(KStream<String, ApiEvent> apiEvents) {
-        return apiEvents.filter((friendsDrinksId, friendsDrinksEvent) ->
-                (friendsDrinksEvent.getEventType().equals(ApiEventType.FRIENDSDRINKS_INVITATION_REPLY_RESPONSE) &&
-                        friendsDrinksEvent.getFriendsDrinksInvitationReplyResponse().getResult().equals(Result.SUCCESS))
-        );
+        return apiEvents.filter((friendsDrinksId, friendsDrinksEvent) -> friendsDrinksEvent.getEventType()
+                .equals(ApiEventType.FRIENDSDRINKS_MEMBERSHIP_EVENT) &&
+                (friendsDrinksEvent.getFriendsDrinksMembershipEvent().getEventType()
+                        .equals(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_REPLY_RESPONSE) &&
+                        friendsDrinksEvent.getFriendsDrinksMembershipEvent()
+                                .getFriendsDrinksInvitationReplyResponse().getResult().equals(Result.SUCCESS)));
     }
 
     private KStream<String, ApiEvent> streamOfRequests(KStream<String, ApiEvent> apiEvents) {
-        return apiEvents.filter((k, v) -> (v.getEventType().equals(ApiEventType.FRIENDSDRINKS_INVITATION_REPLY_REQUEST))
-                && v.getFriendsDrinksInvitationReplyRequest().getReply().equals(Reply.ACCEPTED));
+        return apiEvents.filter((k, v) -> v.getEventType().equals(ApiEventType.FRIENDSDRINKS_MEMBERSHIP_EVENT) &&
+                (v.getFriendsDrinksMembershipEvent().getEventType().equals(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_REPLY_REQUEST))
+                && v.getFriendsDrinksMembershipEvent().getFriendsDrinksInvitationReplyRequest().getReply().equals(Reply.ACCEPTED));
     }
 
     public Properties buildStreamsProperties(Properties envProps) {

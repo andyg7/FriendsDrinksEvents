@@ -164,28 +164,40 @@ public class InvitationWriterService {
     }
 
     private KStream<String, FriendsDrinksInvitationResponse> streamOfSuccessfulInvitationResponses(KStream<String, ApiEvent> apiEvents) {
-        return apiEvents.filter((friendsDrinksId, friendsDrinksEvent) ->
-                (friendsDrinksEvent.getEventType().equals(ApiEventType.FRIENDSDRINKS_INVITATION_RESPONSE) &&
-                        friendsDrinksEvent.getFriendsDrinksInvitationResponse().getResult().equals(Result.SUCCESS)))
-                .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getFriendsDrinksInvitationResponse());
+        return apiEvents.filter((friendsDrinksId, friendsDrinksEvent) -> friendsDrinksEvent.getEventType()
+                .equals(ApiEventType.FRIENDSDRINKS_MEMBERSHIP_EVENT) &&
+                (friendsDrinksEvent.getEventType().equals(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_RESPONSE) &&
+                        friendsDrinksEvent.getFriendsDrinksMembershipEvent()
+                                .getFriendsDrinksInvitationResponse().getResult().equals(Result.SUCCESS)))
+                .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getFriendsDrinksMembershipEvent().getFriendsDrinksInvitationResponse());
     }
 
     private KStream<String, FriendsDrinksInvitationReplyResponse> streamOfSuccessfulInvitationReplyResponses(
             KStream<String, ApiEvent> apiEvents) {
-        return apiEvents.filter((friendsDrinksId, friendsDrinksEvent) ->
-                (friendsDrinksEvent.getEventType().equals(ApiEventType.FRIENDSDRINKS_INVITATION_REPLY_RESPONSE) &&
-                        friendsDrinksEvent.getFriendsDrinksInvitationReplyResponse().getResult().equals(Result.SUCCESS)))
-                .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getFriendsDrinksInvitationReplyResponse());
+        return apiEvents.filter((friendsDrinksId, friendsDrinksEvent) -> friendsDrinksEvent.getEventType()
+                .equals(ApiEventType.FRIENDSDRINKS_MEMBERSHIP_EVENT) &&
+                (friendsDrinksEvent.getFriendsDrinksMembershipEvent().getEventType()
+                        .equals(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_REPLY_RESPONSE) &&
+                        friendsDrinksEvent.getFriendsDrinksMembershipEvent()
+                                .getFriendsDrinksInvitationReplyResponse().getResult().equals(Result.SUCCESS)))
+                .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getFriendsDrinksMembershipEvent()
+                        .getFriendsDrinksInvitationReplyResponse());
     }
 
     private KStream<String, FriendsDrinksInvitationRequest> streamOfInvitationRequests(KStream<String, ApiEvent> apiEvents) {
-        return apiEvents.filter((k, v) -> (v.getEventType().equals(ApiEventType.FRIENDSDRINKS_INVITATION_REQUEST)))
-                .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getFriendsDrinksInvitationRequest());
+        return apiEvents.filter((k, v) -> v.getEventType().equals(ApiEventType.FRIENDSDRINKS_MEMBERSHIP_EVENT) &&
+                v.getFriendsDrinksMembershipEvent().getEventType()
+                        .equals(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_REQUEST))
+                .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getFriendsDrinksMembershipEvent()
+                        .getFriendsDrinksInvitationRequest());
     }
 
     private KStream<String, FriendsDrinksInvitationReplyRequest> streamOfInvitationReplyRequests(KStream<String, ApiEvent> apiEvents) {
-        return apiEvents.filter((k, v) -> (v.getEventType().equals(ApiEventType.FRIENDSDRINKS_INVITATION_REPLY_REQUEST)))
-                .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getFriendsDrinksInvitationReplyRequest());
+        return apiEvents.filter((k, v) -> v.getEventType().equals(ApiEventType.FRIENDSDRINKS_MEMBERSHIP_EVENT) &&
+                v.getFriendsDrinksMembershipEvent().getEventType()
+                        .equals(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_REPLY_REQUEST))
+                .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getFriendsDrinksMembershipEvent()
+                        .getFriendsDrinksInvitationReplyRequest());
     }
 
     public Properties buildStreamsProperties(Properties envProps) {

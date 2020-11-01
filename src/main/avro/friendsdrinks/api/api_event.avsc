@@ -3,14 +3,9 @@
   "type": "record",
   "name": "ApiEvent",
   "fields": [
-    {"name": "eventType", "type": {"type": "enum", "name": "ApiEventType", "symbols" : ["FRIENDSDRINKS_EVENT", "FRIENDSDRINKS_INVITATION_REQUEST", "FRIENDSDRINKS_INVITATION_RESPONSE" ,"FRIENDSDRINKS_INVITATION_REPLY_REQUEST", "FRIENDSDRINKS_INVITATION_REPLY_RESPONSE", "FRIENDSDRINKS_REMOVE_USER_REQUEST", "FRIENDSDRINKS_REMOVE_USER_RESPONSE"] } },
+    {"name": "eventType", "type": {"type": "enum", "name": "ApiEventType", "symbols" : ["FRIENDSDRINKS_EVENT", "FRIENDSDRINKS_MEMBERSHIP_EVENT"] } },
     {"name": "requestId", "type": "string"},
     {"name": "friendsDrinksEvent", "type": ["null", "FriendsDrinksEvent"], "default": null},
-    {"name": "friendsDrinksInvitationRequest", "type": ["null", "FriendsDrinksInvitationRequest"], "default": null},
-    {"name": "friendsDrinksInvitationResponse", "type": ["null", "FriendsDrinksInvitationResponse"], "default": null},
-    {"name": "friendsDrinksInvitationReplyRequest", "type": ["null", "FriendsDrinksInvitationReplyRequest"], "default": null},
-    {"name": "friendsDrinksInvitationReplyResponse", "type": ["null", "FriendsDrinksInvitationReplyResponse"], "default": null},
-    {"name": "friendsDrinksRemoveUserRequest", "type": ["null", "FriendsDrinksRemoveUserRequest"], "default": null},
-    {"name": "friendsDrinksRemoveUserResponse", "type": ["null", "FriendsDrinksRemoveUserResponse"], "default": null}
+    {"name": "friendsDrinksMembershipEvent", "type": ["null", "FriendsDrinksMembershipEvent"], "default": null}
   ]
 }

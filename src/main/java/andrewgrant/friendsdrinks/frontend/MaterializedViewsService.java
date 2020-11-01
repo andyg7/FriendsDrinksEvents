@@ -199,10 +199,13 @@ public class MaterializedViewsService {
                                      String responsesTopicName) {
         stream.filter(((key, value) -> {
             ApiEventType apiEventType = value.getEventType();
-            if (!apiEventType.equals(ApiEventType.FRIENDSDRINKS_EVENT)) {
-                return value.getEventType().equals(ApiEventType.FRIENDSDRINKS_INVITATION_REPLY_RESPONSE) ||
-                        value.getEventType().equals(ApiEventType.FRIENDSDRINKS_REMOVE_USER_RESPONSE) ||
-                        value.getEventType().equals(ApiEventType.FRIENDSDRINKS_INVITATION_RESPONSE);
+            if (apiEventType.equals(ApiEventType.FRIENDSDRINKS_MEMBERSHIP_EVENT)) {
+                return value.getFriendsDrinksMembershipEvent().getEventType()
+                        .equals(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_REPLY_RESPONSE) ||
+                        value.getFriendsDrinksMembershipEvent().getEventType()
+                                .equals(FriendsDrinksMembershipEventType.FRIENDSDRINKS_REMOVE_USER_RESPONSE) ||
+                        value.getFriendsDrinksMembershipEvent().getEventType()
+                                .equals(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_RESPONSE);
             }
             FriendsDrinksEventType eventType = value.getFriendsDrinksEvent().getEventType();
             return eventType.equals(FriendsDrinksEventType.CREATE_FRIENDSDRINKS_RESPONSE) ||
