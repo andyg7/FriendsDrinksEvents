@@ -135,21 +135,21 @@ public class WriterService {
     private KStream<String, FriendsDrinksEvent> streamOfSuccessfulResponses(KStream<String, ApiEvent> apiEvents) {
         return apiEvents.filter((k, v) -> v.getEventType().equals(ApiEventType.FRIENDSDRINKS_EVENT))
         .filter((friendsDrinksId, friendsDrinksEvent) ->
-                (friendsDrinksEvent.getEventType().equals(FriendsDrinksEventType.CREATE_FRIENDSDRINKS_RESPONSE) &&
+                (friendsDrinksEvent.getFriendsDrinksEvent().getEventType().equals(FriendsDrinksEventType.CREATE_FRIENDSDRINKS_RESPONSE) &&
                         friendsDrinksEvent.getFriendsDrinksEvent().getCreateFriendsDrinksResponse().getResult().equals(Result.SUCCESS)) ||
-                        (friendsDrinksEvent.getEventType().equals(FriendsDrinksEventType.UPDATE_FRIENDSDRINKS_RESPONSE) &&
+                        (friendsDrinksEvent.getFriendsDrinksEvent().getEventType().equals(FriendsDrinksEventType.UPDATE_FRIENDSDRINKS_RESPONSE) &&
                                 friendsDrinksEvent.getFriendsDrinksEvent().getUpdateFriendsDrinksResponse().getResult().equals(Result.SUCCESS)) ||
-                        (friendsDrinksEvent.getEventType().equals(FriendsDrinksEventType.DELETE_FRIENDSDRINKS_RESPONSE) &&
+                        (friendsDrinksEvent.getFriendsDrinksEvent().getEventType().equals(FriendsDrinksEventType.DELETE_FRIENDSDRINKS_RESPONSE) &&
                                 friendsDrinksEvent.getFriendsDrinksEvent().getDeleteFriendsDrinksResponse().getResult().equals(Result.SUCCESS))
         ).mapValues(v -> v.getFriendsDrinksEvent());
     }
 
     private KStream<String, FriendsDrinksEvent> streamOfRequests(KStream<String, ApiEvent> apiEvents) {
         return apiEvents.filter((k, v) -> v.getEventType().equals(ApiEventType.FRIENDSDRINKS_EVENT))
-                .filter((k, v) -> v.getEventType().equals(
+                .filter((k, v) -> v.getFriendsDrinksEvent().getEventType().equals(
                         FriendsDrinksEventType.CREATE_FRIENDSDRINKS_REQUEST) ||
-                        v.getEventType().equals(FriendsDrinksEventType.UPDATE_FRIENDSDRINKS_REQUEST) ||
-                        v.getEventType().equals(FriendsDrinksEventType.DELETE_FRIENDSDRINKS_REQUEST))
+                        v.getFriendsDrinksEvent().getEventType().equals(FriendsDrinksEventType.UPDATE_FRIENDSDRINKS_REQUEST) ||
+                        v.getFriendsDrinksEvent().getEventType().equals(FriendsDrinksEventType.DELETE_FRIENDSDRINKS_REQUEST))
                 .mapValues(v -> v.getFriendsDrinksEvent());
     }
 
