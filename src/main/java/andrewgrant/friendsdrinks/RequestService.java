@@ -50,7 +50,6 @@ public class RequestService {
         // Creates.
         KStream<String, CreateFriendsDrinksRequest> createRequests = apiEvents
                 .filter(((s, friendsDrinksEvent) -> friendsDrinksEvent.getEventType().equals(EventType.CREATE_FRIENDSDRINKS_REQUEST)))
-                .selectKey((key, value) -> value.getCreateFriendsDrinksRequest().getFriendsDrinksId().getAdminUserId())
                 .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getCreateFriendsDrinksRequest());
         handleCreateRequests(createRequests, friendsDrinksStateKTable)
                 .to(apiTopicName, Produced.with(Serdes.String(), frontendAvroBuilder.friendsDrinksSerde()));
@@ -89,7 +88,8 @@ public class RequestService {
                                 .withValueSerde(Serdes.Long())
                 );
 
-        return createRequests.leftJoin(friendsDrinksCount,
+        return createRequests.selectKey((key, value) -> value.getFriendsDrinksId().getAdminUserId())
+                .leftJoin(friendsDrinksCount,
                 (request, count) -> {
                     CreateFriendsDrinksResponse.Builder response = CreateFriendsDrinksResponse.newBuilder();
                     response.setRequestId(request.getRequestId());
