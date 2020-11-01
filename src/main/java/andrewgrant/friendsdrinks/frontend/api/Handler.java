@@ -331,6 +331,13 @@ public class Handler {
                 .setFriendsDrinksEvent(FriendsDrinksEvent.newBuilder()
                         .setEventType(FriendsDrinksEventType.CREATE_FRIENDSDRINKS_REQUEST)
                         .setCreateFriendsDrinksRequest(createFriendsDrinksRequest)
+                        .setRequestId(createFriendsDrinksRequest.getRequestId())
+                        .setFriendsDrinksId(
+                                FriendsDrinksId
+                                        .newBuilder()
+                                        .setUuid(friendsDrinksId)
+                                        .setAdminUserId(requestBean.getAdminUserId())
+                                        .build())
                         .build())
                 .build();
         ProducerRecord<String, ApiEvent> record = new ProducerRecord<>(topicName, requestId, friendsDrinksEvent);
@@ -383,6 +390,8 @@ public class Handler {
                 .setFriendsDrinksEvent(FriendsDrinksEvent.newBuilder()
                         .setEventType(FriendsDrinksEventType.UPDATE_FRIENDSDRINKS_REQUEST)
                         .setUpdateFriendsDrinksRequest(updateFriendsDrinksRequest)
+                        .setRequestId(updateFriendsDrinksRequest.getRequestId())
+                        .setFriendsDrinksId(friendsDrinksIdAvro)
                         .build())
                 .build();
 
@@ -429,6 +438,13 @@ public class Handler {
                 .setFriendsDrinksEvent(FriendsDrinksEvent.newBuilder()
                         .setEventType(FriendsDrinksEventType.DELETE_FRIENDSDRINKS_REQUEST)
                         .setDeleteFriendsDrinksRequest(deleteFriendsDrinksRequest)
+                        .setRequestId(deleteFriendsDrinksRequest.getRequestId())
+                        .setFriendsDrinksId(
+                                FriendsDrinksId
+                                        .newBuilder()
+                                        .setUuid(friendsDrinksId)
+                                        .setAdminUserId(adminUserId)
+                                        .build())
                         .build())
                 .build();
         ProducerRecord<String, ApiEvent> producerRecord = new ProducerRecord<>(topicName, requestId, friendsDrinksEvent);

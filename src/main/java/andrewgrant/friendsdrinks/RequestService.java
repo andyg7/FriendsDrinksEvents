@@ -105,6 +105,7 @@ public class RequestService {
                     FriendsDrinksEvent event = FriendsDrinksEvent.newBuilder()
                             .setEventType(FriendsDrinksEventType.CREATE_FRIENDSDRINKS_RESPONSE)
                             .setRequestId(response.getRequestId())
+                            .setFriendsDrinksId(request.getFriendsDrinksId())
                             .setCreateFriendsDrinksResponse(response.build())
                             .build();
                     return ApiEvent
@@ -138,6 +139,8 @@ public class RequestService {
                                     FriendsDrinksEvent
                                             .newBuilder()
                                             .setEventType(FriendsDrinksEventType.DELETE_FRIENDSDRINKS_RESPONSE)
+                                            .setFriendsDrinksId(request.getFriendsDrinksId())
+                                            .setRequestId(request.getRequestId())
                                             .setDeleteFriendsDrinksResponse(DeleteFriendsDrinksResponse
                                                     .newBuilder()
                                                     .setResult(Result.SUCCESS)
@@ -176,6 +179,7 @@ public class RequestService {
                                 .setFriendsDrinksEvent(FriendsDrinksEvent.newBuilder()
                                         .setRequestId(updateRequest.getRequestId())
                                         .setEventType(FriendsDrinksEventType.UPDATE_FRIENDSDRINKS_RESPONSE)
+                                        .setFriendsDrinksId(updateRequest.getFriendsDrinksId())
                                         .setUpdateFriendsDrinksResponse(
                                                 UpdateFriendsDrinksResponse
                                                         .newBuilder()
