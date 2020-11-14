@@ -186,11 +186,15 @@ public class RequestService {
             public FriendsDrinksEventConcurrencyCheck transform(FriendsDrinksEvent friendsDrinksEvent) {
                 FriendsDrinksEventConcurrencyCheck concurrencyCheck = new FriendsDrinksEventConcurrencyCheck();
                 concurrencyCheck.friendsDrinksEvent = friendsDrinksEvent;
-                if (stateStore.get(friendsDrinksEvent.getFriendsDrinksId().getUuid()) != null) {
-                    log.info("Rejecting request {} for FriendsDrinks {] because there's a concurrent request",
+                String uuid = friendsDrinksEvent.getFriendsDrinksId().getUuid();
+                if (stateStore.get(uuid) != null) {
+                    log.info("Rejecting request {} for FriendsDrinks {} because there's a concurrent request",
                             friendsDrinksEvent.getRequestId(), friendsDrinksEvent.getFriendsDrinksId().getUuid());
                     concurrencyCheck.isConcurrentRequest = true;
                 } else {
+                    log.info("Grabbing \"lock\" for request {} for FriendsDrinks {}",
+                            friendsDrinksEvent.getRequestId(), friendsDrinksEvent.getFriendsDrinksId().getUuid());
+                    stateStore.put(uuid, friendsDrinksEvent.getRequestId());
                     concurrencyCheck.isConcurrentRequest = false;
                 }
                 return concurrencyCheck;
@@ -228,8 +232,9 @@ public class RequestService {
                     default:
                         throw new RuntimeException(String.format("Unexpected event type %s", friendsDrinksEventType.name()));
                 }
-                if (result.equals(Result.SUCCESS)) {
-                    stateStore.put(friendsDrinksEvent.getFriendsDrinksId().getUuid(), friendsDrinksEvent.getRequestId());
+                if (result.equals(Result.FAIL)) {
+                    log.info("Releasing \"lock\" for FriendsDrinks {}", friendsDrinksEvent.getFriendsDrinksId().getUuid());
+                    stateStore.delete(friendsDrinksEvent.getFriendsDrinksId().getUuid());
                 }
                 ApiEvent apiEvent = ApiEvent
                         .newBuilder()
