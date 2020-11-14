@@ -47,7 +47,7 @@ public class RequestService {
                 builder.table(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_STATE),
                         Consumed.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksStateSerde()));
 
-        KStream<FriendsDrinksId, FriendsDrinksEvent> friendsDrinksApiEvents =  apiEvents.filter((s, friendsDrinksEvent) ->
+        KStream<FriendsDrinksId, FriendsDrinksEvent> friendsDrinksApiEvents = apiEvents.filter((s, friendsDrinksEvent) ->
                 friendsDrinksEvent.getEventType().equals(ApiEventType.FRIENDSDRINKS_EVENT))
                 .mapValues(x -> x.getFriendsDrinksEvent())
                 .selectKey((key, value) ->
