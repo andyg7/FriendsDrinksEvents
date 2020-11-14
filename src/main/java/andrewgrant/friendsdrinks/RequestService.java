@@ -187,6 +187,8 @@ public class RequestService {
                 FriendsDrinksEventConcurrencyCheck concurrencyCheck = new FriendsDrinksEventConcurrencyCheck();
                 concurrencyCheck.friendsDrinksEvent = friendsDrinksEvent;
                 if (stateStore.get(friendsDrinksEvent.getFriendsDrinksId().getUuid()) != null) {
+                    log.info("Rejecting request {} for FriendsDrinks {] because there's a concurrent request",
+                            friendsDrinksEvent.getRequestId(), friendsDrinksEvent.getFriendsDrinksId().getUuid());
                     concurrencyCheck.isConcurrentRequest = true;
                 } else {
                     concurrencyCheck.isConcurrentRequest = false;
