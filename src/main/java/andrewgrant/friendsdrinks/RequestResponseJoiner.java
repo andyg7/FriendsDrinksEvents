@@ -39,12 +39,14 @@ public class RequestResponseJoiner {
                             .setAdminUserId(r.getCreateFriendsDrinksRequest().getFriendsDrinksId().getAdminUserId())
                             .build())
                     .setFriendsDrinksCreated(friendsDrinks)
+                    .setRequestId(r.getRequestId())
                     .build();
         } else if (r.getEventType().equals(FriendsDrinksEventType.DELETE_FRIENDSDRINKS_REQUEST)) {
             log.info("Got delete join {}", r.getDeleteFriendsDrinksRequest().getRequestId());
             return andrewgrant.friendsdrinks.avro.FriendsDrinksEvent
                     .newBuilder()
                     .setEventType(andrewgrant.friendsdrinks.avro.EventType.DELETED)
+                    .setRequestId(r.getRequestId())
                     .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
                             .newBuilder()
                             .setUuid(r.getDeleteFriendsDrinksRequest().getFriendsDrinksId().getUuid())
@@ -70,6 +72,7 @@ public class RequestResponseJoiner {
             return andrewgrant.friendsdrinks.avro.FriendsDrinksEvent
                     .newBuilder()
                     .setEventType(andrewgrant.friendsdrinks.avro.EventType.UPDATED)
+                    .setRequestId(r.getRequestId())
                     .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
                             .newBuilder()
                             .setUuid(r.getUpdateFriendsDrinksRequest().getFriendsDrinksId().getUuid())

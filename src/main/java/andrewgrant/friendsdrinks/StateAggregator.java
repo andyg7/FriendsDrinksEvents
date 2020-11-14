@@ -22,6 +22,7 @@ public class StateAggregator {
 
                 FriendsDrinksState friendsDrinksState = friendsDrinksStateBuilder
                         .setName(createdFriendsDrinks.getName())
+                        .setLastRequestId(newValue.getRequestId())
                         .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
                                 .newBuilder()
                                 .setUuid(newValue.getFriendsDrinksId().getUuid())

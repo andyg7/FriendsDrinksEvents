@@ -312,14 +312,15 @@ public class Handler {
         String requestId = UUID.randomUUID().toString();
         String friendsDrinksId = UUID.randomUUID().toString();
 
+        FriendsDrinksId friendsDrinksIdAvro =
+                FriendsDrinksId
+                        .newBuilder()
+                        .setUuid(friendsDrinksId)
+                        .setAdminUserId(requestBean.getAdminUserId())
+                        .build();
         CreateFriendsDrinksRequest createFriendsDrinksRequest = CreateFriendsDrinksRequest
                 .newBuilder()
-                .setFriendsDrinksId(
-                        FriendsDrinksId
-                                .newBuilder()
-                                .setUuid(friendsDrinksId)
-                                .setAdminUserId(requestBean.getAdminUserId())
-                                .build())
+                .setFriendsDrinksId(friendsDrinksIdAvro)
                 .setRequestId(requestId)
                 .setName(requestBean.getName())
                 .build();
@@ -332,12 +333,7 @@ public class Handler {
                         .setEventType(FriendsDrinksEventType.CREATE_FRIENDSDRINKS_REQUEST)
                         .setCreateFriendsDrinksRequest(createFriendsDrinksRequest)
                         .setRequestId(createFriendsDrinksRequest.getRequestId())
-                        .setFriendsDrinksId(
-                                FriendsDrinksId
-                                        .newBuilder()
-                                        .setUuid(friendsDrinksId)
-                                        .setAdminUserId(requestBean.getAdminUserId())
-                                        .build())
+                        .setFriendsDrinksId(friendsDrinksIdAvro)
                         .build())
                 .build();
         ProducerRecord<String, ApiEvent> record = new ProducerRecord<>(topicName, requestId, friendsDrinksEvent);
@@ -420,14 +416,15 @@ public class Handler {
         String adminUserId = friendsDrinksState.getFriendsDrinksId().getAdminUserId();
         final String topicName = envProps.getProperty("friendsdrinks-api.topic.name");
         String requestId = UUID.randomUUID().toString();
+        FriendsDrinksId friendsDrinksIdAvro =
+                FriendsDrinksId
+                        .newBuilder()
+                        .setUuid(friendsDrinksId)
+                        .setAdminUserId(adminUserId)
+                        .build();
         DeleteFriendsDrinksRequest deleteFriendsDrinksRequest = DeleteFriendsDrinksRequest
                 .newBuilder()
-                .setFriendsDrinksId(
-                        FriendsDrinksId
-                                .newBuilder()
-                                .setUuid(friendsDrinksId)
-                                .setAdminUserId(adminUserId)
-                                .build())
+                .setFriendsDrinksId(friendsDrinksIdAvro)
                 .setRequestId(requestId)
                 .build();
 
@@ -439,12 +436,7 @@ public class Handler {
                         .setEventType(FriendsDrinksEventType.DELETE_FRIENDSDRINKS_REQUEST)
                         .setDeleteFriendsDrinksRequest(deleteFriendsDrinksRequest)
                         .setRequestId(deleteFriendsDrinksRequest.getRequestId())
-                        .setFriendsDrinksId(
-                                FriendsDrinksId
-                                        .newBuilder()
-                                        .setUuid(friendsDrinksId)
-                                        .setAdminUserId(adminUserId)
-                                        .build())
+                        .setFriendsDrinksId(friendsDrinksIdAvro)
                         .build())
                 .build();
         ProducerRecord<String, ApiEvent> producerRecord = new ProducerRecord<>(topicName, requestId, friendsDrinksEvent);

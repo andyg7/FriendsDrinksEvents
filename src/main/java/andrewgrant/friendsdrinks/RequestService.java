@@ -47,29 +47,35 @@ public class RequestService {
                 builder.table(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_STATE),
                         Consumed.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksStateSerde()));
 
+        KStream<FriendsDrinksId, FriendsDrinksEvent> friendsDrinksApiEvents =  apiEvents.filter((s, friendsDrinksEvent) ->
+                friendsDrinksEvent.getEventType().equals(ApiEventType.FRIENDSDRINKS_EVENT))
+                .mapValues(x -> x.getFriendsDrinksEvent())
+                .selectKey((key, value) ->
+                        FriendsDrinksId
+                                .newBuilder()
+                                .setAdminUserId(value.getFriendsDrinksId().getAdminUserId())
+                                .setUuid(value.getFriendsDrinksId().getUuid())
+                                .build());
+
         // Creates.
-        KStream<String, CreateFriendsDrinksRequest> createRequests = apiEvents
-                .filter(((s, friendsDrinksEvent) -> friendsDrinksEvent.getEventType().equals(ApiEventType.FRIENDSDRINKS_EVENT) &&
-                        friendsDrinksEvent.getFriendsDrinksEvent().getEventType().equals(FriendsDrinksEventType.CREATE_FRIENDSDRINKS_REQUEST)))
-                .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getFriendsDrinksEvent().getCreateFriendsDrinksRequest());
+        KStream<FriendsDrinksId, CreateFriendsDrinksRequest> createRequests = friendsDrinksApiEvents.filter(((s, friendsDrinksEvent) ->
+                friendsDrinksEvent.getEventType().equals(FriendsDrinksEventType.CREATE_FRIENDSDRINKS_REQUEST)))
+                .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getCreateFriendsDrinksRequest());
         handleCreateRequests(createRequests, friendsDrinksStateKTable)
                 .to(apiTopicName, Produced.with(Serdes.String(), frontendAvroBuilder.apiSerde()));
 
         // Updates.
-        KStream<String, UpdateFriendsDrinksRequest> updateRequests = apiEvents
-                .filter(((s, friendsDrinksEvent) -> friendsDrinksEvent.getEventType().equals(ApiEventType.FRIENDSDRINKS_EVENT) &&
-                        friendsDrinksEvent.getFriendsDrinksEvent().getEventType().equals(FriendsDrinksEventType.UPDATE_FRIENDSDRINKS_REQUEST)))
-                .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getFriendsDrinksEvent().getUpdateFriendsDrinksRequest());
+        KStream<FriendsDrinksId, UpdateFriendsDrinksRequest> updateRequests = friendsDrinksApiEvents.filter(((s, friendsDrinksEvent) ->
+                friendsDrinksEvent.getEventType().equals(FriendsDrinksEventType.UPDATE_FRIENDSDRINKS_REQUEST)))
+                .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getUpdateFriendsDrinksRequest());
         handleUpdateRequests(updateRequests, friendsDrinksStateKTable)
                 .to(apiTopicName, Produced.with(Serdes.String(), frontendAvroBuilder.apiSerde()));
 
         // Deletes.
-        KStream<String, DeleteFriendsDrinksRequest> deleteRequests =
-                apiEvents.filter(((s, friendsDrinksEvent) ->
-                        friendsDrinksEvent.getEventType().equals(ApiEventType.FRIENDSDRINKS_EVENT) &&
-                                friendsDrinksEvent.getFriendsDrinksEvent().getEventType()
-                                        .equals(FriendsDrinksEventType.DELETE_FRIENDSDRINKS_REQUEST)))
-                        .mapValues((friendsDrinksEvent) -> friendsDrinksEvent.getFriendsDrinksEvent().getDeleteFriendsDrinksRequest());
+        KStream<FriendsDrinksId, DeleteFriendsDrinksRequest> deleteRequests = friendsDrinksApiEvents.filter(((s, friendsDrinksEvent) ->
+                friendsDrinksEvent.getEventType()
+                        .equals(FriendsDrinksEventType.DELETE_FRIENDSDRINKS_REQUEST)))
+                .mapValues((friendsDrinksEvent) -> friendsDrinksEvent.getDeleteFriendsDrinksRequest());
         handleDeleteRequests(deleteRequests, friendsDrinksStateKTable)
                 .to(apiTopicName, Produced.with(Serdes.String(), frontendAvroBuilder.apiSerde()));
 
@@ -77,7 +83,7 @@ public class RequestService {
     }
 
     private KStream<String, ApiEvent> handleCreateRequests(
-            KStream<String, CreateFriendsDrinksRequest> createRequests,
+            KStream<FriendsDrinksId, CreateFriendsDrinksRequest> createRequests,
             KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable) {
 
         KTable<String, Long> friendsDrinksCount = friendsDrinksStateKTable.groupBy((key, value) ->
@@ -96,6 +102,7 @@ public class RequestService {
                 .leftJoin(friendsDrinksCount,
                 (request, count) -> {
                     CreateFriendsDrinksResponse.Builder response = CreateFriendsDrinksResponse.newBuilder();
+                    response.setFriendsDrinksId(request.getFriendsDrinksId());
                     response.setRequestId(request.getRequestId());
                     if (count == null || count < 5) {
                         response.setResult(Result.SUCCESS);
@@ -120,7 +127,7 @@ public class RequestService {
     }
 
     private KStream<String, ApiEvent> handleDeleteRequests(
-            KStream<String, DeleteFriendsDrinksRequest> deleteRequests,
+            KStream<FriendsDrinksId, DeleteFriendsDrinksRequest> deleteRequests,
             KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable) {
 
         KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, DeleteFriendsDrinksRequest> deleteRequestsKeyed =
@@ -144,6 +151,7 @@ public class RequestService {
                                             .setDeleteFriendsDrinksResponse(DeleteFriendsDrinksResponse
                                                     .newBuilder()
                                                     .setResult(Result.SUCCESS)
+                                                    .setFriendsDrinksId(request.getFriendsDrinksId())
                                                     .setRequestId(request.getRequestId())
                                                     .build())
                                             .build()
@@ -162,7 +170,7 @@ public class RequestService {
     }
 
     private KStream<String, ApiEvent> handleUpdateRequests(
-            KStream<String, UpdateFriendsDrinksRequest> updateRequests,
+            KStream<FriendsDrinksId, UpdateFriendsDrinksRequest> updateRequests,
             KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable) {
 
         KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, UpdateFriendsDrinksRequest> updateRequestsKeyed =
@@ -184,6 +192,7 @@ public class RequestService {
                                                 UpdateFriendsDrinksResponse
                                                         .newBuilder()
                                                         .setRequestId(updateRequest.getRequestId())
+                                                        .setFriendsDrinksId(updateRequest.getFriendsDrinksId())
                                                         .setResult(Result.SUCCESS).build())
                                         .build())
                                 .build();
@@ -197,6 +206,7 @@ public class RequestService {
                                                 UpdateFriendsDrinksResponse
                                                         .newBuilder()
                                                         .setRequestId(updateRequest.getRequestId())
+                                                        .setFriendsDrinksId(updateRequest.getFriendsDrinksId())
                                                         .setResult(Result.FAIL).build())
                                         .build())
                                 .build();
