@@ -15,11 +15,11 @@ public class MembershipRequestResponseJoiner {
                     .getFriendsDrinksInvitationReplyRequest();
             FriendsDrinksMembershipId membershipId = FriendsDrinksMembershipId
                     .newBuilder()
-                    .setUserId(UserId.newBuilder().setUserId(request.getUserId().getUserId()).build())
+                    .setUserId(UserId.newBuilder().setUserId(request.getMembershipId().getUserId().getUserId()).build())
                     .setFriendsDrinksId(FriendsDrinksId
                             .newBuilder()
-                            .setAdminUserId(request.getFriendsDrinksId().getAdminUserId())
-                            .setUuid(request.getFriendsDrinksId().getUuid())
+                            .setAdminUserId(request.getMembershipId().getFriendsDrinksId().getAdminUserId())
+                            .setUuid(request.getMembershipId().getFriendsDrinksId().getUuid())
                             .build())
                     .build();
             return FriendsDrinksMembershipEvent
@@ -36,11 +36,11 @@ public class MembershipRequestResponseJoiner {
             FriendsDrinksInvitationReplyRequest request = r.getFriendsDrinksMembershipEvent().getFriendsDrinksInvitationReplyRequest();
             FriendsDrinksMembershipId membershipId = FriendsDrinksMembershipId
                     .newBuilder()
-                    .setUserId(UserId.newBuilder().setUserId(request.getUserId().getUserId()).build())
+                    .setUserId(UserId.newBuilder().setUserId(request.getMembershipId().getUserId().getUserId()).build())
                     .setFriendsDrinksId(FriendsDrinksId
                             .newBuilder()
-                            .setAdminUserId(request.getFriendsDrinksId().getAdminUserId())
-                            .setUuid(request.getFriendsDrinksId().getUuid())
+                            .setAdminUserId(request.getMembershipId().getFriendsDrinksId().getAdminUserId())
+                            .setUuid(request.getMembershipId().getFriendsDrinksId().getUuid())
                             .build())
                     .build();
             return FriendsDrinksMembershipEvent

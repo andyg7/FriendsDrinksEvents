@@ -491,13 +491,15 @@ public class Handler {
                 .build();
         FriendsDrinksInvitationReplyRequest friendsDrinksInvitationReplyRequest =
                 FriendsDrinksInvitationReplyRequest.newBuilder()
-                        .setFriendsDrinksId(friendsDrinksIdAvro)
-                        .setUserId(
-                                andrewgrant.friendsdrinks.api.avro.UserId
-                                        .newBuilder()
-                                        .setUserId(userId)
-                                        .build()
-                        )
+                        .setMembershipId(FriendsDrinksMembershipId.newBuilder()
+                                .setFriendsDrinksId(friendsDrinksIdAvro)
+                                .setUserId(
+                                        andrewgrant.friendsdrinks.api.avro.UserId
+                                                .newBuilder()
+                                                .setUserId(userId)
+                                                .build()
+                                )
+                                .build())
                         .setReply(Reply.valueOf(requestBean.getResponse()))
                         .setRequestId(requestId)
                         .build();
@@ -508,13 +510,15 @@ public class Handler {
                 .setFriendsDrinksMembershipEvent(FriendsDrinksMembershipEvent.newBuilder()
                         .setEventType(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_REPLY_REQUEST)
                         .setFriendsDrinksInvitationReplyRequest(friendsDrinksInvitationReplyRequest)
-                        .setFriendsDrinksId(friendsDrinksIdAvro)
-                        .setUserId(
-                                andrewgrant.friendsdrinks.api.avro.UserId
-                                        .newBuilder()
-                                        .setUserId(userId)
-                                        .build()
-                        )
+                        .setMembershipId(FriendsDrinksMembershipId.newBuilder()
+                                .setFriendsDrinksId(friendsDrinksIdAvro)
+                                .setUserId(
+                                        andrewgrant.friendsdrinks.api.avro.UserId
+                                                .newBuilder()
+                                                .setUserId(userId)
+                                                .build()
+                                )
+                                .build())
                         .build())
                 .build();
 
@@ -551,12 +555,14 @@ public class Handler {
                 .build();
         FriendsDrinksRemoveUserRequest removeUserRequest = FriendsDrinksRemoveUserRequest
                 .newBuilder()
-                .setUserIdToRemove(andrewgrant.friendsdrinks.api.avro.UserId
-                        .newBuilder()
-                        .setUserId(requestBean.getUserId())
+                .setMembershipId(FriendsDrinksMembershipId.newBuilder()
+                        .setFriendsDrinksId(friendsDrinksIdAvro)
+                        .setUserId(andrewgrant.friendsdrinks.api.avro.UserId
+                                .newBuilder()
+                                .setUserId(requestBean.getUserId())
+                                .build())
                         .build())
                 .setRequestId(requestId)
-                .setFriendsDrinksId(friendsDrinksIdAvro)
                 .setRequester(andrewgrant.friendsdrinks.api.avro.UserId
                         .newBuilder()
                         .setUserId(userId)
@@ -570,10 +576,12 @@ public class Handler {
                 .setFriendsDrinksMembershipEvent(FriendsDrinksMembershipEvent.newBuilder()
                         .setEventType(FriendsDrinksMembershipEventType.FRIENDSDRINKS_REMOVE_USER_REQUEST)
                         .setFriendsDrinksRemoveUserRequest(removeUserRequest)
-                        .setFriendsDrinksId(friendsDrinksIdAvro)
-                        .setUserId(andrewgrant.friendsdrinks.api.avro.UserId
-                                .newBuilder()
-                                .setUserId(requestBean.getUserId())
+                        .setMembershipId(FriendsDrinksMembershipId.newBuilder()
+                                .setFriendsDrinksId(friendsDrinksIdAvro)
+                                .setUserId(andrewgrant.friendsdrinks.api.avro.UserId
+                                        .newBuilder()
+                                        .setUserId(requestBean.getUserId())
+                                        .build())
                                 .build())
                         .build())
                 .build();
@@ -604,12 +612,14 @@ public class Handler {
                 FriendsDrinksInvitationRequest
                         .newBuilder()
                         .setRequestId(requestId)
-                        .setFriendsDrinksId(friendsDrinksIdAvro)
-                        .setUserId(
-                                andrewgrant.friendsdrinks.api.avro.UserId
-                                        .newBuilder()
-                                        .setUserId(requestBean.getUserId())
-                                        .build())
+                        .setMembershipId(FriendsDrinksMembershipId.newBuilder()
+                                .setFriendsDrinksId(friendsDrinksIdAvro)
+                                .setUserId(
+                                        andrewgrant.friendsdrinks.api.avro.UserId
+                                                .newBuilder()
+                                                .setUserId(requestBean.getUserId())
+                                                .build())
+                                .build())
                         .build();
         friendsDrinksEvent = ApiEvent
                 .newBuilder()
@@ -618,12 +628,14 @@ public class Handler {
                 .setFriendsDrinksMembershipEvent(FriendsDrinksMembershipEvent.newBuilder()
                         .setEventType(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_REQUEST)
                         .setFriendsDrinksInvitationRequest(friendsDrinksInvitationRequest)
-                        .setFriendsDrinksId(friendsDrinksIdAvro)
-                        .setUserId(
-                                andrewgrant.friendsdrinks.api.avro.UserId
-                                        .newBuilder()
-                                        .setUserId(requestBean.getUserId())
-                                        .build())
+                        .setMembershipId(FriendsDrinksMembershipId.newBuilder()
+                                .setFriendsDrinksId(friendsDrinksIdAvro)
+                                .setUserId(
+                                        andrewgrant.friendsdrinks.api.avro.UserId
+                                                .newBuilder()
+                                                .setUserId(requestBean.getUserId())
+                                                .build())
+                                .build())
                         .build())
                 .build();
 

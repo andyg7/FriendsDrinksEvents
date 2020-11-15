@@ -122,8 +122,8 @@ public class RequestService {
                         })
                         .selectKey((key, value) -> FriendsDrinksMembershipId
                                 .newBuilder()
-                                .setFriendsDrinksId(value.getFriendsDrinksId())
-                                .setUserId(value.getUserId())
+                                .setFriendsDrinksId(value.getMembershipId().getFriendsDrinksId())
+                                .setUserId(value.getMembershipId().getUserId())
                                 .build());
 
         KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipEventConcurrencyCheck>
@@ -322,13 +322,13 @@ public class RequestService {
             KTable<UserId, UserState> userState) {
 
         KStream<FriendsDrinksMembershipId, RemoveUserResult> resultsAfterValidatingUserState = friendsDrinksRemoveUserRequest
-                .selectKey((key, value) -> UserId.newBuilder().setUserId(value.getUserIdToRemove().getUserId()).build())
+                .selectKey((key, value) -> UserId.newBuilder().setUserId(value.getMembershipId().getUserId().getUserId()).build())
                 .leftJoin(userState,
                         (request, state) -> {
                             RemoveUserResult removeUserResult = new RemoveUserResult();
                             removeUserResult.friendsDrinksRemoveUserRequest = request;
                             if (state == null) {
-                                log.warn(String.format("Failed to find user ID %s", request.getUserIdToRemove().getUserId()));
+                                log.warn(String.format("Failed to find user ID %s", request.getMembershipId().getUserId().getUserId()));
                             }
                             removeUserResult.failed = false;
                             return removeUserResult;
@@ -353,8 +353,8 @@ public class RequestService {
                 branchedResultsAfterValidatingUserState[1].selectKey((key, value) ->
                         andrewgrant.friendsdrinks.avro.FriendsDrinksId
                                 .newBuilder()
-                                .setUuid(value.friendsDrinksRemoveUserRequest.getFriendsDrinksId().getUuid())
-                                .setAdminUserId(value.friendsDrinksRemoveUserRequest.getFriendsDrinksId().getAdminUserId())
+                                .setUuid(value.friendsDrinksRemoveUserRequest.getMembershipId().getFriendsDrinksId().getUuid())
+                                .setAdminUserId(value.friendsDrinksRemoveUserRequest.getMembershipId().getFriendsDrinksId().getAdminUserId())
                                 .build())
                         .mapValues(value -> value.friendsDrinksRemoveUserRequest)
                         .leftJoin(friendsDrinksState,
@@ -394,8 +394,7 @@ public class RequestService {
             return FriendsDrinksMembershipEvent.newBuilder()
                     .setEventType(FriendsDrinksMembershipEventType.FRIENDSDRINKS_REMOVE_USER_RESPONSE)
                     .setFriendsDrinksRemoveUserResponse(removeUserResponse)
-                    .setUserId(value.friendsDrinksRemoveUserRequest.getUserIdToRemove())
-                    .setFriendsDrinksId(value.friendsDrinksRemoveUserRequest.getFriendsDrinksId())
+                    .setMembershipId(value.friendsDrinksRemoveUserRequest.getMembershipId())
                     .build();
         }));
         return result;
@@ -412,8 +411,7 @@ public class RequestService {
             return FriendsDrinksMembershipEvent.newBuilder()
                     .setEventType(FriendsDrinksMembershipEventType.FRIENDSDRINKS_REMOVE_USER_RESPONSE)
                     .setFriendsDrinksRemoveUserResponse(removeUserResponse)
-                    .setFriendsDrinksId(value.getFriendsDrinksId())
-                    .setUserId(value.getUserIdToRemove())
+                    .setMembershipId(value.getMembershipId())
                     .build();
         });
 
@@ -427,13 +425,14 @@ public class RequestService {
         KStream<String, InvitationResult> resultsAfterValidatingFriendsDrinksState = friendsDrinksInvitations.selectKey((key, value) ->
                 andrewgrant.friendsdrinks.avro.FriendsDrinksId
                         .newBuilder()
-                        .setAdminUserId(value.getFriendsDrinksId().getAdminUserId())
-                        .setUuid(value.getFriendsDrinksId().getUuid())
+                        .setAdminUserId(value.getMembershipId().getFriendsDrinksId().getAdminUserId())
+                        .setUuid(value.getMembershipId().getFriendsDrinksId().getUuid())
                         .build())
                 .leftJoin(friendsDrinksStateKTable,
                         (request, state) -> {
                             InvitationResult invitationResult = new InvitationResult();
-                            if (request.getUserId().getUserId().equals(request.getFriendsDrinksId().getAdminUserId())) {
+                            if (request.getMembershipId().getUserId().getUserId().equals(
+                                    request.getMembershipId().getFriendsDrinksId().getAdminUserId())) {
                                 invitationResult.failed = true;
                                 return invitationResult;
                             }
@@ -464,7 +463,10 @@ public class RequestService {
                 convertToFailedInvitationResponse(branchedResultsAfterValidatingFriendsDrinksState[0].mapValues(value -> value.invitationRequest)));
 
         KStream<String, InvitationResult> resultsAfterValidatingUserState = branchedResultsAfterValidatingFriendsDrinksState[1]
-                .selectKey((key, value) -> UserId.newBuilder().setUserId(value.invitationRequest.getUserId().getUserId()).build())
+                .selectKey((key, value) -> UserId
+                        .newBuilder()
+                        .setUserId(value.invitationRequest.getMembershipId().getUserId().getUserId())
+                        .build())
                 .mapValues(value -> value.invitationRequest)
                 .leftJoin(userState,
                         (request, state) -> {
@@ -504,7 +506,7 @@ public class RequestService {
                     .setEventType(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_RESPONSE)
                     .setRequestId(value.getRequestId())
                     .setFriendsDrinksInvitationResponse(response)
-                    .setUserId(value.getUserId())
+                    .setMembershipId(value.getMembershipId())
                     .build();
             return new KeyValue<>(
                     friendsDrinksMembershipEvent.getMembershipId(),
@@ -582,8 +584,7 @@ public class RequestService {
                     .setEventType(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_RESPONSE)
                     .setFriendsDrinksInvitationResponse(response)
                     .setRequestId(response.getRequestId())
-                    .setFriendsDrinksId(value.getFriendsDrinksId())
-                    .setUserId(value.getUserId())
+                    .setMembershipId(value.getMembershipId())
                     .setMembershipId(value.getMembershipId())
                     .build();
 
@@ -599,21 +600,21 @@ public class RequestService {
                         .newBuilder()
                         .setFriendsDrinksId(andrewgrant.friendsdrinks.membership.avro.FriendsDrinksId
                                 .newBuilder()
-                                .setUuid(value.getFriendsDrinksId().getUuid())
-                                .setAdminUserId(value.getFriendsDrinksId().getAdminUserId())
+                                .setUuid(value.getMembershipId().getFriendsDrinksId().getUuid())
+                                .setAdminUserId(value.getMembershipId().getFriendsDrinksId().getAdminUserId())
                                 .build())
                         .setUserId(andrewgrant.friendsdrinks.membership.avro.UserId
                                 .newBuilder()
-                                .setUserId(value.getUserId().getUserId())
+                                .setUserId(value.getMembershipId().getUserId().getUserId())
                                 .build())
                         .build())
                         .leftJoin(friendsDrinksInvitations,
                                 (request, state) -> {
                                     FriendsDrinksMembershipEvent.Builder friendsDrinksMembershipEvent =
                                             FriendsDrinksMembershipEvent.newBuilder()
-                                            .setRequestId(request.getRequestId())
-                                            .setFriendsDrinksId(request.getFriendsDrinksId())
-                                            .setUserId(request.getUserId());
+                                                    .setRequestId(request.getRequestId())
+                                                    .setMembershipId(request.getMembershipId())
+                                                    .setEventType(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_REPLY_RESPONSE);
                                     if (state != null) {
                                         friendsDrinksMembershipEvent.setFriendsDrinksInvitationReplyResponse(FriendsDrinksInvitationReplyResponse
                                                 .newBuilder()
@@ -654,24 +655,6 @@ public class RequestService {
                         .build())
                 .build();
     }
-
-    private andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId toFriendsDrinksMembershipId(
-            FriendsDrinksMembershipId friendsDrinksMembershipId) {
-        return andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId
-                .newBuilder()
-                .setUserId(
-                        andrewgrant.friendsdrinks.membership.avro.UserId
-                                .newBuilder()
-                                .setUserId(friendsDrinksMembershipId.getUserId().getUserId())
-                                .build())
-                .setFriendsDrinksId(andrewgrant.friendsdrinks.membership.avro.FriendsDrinksId
-                        .newBuilder()
-                        .setUuid(friendsDrinksMembershipId.getFriendsDrinksId().getUuid())
-                        .setAdminUserId(friendsDrinksMembershipId.getFriendsDrinksId().getAdminUserId())
-                        .build())
-                .build();
-    }
-
 
     public Properties buildStreamProperties(Properties envProps) {
         Properties streamProps = new Properties();

@@ -86,13 +86,13 @@ public class InvitationWriterService {
                             .newBuilder()
                             .setFriendsDrinksId(andrewgrant.friendsdrinks.membership.avro.FriendsDrinksId
                                     .newBuilder()
-                                    .setAdminUserId(v.getFriendsDrinksId().getAdminUserId())
-                                    .setUuid(v.getFriendsDrinksId().getUuid())
+                                    .setAdminUserId(v.getMembershipId().getFriendsDrinksId().getAdminUserId())
+                                    .setUuid(v.getMembershipId().getFriendsDrinksId().getUuid())
                                     .build()
                             )
                             .setUserId(andrewgrant.friendsdrinks.membership.avro.UserId
                                     .newBuilder()
-                                    .setUserId(v.getUserId().getUserId())
+                                    .setUserId(v.getMembershipId().getUserId().getUserId())
                                     .build())
                             .build();
                     return KeyValue.pair(id, null);
@@ -113,8 +113,8 @@ public class InvitationWriterService {
                 .map((s, request) -> {
                     FriendsDrinksId friendsDrinksId = FriendsDrinksId
                             .newBuilder()
-                            .setAdminUserId(request.getFriendsDrinksId().getAdminUserId())
-                            .setUuid(request.getFriendsDrinksId().getUuid())
+                            .setAdminUserId(request.getMembershipId().getFriendsDrinksId().getAdminUserId())
+                            .setUuid(request.getMembershipId().getFriendsDrinksId().getUuid())
                             .build();
                     return KeyValue.pair(friendsDrinksId, request);
                 })
@@ -126,27 +126,27 @@ public class InvitationWriterService {
                                         .setFriendsDrinksId(
                                                 andrewgrant.friendsdrinks.membership.avro.FriendsDrinksId
                                                         .newBuilder()
-                                                        .setUuid(request.getFriendsDrinksId().getUuid())
-                                                        .setAdminUserId(request.getFriendsDrinksId().getAdminUserId())
+                                                        .setUuid(request.getMembershipId().getFriendsDrinksId().getUuid())
+                                                        .setAdminUserId(request.getMembershipId().getFriendsDrinksId().getAdminUserId())
                                                         .build())
                                         .setUserId(
                                                 andrewgrant.friendsdrinks.membership.avro.UserId
                                                         .newBuilder()
-                                                        .setUserId(request.getUserId().getUserId())
+                                                        .setUserId(request.getMembershipId().getUserId().getUserId())
                                                         .build())
                                         .setInvitationId(
                                                 FriendsDrinksInvitationId
                                                         .newBuilder()
                                                         .setFriendsDrinksId(
                                                                 andrewgrant.friendsdrinks.membership.avro.FriendsDrinksId
-                                                                        .newBuilder()
-                                                                        .setUuid(request.getFriendsDrinksId().getUuid())
-                                                                        .setAdminUserId(request.getFriendsDrinksId().getAdminUserId())
-                                                                        .build())
+                                                                .newBuilder()
+                                                                .setUuid(request.getMembershipId().getFriendsDrinksId().getUuid())
+                                                                .setAdminUserId(request.getMembershipId().getFriendsDrinksId().getAdminUserId())
+                                                                .build())
                                                         .setUserId(
                                                                 andrewgrant.friendsdrinks.membership.avro.UserId
                                                                         .newBuilder()
-                                                                        .setUserId(request.getUserId().getUserId())
+                                                                        .setUserId(request.getMembershipId().getUserId().getUserId())
                                                                         .build())
                                                         .build())
                                         .setMessage(String.format("Want to join %s?!", state.getName()))

@@ -5,8 +5,6 @@
   "fields": [
     {"name": "eventType", "type": {"type": "enum", "name": "FriendsDrinksMembershipEventType", "symbols" : ["FRIENDSDRINKS_INVITATION_REQUEST", "FRIENDSDRINKS_INVITATION_RESPONSE" ,"FRIENDSDRINKS_INVITATION_REPLY_REQUEST", "FRIENDSDRINKS_INVITATION_REPLY_RESPONSE", "FRIENDSDRINKS_REMOVE_USER_REQUEST", "FRIENDSDRINKS_REMOVE_USER_RESPONSE"] } },
     {"name": "requestId", "type": "string"},
-    {"name": "friendsDrinksId", "type": "FriendsDrinksId"},
-    {"name": "userId", "type": "UserId" },
     {"name": "membershipId", "type": "FriendsDrinksMembershipId" },
     {"name": "friendsDrinksInvitationRequest", "type": ["null", "FriendsDrinksInvitationRequest"], "default": null},
     {"name": "friendsDrinksInvitationResponse", "type": ["null", "FriendsDrinksInvitationResponse"], "default": null},

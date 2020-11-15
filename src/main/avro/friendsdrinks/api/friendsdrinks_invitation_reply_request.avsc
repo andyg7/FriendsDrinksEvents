@@ -3,8 +3,6 @@
   "type": "record",
   "name": "FriendsDrinksInvitationReplyRequest",
   "fields": [
-      {"name": "userId", "type": "UserId" },
-      {"name": "friendsDrinksId", "type": "FriendsDrinksId"},
       {"name": "membershipId", "type": "FriendsDrinksMembershipId" },
       {"name": "requestId", "type": "string"},
       {"name": "reply", "type": {"type": "enum", "name": "Reply", "symbols": ["ACCEPTED", "REJECTED"]}}
