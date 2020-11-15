@@ -18,7 +18,7 @@ import java.util.concurrent.CountDownLatch;
 import andrewgrant.friendsdrinks.api.avro.*;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksId;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksState;
-import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksInvitation;
+import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksInvitationEvent;
 import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId;
 
 /**
@@ -71,7 +71,7 @@ public class InvitationWriterService {
         return builder.build();
     }
 
-    private KStream<FriendsDrinksMembershipId, FriendsDrinksInvitation> streamOfResolvedInvitations(
+    private KStream<FriendsDrinksMembershipId, FriendsDrinksInvitationEvent> streamOfResolvedInvitations(
             KStream<String, FriendsDrinksInvitationReplyResponse> invitationReplyResponses,
             KStream<String, FriendsDrinksInvitationReplyRequest> invitationReplyRequests) {
 
@@ -99,7 +99,7 @@ public class InvitationWriterService {
                 });
     }
 
-    private KStream<FriendsDrinksMembershipId, FriendsDrinksInvitation> streamOfPendingInvitations(
+    private KStream<FriendsDrinksMembershipId, FriendsDrinksInvitationEvent> streamOfPendingInvitations(
             KStream<String, FriendsDrinksInvitationResponse> invitationResponses,
             KStream<String, FriendsDrinksInvitationRequest> invitationRequests,
             KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable) {
@@ -121,7 +121,7 @@ public class InvitationWriterService {
                 .leftJoin(friendsDrinksStateKTable,
                         (request, state) -> {
                             if (state != null) {
-                                return FriendsDrinksInvitation
+                                return FriendsDrinksInvitationEvent
                                         .newBuilder()
                                         .setMembershipId(FriendsDrinksMembershipId.newBuilder()
                                                 .setFriendsDrinksId(

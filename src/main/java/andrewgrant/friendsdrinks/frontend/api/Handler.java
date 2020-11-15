@@ -31,7 +31,7 @@ import andrewgrant.friendsdrinks.frontend.api.user.GetUsersResponseBean;
 import andrewgrant.friendsdrinks.frontend.api.user.PostUsersRequestBean;
 import andrewgrant.friendsdrinks.frontend.api.user.PostUsersResponseBean;
 import andrewgrant.friendsdrinks.frontend.api.user.UserBean;
-import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksInvitation;
+import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksInvitationEvent;
 import andrewgrant.friendsdrinks.user.avro.UserEvent;
 import andrewgrant.friendsdrinks.user.avro.UserId;
 import andrewgrant.friendsdrinks.user.avro.UserLoggedIn;
@@ -238,12 +238,12 @@ public class Handler {
             getUserHomepageResponseBean.setMemberFriendsDrinksList(new ArrayList<>());
         }
 
-        ReadOnlyKeyValueStore<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId, FriendsDrinksInvitation> kv =
+        ReadOnlyKeyValueStore<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId, FriendsDrinksInvitationEvent> kv =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(INVITATIONS_STORE, QueryableStoreTypes.keyValueStore()));
-        KeyValueIterator<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId, FriendsDrinksInvitation> allKvs = kv.all();
+        KeyValueIterator<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId, FriendsDrinksInvitationEvent> allKvs = kv.all();
         List<FriendsDrinksInvitationBean> invitationBeans = new ArrayList<>();
         while (allKvs.hasNext()) {
-            KeyValue<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId, FriendsDrinksInvitation> keyValue = allKvs.next();
+            KeyValue<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId, FriendsDrinksInvitationEvent> keyValue = allKvs.next();
             if (keyValue.key.getUserId().getUserId().equals(userId)) {
                 FriendsDrinksInvitationBean invitationBean = new FriendsDrinksInvitationBean();
                 invitationBean.setFriendsDrinksId(
@@ -276,7 +276,7 @@ public class Handler {
             throw new BadRequestException(String.format("friendsDrinksId %s could not be found", friendsDrinksId));
         }
 
-        ReadOnlyKeyValueStore<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId, FriendsDrinksInvitation> kv =
+        ReadOnlyKeyValueStore<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId, FriendsDrinksInvitationEvent> kv =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(INVITATIONS_STORE, QueryableStoreTypes.keyValueStore()));
         andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId invitationId =
                 andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId
@@ -289,7 +289,7 @@ public class Handler {
                 .setUserId(andrewgrant.friendsdrinks.membership.avro.UserId.newBuilder().setUserId(userId).build())
                 .build();
 
-        FriendsDrinksInvitation invitation = kv.get(invitationId);
+        FriendsDrinksInvitationEvent invitation = kv.get(invitationId);
         if (invitation == null) {
             throw new BadRequestException(String.format("Invitation for userId %s and friendsDrinksId %s could not be found",
                     userId, friendsDrinksId));

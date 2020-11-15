@@ -25,7 +25,7 @@ import java.util.concurrent.CountDownLatch;
 import andrewgrant.friendsdrinks.api.avro.*;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksId;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksState;
-import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksInvitation;
+import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksInvitationEvent;
 import andrewgrant.friendsdrinks.user.AvroBuilder;
 import andrewgrant.friendsdrinks.user.avro.UserId;
 import andrewgrant.friendsdrinks.user.avro.UserState;
@@ -70,7 +70,7 @@ public class RequestService {
                 builder.table(envProps.getProperty(USER_STATE),
                         Consumed.with(userAvroBuilder.userIdSerde(), userAvroBuilder.userStateSerde()));
 
-        KTable<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId, FriendsDrinksInvitation> friendsDrinksInvitations =
+        KTable<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId, FriendsDrinksInvitationEvent> friendsDrinksInvitations =
                 builder.table(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_INVITATION),
                         Consumed.with(membershipAvroBuilder.friendsDrinksMembershipIdSerdes(),
                                 membershipAvroBuilder.friendsDrinksInvitationSerde()));
@@ -161,7 +161,7 @@ public class RequestService {
     private void purgePendingRequestsStore(
             KStream<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId,
                     andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipEvent> membershipEventKStream,
-            KStream<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId, FriendsDrinksInvitation>
+            KStream<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId, FriendsDrinksInvitationEvent>
                     friendsDrinksInvitationKStream) {
         membershipEventKStream.process(() ->
                 new Processor<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId,
@@ -189,7 +189,7 @@ public class RequestService {
                 }, PENDING_FRIENDSDRINKS_MEMBERSHIP_REQUESTS_STATE_STORE);
 
         friendsDrinksInvitationKStream.process(() ->
-                new Processor<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId, FriendsDrinksInvitation>() {
+                new Processor<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId, FriendsDrinksInvitationEvent>() {
 
             private KeyValueStore<FriendsDrinksMembershipId, String> stateStore;
 
@@ -200,7 +200,7 @@ public class RequestService {
 
             @Override
             public void process(andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId friendsDrinksMembershipId,
-                                FriendsDrinksInvitation friendsDrinksInvitation) {
+                                FriendsDrinksInvitationEvent friendsDrinksInvitation) {
                 String requestId = stateStore.get(toApi(friendsDrinksMembershipId));
                 if (requestId.equals(friendsDrinksInvitation.getRequestId())) {
                     stateStore.delete(toApi(friendsDrinksMembershipId));
@@ -630,7 +630,7 @@ public class RequestService {
 
     private KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipEvent> handleInvitationReplies(
             KStream<FriendsDrinksMembershipId, FriendsDrinksInvitationReplyRequest> invitationReplyRequestKStream,
-            KTable<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId, FriendsDrinksInvitation> friendsDrinksInvitations) {
+            KTable<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId, FriendsDrinksInvitationEvent> friendsDrinksInvitations) {
         KStream<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId, FriendsDrinksMembershipEvent>
                 friendsDrinksInvitationReplyResponses =
                 invitationReplyRequestKStream.selectKey((key, value) -> andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId

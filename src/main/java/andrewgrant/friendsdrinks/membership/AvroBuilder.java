@@ -145,8 +145,8 @@ public class AvroBuilder {
         return serde;
     }
 
-    public SpecificAvroSerde<FriendsDrinksInvitation> friendsDrinksInvitationSerde() {
-        SpecificAvroSerde<FriendsDrinksInvitation> serde;
+    public SpecificAvroSerde<FriendsDrinksInvitationEvent> friendsDrinksInvitationSerde() {
+        SpecificAvroSerde<FriendsDrinksInvitationEvent> serde;
         if (registryClient != null) {
             serde = new SpecificAvroSerde<>(registryClient);
         } else {
