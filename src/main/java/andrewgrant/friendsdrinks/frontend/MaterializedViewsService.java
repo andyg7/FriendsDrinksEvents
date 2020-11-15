@@ -154,7 +154,7 @@ public class MaterializedViewsService {
                                         .withKeySerde(Serdes.String())
                                         .withValueSerde(apiAvroBuilder.apiFriendsDrinksStateSerde()));
 
-        final String invitationTopicName = envProps.getProperty(FRIENDSDRINKS_INVITATION_EVENT);
+        final String invitationTopicName = envProps.getProperty(FRIENDSDRINKS_INVITATION_STATE);
         builder.table(invitationTopicName,
                 Consumed.with(membershipAvroBuilder.friendsDrinksMembershipIdSerdes(),
                         membershipAvroBuilder.friendsDrinksInvitationSerde()),
