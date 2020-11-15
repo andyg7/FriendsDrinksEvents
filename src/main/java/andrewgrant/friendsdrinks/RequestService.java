@@ -78,6 +78,12 @@ public class RequestService {
         KStream<FriendsDrinksId, FriendsDrinksEvent> friendsDrinksApiEvents = apiEvents.filter((s, friendsDrinksEvent) ->
                 friendsDrinksEvent.getEventType().equals(ApiEventType.FRIENDSDRINKS_EVENT))
                 .mapValues(x -> x.getFriendsDrinksEvent())
+                .filter(((s, friendsDrinksEvent) -> {
+                    FriendsDrinksEventType friendsDrinksEventType = friendsDrinksEvent.getEventType();
+                    return friendsDrinksEventType.equals(FriendsDrinksEventType.CREATE_FRIENDSDRINKS_REQUEST) ||
+                            friendsDrinksEventType.equals(FriendsDrinksEventType.UPDATE_FRIENDSDRINKS_REQUEST) ||
+                            friendsDrinksEventType.equals(FriendsDrinksEventType.DELETE_FRIENDSDRINKS_REQUEST);
+                }))
                 .selectKey((key, value) ->
                         FriendsDrinksId
                                 .newBuilder()
