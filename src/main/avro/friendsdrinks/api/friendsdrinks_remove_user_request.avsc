@@ -6,6 +6,7 @@
     {"name": "requestId", "type": "string"},
     {"name": "friendsDrinksId", "type": "FriendsDrinksId"},
     {"name": "userIdToRemove", "type": "UserId" },
+    {"name": "membershipId", "type": "FriendsDrinksMembershipId" },
     {"name": "requester", "type": "UserId" }
   ]
 }

@@ -4,6 +4,7 @@
   "name": "FriendsDrinksMembershipEvent",
   "fields": [
       {"name": "eventType", "type": {"type": "enum", "name": "EventType", "symbols": ["MEMBERSHIP_ADDED", "MEMBERSHIP_REMOVED"] } },
+      {"name": "requestId", "type": "string"},
       {"name": "membershipId", "type": "FriendsDrinksMembershipId" },
       {"name": "friendsDrinksMembershipAdded", "type": ["null", "FriendsDrinksMembershipAdded"], "default": null},
       {"name": "friendsDrinksMembershipRemoved", "type": ["null", "FriendsDrinksMembershipRemoved"], "default": null}

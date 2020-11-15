@@ -50,8 +50,8 @@ public class RequestService {
 
         StoreBuilder storeBuilder = Stores.keyValueStoreBuilder(
                 Stores.persistentKeyValueStore(PENDING_FRIENDSDRINKS_REQUESTS_STATE_STORE),
-                Serdes.String(),
-                frontendAvroBuilder.apiFriendsDrinksIdSerde());
+                frontendAvroBuilder.apiFriendsDrinksIdSerde(),
+                Serdes.String());
         builder.addStateStore(storeBuilder);
 
         KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable =
@@ -59,6 +59,7 @@ public class RequestService {
                         Consumed.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksStateSerde()));
 
         friendsDrinksStateKTable.toStream().process(() -> new Processor<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState>() {
+
             private KeyValueStore<FriendsDrinksId, String> stateStore;
 
             @Override

@@ -5,6 +5,7 @@
   "fields": [
       {"name": "friendsDrinksId", "type": "FriendsDrinksId"},
       {"name": "requestId", "type": "string"},
+      {"name": "membershipId", "type": "FriendsDrinksMembershipId" },
       {"name": "userId", "type": "UserId" }
   ]
 }
