@@ -58,7 +58,12 @@ public class RequestService {
                 builder.table(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_STATE),
                         Consumed.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksStateSerde()));
 
-        friendsDrinksStateKTable.toStream().process(() -> new Processor<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState>() {
+        KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> friendsDrinksEventKTable =
+                builder.stream(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_EVENT),
+                        Consumed.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksEventSerde()));
+
+        friendsDrinksEventKTable.process(() ->
+                new Processor<andrewgrant.friendsdrinks.avro.FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent>() {
 
             private KeyValueStore<FriendsDrinksId, String> stateStore;
 
@@ -68,8 +73,12 @@ public class RequestService {
             }
 
             @Override
-            public void process(andrewgrant.friendsdrinks.avro.FriendsDrinksId friendsDrinksId, FriendsDrinksState friendsDrinksState) {
-                stateStore.delete(toApi(friendsDrinksId));
+            public void process(andrewgrant.friendsdrinks.avro.FriendsDrinksId friendsDrinksId,
+                                andrewgrant.friendsdrinks.avro.FriendsDrinksEvent friendsDrinksEvent) {
+                String requestId = stateStore.get(toApi(friendsDrinksId));
+                if (requestId.equals(friendsDrinksEvent.getRequestId())) {
+                    stateStore.delete(toApi(friendsDrinksId));
+                }
             }
 
             @Override
