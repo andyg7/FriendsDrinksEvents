@@ -68,7 +68,7 @@ public class RequestService {
 
             @Override
             public void process(andrewgrant.friendsdrinks.avro.FriendsDrinksId friendsDrinksId, FriendsDrinksState friendsDrinksState) {
-                stateStore.delete(friendsDrinksState.getFriendsDrinksId().getUuid());
+                stateStore.delete(friendsDrinksId.getUuid());
             }
 
             @Override
