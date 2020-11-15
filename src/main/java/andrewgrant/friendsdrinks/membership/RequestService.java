@@ -126,9 +126,23 @@ public class RequestService {
                                 .setUserId(value.getUserId())
                                 .build());
 
+        KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipEventConcurrencyCheck>
+                friendsDrinksMembershipEventConcurrencyCheckKStream = checkForConcurrentRequests(friendsDrinksMembershipEventKStream);
+
+        KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipEventConcurrencyCheck>[] branchedConcurrencyCheck =
+                friendsDrinksMembershipEventConcurrencyCheckKStream.branch(
+                        (key, value) -> value.isConcurrentRequest,
+                        (key, value) -> true
+                );
+
+        toRejectedResponse(branchedConcurrencyCheck[0].mapValues(v -> v.friendsDrinksMembershipEvent))
+                .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.apiSerde()));
+
         InvitationRequestResult invitationRequestResult =
-                handleInvitationRequests(friendsDrinksMembershipEventKStream.filter((key, value) ->
-                        value.getEventType().equals(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_REQUEST))
+                handleInvitationRequests(branchedConcurrencyCheck[1]
+                        .mapValues(v -> v.friendsDrinksMembershipEvent)
+                        .filter((key, value) ->
+                                value.getEventType().equals(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_REQUEST))
                         .mapValues(v -> v.getFriendsDrinksInvitationRequest()), friendsDrinksStateKTable, userState);
 
         toApiResponse(invitationRequestResult.getSuccessfulResponseKStream())
@@ -140,14 +154,18 @@ public class RequestService {
                     .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.apiSerde()));
         }
 
-        toApiResponse(handleInvitationReplies(friendsDrinksMembershipEventKStream.filter((key, value) ->
-                value.getEventType().equals(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_REPLY_REQUEST))
+        toApiResponse(handleInvitationReplies(branchedConcurrencyCheck[1]
+                .mapValues(v -> v.friendsDrinksMembershipEvent)
+                .filter((key, value) ->
+                        value.getEventType().equals(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_REPLY_REQUEST))
                 .mapValues(v -> v.getFriendsDrinksInvitationReplyRequest()),  friendsDrinksInvitations))
                 .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.apiSerde()));
 
         RemoveUserRequestResult removeUserRequestResult = handleRemoveUserRequests(
-                friendsDrinksMembershipEventKStream.filter((key, value) ->
-                        value.getEventType().equals(FriendsDrinksMembershipEventType.FRIENDSDRINKS_REMOVE_USER_REQUEST))
+                branchedConcurrencyCheck[1]
+                        .mapValues(v -> v.friendsDrinksMembershipEvent)
+                        .filter((key, value) ->
+                                value.getEventType().equals(FriendsDrinksMembershipEventType.FRIENDSDRINKS_REMOVE_USER_REQUEST))
                         .mapValues(v -> v.getFriendsDrinksRemoveUserRequest()), friendsDrinksStateKTable, userState);
         toApiResponse(removeUserRequestResult.getSuccessfulResponseKStream())
                 .to(envProps.getProperty(FRIENDSDRINKS_API),
@@ -161,18 +179,142 @@ public class RequestService {
         return builder.build();
     }
 
-    private KStream<String, ApiEvent> toApiResponse(
+    private KStream<String, ApiEvent> toRejectedResponse(
             KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipEvent> friendsDrinksMembershipEventKStream) {
         return friendsDrinksMembershipEventKStream.map((key, value) -> {
-            ApiEvent apiEvent = ApiEvent
+            FriendsDrinksMembershipEventType eventType = value.getEventType();
+            ApiEvent.Builder apiEventBuilder = ApiEvent
                     .newBuilder()
-                    .setEventType(ApiEventType.FRIENDSDRINKS_MEMBERSHIP_EVENT)
                     .setRequestId(value.getRequestId())
-                    .setFriendsDrinksMembershipEvent(value)
-                    .build();
+                    .setEventType(ApiEventType.FRIENDSDRINKS_MEMBERSHIP_EVENT);
+            String requestId = value.getRequestId();
+            switch (eventType) {
+                case FRIENDSDRINKS_INVITATION_REQUEST:
+                    apiEventBuilder.setFriendsDrinksMembershipEvent(
+                            FriendsDrinksMembershipEvent
+                                    .newBuilder()
+                                    .setFriendsDrinksInvitationResponse(FriendsDrinksInvitationResponse
+                                            .newBuilder()
+                                            .setRequestId(requestId)
+                                            .setResult(Result.FAIL)
+                                            .build())
+                                    .build());
+                    break;
+                case FRIENDSDRINKS_REMOVE_USER_REQUEST:
+                    apiEventBuilder.setFriendsDrinksMembershipEvent(
+                            FriendsDrinksMembershipEvent
+                                    .newBuilder()
+                                    .setFriendsDrinksRemoveUserResponse(FriendsDrinksRemoveUserResponse
+                                            .newBuilder()
+                                            .setRequestId(requestId)
+                                            .setResult(Result.FAIL)
+                                            .build())
+                                    .build());
+                    break;
+                case FRIENDSDRINKS_INVITATION_REPLY_REQUEST:
+                    apiEventBuilder.setFriendsDrinksMembershipEvent(
+                            FriendsDrinksMembershipEvent
+                                    .newBuilder()
+                                    .setFriendsDrinksInvitationReplyResponse(FriendsDrinksInvitationReplyResponse
+                                            .newBuilder()
+                                            .setRequestId(requestId)
+                                            .setResult(Result.FAIL)
+                                            .build())
+                                    .build());
+                    break;
+                default:
+                    throw new RuntimeException(String.format("Unexpected event type %s", eventType.name()));
+            }
+            ApiEvent apiEvent = apiEventBuilder.build();
             return KeyValue.pair(apiEvent.getRequestId(), apiEvent);
         });
     }
+
+    private KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipEventConcurrencyCheck> checkForConcurrentRequests(
+            KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipEvent> friendsDrinksMembershipEventKStream
+    ) {
+        return friendsDrinksMembershipEventKStream.transformValues(() ->
+                new ValueTransformer<FriendsDrinksMembershipEvent, FriendsDrinksMembershipEventConcurrencyCheck>() {
+
+                    private KeyValueStore<FriendsDrinksMembershipId, String> stateStore;
+
+                    @Override
+                    public void init(ProcessorContext processorContext) {
+                        stateStore = (KeyValueStore) processorContext.getStateStore(PENDING_FRIENDSDRINKS_MEMBERSHIP_REQUESTS_STATE_STORE);
+                    }
+
+                    @Override
+                    public FriendsDrinksMembershipEventConcurrencyCheck transform(FriendsDrinksMembershipEvent friendsDrinksMembershipEvent) {
+                        FriendsDrinksMembershipEventConcurrencyCheck concurrencyCheck =
+                                new FriendsDrinksMembershipEventConcurrencyCheck();
+                        concurrencyCheck.friendsDrinksMembershipEvent = friendsDrinksMembershipEvent;
+                        FriendsDrinksMembershipId friendsDrinksMembershipId = friendsDrinksMembershipEvent.getMembershipId();
+                        if (stateStore.get(friendsDrinksMembershipId) != null) {
+                            concurrencyCheck.isConcurrentRequest = true;
+                        } else {
+                            stateStore.put(friendsDrinksMembershipId, friendsDrinksMembershipEvent.getRequestId());
+                            concurrencyCheck.isConcurrentRequest = false;
+                        }
+                        return concurrencyCheck;
+                    }
+
+                    @Override
+                    public void close() {
+
+                    }
+                }, PENDING_FRIENDSDRINKS_MEMBERSHIP_REQUESTS_STATE_STORE);
+    }
+
+    private KStream<String, ApiEvent> toApiResponse(
+            KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipEvent> friendsDrinksMembershipEventKStream) {
+
+        return friendsDrinksMembershipEventKStream.transform(() ->
+                new Transformer<FriendsDrinksMembershipId, FriendsDrinksMembershipEvent, KeyValue<String, ApiEvent>>() {
+
+                    private KeyValueStore<FriendsDrinksMembershipId, String> stateStore;
+
+                    @Override
+                    public void init(ProcessorContext processorContext) {
+                        stateStore = (KeyValueStore) processorContext.getStateStore(PENDING_FRIENDSDRINKS_MEMBERSHIP_REQUESTS_STATE_STORE);
+                    }
+
+                    @Override
+                    public KeyValue<String, ApiEvent> transform(
+                            FriendsDrinksMembershipId friendsDrinksMembershipId,
+                            FriendsDrinksMembershipEvent friendsDrinksMembershipEvent) {
+                        Result result;
+                        FriendsDrinksMembershipEventType eventType = friendsDrinksMembershipEvent.getEventType();
+                        switch (eventType) {
+                            case FRIENDSDRINKS_INVITATION_RESPONSE:
+                                result = friendsDrinksMembershipEvent.getFriendsDrinksInvitationResponse().getResult();
+                                break;
+                            case FRIENDSDRINKS_REMOVE_USER_RESPONSE:
+                                result = friendsDrinksMembershipEvent.getFriendsDrinksRemoveUserResponse().getResult();
+                                break;
+                            case FRIENDSDRINKS_INVITATION_REPLY_RESPONSE:
+                                result = friendsDrinksMembershipEvent.getFriendsDrinksInvitationReplyResponse().getResult();
+                                break;
+                            default:
+                                throw new RuntimeException(String.format("Unexpected event type %s", eventType.name()));
+                        }
+                        if (result.equals(Result.FAIL)) {
+                            stateStore.delete(friendsDrinksMembershipId);
+                        }
+                        ApiEvent apiEvent = ApiEvent
+                                .newBuilder()
+                                .setRequestId(friendsDrinksMembershipEvent.getRequestId())
+                                .setEventType(ApiEventType.FRIENDSDRINKS_MEMBERSHIP_EVENT)
+                                .setFriendsDrinksMembershipEvent(friendsDrinksMembershipEvent)
+                                .build();
+                        return KeyValue.pair(apiEvent.getRequestId(), apiEvent);
+                    }
+
+                    @Override
+                    public void close() {
+
+                    }
+                }, PENDING_FRIENDSDRINKS_MEMBERSHIP_REQUESTS_STATE_STORE);
+   }
 
     private RemoveUserRequestResult handleRemoveUserRequests(
             KStream<FriendsDrinksMembershipId, FriendsDrinksRemoveUserRequest> friendsDrinksRemoveUserRequest,
@@ -566,4 +708,8 @@ public class RequestService {
         }
     }
 
+}
+class FriendsDrinksMembershipEventConcurrencyCheck {
+    FriendsDrinksMembershipEvent friendsDrinksMembershipEvent;
+    boolean isConcurrentRequest;
 }
