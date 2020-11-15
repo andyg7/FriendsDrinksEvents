@@ -301,7 +301,10 @@ public class RequestService {
                                 throw new RuntimeException(String.format("Unexpected event type %s", eventType.name()));
                         }
                         if (result.equals(Result.FAIL)) {
-                            stateStore.delete(friendsDrinksMembershipId);
+                            String requestId = stateStore.get(friendsDrinksMembershipId);
+                            if (requestId.equals(friendsDrinksMembershipEvent.getRequestId())) {
+                                stateStore.delete(friendsDrinksMembershipId);
+                            }
                         }
                         ApiEvent apiEvent = ApiEvent
                                 .newBuilder()

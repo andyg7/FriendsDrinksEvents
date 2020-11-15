@@ -248,7 +248,10 @@ public class RequestService {
                 }
                 if (result.equals(Result.FAIL)) {
                     log.info("Releasing \"lock\" for FriendsDrinks {}", friendsDrinksEvent.getFriendsDrinksId().getUuid());
-                    stateStore.delete(friendsDrinksEvent.getFriendsDrinksId());
+                    String requestId = stateStore.get(friendsDrinksEvent.getFriendsDrinksId());
+                    if (requestId.equals(friendsDrinksEvent.getRequestId())) {
+                        stateStore.delete(friendsDrinksEvent.getFriendsDrinksId());
+                    }
                 }
                 ApiEvent apiEvent = ApiEvent
                         .newBuilder()
