@@ -25,6 +25,7 @@ public class MembershipRequestResponseJoiner {
             return FriendsDrinksMembershipEvent
                     .newBuilder()
                     .setEventType(andrewgrant.friendsdrinks.membership.avro.EventType.MEMBERSHIP_ADDED)
+                    .setRequestId(r.getRequestId())
                     .setMembershipId(membershipId)
                     .setFriendsDrinksMembershipAdded(
                             FriendsDrinksMembershipAdded
@@ -46,6 +47,7 @@ public class MembershipRequestResponseJoiner {
             return FriendsDrinksMembershipEvent
                     .newBuilder()
                     .setEventType(andrewgrant.friendsdrinks.membership.avro.EventType.MEMBERSHIP_REMOVED)
+                    .setRequestId(r.getRequestId())
                     .setMembershipId(membershipId)
                     .setFriendsDrinksMembershipRemoved(
                             FriendsDrinksMembershipRemoved
