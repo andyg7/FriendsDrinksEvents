@@ -3,9 +3,8 @@
   "type": "record",
   "name": "FriendsDrinksInvitation",
   "fields": [
-      {"name": "invitationId", "type": "FriendsDrinksInvitationId"},
-      {"name": "friendsDrinksId", "type": "FriendsDrinksId"},
-      {"name": "userId", "type": "UserId" },
+      {"name": "membershipId", "type": "FriendsDrinksMembershipId" },
+      {"name": "requestId", "type": "string"},
       {"name": "message", "type": "string" }
   ]
 }

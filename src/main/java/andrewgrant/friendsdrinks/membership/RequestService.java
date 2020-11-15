@@ -26,7 +26,6 @@ import andrewgrant.friendsdrinks.api.avro.*;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksId;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksState;
 import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksInvitation;
-import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksInvitationId;
 import andrewgrant.friendsdrinks.user.AvroBuilder;
 import andrewgrant.friendsdrinks.user.avro.UserId;
 import andrewgrant.friendsdrinks.user.avro.UserState;
@@ -71,14 +70,14 @@ public class RequestService {
                 builder.table(envProps.getProperty(USER_STATE),
                         Consumed.with(userAvroBuilder.userIdSerde(), userAvroBuilder.userStateSerde()));
 
-        KTable<FriendsDrinksInvitationId, FriendsDrinksInvitation> friendsDrinksInvitations =
+        KTable<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId, FriendsDrinksInvitation> friendsDrinksInvitations =
                 builder.table(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_INVITATION),
-                        Consumed.with(membershipAvroBuilder.friendsDrinksInvitationIdSerde(),
+                        Consumed.with(membershipAvroBuilder.friendsDrinksMembershipIdSerdes(),
                                 membershipAvroBuilder.friendsDrinksInvitationSerde()));
 
         KStream<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId,
                 andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipEvent> membershipEventKStream =
-                builder.stream(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_MEMBERSHIP_STATE),
+                builder.stream(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_MEMBERSHIP_EVENT),
                         Consumed.with(
                                 membershipAvroBuilder.friendsDrinksMembershipIdSerdes(),
                                 membershipAvroBuilder.friendsDrinksMembershipEventSerdes()));
@@ -89,30 +88,7 @@ public class RequestService {
                 Serdes.String());
         builder.addStateStore(storeBuilder);
 
-        membershipEventKStream.process(() ->
-                new Processor<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId,
-                        andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipEvent>() {
-
-                    private KeyValueStore<FriendsDrinksMembershipId, String> stateStore;
-
-                    @Override
-                    public void init(ProcessorContext processorContext) {
-                        stateStore = (KeyValueStore) processorContext.getStateStore(PENDING_FRIENDSDRINKS_MEMBERSHIP_REQUESTS_STATE_STORE);
-                    }
-
-                    @Override
-                    public void process(
-                            andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId friendsDrinksMembershipId,
-                            andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipEvent friendsDrinksMembershipEvent) {
-                        String requestId = stateStore.get(toApi(friendsDrinksMembershipId));
-                        if (requestId.equals(friendsDrinksMembershipEvent.getRequestId())) {
-                            stateStore.delete(toApi(friendsDrinksMembershipId));
-                        }
-                    }
-
-                    @Override
-                    public void close() { }
-                }, PENDING_FRIENDSDRINKS_MEMBERSHIP_REQUESTS_STATE_STORE);
+        purgePendingRequestsStore(membershipEventKStream, friendsDrinksInvitations.toStream());
 
         KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipEvent> friendsDrinksMembershipEventKStream =
                 apiEvents.filter((key, value) -> value.getEventType().equals(ApiEventType.FRIENDSDRINKS_MEMBERSHIP_EVENT))
@@ -180,6 +156,60 @@ public class RequestService {
         }
 
         return builder.build();
+    }
+
+    private void purgePendingRequestsStore(
+            KStream<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId,
+                    andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipEvent> membershipEventKStream,
+            KStream<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId, FriendsDrinksInvitation>
+                    friendsDrinksInvitationKStream) {
+        membershipEventKStream.process(() ->
+                new Processor<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId,
+                        andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipEvent>() {
+
+                    private KeyValueStore<FriendsDrinksMembershipId, String> stateStore;
+
+                    @Override
+                    public void init(ProcessorContext processorContext) {
+                        stateStore = (KeyValueStore) processorContext.getStateStore(PENDING_FRIENDSDRINKS_MEMBERSHIP_REQUESTS_STATE_STORE);
+                    }
+
+                    @Override
+                    public void process(
+                            andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId friendsDrinksMembershipId,
+                            andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipEvent friendsDrinksMembershipEvent) {
+                        String requestId = stateStore.get(toApi(friendsDrinksMembershipId));
+                        if (requestId.equals(friendsDrinksMembershipEvent.getRequestId())) {
+                            stateStore.delete(toApi(friendsDrinksMembershipId));
+                        }
+                    }
+
+                    @Override
+                    public void close() { }
+                }, PENDING_FRIENDSDRINKS_MEMBERSHIP_REQUESTS_STATE_STORE);
+
+        friendsDrinksInvitationKStream.process(() ->
+                new Processor<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId, FriendsDrinksInvitation>() {
+
+            private KeyValueStore<FriendsDrinksMembershipId, String> stateStore;
+
+            @Override
+            public void init(ProcessorContext processorContext) {
+                stateStore = (KeyValueStore) processorContext.getStateStore(PENDING_FRIENDSDRINKS_MEMBERSHIP_REQUESTS_STATE_STORE);
+            }
+
+            @Override
+            public void process(andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId friendsDrinksMembershipId,
+                                FriendsDrinksInvitation friendsDrinksInvitation) {
+                String requestId = stateStore.get(toApi(friendsDrinksMembershipId));
+                if (requestId.equals(friendsDrinksInvitation.getRequestId())) {
+                    stateStore.delete(toApi(friendsDrinksMembershipId));
+                }
+            }
+
+            @Override
+            public void close() { }
+        });
     }
 
     private KStream<String, ApiEvent> toRejectedResponse(
@@ -600,9 +630,10 @@ public class RequestService {
 
     private KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipEvent> handleInvitationReplies(
             KStream<FriendsDrinksMembershipId, FriendsDrinksInvitationReplyRequest> invitationReplyRequestKStream,
-            KTable<FriendsDrinksInvitationId, FriendsDrinksInvitation> friendsDrinksInvitations) {
-        KStream<FriendsDrinksInvitationId, FriendsDrinksMembershipEvent> friendsDrinksInvitationReplyResponses =
-                invitationReplyRequestKStream.selectKey((key, value) -> FriendsDrinksInvitationId
+            KTable<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId, FriendsDrinksInvitation> friendsDrinksInvitations) {
+        KStream<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId, FriendsDrinksMembershipEvent>
+                friendsDrinksInvitationReplyResponses =
+                invitationReplyRequestKStream.selectKey((key, value) -> andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId
                         .newBuilder()
                         .setFriendsDrinksId(andrewgrant.friendsdrinks.membership.avro.FriendsDrinksId
                                 .newBuilder()
@@ -638,7 +669,7 @@ public class RequestService {
                                     }
                                     return friendsDrinksMembershipEvent.build();
                                 },
-                                Joined.with(membershipAvroBuilder.friendsDrinksInvitationIdSerde(),
+                                Joined.with(membershipAvroBuilder.friendsDrinksMembershipIdSerdes(),
                                         frontendAvroBuilder.friendsDrinksInvitationReplyRequestSerde(),
                                         membershipAvroBuilder.friendsDrinksInvitationSerde())
                         );

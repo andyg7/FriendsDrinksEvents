@@ -32,7 +32,6 @@ import andrewgrant.friendsdrinks.frontend.api.user.PostUsersRequestBean;
 import andrewgrant.friendsdrinks.frontend.api.user.PostUsersResponseBean;
 import andrewgrant.friendsdrinks.frontend.api.user.UserBean;
 import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksInvitation;
-import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksInvitationId;
 import andrewgrant.friendsdrinks.user.avro.UserEvent;
 import andrewgrant.friendsdrinks.user.avro.UserId;
 import andrewgrant.friendsdrinks.user.avro.UserLoggedIn;
@@ -239,20 +238,21 @@ public class Handler {
             getUserHomepageResponseBean.setMemberFriendsDrinksList(new ArrayList<>());
         }
 
-        ReadOnlyKeyValueStore<FriendsDrinksInvitationId, FriendsDrinksInvitation> kv =
+        ReadOnlyKeyValueStore<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId, FriendsDrinksInvitation> kv =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(INVITATIONS_STORE, QueryableStoreTypes.keyValueStore()));
-        KeyValueIterator<FriendsDrinksInvitationId, FriendsDrinksInvitation> allKvs = kv.all();
+        KeyValueIterator<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId, FriendsDrinksInvitation> allKvs = kv.all();
         List<FriendsDrinksInvitationBean> invitationBeans = new ArrayList<>();
         while (allKvs.hasNext()) {
-            KeyValue<FriendsDrinksInvitationId, FriendsDrinksInvitation> keyValue = allKvs.next();
+            KeyValue<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId, FriendsDrinksInvitation> keyValue = allKvs.next();
             if (keyValue.key.getUserId().getUserId().equals(userId)) {
                 FriendsDrinksInvitationBean invitationBean = new FriendsDrinksInvitationBean();
-                invitationBean.setFriendsDrinksId(keyValue.value.getFriendsDrinksId().getUuid());
+                invitationBean.setFriendsDrinksId(
+                        keyValue.value.getMembershipId().getFriendsDrinksId().getUuid());
                 invitationBean.setMessage(keyValue.value.getMessage());
                 FriendsDrinksState friendsDrinksState = friendsDrinksStore.get(FriendsDrinksId
                         .newBuilder()
-                        .setUuid(keyValue.value.getFriendsDrinksId().getUuid())
-                        .setAdminUserId(keyValue.value.getFriendsDrinksId().getAdminUserId())
+                        .setUuid(keyValue.value.getMembershipId().getFriendsDrinksId().getUuid())
+                        .setAdminUserId(keyValue.value.getMembershipId().getFriendsDrinksId().getAdminUserId())
                         .build());
                 invitationBean.setFriendsDrinksName(friendsDrinksState.getName());
                 invitationBeans.add(invitationBean);
@@ -276,9 +276,10 @@ public class Handler {
             throw new BadRequestException(String.format("friendsDrinksId %s could not be found", friendsDrinksId));
         }
 
-        ReadOnlyKeyValueStore<FriendsDrinksInvitationId, FriendsDrinksInvitation> kv =
+        ReadOnlyKeyValueStore<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId, FriendsDrinksInvitation> kv =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(INVITATIONS_STORE, QueryableStoreTypes.keyValueStore()));
-        FriendsDrinksInvitationId invitationId = FriendsDrinksInvitationId
+        andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId invitationId =
+                andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId
                 .newBuilder()
                 .setFriendsDrinksId(andrewgrant.friendsdrinks.membership.avro.FriendsDrinksId
                         .newBuilder()

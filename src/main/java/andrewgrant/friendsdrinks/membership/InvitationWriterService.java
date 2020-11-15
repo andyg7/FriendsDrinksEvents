@@ -19,7 +19,7 @@ import andrewgrant.friendsdrinks.api.avro.*;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksId;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksState;
 import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksInvitation;
-import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksInvitationId;
+import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId;
 
 /**
  * Owns writing to friendsdrinks-invitation topic.
@@ -56,7 +56,7 @@ public class InvitationWriterService {
 
         streamOfPendingInvitations(invitationResponses, invitationRequests, friendsDrinksStateKTable)
                 .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_INVITATION),
-                        Produced.with(avroBuilder.friendsDrinksInvitationIdSerde(),
+                        Produced.with(avroBuilder.friendsDrinksMembershipIdSerdes(),
                                 avroBuilder.friendsDrinksInvitationSerde()));
 
         KStream<String, FriendsDrinksInvitationReplyResponse> invitationReplyResponses =
@@ -65,13 +65,13 @@ public class InvitationWriterService {
                 streamOfInvitationReplyRequests(apiEvents);
         streamOfResolvedInvitations(invitationReplyResponses, invitationReplyRequests)
                 .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_INVITATION),
-                        Produced.with(avroBuilder.friendsDrinksInvitationIdSerde(),
+                        Produced.with(avroBuilder.friendsDrinksMembershipIdSerdes(),
                                 avroBuilder.friendsDrinksInvitationSerde()));
 
         return builder.build();
     }
 
-    private KStream<FriendsDrinksInvitationId, FriendsDrinksInvitation> streamOfResolvedInvitations(
+    private KStream<FriendsDrinksMembershipId, FriendsDrinksInvitation> streamOfResolvedInvitations(
             KStream<String, FriendsDrinksInvitationReplyResponse> invitationReplyResponses,
             KStream<String, FriendsDrinksInvitationReplyRequest> invitationReplyRequests) {
 
@@ -82,7 +82,7 @@ public class InvitationWriterService {
                         frontendAvroBuilder.friendsDrinksInvitationReplyResponseSerde(),
                         frontendAvroBuilder.friendsDrinksInvitationReplyRequestSerde()))
                 .map((k, v) -> {
-                    FriendsDrinksInvitationId id = FriendsDrinksInvitationId
+                    FriendsDrinksMembershipId id = FriendsDrinksMembershipId
                             .newBuilder()
                             .setFriendsDrinksId(andrewgrant.friendsdrinks.membership.avro.FriendsDrinksId
                                     .newBuilder()
@@ -99,7 +99,7 @@ public class InvitationWriterService {
                 });
     }
 
-    private KStream<FriendsDrinksInvitationId, FriendsDrinksInvitation> streamOfPendingInvitations(
+    private KStream<FriendsDrinksMembershipId, FriendsDrinksInvitation> streamOfPendingInvitations(
             KStream<String, FriendsDrinksInvitationResponse> invitationResponses,
             KStream<String, FriendsDrinksInvitationRequest> invitationRequests,
             KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable) {
@@ -123,32 +123,19 @@ public class InvitationWriterService {
                             if (state != null) {
                                 return FriendsDrinksInvitation
                                         .newBuilder()
-                                        .setFriendsDrinksId(
-                                                andrewgrant.friendsdrinks.membership.avro.FriendsDrinksId
-                                                        .newBuilder()
-                                                        .setUuid(request.getMembershipId().getFriendsDrinksId().getUuid())
-                                                        .setAdminUserId(request.getMembershipId().getFriendsDrinksId().getAdminUserId())
-                                                        .build())
-                                        .setUserId(
-                                                andrewgrant.friendsdrinks.membership.avro.UserId
-                                                        .newBuilder()
-                                                        .setUserId(request.getMembershipId().getUserId().getUserId())
-                                                        .build())
-                                        .setInvitationId(
-                                                FriendsDrinksInvitationId
-                                                        .newBuilder()
-                                                        .setFriendsDrinksId(
-                                                                andrewgrant.friendsdrinks.membership.avro.FriendsDrinksId
+                                        .setMembershipId(FriendsDrinksMembershipId.newBuilder()
+                                                .setFriendsDrinksId(
+                                                        andrewgrant.friendsdrinks.membership.avro.FriendsDrinksId
                                                                 .newBuilder()
                                                                 .setUuid(request.getMembershipId().getFriendsDrinksId().getUuid())
                                                                 .setAdminUserId(request.getMembershipId().getFriendsDrinksId().getAdminUserId())
                                                                 .build())
-                                                        .setUserId(
-                                                                andrewgrant.friendsdrinks.membership.avro.UserId
-                                                                        .newBuilder()
-                                                                        .setUserId(request.getMembershipId().getUserId().getUserId())
-                                                                        .build())
-                                                        .build())
+                                                .setUserId(
+                                                        andrewgrant.friendsdrinks.membership.avro.UserId
+                                                                .newBuilder()
+                                                                .setUserId(request.getMembershipId().getUserId().getUserId())
+                                                                .build())
+                                                .build())
                                         .setMessage(String.format("Want to join %s?!", state.getName()))
                                         .build();
                             } else {
@@ -160,7 +147,7 @@ public class InvitationWriterService {
                                 frontendAvroBuilder.friendsDrinksInvitationRequestSerde(),
                                 friendsDrinksAvroBuilder.friendsDrinksStateSerde())
                 )
-                .selectKey((key, value) -> value.getInvitationId());
+                .selectKey((key, value) -> value.getMembershipId());
     }
 
     private KStream<String, FriendsDrinksInvitationResponse> streamOfSuccessfulInvitationResponses(KStream<String, ApiEvent> apiEvents) {
