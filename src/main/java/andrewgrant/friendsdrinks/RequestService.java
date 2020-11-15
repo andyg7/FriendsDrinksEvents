@@ -76,8 +76,10 @@ public class RequestService {
             public void process(andrewgrant.friendsdrinks.avro.FriendsDrinksId friendsDrinksId,
                                 andrewgrant.friendsdrinks.avro.FriendsDrinksEvent friendsDrinksEvent) {
                 String requestId = stateStore.get(toApi(friendsDrinksId));
-                if (requestId.equals(friendsDrinksEvent.getRequestId())) {
+                if (requestId != null && requestId.equals(friendsDrinksEvent.getRequestId())) {
                     stateStore.delete(toApi(friendsDrinksId));
+                } else {
+                    log.info("Failed to get request for FriendsDrinks UUID {}", friendsDrinksId.getUuid());
                 }
             }
 
@@ -249,8 +251,10 @@ public class RequestService {
                 if (result.equals(Result.FAIL)) {
                     log.info("Releasing \"lock\" for FriendsDrinks {}", friendsDrinksEvent.getFriendsDrinksId().getUuid());
                     String requestId = stateStore.get(friendsDrinksEvent.getFriendsDrinksId());
-                    if (requestId.equals(friendsDrinksEvent.getRequestId())) {
+                    if (requestId != null && requestId.equals(friendsDrinksEvent.getRequestId())) {
                         stateStore.delete(friendsDrinksEvent.getFriendsDrinksId());
+                    } else {
+                        log.info("Failed to get request for FriendsDrinks UUID {}", friendsDrinksId.getUuid());
                     }
                 }
                 ApiEvent apiEvent = ApiEvent
