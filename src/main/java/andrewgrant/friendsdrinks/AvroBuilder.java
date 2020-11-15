@@ -93,5 +93,4 @@ public class AvroBuilder {
         return serde;
     }
 
-
 }

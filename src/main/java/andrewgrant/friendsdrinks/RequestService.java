@@ -51,7 +51,7 @@ public class RequestService {
         StoreBuilder storeBuilder = Stores.keyValueStoreBuilder(
                 Stores.persistentKeyValueStore(PENDING_FRIENDSDRINKS_REQUESTS_STATE_STORE),
                 Serdes.String(),
-                Serdes.String());
+                frontendAvroBuilder.apiFriendsDrinksIdSerde());
         builder.addStateStore(storeBuilder);
 
         KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable =
@@ -59,7 +59,7 @@ public class RequestService {
                         Consumed.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksStateSerde()));
 
         friendsDrinksStateKTable.toStream().process(() -> new Processor<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState>() {
-            private KeyValueStore<String, String> stateStore;
+            private KeyValueStore<FriendsDrinksId, String> stateStore;
 
             @Override
             public void init(ProcessorContext processorContext) {
@@ -68,7 +68,7 @@ public class RequestService {
 
             @Override
             public void process(andrewgrant.friendsdrinks.avro.FriendsDrinksId friendsDrinksId, FriendsDrinksState friendsDrinksState) {
-                stateStore.delete(friendsDrinksId.getUuid());
+                stateStore.delete(toApi(friendsDrinksId));
             }
 
             @Override
@@ -84,12 +84,7 @@ public class RequestService {
                             friendsDrinksEventType.equals(FriendsDrinksEventType.UPDATE_FRIENDSDRINKS_REQUEST) ||
                             friendsDrinksEventType.equals(FriendsDrinksEventType.DELETE_FRIENDSDRINKS_REQUEST);
                 }))
-                .selectKey((key, value) ->
-                        FriendsDrinksId
-                                .newBuilder()
-                                .setAdminUserId(value.getFriendsDrinksId().getAdminUserId())
-                                .setUuid(value.getFriendsDrinksId().getUuid())
-                                .build());
+                .selectKey((key, value) -> value.getFriendsDrinksId());
         KStream<FriendsDrinksId, FriendsDrinksEventConcurrencyCheck> friendsDrinksApiEventsWithConcurrencyCheck =
                 checkForConcurrentRequest(friendsDrinksApiEvents);
 
@@ -184,7 +179,7 @@ public class RequestService {
     private KStream<FriendsDrinksId, FriendsDrinksEventConcurrencyCheck> checkForConcurrentRequest(
             KStream<FriendsDrinksId, FriendsDrinksEvent> friendsDrinksEventKStream) {
         return friendsDrinksEventKStream.transformValues(() -> new ValueTransformer<FriendsDrinksEvent, FriendsDrinksEventConcurrencyCheck>() {
-           private KeyValueStore<String, String> stateStore;
+           private KeyValueStore<FriendsDrinksId, String> stateStore;
 
             @Override
             public void init(ProcessorContext processorContext) {
@@ -195,15 +190,15 @@ public class RequestService {
             public FriendsDrinksEventConcurrencyCheck transform(FriendsDrinksEvent friendsDrinksEvent) {
                 FriendsDrinksEventConcurrencyCheck concurrencyCheck = new FriendsDrinksEventConcurrencyCheck();
                 concurrencyCheck.friendsDrinksEvent = friendsDrinksEvent;
-                String uuid = friendsDrinksEvent.getFriendsDrinksId().getUuid();
-                if (stateStore.get(uuid) != null) {
+                FriendsDrinksId friendsDrinksId = friendsDrinksEvent.getFriendsDrinksId();
+                if (stateStore.get(friendsDrinksId) != null) {
                     log.info("Rejecting request {} for FriendsDrinks {} because there's a concurrent request",
                             friendsDrinksEvent.getRequestId(), friendsDrinksEvent.getFriendsDrinksId().getUuid());
                     concurrencyCheck.isConcurrentRequest = true;
                 } else {
                     log.info("Grabbing \"lock\" for request {} for FriendsDrinks {}",
                             friendsDrinksEvent.getRequestId(), friendsDrinksEvent.getFriendsDrinksId().getUuid());
-                    stateStore.put(uuid, friendsDrinksEvent.getRequestId());
+                    stateStore.put(friendsDrinksId, friendsDrinksEvent.getRequestId());
                     concurrencyCheck.isConcurrentRequest = false;
                 }
                 return concurrencyCheck;
@@ -217,7 +212,7 @@ public class RequestService {
     private KStream<String, ApiEvent> toApiEventResponse(KStream<FriendsDrinksId, FriendsDrinksEvent> friendsDrinksEventKStream) {
         return friendsDrinksEventKStream.transform(() -> new Transformer<FriendsDrinksId, FriendsDrinksEvent, KeyValue<String, ApiEvent>>() {
 
-            private KeyValueStore<String, String> stateStore;
+            private KeyValueStore<FriendsDrinksId, String> stateStore;
 
             @Override
             public void init(ProcessorContext processorContext) {
@@ -243,7 +238,7 @@ public class RequestService {
                 }
                 if (result.equals(Result.FAIL)) {
                     log.info("Releasing \"lock\" for FriendsDrinks {}", friendsDrinksEvent.getFriendsDrinksId().getUuid());
-                    stateStore.delete(friendsDrinksEvent.getFriendsDrinksId().getUuid());
+                    stateStore.delete(friendsDrinksEvent.getFriendsDrinksId());
                 }
                 ApiEvent apiEvent = ApiEvent
                         .newBuilder()
@@ -302,10 +297,7 @@ public class RequestService {
             KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable) {
 
         KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, DeleteFriendsDrinksRequest> deleteRequestsKeyed =
-                deleteRequests.selectKey(((key, value) -> andrewgrant.friendsdrinks.avro.FriendsDrinksId
-                        .newBuilder()
-                        .setAdminUserId(value.getFriendsDrinksId().getAdminUserId())
-                        .setUuid(value.getFriendsDrinksId().getUuid()).build()));
+                deleteRequests.selectKey((key, value) -> toFriendsDrinks(value.getFriendsDrinksId()));
 
         return deleteRequestsKeyed.leftJoin(friendsDrinksStateKTable,
                 (request, state) -> {
@@ -339,10 +331,7 @@ public class RequestService {
             KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable) {
 
         KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, UpdateFriendsDrinksRequest> updateRequestsKeyed =
-                updateRequests.selectKey(((key, value) -> andrewgrant.friendsdrinks.avro.FriendsDrinksId
-                        .newBuilder()
-                        .setAdminUserId(value.getFriendsDrinksId().getAdminUserId())
-                        .setUuid(value.getFriendsDrinksId().getUuid()).build()));
+                updateRequests.selectKey((key, value) -> toFriendsDrinks(value.getFriendsDrinksId()));
         return updateRequestsKeyed.leftJoin(friendsDrinksStateKTable,
                 (updateRequest, state) -> {
                     if (state != null) {
@@ -374,6 +363,22 @@ public class RequestService {
                         frontendAvroBuilder.updateFriendsDrinksRequestSerde(),
                         avroBuilder.friendsDrinksStateSerde()))
                 .selectKey(((key, value) -> value.getFriendsDrinksId()));
+    }
+
+    private FriendsDrinksId toApi(andrewgrant.friendsdrinks.avro.FriendsDrinksId friendsDrinksId) {
+        return FriendsDrinksId
+                .newBuilder()
+                .setUuid(friendsDrinksId.getUuid())
+                .setAdminUserId(friendsDrinksId.getAdminUserId())
+                .build();
+    }
+
+    private andrewgrant.friendsdrinks.avro.FriendsDrinksId toFriendsDrinks(FriendsDrinksId friendsDrinksId) {
+        return andrewgrant.friendsdrinks.avro.FriendsDrinksId
+                .newBuilder()
+                .setUuid(friendsDrinksId.getUuid())
+                .setAdminUserId(friendsDrinksId.getAdminUserId())
+                .build();
     }
 
     public Properties buildStreamProperties(Properties envProps) {
