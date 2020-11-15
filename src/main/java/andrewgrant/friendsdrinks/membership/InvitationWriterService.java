@@ -55,7 +55,7 @@ public class InvitationWriterService {
                         Consumed.with(friendsDrinksAvroBuilder.friendsDrinksIdSerde(), friendsDrinksAvroBuilder.friendsDrinksStateSerde()));
 
         streamOfPendingInvitations(invitationResponses, invitationRequests, friendsDrinksStateKTable)
-                .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_INVITATION),
+                .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_INVITATION_EVENT),
                         Produced.with(avroBuilder.friendsDrinksMembershipIdSerdes(),
                                 avroBuilder.friendsDrinksInvitationSerde()));
 
@@ -64,7 +64,7 @@ public class InvitationWriterService {
         KStream<String, FriendsDrinksInvitationReplyRequest> invitationReplyRequests =
                 streamOfInvitationReplyRequests(apiEvents);
         streamOfResolvedInvitations(invitationReplyResponses, invitationReplyRequests)
-                .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_INVITATION),
+                .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_INVITATION_EVENT),
                         Produced.with(avroBuilder.friendsDrinksMembershipIdSerdes(),
                                 avroBuilder.friendsDrinksInvitationSerde()));
 

@@ -71,7 +71,7 @@ public class RequestService {
                         Consumed.with(userAvroBuilder.userIdSerde(), userAvroBuilder.userStateSerde()));
 
         KTable<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId, FriendsDrinksInvitationEvent> friendsDrinksInvitations =
-                builder.table(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_INVITATION),
+                builder.table(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_INVITATION_EVENT),
                         Consumed.with(membershipAvroBuilder.friendsDrinksMembershipIdSerdes(),
                                 membershipAvroBuilder.friendsDrinksInvitationSerde()));
 
