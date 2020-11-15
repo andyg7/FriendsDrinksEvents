@@ -133,6 +133,7 @@ public class RequestService {
                    .setRequestId(requestId);
            switch (friendsDrinksEventType) {
                case CREATE_FRIENDSDRINKS_REQUEST:
+                   responseFriendsDrinksEvent.setEventType(FriendsDrinksEventType.CREATE_FRIENDSDRINKS_RESPONSE);
                    responseFriendsDrinksEvent.setCreateFriendsDrinksResponse(
                            CreateFriendsDrinksResponse
                                    .newBuilder()
@@ -142,6 +143,7 @@ public class RequestService {
                                    .build());
                    break;
                case UPDATE_FRIENDSDRINKS_REQUEST:
+                   responseFriendsDrinksEvent.setEventType(FriendsDrinksEventType.UPDATE_FRIENDSDRINKS_RESPONSE);
                    responseFriendsDrinksEvent.setUpdateFriendsDrinksResponse(
                            UpdateFriendsDrinksResponse
                                    .newBuilder()
@@ -151,6 +153,7 @@ public class RequestService {
                                    .build());
                    break;
                case DELETE_FRIENDSDRINKS_REQUEST:
+                   responseFriendsDrinksEvent.setEventType(FriendsDrinksEventType.DELETE_FRIENDSDRINKS_RESPONSE);
                    responseFriendsDrinksEvent.setDeleteFriendsDrinksResponse(
                            DeleteFriendsDrinksResponse
                                    .newBuilder()
