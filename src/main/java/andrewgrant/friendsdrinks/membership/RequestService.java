@@ -458,36 +458,37 @@ public class RequestService {
             KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable,
             KTable<UserId, UserState> userState) {
 
-        KStream<String, InvitationResult> resultsAfterValidatingFriendsDrinksState = friendsDrinksInvitations.selectKey((key, value) ->
-                andrewgrant.friendsdrinks.avro.FriendsDrinksId
-                        .newBuilder()
-                        .setAdminUserId(value.getMembershipId().getFriendsDrinksId().getAdminUserId())
-                        .setUuid(value.getMembershipId().getFriendsDrinksId().getUuid())
-                        .build())
-                .leftJoin(friendsDrinksStateKTable,
-                        (request, state) -> {
-                            InvitationResult invitationResult = new InvitationResult();
-                            if (request.getMembershipId().getUserId().getUserId().equals(
-                                    request.getMembershipId().getFriendsDrinksId().getAdminUserId())) {
-                                invitationResult.failed = true;
-                                return invitationResult;
-                            }
-                            // Validate request against state of FriendsDrinks
-                            invitationResult.invitationRequest = request;
-                            if (state != null) {
-                                invitationResult.failed = false;
-                            } else {
-                                invitationResult.failed = true;
-                            }
-                            return invitationResult;
-                        },
-                        Joined.with(avroBuilder.friendsDrinksIdSerde(),
-                                frontendAvroBuilder.friendsDrinksInvitationRequestSerde(),
-                                avroBuilder.friendsDrinksStateSerde())
-                )
-                .selectKey((key, value) -> value.invitationRequest.getRequestId());
+        KStream<FriendsDrinksMembershipId, InvitationResult> resultsAfterValidatingFriendsDrinksState =
+                friendsDrinksInvitations.selectKey((key, value) ->
+                        andrewgrant.friendsdrinks.avro.FriendsDrinksId
+                                .newBuilder()
+                                .setAdminUserId(value.getMembershipId().getFriendsDrinksId().getAdminUserId())
+                                .setUuid(value.getMembershipId().getFriendsDrinksId().getUuid())
+                                .build())
+                        .leftJoin(friendsDrinksStateKTable,
+                                (request, state) -> {
+                                    InvitationResult invitationResult = new InvitationResult();
+                                    if (request.getMembershipId().getUserId().getUserId().equals(
+                                            request.getMembershipId().getFriendsDrinksId().getAdminUserId())) {
+                                        invitationResult.failed = true;
+                                        return invitationResult;
+                                    }
+                                    // Validate request against state of FriendsDrinks
+                                    invitationResult.invitationRequest = request;
+                                    if (state != null) {
+                                        invitationResult.failed = false;
+                                    } else {
+                                        invitationResult.failed = true;
+                                    }
+                                    return invitationResult;
+                                },
+                                Joined.with(avroBuilder.friendsDrinksIdSerde(),
+                                        frontendAvroBuilder.friendsDrinksInvitationRequestSerde(),
+                                        avroBuilder.friendsDrinksStateSerde())
+                        )
+                .selectKey((key, value) -> value.invitationRequest.getMembershipId());
 
-        KStream<String, InvitationResult>[] branchedResultsAfterValidatingFriendsDrinksState =
+        KStream<FriendsDrinksMembershipId, InvitationResult>[] branchedResultsAfterValidatingFriendsDrinksState =
                 resultsAfterValidatingFriendsDrinksState.branch(
                         ((key, value) -> value.failed),
                         ((key, value) -> true)
@@ -498,7 +499,7 @@ public class RequestService {
         result.addFailedResponse(
                 convertToFailedInvitationResponse(branchedResultsAfterValidatingFriendsDrinksState[0].mapValues(value -> value.invitationRequest)));
 
-        KStream<String, InvitationResult> resultsAfterValidatingUserState = branchedResultsAfterValidatingFriendsDrinksState[1]
+        KStream<FriendsDrinksMembershipId, InvitationResult> resultsAfterValidatingUserState = branchedResultsAfterValidatingFriendsDrinksState[1]
                 .selectKey((key, value) -> UserId
                         .newBuilder()
                         .setUserId(value.invitationRequest.getMembershipId().getUserId().getUserId())
@@ -517,9 +518,9 @@ public class RequestService {
                         },
                         Joined.with(userAvroBuilder.userIdSerde(), frontendAvroBuilder.friendsDrinksInvitationRequestSerde(),
                                 userAvroBuilder.userStateSerde()))
-                .selectKey((key, value) -> value.invitationRequest.getRequestId());
+                .selectKey((key, value) -> value.invitationRequest.getMembershipId());
 
-        KStream<String, InvitationResult>[] branchedResultsAfterValidatingUserState =
+        KStream<FriendsDrinksMembershipId, InvitationResult>[] branchedResultsAfterValidatingUserState =
                 resultsAfterValidatingUserState.branch(
                         ((key, value) -> value.failed),
                         ((key, value) -> true)
@@ -528,7 +529,7 @@ public class RequestService {
         result.addFailedResponse(
                 convertToFailedInvitationResponse(branchedResultsAfterValidatingUserState[0].mapValues(value -> value.invitationRequest)));
 
-        KStream<String, FriendsDrinksInvitationRequest> acceptedInvitationRequests = branchedResultsAfterValidatingUserState[1]
+        KStream<FriendsDrinksMembershipId, FriendsDrinksInvitationRequest> acceptedInvitationRequests = branchedResultsAfterValidatingUserState[1]
                 .mapValues(value -> value.invitationRequest);
 
         result.setSuccessfulResponseKStream(acceptedInvitationRequests.map((key, value) -> {
@@ -608,7 +609,7 @@ public class RequestService {
     }
 
     private KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipEvent> convertToFailedInvitationResponse(
-            KStream<String, FriendsDrinksInvitationRequest> stream) {
+            KStream<FriendsDrinksMembershipId, FriendsDrinksInvitationRequest> stream) {
         return stream.map((key, value) -> {
             FriendsDrinksInvitationResponse response = FriendsDrinksInvitationResponse
                     .newBuilder()
