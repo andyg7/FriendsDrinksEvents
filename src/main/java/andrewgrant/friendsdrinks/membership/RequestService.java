@@ -108,8 +108,7 @@ public class RequestService {
 
                     @Override
                     public void close() { }
-                }
-        );
+                }, PENDING_FRIENDSDRINKS_MEMBERSHIP_REQUESTS_STATE_STORE);
 
         KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipEvent> friendsDrinksMembershipEventKStream =
                 apiEvents.filter((key, value) -> value.getEventType().equals(ApiEventType.FRIENDSDRINKS_MEMBERSHIP_EVENT))
@@ -692,6 +691,7 @@ public class RequestService {
     }
 
 }
+
 class FriendsDrinksMembershipEventConcurrencyCheck {
     FriendsDrinksMembershipEvent friendsDrinksMembershipEvent;
     boolean isConcurrentRequest;
