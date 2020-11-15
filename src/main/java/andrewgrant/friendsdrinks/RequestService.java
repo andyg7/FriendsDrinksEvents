@@ -28,7 +28,7 @@ import andrewgrant.friendsdrinks.avro.FriendsDrinksState;
 public class RequestService {
 
     private static final Logger log = LoggerFactory.getLogger(WriterService.class);
-    private static final String PENDING_FRIENDSDRINKS_REQUESTS_STATE_STORE = "PendingFriendsDrinksRequestsStateStore";
+    private static final String PENDING_FRIENDSDRINKS_REQUESTS_STATE_STORE = "pending-friendsdrinks-requests-store";
 
     private Properties envProps;
     private AvroBuilder avroBuilder;
@@ -202,7 +202,7 @@ public class RequestService {
 
             @Override
             public void close() { }
-        });
+        }, PENDING_FRIENDSDRINKS_REQUESTS_STATE_STORE);
     }
 
     private KStream<String, ApiEvent> toApiEventResponse(KStream<FriendsDrinksId, FriendsDrinksEvent> friendsDrinksEventKStream) {
@@ -247,7 +247,7 @@ public class RequestService {
 
             @Override
             public void close() { }
-        });
+        }, PENDING_FRIENDSDRINKS_REQUESTS_STATE_STORE);
     }
 
     private KStream<FriendsDrinksId, FriendsDrinksEvent> handleCreateRequests(
