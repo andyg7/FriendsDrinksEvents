@@ -81,10 +81,11 @@ public class RequestService {
                                         andrewgrant.friendsdrinks.avro.FriendsDrinksEvent friendsDrinksEvent) {
                         String requestId = stateStore.get(friendsDrinksId);
                         if (requestId != null && requestId.equals(friendsDrinksEvent.getRequestId())) {
-                            log.info("Deleting from state store {}", friendsDrinksId.getUuid());
+                            log.info("Deleting from state store UUID {} Admin ID {}",
+                                    friendsDrinksId.getUuid(), friendsDrinksId.getAdminUserId());
                             stateStore.delete(friendsDrinksId);
                         } else {
-                            log.info("Failed to get request for FriendsDrinks UUID Admin ID {}",
+                            log.error("Failed to get request for FriendsDrinks UUID Admin ID {}",
                                     friendsDrinksId.getUuid(), friendsDrinksId.getAdminUserId());
                         }
                     }
@@ -260,7 +261,8 @@ public class RequestService {
                     if (requestId != null && requestId.equals(friendsDrinksEvent.getRequestId())) {
                         stateStore.delete(friendsDrinksEvent.getFriendsDrinksId());
                     } else {
-                        log.info("Failed to get request for FriendsDrinks UUID {}", friendsDrinksId.getUuid());
+                        log.error("Failed to get request for FriendsDrinks UUID {} Admin ID {}",
+                                friendsDrinksId.getUuid(), friendsDrinksId.getAdminUserId());
                     }
                 }
                 ApiEvent apiEvent = ApiEvent
