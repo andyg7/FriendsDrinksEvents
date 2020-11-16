@@ -511,6 +511,7 @@ public class Handler {
                 .setFriendsDrinksMembershipEvent(FriendsDrinksMembershipEvent.newBuilder()
                         .setEventType(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_REPLY_REQUEST)
                         .setFriendsDrinksInvitationReplyRequest(friendsDrinksInvitationReplyRequest)
+                        .setRequestId(friendsDrinksInvitationReplyRequest.getRequestId())
                         .setMembershipId(FriendsDrinksMembershipId.newBuilder()
                                 .setFriendsDrinksId(friendsDrinksIdAvro)
                                 .setUserId(
@@ -577,6 +578,7 @@ public class Handler {
                 .setFriendsDrinksMembershipEvent(FriendsDrinksMembershipEvent.newBuilder()
                         .setEventType(FriendsDrinksMembershipEventType.FRIENDSDRINKS_REMOVE_USER_REQUEST)
                         .setFriendsDrinksRemoveUserRequest(removeUserRequest)
+                        .setRequestId(removeUserRequest.getRequestId())
                         .setMembershipId(FriendsDrinksMembershipId.newBuilder()
                                 .setFriendsDrinksId(friendsDrinksIdAvro)
                                 .setUserId(andrewgrant.friendsdrinks.api.avro.UserId
@@ -629,6 +631,7 @@ public class Handler {
                 .setFriendsDrinksMembershipEvent(FriendsDrinksMembershipEvent.newBuilder()
                         .setEventType(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_REQUEST)
                         .setFriendsDrinksInvitationRequest(friendsDrinksInvitationRequest)
+                        .setRequestId(friendsDrinksInvitationRequest.getRequestId())
                         .setMembershipId(FriendsDrinksMembershipId.newBuilder()
                                 .setFriendsDrinksId(friendsDrinksIdAvro)
                                 .setUserId(

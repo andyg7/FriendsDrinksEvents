@@ -73,7 +73,7 @@ public class RequestService {
         KTable<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId, FriendsDrinksInvitationState> friendsDrinksInvitations =
                 builder.table(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_INVITATION_STATE),
                         Consumed.with(membershipAvroBuilder.friendsDrinksMembershipIdSerdes(),
-                                membershipAvroBuilder.friendsDrinksInvitationSerde()));
+                                membershipAvroBuilder.friendsDrinksInvitationStateSerde()));
 
         KStream<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId,
                 andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipEvent> membershipEventKStream =
@@ -210,7 +210,8 @@ public class RequestService {
                         if (requestId != null && requestId.equals(friendsDrinksInvitation.getRequestId())) {
                             stateStore.delete(friendsDrinksMembershipId);
                         } else {
-                            log.error("Failed to get request for FriendsDrinks UUID Admin ID {}",
+                            log.error("Failed to get request {} for FriendsDrinks UUID Admin ID {}",
+                                    friendsDrinksInvitation.getRequestId(),
                                     friendsDrinksMembershipId.getFriendsDrinksId().getUuid(),
                                     friendsDrinksMembershipId.getFriendsDrinksId().getAdminUserId());
                         }
@@ -685,7 +686,7 @@ public class RequestService {
                                 },
                                 Joined.with(membershipAvroBuilder.friendsDrinksMembershipIdSerdes(),
                                         frontendAvroBuilder.friendsDrinksInvitationReplyRequestSerde(),
-                                        membershipAvroBuilder.friendsDrinksInvitationSerde())
+                                        membershipAvroBuilder.friendsDrinksInvitationStateSerde())
                         );
 
         return friendsDrinksInvitationReplyResponses.selectKey((k, v) -> v.getMembershipId());
