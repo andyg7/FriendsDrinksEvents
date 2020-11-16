@@ -59,8 +59,8 @@ public class MembershipWriterService {
 
         KStream<String, ApiEvent> apiEvents = builder.stream(envProps.getProperty(FRIENDSDRINKS_API),
                 Consumed.with(Serdes.String(), frontendAvroBuilder.apiSerde()));
-        KStream<String, ApiEvent> successfulApiResponses = streamOfSuccessfulResponses(apiEvents);
-        KStream<String, ApiEvent> apiRequests = streamOfRequests(apiEvents);
+        KStream<String, ApiEvent> successfulApiResponses = streamOfSuccessfulInvitationReplies(apiEvents);
+        KStream<String, ApiEvent> apiRequests = streamOfAcceptedInvitations(apiEvents);
 
         successfulApiResponses.join(apiRequests,
                 (l, r) -> new MembershipRequestResponseJoiner().join(r),
@@ -299,7 +299,7 @@ public class MembershipWriterService {
         });
     }
 
-    private KStream<String, ApiEvent> streamOfSuccessfulResponses(KStream<String, ApiEvent> apiEvents) {
+    private KStream<String, ApiEvent> streamOfSuccessfulInvitationReplies(KStream<String, ApiEvent> apiEvents) {
         return apiEvents.filter((friendsDrinksId, friendsDrinksEvent) -> friendsDrinksEvent.getEventType()
                 .equals(ApiEventType.FRIENDSDRINKS_MEMBERSHIP_EVENT) &&
                 (friendsDrinksEvent.getFriendsDrinksMembershipEvent().getEventType()
@@ -308,7 +308,7 @@ public class MembershipWriterService {
                                 .getFriendsDrinksInvitationReplyResponse().getResult().equals(Result.SUCCESS)));
     }
 
-    private KStream<String, ApiEvent> streamOfRequests(KStream<String, ApiEvent> apiEvents) {
+    private KStream<String, ApiEvent> streamOfAcceptedInvitations(KStream<String, ApiEvent> apiEvents) {
         return apiEvents.filter((k, v) -> v.getEventType().equals(ApiEventType.FRIENDSDRINKS_MEMBERSHIP_EVENT) &&
                 (v.getFriendsDrinksMembershipEvent().getEventType().equals(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_REPLY_REQUEST))
                 && v.getFriendsDrinksMembershipEvent().getFriendsDrinksInvitationReplyRequest().getReply().equals(Reply.ACCEPTED));

@@ -123,6 +123,7 @@ public class InvitationWriterService {
                             if (state != null) {
                                 return FriendsDrinksInvitationState
                                         .newBuilder()
+                                        .setRequestId(request.getRequestId())
                                         .setMembershipId(FriendsDrinksMembershipId.newBuilder()
                                                 .setFriendsDrinksId(
                                                         andrewgrant.friendsdrinks.membership.avro.FriendsDrinksId
