@@ -62,30 +62,38 @@ public class RequestService {
                 builder.stream(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_EVENT),
                         Consumed.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksEventSerde()));
 
-        friendsDrinksEventKTable.process(() ->
-                new Processor<andrewgrant.friendsdrinks.avro.FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent>() {
+        friendsDrinksEventKTable.selectKey((key, value) -> FriendsDrinksId
+                .newBuilder()
+                .setAdminUserId(key.getAdminUserId())
+                .setUuid(key.getUuid())
+                .build()).process(() ->
+                new Processor<andrewgrant.friendsdrinks.api.avro.FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent>() {
 
-            private KeyValueStore<FriendsDrinksId, String> stateStore;
+                    private KeyValueStore<FriendsDrinksId, String> stateStore;
 
-            @Override
-            public void init(ProcessorContext processorContext) {
-                stateStore = (KeyValueStore) processorContext.getStateStore(PENDING_FRIENDSDRINKS_REQUESTS_STATE_STORE);
-            }
+                    @Override
+                    public void init(ProcessorContext processorContext) {
+                        stateStore = (KeyValueStore) processorContext.getStateStore(PENDING_FRIENDSDRINKS_REQUESTS_STATE_STORE);
+                    }
 
-            @Override
-            public void process(andrewgrant.friendsdrinks.avro.FriendsDrinksId friendsDrinksId,
-                                andrewgrant.friendsdrinks.avro.FriendsDrinksEvent friendsDrinksEvent) {
-                String requestId = stateStore.get(toApi(friendsDrinksId));
-                if (requestId != null && requestId.equals(friendsDrinksEvent.getRequestId())) {
-                    stateStore.delete(toApi(friendsDrinksId));
-                } else {
-                    log.info("Failed to get request for FriendsDrinks UUID {}", friendsDrinksId.getUuid());
-                }
-            }
+                    @Override
+                    public void process(andrewgrant.friendsdrinks.api.avro.FriendsDrinksId friendsDrinksId,
+                                        andrewgrant.friendsdrinks.avro.FriendsDrinksEvent friendsDrinksEvent) {
+                        log.info("Processing UUID {} Admin ID", friendsDrinksId.getUuid(), friendsDrinksId.getAdminUserId());
+                        log.info("Processing API UUID {} Admin ID", friendsDrinksId.getUuid(), friendsDrinksId.getAdminUserId());
+                        String requestId = stateStore.get(friendsDrinksId);
+                        if (requestId != null && requestId.equals(friendsDrinksEvent.getRequestId())) {
+                            log.info("Deleting from state store {}", friendsDrinksId.getUuid());
+                            stateStore.delete(friendsDrinksId);
+                        } else {
+                            log.info("Failed to get request for FriendsDrinks UUID Admin ID {}",
+                                    friendsDrinksId.getUuid(), friendsDrinksId.getAdminUserId());
+                        }
+                    }
 
-            @Override
-            public void close() { }
-        }, PENDING_FRIENDSDRINKS_REQUESTS_STATE_STORE);
+                    @Override
+                    public void close() { }
+                }, PENDING_FRIENDSDRINKS_REQUESTS_STATE_STORE);
 
         KStream<FriendsDrinksId, FriendsDrinksEvent> friendsDrinksApiEvents = apiEvents.filter((s, friendsDrinksEvent) ->
                 friendsDrinksEvent.getEventType().equals(ApiEventType.FRIENDSDRINKS_EVENT))
