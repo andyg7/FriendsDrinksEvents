@@ -210,7 +210,7 @@ public class RequestService {
 
                     @Override
                     public void close() { }
-                });
+                }, PENDING_FRIENDSDRINKS_MEMBERSHIP_REQUESTS_STATE_STORE);
     }
 
     private KStream<String, ApiEvent> toRejectedResponse(
