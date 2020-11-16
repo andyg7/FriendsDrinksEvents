@@ -79,8 +79,6 @@ public class RequestService {
                     @Override
                     public void process(andrewgrant.friendsdrinks.api.avro.FriendsDrinksId friendsDrinksId,
                                         andrewgrant.friendsdrinks.avro.FriendsDrinksEvent friendsDrinksEvent) {
-                        log.info("Processing UUID {} Admin ID", friendsDrinksId.getUuid(), friendsDrinksId.getAdminUserId());
-                        log.info("Processing API UUID {} Admin ID", friendsDrinksId.getUuid(), friendsDrinksId.getAdminUserId());
                         String requestId = stateStore.get(friendsDrinksId);
                         if (requestId != null && requestId.equals(friendsDrinksEvent.getRequestId())) {
                             log.info("Deleting from state store {}", friendsDrinksId.getUuid());
