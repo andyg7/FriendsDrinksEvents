@@ -3,7 +3,7 @@ package andrewgrant.friendsdrinks.frontend.api.membership;
 /**
  * DTO for AddUserRequest.
  */
-public class AddUserRequestBean {
+public class InviteUserRequestBean {
     private String userId;
 
     public String getUserId() {

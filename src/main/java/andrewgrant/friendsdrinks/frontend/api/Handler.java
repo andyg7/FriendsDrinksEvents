@@ -458,12 +458,10 @@ public class Handler {
             throws ExecutionException, InterruptedException {
         String userId = requestBean.getUserId();
         String friendsDrinksId = requestBean.getFriendsDrinksId();
-        if (requestBean.getRequestType().equals(ADD_USER)) {
-            return handleAddUser(userId, friendsDrinksId, requestBean.getAddUserRequest());
+        if (requestBean.getRequestType().equals(INVITE_USER)) {
+            return handleInviteUser(userId, friendsDrinksId, requestBean.getInviteUserRequest());
         } else if (requestBean.getRequestType().equals(REPLY_TO_INVITATION)) {
             return handleReplyToInvitation(userId, friendsDrinksId, requestBean.getReplyToInvitationRequest());
-        } else if (requestBean.getRequestType().equals(REMOVE_USER)) {
-            return handleRemoveUser(userId, friendsDrinksId, requestBean.getRemoveUserRequest());
         } else {
             throw new RuntimeException(String.format("Unknown update type %s", requestBean.getRequestType()));
         }
@@ -534,73 +532,8 @@ public class Handler {
         return responseBean;
     }
 
-    public PostFriendsDrinksMembershipResponseBean handleRemoveUser(String userId, String friendsDrinksId,
-                                                  RemoveUserRequestBean requestBean)
-            throws InterruptedException, ExecutionException {
-
-        ReadOnlyKeyValueStore<String, FriendsDrinksState> kv =
-                kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_KEYED_BY_SINGLE_ID_STORE, QueryableStoreTypes.keyValueStore()));
-        FriendsDrinksState friendsDrinksState = kv.get(friendsDrinksId);
-        if (friendsDrinksState == null) {
-            throw new BadRequestException(String.format("FriendsDrinksId %s could not be found", friendsDrinksId));
-        }
-
-        final String topicName = envProps.getProperty("friendsdrinks-api.topic.name");
-        String requestId = UUID.randomUUID().toString();
-        ApiEvent friendsDrinksEvent;
-        FriendsDrinksId friendsDrinksIdAvro;
-
-        friendsDrinksIdAvro = FriendsDrinksId
-                .newBuilder()
-                .setAdminUserId(friendsDrinksState.getFriendsDrinksId().getAdminUserId())
-                .setUuid(friendsDrinksId)
-                .build();
-        FriendsDrinksRemoveUserRequest removeUserRequest = FriendsDrinksRemoveUserRequest
-                .newBuilder()
-                .setMembershipId(FriendsDrinksMembershipId.newBuilder()
-                        .setFriendsDrinksId(friendsDrinksIdAvro)
-                        .setUserId(andrewgrant.friendsdrinks.api.avro.UserId
-                                .newBuilder()
-                                .setUserId(requestBean.getUserId())
-                                .build())
-                        .build())
-                .setRequestId(requestId)
-                .setRequester(andrewgrant.friendsdrinks.api.avro.UserId
-                        .newBuilder()
-                        .setUserId(userId)
-                        .build())
-                .build();
-
-        friendsDrinksEvent = ApiEvent
-                .newBuilder()
-                .setRequestId(removeUserRequest.getRequestId())
-                .setEventType(ApiEventType.FRIENDSDRINKS_MEMBERSHIP_EVENT)
-                .setFriendsDrinksMembershipEvent(FriendsDrinksMembershipEvent.newBuilder()
-                        .setEventType(FriendsDrinksMembershipEventType.FRIENDSDRINKS_REMOVE_USER_REQUEST)
-                        .setFriendsDrinksRemoveUserRequest(removeUserRequest)
-                        .setRequestId(removeUserRequest.getRequestId())
-                        .setMembershipId(FriendsDrinksMembershipId.newBuilder()
-                                .setFriendsDrinksId(friendsDrinksIdAvro)
-                                .setUserId(andrewgrant.friendsdrinks.api.avro.UserId
-                                        .newBuilder()
-                                        .setUserId(requestBean.getUserId())
-                                        .build())
-                                .build())
-                        .build())
-                .build();
-
-        ProducerRecord<String, ApiEvent> record = new ProducerRecord<>(topicName, requestId, friendsDrinksEvent);
-        friendsDrinksKafkaProducer.send(record).get();
-
-        ApiEvent backendResponse = getApiResponse(requestId);
-        PostFriendsDrinksMembershipResponseBean responseBean = new PostFriendsDrinksMembershipResponseBean();
-        Result result = backendResponse.getFriendsDrinksMembershipEvent().getFriendsDrinksRemoveUserResponse().getResult();
-        responseBean.setResult(result.name());
-        return responseBean;
-    }
-
-    public PostFriendsDrinksMembershipResponseBean handleAddUser(String userId, String friendsDrinksId,
-                                                                 AddUserRequestBean requestBean) throws InterruptedException, ExecutionException {
+    public PostFriendsDrinksMembershipResponseBean handleInviteUser(String userId, String friendsDrinksId,
+                                                                    InviteUserRequestBean requestBean) throws InterruptedException, ExecutionException {
         final String topicName = envProps.getProperty("friendsdrinks-api.topic.name");
         String requestId = UUID.randomUUID().toString();
         ApiEvent friendsDrinksEvent;

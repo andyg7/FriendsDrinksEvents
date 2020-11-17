@@ -8,23 +8,22 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @JsonIgnoreProperties
 public class PostFriendsDrinksMembershipRequestBean {
 
-    public static final String ADD_USER = "ADD_USER";
-    public static final String REMOVE_USER = "REMOVE_USER";
+    public static final String INVITE_USER = "INVITE_USER";
     public static final String REPLY_TO_INVITATION = "REPLY_TO_INVITATION";
 
     private String userId;
     private String friendsDrinksId;
     private String requestType;
-    private AddUserRequestBean addUserRequest;
+    private InviteUserRequestBean inviteUserRequest;
     private RemoveUserRequestBean removeUserRequest;
     private ReplyToInvitationRequestBean replyToInvitationRequest;
 
-    public AddUserRequestBean getAddUserRequest() {
-        return addUserRequest;
+    public InviteUserRequestBean getInviteUserRequest() {
+        return inviteUserRequest;
     }
 
-    public void setAddUserRequest(AddUserRequestBean addUserRequest) {
-        this.addUserRequest = addUserRequest;
+    public void setInviteUserRequest(InviteUserRequestBean addUserRequest) {
+        this.inviteUserRequest = addUserRequest;
     }
 
     public RemoveUserRequestBean getRemoveUserRequest() {

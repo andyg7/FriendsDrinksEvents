@@ -33,28 +33,6 @@ public class MembershipRequestResponseJoiner {
                                     .setMembershipId(membershipId)
                                     .build())
                     .build();
-        } else if (r.getFriendsDrinksMembershipEvent().getEventType().equals(FriendsDrinksMembershipEventType.FRIENDSDRINKS_REMOVE_USER_REQUEST)) {
-            FriendsDrinksInvitationReplyRequest request = r.getFriendsDrinksMembershipEvent().getFriendsDrinksInvitationReplyRequest();
-            FriendsDrinksMembershipId membershipId = FriendsDrinksMembershipId
-                    .newBuilder()
-                    .setUserId(UserId.newBuilder().setUserId(request.getMembershipId().getUserId().getUserId()).build())
-                    .setFriendsDrinksId(FriendsDrinksId
-                            .newBuilder()
-                            .setAdminUserId(request.getMembershipId().getFriendsDrinksId().getAdminUserId())
-                            .setUuid(request.getMembershipId().getFriendsDrinksId().getUuid())
-                            .build())
-                    .build();
-            return FriendsDrinksMembershipEvent
-                    .newBuilder()
-                    .setEventType(andrewgrant.friendsdrinks.membership.avro.EventType.MEMBERSHIP_REMOVED)
-                    .setRequestId(r.getRequestId())
-                    .setMembershipId(membershipId)
-                    .setFriendsDrinksMembershipRemoved(
-                            FriendsDrinksMembershipRemoved
-                                    .newBuilder()
-                                    .setMembershipId(membershipId)
-                                    .build())
-                    .build();
         } else {
             throw new RuntimeException(
                     String.format("Received unexpected event type %s", r.getEventType().name()));
