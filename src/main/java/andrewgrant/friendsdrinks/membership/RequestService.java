@@ -222,6 +222,7 @@ public class RequestService {
                                     .newBuilder()
                                     .setRequestId(requestId)
                                     .setEventType(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_RESPONSE)
+                                    .setMembershipId(value.getMembershipId())
                                     .setFriendsDrinksInvitationResponse(FriendsDrinksInvitationResponse
                                             .newBuilder()
                                             .setRequestId(requestId)
@@ -234,6 +235,7 @@ public class RequestService {
                             FriendsDrinksMembershipEvent
                                     .newBuilder()
                                     .setEventType(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_REPLY_RESPONSE)
+                                    .setMembershipId(value.getMembershipId())
                                     .setRequestId(requestId)
                                     .setFriendsDrinksInvitationReplyResponse(FriendsDrinksInvitationReplyResponse
                                             .newBuilder()
@@ -272,6 +274,11 @@ public class RequestService {
                         if (stateStore.get(friendsDrinksMembershipId) != null) {
                             concurrencyCheck.isConcurrentRequest = true;
                         } else {
+                            log.info("Found a concurrent request for FriendsDrinks UUID {} Admin ID {} and User ID {} with request ID {}",
+                                    friendsDrinksMembershipId.getFriendsDrinksId().getUuid(),
+                                    friendsDrinksMembershipId.getFriendsDrinksId().getAdminUserId(),
+                                    friendsDrinksMembershipId.getUserId().getUserId(),
+                                    friendsDrinksMembershipEvent.getRequestId());
                             stateStore.put(friendsDrinksMembershipId, friendsDrinksMembershipEvent.getRequestId());
                             concurrencyCheck.isConcurrentRequest = false;
                         }
