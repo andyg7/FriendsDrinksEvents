@@ -203,8 +203,6 @@ public class MaterializedViewsService {
                 return value.getFriendsDrinksMembershipEvent().getEventType()
                         .equals(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_REPLY_RESPONSE) ||
                         value.getFriendsDrinksMembershipEvent().getEventType()
-                                .equals(FriendsDrinksMembershipEventType.FRIENDSDRINKS_REMOVE_USER_RESPONSE) ||
-                        value.getFriendsDrinksMembershipEvent().getEventType()
                                 .equals(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_RESPONSE);
             }
             FriendsDrinksEventType eventType = value.getFriendsDrinksEvent().getEventType();

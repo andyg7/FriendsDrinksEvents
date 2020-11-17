@@ -533,7 +533,8 @@ public class Handler {
     }
 
     public PostFriendsDrinksMembershipResponseBean handleInviteUser(String userId, String friendsDrinksId,
-                                                                    InviteUserRequestBean requestBean) throws InterruptedException, ExecutionException {
+                                                                    InviteUserRequestBean requestBean)
+            throws InterruptedException, ExecutionException {
         final String topicName = envProps.getProperty("friendsdrinks-api.topic.name");
         String requestId = UUID.randomUUID().toString();
         ApiEvent friendsDrinksEvent;

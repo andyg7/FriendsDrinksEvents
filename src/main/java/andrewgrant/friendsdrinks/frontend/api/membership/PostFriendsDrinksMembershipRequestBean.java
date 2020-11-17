@@ -15,7 +15,6 @@ public class PostFriendsDrinksMembershipRequestBean {
     private String friendsDrinksId;
     private String requestType;
     private InviteUserRequestBean inviteUserRequest;
-    private RemoveUserRequestBean removeUserRequest;
     private ReplyToInvitationRequestBean replyToInvitationRequest;
 
     public InviteUserRequestBean getInviteUserRequest() {
@@ -24,14 +23,6 @@ public class PostFriendsDrinksMembershipRequestBean {
 
     public void setInviteUserRequest(InviteUserRequestBean addUserRequest) {
         this.inviteUserRequest = addUserRequest;
-    }
-
-    public RemoveUserRequestBean getRemoveUserRequest() {
-        return removeUserRequest;
-    }
-
-    public void setRemoveUserRequest(RemoveUserRequestBean removeUserRequest) {
-        this.removeUserRequest = removeUserRequest;
     }
 
     public ReplyToInvitationRequestBean getReplyToInvitationRequest() {

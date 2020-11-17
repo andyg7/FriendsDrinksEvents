@@ -96,8 +96,7 @@ public class RequestService {
                         .filter((key, value) -> {
                             FriendsDrinksMembershipEventType eventType = value.getEventType();
                             return eventType.equals(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_REPLY_REQUEST) ||
-                                    eventType.equals(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_REQUEST) ||
-                                    eventType.equals(FriendsDrinksMembershipEventType.FRIENDSDRINKS_REMOVE_USER_REQUEST);
+                                    eventType.equals(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_REQUEST);
                         })
                         .selectKey((key, value) -> FriendsDrinksMembershipId
                                 .newBuilder()
@@ -139,21 +138,6 @@ public class RequestService {
                         value.getEventType().equals(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_REPLY_REQUEST))
                 .mapValues(v -> v.getFriendsDrinksInvitationReplyRequest()),  friendsDrinksInvitations))
                 .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.apiSerde()));
-
-        RemoveUserRequestResult removeUserRequestResult = handleRemoveUserRequests(
-                branchedConcurrencyCheck[1]
-                        .mapValues(v -> v.friendsDrinksMembershipEvent)
-                        .filter((key, value) ->
-                                value.getEventType().equals(FriendsDrinksMembershipEventType.FRIENDSDRINKS_REMOVE_USER_REQUEST))
-                        .mapValues(v -> v.getFriendsDrinksRemoveUserRequest()), friendsDrinksStateKTable, userState);
-        toApiResponse(removeUserRequestResult.getSuccessfulResponseKStream())
-                .to(envProps.getProperty(FRIENDSDRINKS_API),
-                        Produced.with(Serdes.String(), frontendAvroBuilder.apiSerde()));
-        for (KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipEvent> friendsDrinksEventKStream :
-                removeUserRequestResult.getFailedResponseKStreams()) {
-            toApiResponse(friendsDrinksEventKStream)
-                    .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.apiSerde()));
-        }
 
         return builder.build();
     }
@@ -243,17 +227,6 @@ public class RequestService {
                                             .build())
                                     .build());
                     break;
-                case FRIENDSDRINKS_REMOVE_USER_REQUEST:
-                    apiEventBuilder.setFriendsDrinksMembershipEvent(
-                            FriendsDrinksMembershipEvent
-                                    .newBuilder()
-                                    .setFriendsDrinksRemoveUserResponse(FriendsDrinksRemoveUserResponse
-                                            .newBuilder()
-                                            .setRequestId(requestId)
-                                            .setResult(Result.FAIL)
-                                            .build())
-                                    .build());
-                    break;
                 case FRIENDSDRINKS_INVITATION_REPLY_REQUEST:
                     apiEventBuilder.setFriendsDrinksMembershipEvent(
                             FriendsDrinksMembershipEvent
@@ -331,9 +304,6 @@ public class RequestService {
                             case FRIENDSDRINKS_INVITATION_RESPONSE:
                                 result = friendsDrinksMembershipEvent.getFriendsDrinksInvitationResponse().getResult();
                                 break;
-                            case FRIENDSDRINKS_REMOVE_USER_RESPONSE:
-                                result = friendsDrinksMembershipEvent.getFriendsDrinksRemoveUserResponse().getResult();
-                                break;
                             case FRIENDSDRINKS_INVITATION_REPLY_RESPONSE:
                                 result = friendsDrinksMembershipEvent.getFriendsDrinksInvitationReplyResponse().getResult();
                                 break;
@@ -365,107 +335,6 @@ public class RequestService {
                     }
                 }, PENDING_FRIENDSDRINKS_MEMBERSHIP_REQUESTS_STATE_STORE);
    }
-
-    private RemoveUserRequestResult handleRemoveUserRequests(
-            KStream<FriendsDrinksMembershipId, FriendsDrinksRemoveUserRequest> friendsDrinksRemoveUserRequest,
-            KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksState,
-            KTable<UserId, UserState> userState) {
-
-        KStream<FriendsDrinksMembershipId, RemoveUserResult> resultsAfterValidatingUserState = friendsDrinksRemoveUserRequest
-                .selectKey((key, value) -> UserId.newBuilder().setUserId(value.getMembershipId().getUserId().getUserId()).build())
-                .leftJoin(userState,
-                        (request, state) -> {
-                            RemoveUserResult removeUserResult = new RemoveUserResult();
-                            removeUserResult.friendsDrinksRemoveUserRequest = request;
-                            if (state == null) {
-                                log.warn(String.format("Failed to find user ID %s", request.getMembershipId().getUserId().getUserId()));
-                            }
-                            removeUserResult.failed = false;
-                            return removeUserResult;
-                        },
-                        Joined.with(userAvroBuilder.userIdSerde(),
-                                frontendAvroBuilder.friendsDrinksRemoveUserRequestSerde(),
-                                userAvroBuilder.userStateSerde()))
-                .selectKey((key, value) -> value.friendsDrinksRemoveUserRequest.getMembershipId());
-
-        KStream<FriendsDrinksMembershipId, RemoveUserResult>[] branchedResultsAfterValidatingUserState =
-                resultsAfterValidatingUserState.branch(
-                        ((key, value) -> value.failed),
-                        ((key, value) -> true)
-                );
-
-        RemoveUserRequestResult result = new RemoveUserRequestResult();
-        result.addFailedResponse(
-                convertToFailedRemoveUserResponse(
-                        branchedResultsAfterValidatingUserState[0].mapValues(value -> value.friendsDrinksRemoveUserRequest)));
-
-        KStream<FriendsDrinksMembershipId, RemoveUserResult> resultsAfterValidatingFriendsDrinksState =
-                branchedResultsAfterValidatingUserState[1].selectKey((key, value) ->
-                        andrewgrant.friendsdrinks.avro.FriendsDrinksId
-                                .newBuilder()
-                                .setUuid(value.friendsDrinksRemoveUserRequest.getMembershipId().getFriendsDrinksId().getUuid())
-                                .setAdminUserId(value.friendsDrinksRemoveUserRequest.getMembershipId().getFriendsDrinksId().getAdminUserId())
-                                .build())
-                        .mapValues(value -> value.friendsDrinksRemoveUserRequest)
-                        .leftJoin(friendsDrinksState,
-                                (request, state) -> {
-                                    RemoveUserResult removeUserResult = new RemoveUserResult();
-                                    if (state != null) {
-                                        if (request.getRequester().getUserId().equals(state.getFriendsDrinksId().getAdminUserId())) {
-                                            removeUserResult.failed = false;
-                                        } else {
-                                            removeUserResult.failed = true;
-                                        }
-                                    } else {
-                                        removeUserResult.failed = true;
-                                    }
-                                    return removeUserResult;
-                                },
-                                Joined.with(avroBuilder.friendsDrinksIdSerde(), frontendAvroBuilder.friendsDrinksRemoveUserRequestSerde(),
-                                        avroBuilder.friendsDrinksStateSerde()))
-                        .selectKey((key, value) -> value.friendsDrinksRemoveUserRequest.getMembershipId());
-
-        KStream<FriendsDrinksMembershipId, RemoveUserResult>[] branchedResultsAfterValidatingFriendsDrinksState =
-                resultsAfterValidatingFriendsDrinksState.branch(
-                        ((key, value) -> value.failed),
-                        ((key, value) -> true)
-                );
-
-        result.addFailedResponse(
-                convertToFailedRemoveUserResponse(
-                        branchedResultsAfterValidatingFriendsDrinksState[0].mapValues(value -> value.friendsDrinksRemoveUserRequest)));
-
-        result.setSuccessfulResponseKStream(branchedResultsAfterValidatingFriendsDrinksState[1].mapValues(value -> {
-            FriendsDrinksRemoveUserResponse removeUserResponse = FriendsDrinksRemoveUserResponse
-                    .newBuilder()
-                    .setRequestId(value.friendsDrinksRemoveUserRequest.getRequestId())
-                    .setResult(Result.SUCCESS)
-                    .build();
-            return FriendsDrinksMembershipEvent.newBuilder()
-                    .setEventType(FriendsDrinksMembershipEventType.FRIENDSDRINKS_REMOVE_USER_RESPONSE)
-                    .setFriendsDrinksRemoveUserResponse(removeUserResponse)
-                    .setMembershipId(value.friendsDrinksRemoveUserRequest.getMembershipId())
-                    .build();
-        }));
-        return result;
-    }
-
-    private KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipEvent> convertToFailedRemoveUserResponse(
-            KStream<FriendsDrinksMembershipId, FriendsDrinksRemoveUserRequest> requests) {
-        return requests.mapValues(value -> {
-            FriendsDrinksRemoveUserResponse removeUserResponse = FriendsDrinksRemoveUserResponse
-                    .newBuilder()
-                    .setRequestId(value.getRequestId())
-                    .setResult(Result.FAIL)
-                    .build();
-            return FriendsDrinksMembershipEvent.newBuilder()
-                    .setEventType(FriendsDrinksMembershipEventType.FRIENDSDRINKS_REMOVE_USER_RESPONSE)
-                    .setFriendsDrinksRemoveUserResponse(removeUserResponse)
-                    .setMembershipId(value.getMembershipId())
-                    .build();
-        });
-
-    }
 
     private InvitationRequestResult handleInvitationRequests(
             KStream<FriendsDrinksMembershipId, FriendsDrinksInvitationRequest> friendsDrinksInvitations ,
@@ -592,34 +461,6 @@ public class RequestService {
         public void setSuccessfulResponseKStream(KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipEvent> successfulResponseKStream) {
             this.successfulResponseKStream = successfulResponseKStream;
         }
-    }
-
-    private static class RemoveUserRequestResult {
-
-        private List<KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipEvent>> failedResponseKStreams;
-        private KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipEvent> successfulResponseKStream;
-
-        public RemoveUserRequestResult() {
-            this.failedResponseKStreams = new ArrayList<>();
-            this.successfulResponseKStream = null;
-        }
-
-        public List<KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipEvent>> getFailedResponseKStreams() {
-            return failedResponseKStreams;
-        }
-
-        public KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipEvent> getSuccessfulResponseKStream() {
-            return successfulResponseKStream;
-        }
-
-        public void addFailedResponse(KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipEvent> failedResponse) {
-            failedResponseKStreams.add(failedResponse);
-        }
-
-        public void setSuccessfulResponseKStream(KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipEvent> successfulResponseKStream) {
-            this.successfulResponseKStream = successfulResponseKStream;
-        }
-
     }
 
     private KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipEvent> convertToFailedInvitationResponse(
