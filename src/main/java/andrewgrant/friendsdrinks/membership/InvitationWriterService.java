@@ -54,7 +54,7 @@ public class InvitationWriterService {
                 builder.table(envProps.getProperty(FRIENDSDRINKS_STATE),
                         Consumed.with(friendsDrinksAvroBuilder.friendsDrinksIdSerde(), friendsDrinksAvroBuilder.friendsDrinksStateSerde()));
 
-        streamOfPendingInvitations(invitationResponses, invitationRequests, friendsDrinksStateKTable)
+        streamOfValidInvitations(invitationResponses, invitationRequests, friendsDrinksStateKTable)
                 .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_INVITATION_STATE),
                         Produced.with(avroBuilder.friendsDrinksMembershipIdSerdes(),
                                 avroBuilder.friendsDrinksInvitationStateSerde()));
@@ -63,7 +63,7 @@ public class InvitationWriterService {
                 streamOfSuccessfulInvitationReplyResponses(apiEvents);
         KStream<String, FriendsDrinksInvitationReplyRequest> invitationReplyRequests =
                 streamOfInvitationReplyRequests(apiEvents);
-        streamOfResolvedInvitations(invitationReplyResponses, invitationReplyRequests)
+        streamOfValidInvitationReplies(invitationReplyResponses, invitationReplyRequests)
                 .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_INVITATION_STATE),
                         Produced.with(avroBuilder.friendsDrinksMembershipIdSerdes(),
                                 avroBuilder.friendsDrinksInvitationStateSerde()));
@@ -71,7 +71,7 @@ public class InvitationWriterService {
         return builder.build();
     }
 
-    private KStream<FriendsDrinksMembershipId, FriendsDrinksInvitationState> streamOfResolvedInvitations(
+    private KStream<FriendsDrinksMembershipId, FriendsDrinksInvitationState> streamOfValidInvitationReplies(
             KStream<String, FriendsDrinksInvitationReplyResponse> invitationReplyResponses,
             KStream<String, FriendsDrinksInvitationReplyRequest> invitationReplyRequests) {
 
@@ -99,7 +99,7 @@ public class InvitationWriterService {
                 });
     }
 
-    private KStream<FriendsDrinksMembershipId, FriendsDrinksInvitationState> streamOfPendingInvitations(
+    private KStream<FriendsDrinksMembershipId, FriendsDrinksInvitationState> streamOfValidInvitations(
             KStream<String, FriendsDrinksInvitationResponse> invitationResponses,
             KStream<String, FriendsDrinksInvitationRequest> invitationRequests,
             KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable) {

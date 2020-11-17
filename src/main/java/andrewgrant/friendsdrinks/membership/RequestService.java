@@ -220,6 +220,7 @@ public class RequestService {
                     apiEventBuilder.setFriendsDrinksMembershipEvent(
                             FriendsDrinksMembershipEvent
                                     .newBuilder()
+                                    .setEventType(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_RESPONSE)
                                     .setFriendsDrinksInvitationResponse(FriendsDrinksInvitationResponse
                                             .newBuilder()
                                             .setRequestId(requestId)
@@ -231,6 +232,7 @@ public class RequestService {
                     apiEventBuilder.setFriendsDrinksMembershipEvent(
                             FriendsDrinksMembershipEvent
                                     .newBuilder()
+                                    .setEventType(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_REPLY_RESPONSE)
                                     .setFriendsDrinksInvitationReplyResponse(FriendsDrinksInvitationReplyResponse
                                             .newBuilder()
                                             .setRequestId(requestId)
