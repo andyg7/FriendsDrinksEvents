@@ -22,7 +22,7 @@ import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksInvitationState;
 import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId;
 
 /**
- * Owns writing to friendsdrinks-invitation topic.
+ * Owns writing to friendsdrinks-invitation-event topic.
  */
 public class InvitationWriterService {
 

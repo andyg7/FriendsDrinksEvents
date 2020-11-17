@@ -157,7 +157,6 @@ public class RequestService {
                    responseFriendsDrinksEvent.setCreateFriendsDrinksResponse(
                            CreateFriendsDrinksResponse
                                    .newBuilder()
-                                   .setFriendsDrinksId(friendsDrinksId)
                                    .setRequestId(requestId)
                                    .setResult(Result.FAIL)
                                    .build());
@@ -167,7 +166,6 @@ public class RequestService {
                    responseFriendsDrinksEvent.setUpdateFriendsDrinksResponse(
                            UpdateFriendsDrinksResponse
                                    .newBuilder()
-                                   .setFriendsDrinksId(friendsDrinksId)
                                    .setRequestId(requestId)
                                    .setResult(Result.FAIL)
                                    .build());
@@ -177,7 +175,6 @@ public class RequestService {
                    responseFriendsDrinksEvent.setDeleteFriendsDrinksResponse(
                            DeleteFriendsDrinksResponse
                                    .newBuilder()
-                                   .setFriendsDrinksId(friendsDrinksId)
                                    .setRequestId(requestId)
                                    .setResult(Result.FAIL)
                                    .build());
@@ -299,7 +296,6 @@ public class RequestService {
                 .leftJoin(friendsDrinksCount,
                         (request, count) -> {
                             CreateFriendsDrinksResponse.Builder response = CreateFriendsDrinksResponse.newBuilder();
-                            response.setFriendsDrinksId(request.getFriendsDrinksId());
                             response.setRequestId(request.getRequestId());
                             if (count == null || count < 5) {
                                 response.setResult(Result.SUCCESS);
@@ -335,7 +331,6 @@ public class RequestService {
                                     .setDeleteFriendsDrinksResponse(DeleteFriendsDrinksResponse
                                             .newBuilder()
                                             .setResult(Result.SUCCESS)
-                                            .setFriendsDrinksId(request.getFriendsDrinksId())
                                             .setRequestId(request.getRequestId())
                                             .build())
                                     .build();
@@ -368,17 +363,16 @@ public class RequestService {
                                         UpdateFriendsDrinksResponse
                                                 .newBuilder()
                                                 .setRequestId(updateRequest.getRequestId())
-                                                .setFriendsDrinksId(updateRequest.getFriendsDrinksId())
                                                 .setResult(Result.SUCCESS).build())
                                 .build();
                     } else {
                         return FriendsDrinksEvent.newBuilder()
                                 .setEventType(FriendsDrinksEventType.UPDATE_FRIENDSDRINKS_RESPONSE)
+                                .setFriendsDrinksId(updateRequest.getFriendsDrinksId())
                                 .setUpdateFriendsDrinksResponse(
                                         UpdateFriendsDrinksResponse
                                                 .newBuilder()
                                                 .setRequestId(updateRequest.getRequestId())
-                                                .setFriendsDrinksId(updateRequest.getFriendsDrinksId())
                                                 .setResult(Result.FAIL).build())
                                 .build();
                     }
@@ -388,14 +382,6 @@ public class RequestService {
                         frontendAvroBuilder.updateFriendsDrinksRequestSerde(),
                         avroBuilder.friendsDrinksStateSerde()))
                 .selectKey(((key, value) -> value.getFriendsDrinksId()));
-    }
-
-    private FriendsDrinksId toApi(andrewgrant.friendsdrinks.avro.FriendsDrinksId friendsDrinksId) {
-        return FriendsDrinksId
-                .newBuilder()
-                .setUuid(friendsDrinksId.getUuid())
-                .setAdminUserId(friendsDrinksId.getAdminUserId())
-                .build();
     }
 
     private andrewgrant.friendsdrinks.avro.FriendsDrinksId toFriendsDrinks(FriendsDrinksId friendsDrinksId) {
