@@ -351,13 +351,13 @@ public class RequestService {
                         .leftJoin(friendsDrinksStateKTable,
                                 (request, state) -> {
                                     InvitationResult invitationResult = new InvitationResult();
+                                    invitationResult.invitationRequest = request;
                                     if (request.getMembershipId().getUserId().getUserId().equals(
                                             request.getMembershipId().getFriendsDrinksId().getAdminUserId())) {
                                         invitationResult.failed = true;
                                         return invitationResult;
                                     }
                                     // Validate request against state of FriendsDrinks
-                                    invitationResult.invitationRequest = request;
                                     if (state != null) {
                                         invitationResult.failed = false;
                                     } else {
