@@ -273,12 +273,12 @@ public class RequestService {
                         FriendsDrinksMembershipId friendsDrinksMembershipId = friendsDrinksMembershipEvent.getMembershipId();
                         if (stateStore.get(friendsDrinksMembershipId) != null) {
                             concurrencyCheck.isConcurrentRequest = true;
-                        } else {
                             log.info("Found a concurrent request for FriendsDrinks UUID {} Admin ID {} and User ID {} with request ID {}",
                                     friendsDrinksMembershipId.getFriendsDrinksId().getUuid(),
                                     friendsDrinksMembershipId.getFriendsDrinksId().getAdminUserId(),
                                     friendsDrinksMembershipId.getUserId().getUserId(),
                                     friendsDrinksMembershipEvent.getRequestId());
+                        } else {
                             stateStore.put(friendsDrinksMembershipId, friendsDrinksMembershipEvent.getRequestId());
                             concurrencyCheck.isConcurrentRequest = false;
                         }
