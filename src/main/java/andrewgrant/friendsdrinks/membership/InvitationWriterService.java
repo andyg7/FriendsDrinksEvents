@@ -18,8 +18,10 @@ import java.util.concurrent.CountDownLatch;
 import andrewgrant.friendsdrinks.api.avro.*;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksId;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksState;
+import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksInvitationEvent;
 import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksInvitationState;
 import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId;
+import andrewgrant.friendsdrinks.membership.avro.InvitationEventType;
 
 /**
  * Owns writing to friendsdrinks-invitation-event topic.
@@ -54,24 +56,41 @@ public class InvitationWriterService {
                 builder.table(envProps.getProperty(FRIENDSDRINKS_STATE),
                         Consumed.with(friendsDrinksAvroBuilder.friendsDrinksIdSerde(), friendsDrinksAvroBuilder.friendsDrinksStateSerde()));
 
-        streamOfValidInvitations(invitationResponses, invitationRequests, friendsDrinksStateKTable)
-                .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_INVITATION_STATE),
-                        Produced.with(avroBuilder.friendsDrinksMembershipIdSerdes(),
-                                avroBuilder.friendsDrinksInvitationStateSerde()));
+        KStream<FriendsDrinksMembershipId, FriendsDrinksInvitationEvent> streamOfValidInvitations =
+                streamOfValidInvitations(invitationResponses, invitationRequests, friendsDrinksStateKTable);
+
+        streamOfValidInvitations.to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_INVITATION_EVENT),
+                Produced.with(avroBuilder.friendsDrinksMembershipIdSerdes(),
+                        avroBuilder.friendsDrinksInvitationEventSerde()));
+
+        streamOfValidInvitations.mapValues(v -> FriendsDrinksInvitationState
+                .newBuilder()
+                .setMembershipId(v.getMembershipId())
+                .setMessage(v.getMessage())
+                .build()).to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_INVITATION_STATE),
+                Produced.with(avroBuilder.friendsDrinksMembershipIdSerdes(),
+                        avroBuilder.friendsDrinksInvitationStateSerde()));
 
         KStream<String, FriendsDrinksInvitationReplyResponse> invitationReplyResponses =
                 streamOfSuccessfulInvitationReplyResponses(apiEvents);
         KStream<String, FriendsDrinksInvitationReplyRequest> invitationReplyRequests =
                 streamOfInvitationReplyRequests(apiEvents);
-        streamOfValidInvitationReplies(invitationReplyResponses, invitationReplyRequests)
+        KStream<FriendsDrinksMembershipId, FriendsDrinksInvitationEvent> streamOfValidInvitationReplies =
+                streamOfValidInvitationReplies(invitationReplyResponses, invitationReplyRequests);
+
+        streamOfValidInvitationReplies.to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_INVITATION_EVENT),
+                Produced.with(avroBuilder.friendsDrinksMembershipIdSerdes(),
+                        avroBuilder.friendsDrinksInvitationEventSerde()));
+        streamOfValidInvitationReplies.mapValues(v -> (FriendsDrinksInvitationState) null)
                 .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_INVITATION_STATE),
                         Produced.with(avroBuilder.friendsDrinksMembershipIdSerdes(),
                                 avroBuilder.friendsDrinksInvitationStateSerde()));
 
+
         return builder.build();
     }
 
-    private KStream<FriendsDrinksMembershipId, FriendsDrinksInvitationState> streamOfValidInvitationReplies(
+    private KStream<FriendsDrinksMembershipId, FriendsDrinksInvitationEvent> streamOfValidInvitationReplies(
             KStream<String, FriendsDrinksInvitationReplyResponse> invitationReplyResponses,
             KStream<String, FriendsDrinksInvitationReplyRequest> invitationReplyRequests) {
 
@@ -95,11 +114,16 @@ public class InvitationWriterService {
                                     .setUserId(v.getMembershipId().getUserId().getUserId())
                                     .build())
                             .build();
-                    return KeyValue.pair(id, null);
+                    return KeyValue.pair(id, FriendsDrinksInvitationEvent
+                            .newBuilder()
+                            .setEventType(InvitationEventType.DELETED)
+                            .setMembershipId(id)
+                            .setRequestId(v.getRequestId())
+                            .build());
                 });
     }
 
-    private KStream<FriendsDrinksMembershipId, FriendsDrinksInvitationState> streamOfValidInvitations(
+    private KStream<FriendsDrinksMembershipId, FriendsDrinksInvitationEvent> streamOfValidInvitations(
             KStream<String, FriendsDrinksInvitationResponse> invitationResponses,
             KStream<String, FriendsDrinksInvitationRequest> invitationRequests,
             KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable) {
@@ -121,8 +145,9 @@ public class InvitationWriterService {
                 .leftJoin(friendsDrinksStateKTable,
                         (request, state) -> {
                             if (state != null) {
-                                return FriendsDrinksInvitationState
+                                return FriendsDrinksInvitationEvent
                                         .newBuilder()
+                                        .setEventType(InvitationEventType.CREATED)
                                         .setRequestId(request.getRequestId())
                                         .setMembershipId(FriendsDrinksMembershipId.newBuilder()
                                                 .setFriendsDrinksId(

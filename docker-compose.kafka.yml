@@ -66,6 +66,7 @@ services:
                        kafka-topics --create --if-not-exists --zookeeper zookeeper:2181 --partitions 2 --replication-factor 1 --topic friendsdrinks-membership-keyed-by-friendsdrinks-id-state && \
                        kafka-topics --create --if-not-exists --zookeeper zookeeper:2181 --partitions 2 --replication-factor 1 --topic friendsdrinks-membership-keyed-by-user-id-state && \
                        kafka-topics --create --if-not-exists --zookeeper zookeeper:2181 --partitions 2 --replication-factor 1 --topic friendsdrinks-api && \
+                       kafka-topics --create --if-not-exists --zookeeper zookeeper:2181 --partitions 2 --replication-factor 1 --topic friendsdrinks-invitation-event && \
                        kafka-topics --create --if-not-exists --zookeeper zookeeper:2181 --partitions 2 --replication-factor 1 --topic friendsdrinks-invitation-state && \
                        kafka-topics --create --if-not-exists --zookeeper zookeeper:2181 --partitions 2 --replication-factor 1 --topic user-event && \
                        kafka-topics --create --if-not-exists --zookeeper zookeeper:2181 --partitions 2 --replication-factor 1 --topic user-state && \
