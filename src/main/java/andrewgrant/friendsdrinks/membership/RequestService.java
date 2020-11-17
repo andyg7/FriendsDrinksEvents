@@ -323,7 +323,7 @@ public class RequestService {
                         }
                         if (result.equals(Result.FAIL)) {
                             String requestId = stateStore.get(friendsDrinksMembershipId);
-                            if (requestId.equals(friendsDrinksMembershipEvent.getRequestId())) {
+                            if (requestId != null && requestId.equals(friendsDrinksMembershipEvent.getRequestId())) {
                                 stateStore.delete(friendsDrinksMembershipId);
                             } else {
                                 log.error("Failed to get request for FriendsDrinks UUID Admin ID {}",
