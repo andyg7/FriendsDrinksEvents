@@ -4,7 +4,6 @@
   "name": "FriendsDrinksState",
   "fields": [
       {"name": "friendsDrinksId", "type": "FriendsDrinksId"},
-      {"name": "name", "type": "string"},
-      {"name": "lastRequestId", "type": "string"}
+      {"name": "name", "type": "string"}
   ]
 }

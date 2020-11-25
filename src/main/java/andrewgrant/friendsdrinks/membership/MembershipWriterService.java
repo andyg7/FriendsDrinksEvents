@@ -299,7 +299,6 @@ public class MembershipWriterService {
             } else {
                 return FriendsDrinksMembershipState.newBuilder()
                         .setMembershipId(value.getMembershipId())
-                        .setLastRequestId(value.getRequestId())
                         .build();
             }
         });

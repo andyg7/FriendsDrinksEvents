@@ -22,7 +22,6 @@ public class StateAggregator {
 
                 FriendsDrinksState friendsDrinksState = friendsDrinksStateBuilder
                         .setName(createdFriendsDrinks.getName())
-                        .setLastRequestId(newValue.getRequestId())
                         .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
                                 .newBuilder()
                                 .setUuid(newValue.getFriendsDrinksId().getUuid())
@@ -36,7 +35,7 @@ public class StateAggregator {
                 FriendsDrinksUpdated updatedFriendsDrinks = newValue.getFriendsDrinksUpdated();
                 FriendsDrinksState.Builder friendsDrinksStateBuilder;
                 if (aggValue.getFriendsDrinksState() == null) {
-                    throw new RuntimeException(String.format("FriendsDrinksState is null for %s", aggKey));
+                    return null;
                 }
                 andrewgrant.friendsdrinks.avro.UpdateType updateType = updatedFriendsDrinks.getUpdateType();
                 friendsDrinksStateBuilder = FriendsDrinksState.newBuilder(aggValue.getFriendsDrinksState());

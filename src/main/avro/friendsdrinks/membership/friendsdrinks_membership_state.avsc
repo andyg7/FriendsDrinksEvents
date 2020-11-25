@@ -3,7 +3,6 @@
   "type": "record",
   "name": "FriendsDrinksMembershipState",
   "fields": [
-      {"name": "membershipId", "type": "FriendsDrinksMembershipId" },
-      {"name": "lastRequestId", "type": "string"}
+      {"name": "membershipId", "type": "FriendsDrinksMembershipId" }
   ]
 }
