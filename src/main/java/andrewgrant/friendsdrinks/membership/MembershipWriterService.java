@@ -1,9 +1,9 @@
 package andrewgrant.friendsdrinks.membership;
 
-import static andrewgrant.friendsdrinks.TopicNameConfigKey.FRIENDSDRINKS_STATE;
+import static andrewgrant.friendsdrinks.TopicNameConfigKey.FRIENDSDRINKS_EVENT;
 import static andrewgrant.friendsdrinks.env.Properties.load;
 import static andrewgrant.friendsdrinks.frontend.TopicNameConfigKey.FRIENDSDRINKS_API;
-import static andrewgrant.friendsdrinks.user.TopicNameConfigKey.USER_STATE;
+import static andrewgrant.friendsdrinks.user.TopicNameConfigKey.USER_EVENT;
 
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
+import java.util.stream.Collectors;
 
 import andrewgrant.friendsdrinks.api.avro.*;
 import andrewgrant.friendsdrinks.api.avro.ApiEventType;
@@ -28,7 +29,7 @@ import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipEvent;
 import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId;
 import andrewgrant.friendsdrinks.membership.avro.UserId;
 import andrewgrant.friendsdrinks.user.AvroBuilder;
-import andrewgrant.friendsdrinks.user.avro.UserState;
+import andrewgrant.friendsdrinks.user.avro.UserEvent;
 
 /**
  * Owns writing to friendsdrinks-membership-event.
@@ -95,11 +96,11 @@ public class MembershipWriterService {
                 builder.table(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_MEMBERSHIP_KEYED_BY_FRIENDSDRINKS_ID_STATE),
                         Consumed.with(avroBuilder.friendsDrinksIdSerdes(), avroBuilder.friendsDrinksMembershipIdListSerdes()));
 
-        KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState>
-                friendsDrinksStateKStream = builder.stream(envProps.getProperty(FRIENDSDRINKS_STATE),
-                Consumed.with(friendsDrinksAvroBuilder.friendsDrinksIdSerde(), friendsDrinksAvroBuilder.friendsDrinksStateSerde()));
+        KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent>
+                friendsDrinksEventKStream = builder.stream(envProps.getProperty(FRIENDSDRINKS_EVENT),
+                Consumed.with(friendsDrinksAvroBuilder.friendsDrinksIdSerde(), friendsDrinksAvroBuilder.friendsDrinksEventSerde()));
 
-        handleDeletedFriendsDrinks(friendsDrinksStateKStream, membershipIdListKeyedByFriendsDrinksIdStateKTable)
+        handleDeletedFriendsDrinks(friendsDrinksEventKStream, membershipIdListKeyedByFriendsDrinksIdStateKTable)
                 .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_MEMBERSHIP_EVENT),
                         Produced.with(avroBuilder.friendsDrinksMembershipIdSerdes(), avroBuilder.friendsDrinksMembershipEventSerdes()));
 
@@ -107,10 +108,10 @@ public class MembershipWriterService {
                 builder.table(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_MEMBERSHIP_KEYED_BY_USER_ID_STATE),
                         Consumed.with(avroBuilder.userIdSerdes(), avroBuilder.friendsDrinksMembershipIdListSerdes()));
 
-        KStream<andrewgrant.friendsdrinks.user.avro.UserId, UserState> userStateKStream =
-                builder.stream(envProps.getProperty(USER_STATE),
-                        Consumed.with(userAvroBuilder.userIdSerde(), userAvroBuilder.userStateSerde()));
-        handleDeletedUsers(userStateKStream, membershipIdListKeyedByUserIdStateKTable)
+        KStream<andrewgrant.friendsdrinks.user.avro.UserId, UserEvent> userEventKStream =
+                builder.stream(envProps.getProperty(USER_EVENT),
+                        Consumed.with(userAvroBuilder.userIdSerde(), userAvroBuilder.userEventSerde()));
+        handleDeletedUsers(userEventKStream, membershipIdListKeyedByUserIdStateKTable)
                 .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_MEMBERSHIP_EVENT),
                         Produced.with(avroBuilder.friendsDrinksMembershipIdSerdes(), avroBuilder.friendsDrinksMembershipEventSerdes()));
 
@@ -205,84 +206,89 @@ public class MembershipWriterService {
     }
 
     private KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipEvent> handleDeletedUsers(
-            KStream<andrewgrant.friendsdrinks.user.avro.UserId, UserState> userStateKStream,
+            KStream<andrewgrant.friendsdrinks.user.avro.UserId, UserEvent> userEventKStream,
             KTable<UserId, FriendsDrinksMembershipIdList> membershipIdListKTable) {
 
-        KStream<UserId, FriendsDrinksMembershipId> streamOfMembershipIdsToDelete = userStateKStream
+        KStream<UserId, FriendsDrinksMembershipEvent> streamOfMembershipIdsToDelete = userEventKStream
                 .map((key, value) -> {
                     UserId userId = UserId
                             .newBuilder()
                             .setUserId(key.getUserId())
                             .build();
-                    if (value == null) {
-                        return KeyValue.pair(userId, userId);
+                    if (value.getEventType().equals(andrewgrant.friendsdrinks.user.avro.EventType.DELETED)) {
+                        return KeyValue.pair(userId, value.getRequestId());
                     } else {
                         return KeyValue.pair(userId, null);
                     }
                 })
                 .filter((key, value) -> value != null)
                 .leftJoin(membershipIdListKTable,
-                        (l, r) -> r,
-                        Joined.with(avroBuilder.userIdSerdes(), avroBuilder.userIdSerdes(), avroBuilder.friendsDrinksMembershipIdListSerdes()))
+                        (l, r) -> FriendsDrinksMembershipEventList
+                                .newBuilder()
+                                .setEvents(r.getIds().stream().map(x -> FriendsDrinksMembershipEvent
+                                        .newBuilder()
+                                        .setRequestId(l)
+                                        .setEventType(EventType.MEMBERSHIP_REMOVED)
+                                        .setMembershipId(x)
+                                        .setFriendsDrinksMembershipRemoved(FriendsDrinksMembershipRemoved
+                                                .newBuilder()
+                                                .setMembershipId(x)
+                                                .build())
+                                        .build()).collect(Collectors.toList()))
+                                .build(),
+                        Joined.with(
+                                avroBuilder.userIdSerdes(),
+                                Serdes.String(),
+                                avroBuilder.friendsDrinksMembershipIdListSerdes()))
                 .filter((key, value) -> value != null)
-                .flatMapValues(value -> value.getIds());
+                .flatMapValues(value -> value.getEvents());
 
-        return streamOfMembershipIdsToDelete.map(((key, value) -> {
-            FriendsDrinksMembershipEvent friendsDrinksMembershipEvent = FriendsDrinksMembershipEvent
-                    .newBuilder()
-                    .setEventType(andrewgrant.friendsdrinks.membership.avro.EventType.MEMBERSHIP_REMOVED)
-                    .setMembershipId(value)
-                    .setFriendsDrinksMembershipRemoved(FriendsDrinksMembershipRemoved
-                            .newBuilder()
-                            .setMembershipId(value)
-                            .build())
-                    .build();
-            return KeyValue.pair(value, friendsDrinksMembershipEvent);
-        }));
+        return streamOfMembershipIdsToDelete.map(((key, value) ->
+                KeyValue.pair(value.getMembershipId(), value)));
     }
 
-
     private KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipEvent> handleDeletedFriendsDrinks(
-            KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState>
-                    friendsDrinksStateKStream,
+            KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent>
+                    friendsDrinksEventKStream,
             KTable<FriendsDrinksId, FriendsDrinksMembershipIdList> membershipIdListKTable) {
 
-        KStream<FriendsDrinksId, FriendsDrinksMembershipId> streamOfMembershipIdsToDelete = friendsDrinksStateKStream
+        KStream<FriendsDrinksId, FriendsDrinksMembershipEvent> streamOfMembershipIdsToDelete = friendsDrinksEventKStream
                 .map((key, value) -> {
                     FriendsDrinksId friendsDrinksId = FriendsDrinksId
                             .newBuilder()
                             .setAdminUserId(key.getAdminUserId())
                             .setUuid(key.getUuid())
                             .build();
-                    if (value == null) {
-                        return KeyValue.pair(friendsDrinksId, friendsDrinksId);
+                    if (value.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.DELETED)) {
+                        return KeyValue.pair(friendsDrinksId, value.getRequestId());
                     } else {
                         return KeyValue.pair(friendsDrinksId, null);
                     }
                 })
                 .filter((key, value) -> value != null)
                 .leftJoin(membershipIdListKTable,
-                        (l, r) -> r,
+                        (l, r) -> FriendsDrinksMembershipEventList
+                                .newBuilder()
+                                .setEvents(r.getIds().stream().map(x -> FriendsDrinksMembershipEvent
+                                        .newBuilder()
+                                        .setRequestId(l)
+                                        .setEventType(EventType.MEMBERSHIP_REMOVED)
+                                        .setMembershipId(x)
+                                        .setFriendsDrinksMembershipRemoved(FriendsDrinksMembershipRemoved
+                                                .newBuilder()
+                                                .setMembershipId(x)
+                                                .build())
+                                        .build()).collect(Collectors.toList()))
+                                .build(),
                         Joined.with(
                                 avroBuilder.friendsDrinksIdSerdes(),
-                                avroBuilder.friendsDrinksIdSerdes(),
+                                Serdes.String(),
                                 avroBuilder.friendsDrinksMembershipIdListSerdes())
                 )
                 .filter((key, value) -> value != null)
-                .flatMapValues(value -> value.getIds());
+                .flatMapValues(value -> value.getEvents());
 
-        return streamOfMembershipIdsToDelete.map((key, value) -> {
-            FriendsDrinksMembershipEvent event = FriendsDrinksMembershipEvent
-                    .newBuilder()
-                    .setEventType(andrewgrant.friendsdrinks.membership.avro.EventType.MEMBERSHIP_REMOVED)
-                    .setMembershipId(value)
-                    .setFriendsDrinksMembershipRemoved(FriendsDrinksMembershipRemoved
-                            .newBuilder()
-                            .setMembershipId(value)
-                            .build())
-                    .build();
-            return KeyValue.pair(value, event);
-        });
+        return streamOfMembershipIdsToDelete.map((key, value) -> KeyValue.pair(value.getMembershipId(), value));
     }
 
     private KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipState> buildMembershipStateKTable(

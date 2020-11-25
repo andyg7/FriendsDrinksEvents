@@ -591,10 +591,12 @@ public class Handler {
         String eventType = requestBean.getEventType();
         final String topicName = envProps.getProperty("user-event.topic.name");
         UserId userIdAvro = UserId.newBuilder().setUserId(userId).build();
+        String requestId = UUID.randomUUID().toString();
         UserEvent userEvent;
         if (eventType.equals(LOGGED_IN)) {
             userEvent = UserEvent
                     .newBuilder()
+                    .setRequestId(requestId)
                     .setEventType(andrewgrant.friendsdrinks.user.avro.EventType.LOGGED_IN)
                     .setUserLoggedIn(UserLoggedIn
                             .newBuilder()
@@ -608,18 +610,21 @@ public class Handler {
         } else if (eventType.equals(LOGGED_OUT)) {
             userEvent = UserEvent
                     .newBuilder()
+                    .setRequestId(requestId)
                     .setEventType(andrewgrant.friendsdrinks.user.avro.EventType.LOGGED_OUT)
                     .setUserId(userIdAvro)
                     .build();
         } else if (eventType.equals(SIGNED_OUT_SESSION_EXPIRED)) {
             userEvent = UserEvent
                     .newBuilder()
+                    .setRequestId(requestId)
                     .setEventType(andrewgrant.friendsdrinks.user.avro.EventType.SIGNED_OUT_SESSION_EXPIRED)
                     .setUserId(userIdAvro)
                     .build();
         } else if (eventType.equals(DELETED)) {
             userEvent = UserEvent
                     .newBuilder()
+                    .setRequestId(requestId)
                     .setEventType(andrewgrant.friendsdrinks.user.avro.EventType.DELETED)
                     .setUserId(userIdAvro)
                     .build();
