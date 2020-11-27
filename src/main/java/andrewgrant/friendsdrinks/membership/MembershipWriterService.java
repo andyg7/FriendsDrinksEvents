@@ -250,7 +250,7 @@ public class MembershipWriterService {
                                                     .setMembershipId(x)
                                                     .build())
                                             .build()).collect(Collectors.toList()))
-                                    .build()
+                                    .build();
                         },
                         Joined.with(
                                 avroBuilder.userIdSerdes(),
