@@ -15,6 +15,8 @@ public class StateAggregator {
                 FriendsDrinksState.Builder friendsDrinksStateBuilder;
                 if (aggValue.getFriendsDrinksState() == null) {
                     friendsDrinksStateBuilder = FriendsDrinksState.newBuilder();
+                } else if (aggValue.getFriendsDrinksState().getStatus().equals(Status.DELETED)) {
+                    return aggValue;
                 } else {
                     friendsDrinksStateBuilder = FriendsDrinksState
                             .newBuilder(aggValue.getFriendsDrinksState());
@@ -39,6 +41,8 @@ public class StateAggregator {
                     friendsDrinksStateBuilder = FriendsDrinksState.newBuilder();
                     friendsDrinksStateBuilder.setFriendsDrinksId(aggKey);
                     friendsDrinksStateBuilder.setStatus(Status.ACTIVE);
+                } else if (aggValue.getFriendsDrinksState().getStatus().equals(Status.DELETED)) {
+                    return aggValue;
                 }
                 andrewgrant.friendsdrinks.avro.UpdateType updateType = updatedFriendsDrinks.getUpdateType();
                 friendsDrinksStateBuilder = FriendsDrinksState.newBuilder(aggValue.getFriendsDrinksState());

@@ -120,8 +120,13 @@ public class MembershipWriterService {
 
     private KStream<FriendsDrinksId, FriendsDrinksMembershipIdList> buildMembershipIdListKeyedByFriendsDrinksIdView(
             KTable<FriendsDrinksMembershipId, FriendsDrinksMembershipState> friendsDrinksMembershipStateKTable) {
-
-        return friendsDrinksMembershipStateKTable.groupBy((key, value) ->
+        return friendsDrinksMembershipStateKTable.mapValues(v -> {
+            if (v.getStatus().equals(Status.DELETED)) {
+                return null;
+            } else {
+                return v;
+            }
+        }).groupBy((key, value) ->
                         KeyValue.pair(value.getMembershipId().getFriendsDrinksId(), value),
                 Grouped.with(avroBuilder.friendsDrinksIdSerdes(), avroBuilder.friendsDrinksMembershipStateSerdes()))
                 .aggregate(
@@ -163,7 +168,13 @@ public class MembershipWriterService {
     private KStream<UserId, FriendsDrinksMembershipIdList> buildMembershipIdListKeyedByUserIdView(
             KTable<FriendsDrinksMembershipId, FriendsDrinksMembershipState> friendsDrinksMembershipStateKTable) {
 
-        return friendsDrinksMembershipStateKTable.groupBy((key, value) ->
+        return friendsDrinksMembershipStateKTable.mapValues(v -> {
+            if (v.getStatus().equals(Status.DELETED)) {
+                return null;
+            } else {
+                return v;
+            }
+        }).groupBy((key, value) ->
                         KeyValue.pair(value.getMembershipId().getUserId(), value),
                 Grouped.with(avroBuilder.userIdSerdes(), avroBuilder.friendsDrinksMembershipStateSerdes()))
                 .aggregate(
