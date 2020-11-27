@@ -146,7 +146,7 @@ public class MembershipWriterService {
                         (aggKey, oldValue, aggValue) -> {
                             List<FriendsDrinksMembershipId> ids = aggValue.getIds();
                             for (int i = 0; i < ids.size(); i++) {
-                                if (ids.get(0).equals(oldValue.getMembershipId())) {
+                                if (ids.get(i).equals(oldValue.getMembershipId())) {
                                     ids.remove(i);
                                     break;
                                 }
@@ -194,7 +194,7 @@ public class MembershipWriterService {
                         (aggKey, oldValue, aggValue) -> {
                             List<FriendsDrinksMembershipId> ids = aggValue.getIds();
                             for (int i = 0; i < ids.size(); i++) {
-                                if (ids.get(0).equals(oldValue.getMembershipId())) {
+                                if (ids.get(i).equals(oldValue.getMembershipId())) {
                                     ids.remove(i);
                                     break;
                                 }
