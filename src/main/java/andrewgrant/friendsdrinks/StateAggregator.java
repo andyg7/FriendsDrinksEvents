@@ -27,6 +27,7 @@ public class StateAggregator {
                                 .setUuid(newValue.getFriendsDrinksId().getUuid())
                                 .setAdminUserId(newValue.getFriendsDrinksId().getAdminUserId())
                                 .build())
+                        .setStatus(Status.ACTIVE)
                         .build();
                 return FriendsDrinksStateAggregate.newBuilder()
                         .setFriendsDrinksState(friendsDrinksState)
@@ -35,7 +36,9 @@ public class StateAggregator {
                 FriendsDrinksUpdated updatedFriendsDrinks = newValue.getFriendsDrinksUpdated();
                 FriendsDrinksState.Builder friendsDrinksStateBuilder;
                 if (aggValue.getFriendsDrinksState() == null) {
-                    return null;
+                    friendsDrinksStateBuilder = FriendsDrinksState.newBuilder();
+                    friendsDrinksStateBuilder.setFriendsDrinksId(aggKey);
+                    friendsDrinksStateBuilder.setStatus(Status.ACTIVE);
                 }
                 andrewgrant.friendsdrinks.avro.UpdateType updateType = updatedFriendsDrinks.getUpdateType();
                 friendsDrinksStateBuilder = FriendsDrinksState.newBuilder(aggValue.getFriendsDrinksState());
@@ -55,7 +58,17 @@ public class StateAggregator {
                         .setFriendsDrinksState(friendsDrinksStateBuilder.build())
                         .build();
             } else if (newValue.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.DELETED)) {
-                return null;
+                FriendsDrinksState.Builder friendsDrinksStateBuilder;
+                if (aggValue.getFriendsDrinksState() == null) {
+                    friendsDrinksStateBuilder = FriendsDrinksState.newBuilder();
+                    friendsDrinksStateBuilder.setFriendsDrinksId(aggKey);
+                } else {
+                    friendsDrinksStateBuilder = FriendsDrinksState.newBuilder(aggValue.getFriendsDrinksState());
+                }
+                friendsDrinksStateBuilder.setStatus(Status.DELETED);
+                return FriendsDrinksStateAggregate.newBuilder()
+                        .setFriendsDrinksState(friendsDrinksStateBuilder.build())
+                        .build();
             } else {
                 throw new RuntimeException(String.format("Unexpected event type %s", newValue.getEventType().name()));
             }

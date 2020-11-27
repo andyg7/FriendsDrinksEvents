@@ -25,6 +25,7 @@ import java.util.concurrent.CountDownLatch;
 import andrewgrant.friendsdrinks.api.avro.*;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksId;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksState;
+import andrewgrant.friendsdrinks.avro.Status;
 import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksInvitationEvent;
 import andrewgrant.friendsdrinks.user.AvroBuilder;
 import andrewgrant.friendsdrinks.user.avro.UserId;
@@ -369,7 +370,7 @@ public class RequestService {
                                         return invitationResult;
                                     }
                                     // Validate request against state of FriendsDrinks
-                                    if (state != null) {
+                                    if (state != null && (!state.getStatus().equals(Status.DELETED))) {
                                         invitationResult.failed = false;
                                     } else {
                                         invitationResult.failed = true;

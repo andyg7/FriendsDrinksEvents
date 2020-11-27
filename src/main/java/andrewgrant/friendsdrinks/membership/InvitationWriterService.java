@@ -18,6 +18,7 @@ import java.util.concurrent.CountDownLatch;
 import andrewgrant.friendsdrinks.api.avro.*;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksId;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksState;
+import andrewgrant.friendsdrinks.avro.Status;
 import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksInvitationEvent;
 import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksInvitationState;
 import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId;
@@ -144,7 +145,7 @@ public class InvitationWriterService {
                 })
                 .leftJoin(friendsDrinksStateKTable,
                         (request, state) -> {
-                            if (state != null) {
+                            if (state != null && (!state.getStatus().equals(Status.DELETED))) {
                                 return FriendsDrinksInvitationEvent
                                         .newBuilder()
                                         .setEventType(InvitationEventType.CREATED)

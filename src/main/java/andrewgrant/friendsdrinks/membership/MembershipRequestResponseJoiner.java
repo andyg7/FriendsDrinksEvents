@@ -24,7 +24,7 @@ public class MembershipRequestResponseJoiner {
                     .build();
             return FriendsDrinksMembershipEvent
                     .newBuilder()
-                    .setEventType(andrewgrant.friendsdrinks.membership.avro.EventType.MEMBERSHIP_ADDED)
+                    .setEventType(andrewgrant.friendsdrinks.membership.avro.EventType.ADDED)
                     .setRequestId(r.getRequestId())
                     .setMembershipId(membershipId)
                     .setFriendsDrinksMembershipAdded(

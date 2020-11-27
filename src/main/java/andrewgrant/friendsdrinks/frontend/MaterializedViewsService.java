@@ -20,6 +20,7 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 
 import andrewgrant.friendsdrinks.api.avro.*;
+import andrewgrant.friendsdrinks.avro.Status;
 import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipState;
 import andrewgrant.friendsdrinks.user.AvroBuilder;
 
@@ -129,7 +130,7 @@ public class MaterializedViewsService {
                             .setAdminUserId(key.getAdminUserId())
                             .setUuid(key.getUuid())
                             .build();
-                    if (value == null) {
+                    if (value.getStatus().equals(Status.DELETED)) {
                         return KeyValue.pair(friendsDrinksIdApi, null);
                     }
                     FriendsDrinksState friendsDrinksStateApi = FriendsDrinksState
@@ -251,7 +252,7 @@ public class MaterializedViewsService {
                                             .setUserId(key.getUserId().getUserId())
                                             .build())
                                     .build();
-                    if (value == null) {
+                    if (value.getStatus().equals(andrewgrant.friendsdrinks.membership.avro.Status.DELETED)) {
                         return KeyValue.pair(apiId, null);
                     } else {
                         FriendsDrinksEnrichedMembershipState enrichedMembershipState =

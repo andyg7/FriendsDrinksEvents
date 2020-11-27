@@ -70,7 +70,7 @@ public class WriterService {
                         Materialized.<
                                 andrewgrant.friendsdrinks.avro.FriendsDrinksId,
                                 FriendsDrinksStateAggregate, KeyValueStore<Bytes, byte[]>>
-                                as("friendsdrinks-aggregate-state-store")
+                                as("friendsdrinks-state-aggregate-state-store")
                                 .withKeySerde(avroBuilder.friendsDrinksIdSerde())
                                 .withValueSerde(avroBuilder.friendsDrinksStateAggregateSerde())
                 ).toStream().mapValues(value -> {
@@ -93,7 +93,13 @@ public class WriterService {
 
     private KStream<String, FriendsDrinksIdList> buildFriendsDrinksIdListKeyedByAdminUserIdView(
             KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable) {
-        return friendsDrinksStateKTable.groupBy(((key, value) ->
+        return friendsDrinksStateKTable.mapValues(v -> {
+            if (v.getStatus().equals(Status.DELETED)) {
+                return null;
+            } else {
+                return v;
+            }
+        }).groupBy(((key, value) ->
                         KeyValue.pair(value.getFriendsDrinksId().getAdminUserId(), value)),
                 Grouped.with(Serdes.String(), avroBuilder.friendsDrinksStateSerde()))
                 .aggregate(

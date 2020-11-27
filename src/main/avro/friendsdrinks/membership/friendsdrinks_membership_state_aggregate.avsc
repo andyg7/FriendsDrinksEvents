@@ -1,0 +1,8 @@
+{
+  "namespace": "andrewgrant.friendsdrinks.membership.avro",
+  "type": "record",
+  "name": "FriendsDrinksMembershipStateAggregate",
+  "fields": [
+      {"name": "friendsDrinksMembershipState", "type": ["null", "FriendsDrinksMembershipState"], "default": null}
+  ]
+}

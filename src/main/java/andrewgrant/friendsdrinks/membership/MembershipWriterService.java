@@ -228,7 +228,7 @@ public class MembershipWriterService {
                                 .setEvents(r.getIds().stream().map(x -> FriendsDrinksMembershipEvent
                                         .newBuilder()
                                         .setRequestId(l)
-                                        .setEventType(EventType.MEMBERSHIP_REMOVED)
+                                        .setEventType(EventType.DELETED)
                                         .setMembershipId(x)
                                         .setFriendsDrinksMembershipRemoved(FriendsDrinksMembershipRemoved
                                                 .newBuilder()
@@ -272,7 +272,7 @@ public class MembershipWriterService {
                                 .setEvents(r.getIds().stream().map(x -> FriendsDrinksMembershipEvent
                                         .newBuilder()
                                         .setRequestId(l)
-                                        .setEventType(EventType.MEMBERSHIP_REMOVED)
+                                        .setEventType(EventType.DELETED)
                                         .setMembershipId(x)
                                         .setFriendsDrinksMembershipRemoved(FriendsDrinksMembershipRemoved
                                                 .newBuilder()
@@ -293,15 +293,19 @@ public class MembershipWriterService {
 
     private KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipState> buildMembershipStateKTable(
             KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipEvent> membershipEventKStream) {
-        return membershipEventKStream.mapValues(value -> {
-            if (value.getEventType().equals(andrewgrant.friendsdrinks.membership.avro.EventType.MEMBERSHIP_REMOVED)) {
-                return null;
-            } else {
-                return FriendsDrinksMembershipState.newBuilder()
-                        .setMembershipId(value.getMembershipId())
-                        .build();
-            }
-        });
+        return membershipEventKStream.groupByKey(Grouped.with(
+                avroBuilder.friendsDrinksMembershipIdSerdes(),
+                avroBuilder.friendsDrinksMembershipEventSerdes()))
+                .aggregate(
+                        () -> FriendsDrinksMembershipStateAggregate.newBuilder().build(),
+                        (aggKey, newValue, aggValue) -> new StateAggregator().handleNewEvent(aggKey, newValue, aggValue),
+                        Materialized.<
+                                FriendsDrinksMembershipId,
+                                FriendsDrinksMembershipStateAggregate, KeyValueStore<Bytes, byte[]>>
+                                as("friendsdrinks-membership-state-aggregate-state-store")
+                                .withKeySerde(avroBuilder.friendsDrinksMembershipIdSerdes())
+                                .withValueSerde(avroBuilder.friendsDrinksMembershipStateAggregateSerdes())
+                ).toStream().mapValues(v -> v.getFriendsDrinksMembershipState());
     }
 
     private KStream<String, ApiEvent> streamOfSuccessfulInvitationReplies(KStream<String, ApiEvent> apiEvents) {

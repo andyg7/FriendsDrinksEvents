@@ -1,9 +1,8 @@
 {
   "namespace": "andrewgrant.friendsdrinks.membership.avro",
   "type": "record",
-  "name": "FriendsDrinksMembershipState",
+  "name": "FriendsDrinksMembershipDeleted",
   "fields": [
-      {"name": "status", "type": {"type": "enum", "name": "Status", "symbols": ["ACTIVE", "REMOVED", "DELETED"] } },
       {"name": "membershipId", "type": "FriendsDrinksMembershipId" }
   ]
 }
