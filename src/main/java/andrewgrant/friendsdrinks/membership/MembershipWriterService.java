@@ -234,19 +234,24 @@ public class MembershipWriterService {
                 })
                 .filter((key, value) -> value != null)
                 .leftJoin(membershipIdListKTable,
-                        (l, r) -> FriendsDrinksMembershipEventList
-                                .newBuilder()
-                                .setEvents(r.getIds().stream().map(x -> FriendsDrinksMembershipEvent
-                                        .newBuilder()
-                                        .setRequestId(l)
-                                        .setEventType(EventType.DELETED)
-                                        .setMembershipId(x)
-                                        .setFriendsDrinksMembershipRemoved(FriendsDrinksMembershipRemoved
-                                                .newBuilder()
-                                                .setMembershipId(x)
-                                                .build())
-                                        .build()).collect(Collectors.toList()))
-                                .build(),
+                        (l, r) -> {
+                            if (r == null) {
+                                return null;
+                            }
+                            return FriendsDrinksMembershipEventList
+                                    .newBuilder()
+                                    .setEvents(r.getIds().stream().map(x -> FriendsDrinksMembershipEvent
+                                            .newBuilder()
+                                            .setRequestId(l)
+                                            .setEventType(EventType.DELETED)
+                                            .setMembershipId(x)
+                                            .setFriendsDrinksMembershipRemoved(FriendsDrinksMembershipRemoved
+                                                    .newBuilder()
+                                                    .setMembershipId(x)
+                                                    .build())
+                                            .build()).collect(Collectors.toList()))
+                                    .build()
+                        },
                         Joined.with(
                                 avroBuilder.userIdSerdes(),
                                 Serdes.String(),
@@ -278,19 +283,24 @@ public class MembershipWriterService {
                 })
                 .filter((key, value) -> value != null)
                 .leftJoin(membershipIdListKTable,
-                        (l, r) -> FriendsDrinksMembershipEventList
-                                .newBuilder()
-                                .setEvents(r.getIds().stream().map(x -> FriendsDrinksMembershipEvent
-                                        .newBuilder()
-                                        .setRequestId(l)
-                                        .setEventType(EventType.DELETED)
-                                        .setMembershipId(x)
-                                        .setFriendsDrinksMembershipRemoved(FriendsDrinksMembershipRemoved
-                                                .newBuilder()
-                                                .setMembershipId(x)
-                                                .build())
-                                        .build()).collect(Collectors.toList()))
-                                .build(),
+                        (l, r) -> {
+                            if (r == null) {
+                                return null;
+                            }
+                            return FriendsDrinksMembershipEventList
+                                    .newBuilder()
+                                    .setEvents(r.getIds().stream().map(x -> FriendsDrinksMembershipEvent
+                                            .newBuilder()
+                                            .setRequestId(l)
+                                            .setEventType(EventType.DELETED)
+                                            .setMembershipId(x)
+                                            .setFriendsDrinksMembershipRemoved(FriendsDrinksMembershipRemoved
+                                                    .newBuilder()
+                                                    .setMembershipId(x)
+                                                    .build())
+                                            .build()).collect(Collectors.toList()))
+                                    .build();
+                        },
                         Joined.with(
                                 avroBuilder.friendsDrinksIdSerdes(),
                                 Serdes.String(),

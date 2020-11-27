@@ -168,7 +168,7 @@ public class RequestService {
                                 if (requestId != null && requestId.equals(friendsDrinksMembershipEvent.getRequestId())) {
                                     stateStore.delete(friendsDrinksMembershipId);
                                 } else {
-                                    log.error("Failed to get request for FriendsDrinks UUID Admin ID {}",
+                                    log.error("Failed to get request for FriendsDrinks UUID {} Admin ID {}",
                                             friendsDrinksMembershipId.getFriendsDrinksId().getUuid(),
                                             friendsDrinksMembershipId.getFriendsDrinksId().getAdminUserId());
                                 }
@@ -195,7 +195,7 @@ public class RequestService {
                         if (requestId != null && requestId.equals(friendsDrinksInvitation.getRequestId())) {
                             stateStore.delete(friendsDrinksMembershipId);
                         } else {
-                            log.error("Failed to get request {} for FriendsDrinks UUID Admin ID {}",
+                            log.error("Failed to get request {} for FriendsDrinks UUID {} Admin ID {}",
                                     friendsDrinksInvitation.getRequestId(),
                                     friendsDrinksMembershipId.getFriendsDrinksId().getUuid(),
                                     friendsDrinksMembershipId.getFriendsDrinksId().getAdminUserId());
