@@ -55,8 +55,8 @@ public class WriterService {
                 (l, r) -> new RequestResponseJoiner().join(r),
                 JoinWindows.of(Duration.ofSeconds(30)),
                 StreamJoined.with(Serdes.String(),
-                        frontendAvroBuilder.friendsDrinksApiSerde(),
-                        frontendAvroBuilder.friendsDrinksApiSerde()))
+                        frontendAvroBuilder.friendsDrinksEventSerde(),
+                        frontendAvroBuilder.friendsDrinksEventSerde()))
                 .selectKey((k, v) -> v.getFriendsDrinksId())
                 .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_EVENT),
                         Produced.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksEventSerde()));

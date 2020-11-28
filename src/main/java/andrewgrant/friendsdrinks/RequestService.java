@@ -50,7 +50,7 @@ public class RequestService {
 
         StoreBuilder storeBuilder = Stores.keyValueStoreBuilder(
                 Stores.persistentKeyValueStore(PENDING_FRIENDSDRINKS_REQUESTS_STATE_STORE),
-                frontendAvroBuilder.apiFriendsDrinksIdSerde(),
+                frontendAvroBuilder.friendsDrinksIdSerde(),
                 Serdes.String());
         builder.addStateStore(storeBuilder);
 
@@ -66,33 +66,35 @@ public class RequestService {
                 .newBuilder()
                 .setAdminUserId(key.getAdminUserId())
                 .setUuid(key.getUuid())
-                .build()).repartition().process(() ->
-                new Processor<andrewgrant.friendsdrinks.api.avro.FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent>() {
+                .build())
+                .repartition(Repartitioned.with(frontendAvroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksEventSerde()))
+                .process(() ->
+                        new Processor<andrewgrant.friendsdrinks.api.avro.FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent>() {
 
-                    private KeyValueStore<FriendsDrinksId, String> stateStore;
+                            private KeyValueStore<FriendsDrinksId, String> stateStore;
 
-                    @Override
-                    public void init(ProcessorContext processorContext) {
-                        stateStore = (KeyValueStore) processorContext.getStateStore(PENDING_FRIENDSDRINKS_REQUESTS_STATE_STORE);
-                    }
+                            @Override
+                            public void init(ProcessorContext processorContext) {
+                                stateStore = (KeyValueStore) processorContext.getStateStore(PENDING_FRIENDSDRINKS_REQUESTS_STATE_STORE);
+                            }
 
-                    @Override
-                    public void process(andrewgrant.friendsdrinks.api.avro.FriendsDrinksId friendsDrinksId,
-                                        andrewgrant.friendsdrinks.avro.FriendsDrinksEvent friendsDrinksEvent) {
-                        String requestId = stateStore.get(friendsDrinksId);
-                        if (requestId != null && requestId.equals(friendsDrinksEvent.getRequestId())) {
-                            log.info("Deleting request {} from state store UUID {} Admin ID {}",
-                                    requestId, friendsDrinksId.getUuid(), friendsDrinksId.getAdminUserId());
-                            stateStore.delete(friendsDrinksId);
-                        } else {
-                            log.error("Failed to get request {} for FriendsDrinks UUID {} Admin ID {}",
-                                    requestId, friendsDrinksId.getUuid(), friendsDrinksId.getAdminUserId());
-                        }
-                    }
+                            @Override
+                            public void process(andrewgrant.friendsdrinks.api.avro.FriendsDrinksId friendsDrinksId,
+                                                andrewgrant.friendsdrinks.avro.FriendsDrinksEvent friendsDrinksEvent) {
+                                String requestId = stateStore.get(friendsDrinksId);
+                                if (requestId != null && requestId.equals(friendsDrinksEvent.getRequestId())) {
+                                    log.info("Deleting request {} from state store UUID {} Admin ID {}",
+                                            requestId, friendsDrinksId.getUuid(), friendsDrinksId.getAdminUserId());
+                                    stateStore.delete(friendsDrinksId);
+                                } else {
+                                    log.error("Failed to get request {} for FriendsDrinks UUID {} Admin ID {}",
+                                            requestId, friendsDrinksId.getUuid(), friendsDrinksId.getAdminUserId());
+                                }
+                            }
 
-                    @Override
-                    public void close() { }
-                }, PENDING_FRIENDSDRINKS_REQUESTS_STATE_STORE);
+                            @Override
+                            public void close() { }
+                        }, PENDING_FRIENDSDRINKS_REQUESTS_STATE_STORE);
 
         KStream<FriendsDrinksId, FriendsDrinksEvent> friendsDrinksApiEvents = apiEvents.filter((s, friendsDrinksEvent) ->
                 friendsDrinksEvent.getEventType().equals(ApiEventType.FRIENDSDRINKS_EVENT))
@@ -194,92 +196,96 @@ public class RequestService {
 
     private KStream<FriendsDrinksId, FriendsDrinksEventConcurrencyCheck> checkForConcurrentRequest(
             KStream<FriendsDrinksId, FriendsDrinksEvent> friendsDrinksEventKStream) {
-        return friendsDrinksEventKStream.repartition().transformValues(() ->
-                new ValueTransformer<FriendsDrinksEvent, FriendsDrinksEventConcurrencyCheck>() {
-                    private KeyValueStore<FriendsDrinksId, String> stateStore;
+        return friendsDrinksEventKStream.repartition(
+                Repartitioned.with(frontendAvroBuilder.friendsDrinksIdSerde(), frontendAvroBuilder.friendsDrinksEventSerde()))
+                .transformValues(() ->
+                        new ValueTransformer<FriendsDrinksEvent, FriendsDrinksEventConcurrencyCheck>() {
+                            private KeyValueStore<FriendsDrinksId, String> stateStore;
 
-                    @Override
-                    public void init(ProcessorContext processorContext) {
-                        stateStore = (KeyValueStore) processorContext.getStateStore(PENDING_FRIENDSDRINKS_REQUESTS_STATE_STORE);
-                    }
+                            @Override
+                            public void init(ProcessorContext processorContext) {
+                                stateStore = (KeyValueStore) processorContext.getStateStore(PENDING_FRIENDSDRINKS_REQUESTS_STATE_STORE);
+                            }
 
-                    @Override
-                    public FriendsDrinksEventConcurrencyCheck transform(FriendsDrinksEvent friendsDrinksEvent) {
-                        FriendsDrinksEventConcurrencyCheck concurrencyCheck = new FriendsDrinksEventConcurrencyCheck();
-                        concurrencyCheck.friendsDrinksEvent = friendsDrinksEvent;
-                        FriendsDrinksId friendsDrinksId = friendsDrinksEvent.getFriendsDrinksId();
-                        if (stateStore.get(friendsDrinksId) != null) {
-                            log.info("Rejecting request {} for FriendsDrinks {} because there's a concurrent request",
-                                    friendsDrinksEvent.getRequestId(), friendsDrinksEvent.getFriendsDrinksId().getUuid());
-                            concurrencyCheck.isConcurrentRequest = true;
-                        } else {
-                            log.info("Grabbing \"lock\" for request {} for FriendsDrinks UUID {} Admin ID {}",
-                                    friendsDrinksEvent.getRequestId(), friendsDrinksEvent.getFriendsDrinksId().getUuid(),
-                                    friendsDrinksEvent.getFriendsDrinksId().getAdminUserId());
-                            stateStore.put(friendsDrinksId, friendsDrinksEvent.getRequestId());
-                            concurrencyCheck.isConcurrentRequest = false;
-                        }
-                        return concurrencyCheck;
-                    }
+                            @Override
+                            public FriendsDrinksEventConcurrencyCheck transform(FriendsDrinksEvent friendsDrinksEvent) {
+                                FriendsDrinksEventConcurrencyCheck concurrencyCheck = new FriendsDrinksEventConcurrencyCheck();
+                                concurrencyCheck.friendsDrinksEvent = friendsDrinksEvent;
+                                FriendsDrinksId friendsDrinksId = friendsDrinksEvent.getFriendsDrinksId();
+                                if (stateStore.get(friendsDrinksId) != null) {
+                                    log.info("Rejecting request {} for FriendsDrinks {} because there's a concurrent request",
+                                            friendsDrinksEvent.getRequestId(), friendsDrinksEvent.getFriendsDrinksId().getUuid());
+                                    concurrencyCheck.isConcurrentRequest = true;
+                                } else {
+                                    log.info("Grabbing \"lock\" for request {} for FriendsDrinks UUID {} Admin ID {}",
+                                            friendsDrinksEvent.getRequestId(), friendsDrinksEvent.getFriendsDrinksId().getUuid(),
+                                            friendsDrinksEvent.getFriendsDrinksId().getAdminUserId());
+                                    stateStore.put(friendsDrinksId, friendsDrinksEvent.getRequestId());
+                                    concurrencyCheck.isConcurrentRequest = false;
+                                }
+                                return concurrencyCheck;
+                            }
 
-                    @Override
-                    public void close() { }
-                }, PENDING_FRIENDSDRINKS_REQUESTS_STATE_STORE);
+                            @Override
+                            public void close() { }
+                        }, PENDING_FRIENDSDRINKS_REQUESTS_STATE_STORE);
     }
 
     private KStream<String, ApiEvent> toApiEventResponse(KStream<FriendsDrinksId, FriendsDrinksEvent> friendsDrinksEventKStream) {
-        return friendsDrinksEventKStream.repartition().transform(() ->
-                new Transformer<FriendsDrinksId, FriendsDrinksEvent, KeyValue<String, ApiEvent>>() {
+        return friendsDrinksEventKStream
+                .repartition(Repartitioned.with(frontendAvroBuilder.friendsDrinksIdSerde(), frontendAvroBuilder.friendsDrinksEventSerde()))
+                .transform(() ->
+                        new Transformer<FriendsDrinksId, FriendsDrinksEvent, KeyValue<String, ApiEvent>>() {
 
-                    private KeyValueStore<FriendsDrinksId, String> stateStore;
+                            private KeyValueStore<FriendsDrinksId, String> stateStore;
 
-                    @Override
-                    public void init(ProcessorContext processorContext) {
-                        stateStore = (KeyValueStore) processorContext.getStateStore(PENDING_FRIENDSDRINKS_REQUESTS_STATE_STORE);
-                    }
-
-                    @Override
-                    public KeyValue<String, ApiEvent> transform(FriendsDrinksId friendsDrinksId, FriendsDrinksEvent friendsDrinksEvent) {
-                        Result result;
-                        FriendsDrinksEventType friendsDrinksEventType = friendsDrinksEvent.getEventType();
-                        switch (friendsDrinksEventType) {
-                            case CREATE_FRIENDSDRINKS_RESPONSE:
-                                result = friendsDrinksEvent.getCreateFriendsDrinksResponse().getResult();
-                                break;
-                            case UPDATE_FRIENDSDRINKS_RESPONSE:
-                                result = friendsDrinksEvent.getUpdateFriendsDrinksResponse().getResult();
-                                break;
-                            case DELETE_FRIENDSDRINKS_RESPONSE:
-                                result = friendsDrinksEvent.getDeleteFriendsDrinksResponse().getResult();
-                                break;
-                            default:
-                                throw new RuntimeException(String.format("Unexpected event type %s", friendsDrinksEventType.name()));
-                        }
-                        if (result.equals(Result.FAIL)) {
-                            String requestId = stateStore.get(friendsDrinksEvent.getFriendsDrinksId());
-                            if (requestId != null && requestId.equals(friendsDrinksEvent.getRequestId())) {
-                                log.info("Releasing \"lock\" for request ID {} FriendsDrinks UUID {} Admin ID",
-                                        requestId,
-                                        friendsDrinksEvent.getFriendsDrinksId().getUuid(),
-                                        friendsDrinksEvent.getFriendsDrinksId().getAdminUserId());
-                                stateStore.delete(friendsDrinksEvent.getFriendsDrinksId());
-                            } else {
-                                log.error("Failed to get request ID {} for FriendsDrinks UUID {} Admin ID {}",
-                                        requestId, friendsDrinksId.getUuid(), friendsDrinksId.getAdminUserId());
+                            @Override
+                            public void init(ProcessorContext processorContext) {
+                                stateStore = (KeyValueStore) processorContext.getStateStore(PENDING_FRIENDSDRINKS_REQUESTS_STATE_STORE);
                             }
-                        }
-                        ApiEvent apiEvent = ApiEvent
-                                .newBuilder()
-                                .setEventType(ApiEventType.FRIENDSDRINKS_EVENT)
-                                .setFriendsDrinksEvent(friendsDrinksEvent)
-                                .setRequestId(friendsDrinksEvent.getRequestId())
-                                .build();
-                        return KeyValue.pair(apiEvent.getRequestId(), apiEvent);
-                    }
 
-                    @Override
-                    public void close() { }
-                }, PENDING_FRIENDSDRINKS_REQUESTS_STATE_STORE);
+                            @Override
+                            public KeyValue<String, ApiEvent> transform(FriendsDrinksId friendsDrinksId, FriendsDrinksEvent friendsDrinksEvent) {
+                                Result result;
+                                FriendsDrinksEventType friendsDrinksEventType = friendsDrinksEvent.getEventType();
+                                switch (friendsDrinksEventType) {
+                                    case CREATE_FRIENDSDRINKS_RESPONSE:
+                                        result = friendsDrinksEvent.getCreateFriendsDrinksResponse().getResult();
+                                        break;
+                                    case UPDATE_FRIENDSDRINKS_RESPONSE:
+                                        result = friendsDrinksEvent.getUpdateFriendsDrinksResponse().getResult();
+                                        break;
+                                    case DELETE_FRIENDSDRINKS_RESPONSE:
+                                        result = friendsDrinksEvent.getDeleteFriendsDrinksResponse().getResult();
+                                        break;
+                                    default:
+                                        throw new RuntimeException(String.format("Unexpected event type %s", friendsDrinksEventType.name()));
+                                }
+                                if (result.equals(Result.FAIL)) {
+                                    String requestId = stateStore.get(friendsDrinksEvent.getFriendsDrinksId());
+                                    if (requestId != null && requestId.equals(friendsDrinksEvent.getRequestId())) {
+                                        log.info("Releasing \"lock\" for request ID {} FriendsDrinks UUID {} Admin ID",
+                                                requestId,
+                                                friendsDrinksEvent.getFriendsDrinksId().getUuid(),
+                                                friendsDrinksEvent.getFriendsDrinksId().getAdminUserId());
+                                        stateStore.delete(friendsDrinksEvent.getFriendsDrinksId());
+                                    } else {
+                                        log.error("Failed to get request ID {} for FriendsDrinks UUID {} Admin ID {}",
+                                                requestId, friendsDrinksId.getUuid(), friendsDrinksId.getAdminUserId());
+                                    }
+                                }
+                                ApiEvent apiEvent = ApiEvent
+                                        .newBuilder()
+                                        .setEventType(ApiEventType.FRIENDSDRINKS_EVENT)
+                                        .setFriendsDrinksEvent(friendsDrinksEvent)
+                                        .setRequestId(friendsDrinksEvent.getRequestId())
+                                        .build();
+                                return KeyValue.pair(apiEvent.getRequestId(), apiEvent);
+                            }
+
+                            @Override
+                            public void close() { }
+                        }, PENDING_FRIENDSDRINKS_REQUESTS_STATE_STORE);
     }
 
     private KStream<FriendsDrinksId, FriendsDrinksEvent> handleCreateRequests(
