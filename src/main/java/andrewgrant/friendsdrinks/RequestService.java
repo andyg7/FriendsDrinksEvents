@@ -27,7 +27,7 @@ import andrewgrant.friendsdrinks.avro.FriendsDrinksState;
  */
 public class RequestService {
 
-    private static final Logger log = LoggerFactory.getLogger(WriterService.class);
+    private static final Logger log = LoggerFactory.getLogger(RequestService.class);
     private static final String PENDING_FRIENDSDRINKS_REQUESTS_STATE_STORE = "pending-friendsdrinks-requests-store";
 
     private Properties envProps;
@@ -81,12 +81,12 @@ public class RequestService {
                                         andrewgrant.friendsdrinks.avro.FriendsDrinksEvent friendsDrinksEvent) {
                         String requestId = stateStore.get(friendsDrinksId);
                         if (requestId != null && requestId.equals(friendsDrinksEvent.getRequestId())) {
-                            log.info("Deleting from state store UUID {} Admin ID {}",
-                                    friendsDrinksId.getUuid(), friendsDrinksId.getAdminUserId());
+                            log.info("Deleting request {} from state store UUID {} Admin ID {}",
+                                    requestId, friendsDrinksId.getUuid(), friendsDrinksId.getAdminUserId());
                             stateStore.delete(friendsDrinksId);
                         } else {
-                            log.error("Failed to get request for FriendsDrinks UUID Admin ID {}",
-                                    friendsDrinksId.getUuid(), friendsDrinksId.getAdminUserId());
+                            log.error("Failed to get request {} for FriendsDrinks UUID {} Admin ID {}",
+                                    requestId, friendsDrinksId.getUuid(), friendsDrinksId.getAdminUserId());
                         }
                     }
 
@@ -212,8 +212,9 @@ public class RequestService {
                             friendsDrinksEvent.getRequestId(), friendsDrinksEvent.getFriendsDrinksId().getUuid());
                     concurrencyCheck.isConcurrentRequest = true;
                 } else {
-                    log.info("Grabbing \"lock\" for request {} for FriendsDrinks {}",
-                            friendsDrinksEvent.getRequestId(), friendsDrinksEvent.getFriendsDrinksId().getUuid());
+                    log.info("Grabbing \"lock\" for request {} for FriendsDrinks UUID {} Admin ID {}",
+                            friendsDrinksEvent.getRequestId(), friendsDrinksEvent.getFriendsDrinksId().getUuid(),
+                            friendsDrinksEvent.getFriendsDrinksId().getAdminUserId());
                     stateStore.put(friendsDrinksId, friendsDrinksEvent.getRequestId());
                     concurrencyCheck.isConcurrentRequest = false;
                 }

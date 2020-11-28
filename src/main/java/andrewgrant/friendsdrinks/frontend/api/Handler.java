@@ -224,8 +224,11 @@ public class Handler {
             for (FriendsDrinksId friendsDrinksId : memberFriendsDrinksList.getIds()) {
                 FriendsDrinksState friendsDrinksState = friendsDrinksStore.get(friendsDrinksId);
                 if (friendsDrinksState == null || friendsDrinksState.getFriendsDrinksId() == null) {
-                    throw new RuntimeException(String.format("FriendsDrinks with uuid %s and adminUserId %s could not be found",
-                            friendsDrinksId.getUuid(), friendsDrinksId.getAdminUserId()));
+                    log.error("FriendsDrinks with uuid {} and adminUserId {} could not be found from",
+                            friendsDrinksId.getUuid(),
+                            friendsDrinksId.getAdminUserId(),
+                            FRIENDSDRINKS_STORE);
+                    continue;
                 }
                 FriendsDrinksBean friendsDrinksBean = new FriendsDrinksBean();
                 friendsDrinksBean.setAdminUserId(friendsDrinksState.getFriendsDrinksId().getAdminUserId());
