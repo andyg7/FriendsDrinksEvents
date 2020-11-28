@@ -6,6 +6,7 @@
       {"name": "eventType", "type": {"type": "enum", "name": "InvitationEventType", "symbols": ["CREATED", "DELETED"] } },
       {"name": "membershipId", "type": "FriendsDrinksMembershipId" },
       {"name": "requestId", "type": "string"},
-      {"name": "message", "type": ["null", "string"], "default": null }
+      {"name": "friendsDrinksInvitationCreated", "type": ["null", "FriendsDrinksInvitationCreated"], "default": null },
+      {"name": "friendsDrinksInvitationDeleted", "type": ["null", "FriendsDrinksInvitationDeleted"], "default": null }
   ]
 }

@@ -1,0 +1,11 @@
+{
+  "namespace": "andrewgrant.friendsdrinks.membership.avro",
+  "type": "record",
+  "name": "FriendsDrinksInvitationCreated",
+  "fields": [
+      {"name": "membershipId", "type": "FriendsDrinksMembershipId" },
+      {"name": "requestId", "type": "string"},
+      {"name": "message", "type": ["null", "string"], "default": null },
+      {"name": "result", "type": {"type": "enum", "name": "Result", "symbols": ["ACCEPTED", "REJECTED"] } }
+  ]
+}

@@ -2,7 +2,6 @@ package andrewgrant.friendsdrinks.membership;
 
 import static andrewgrant.friendsdrinks.TopicNameConfigKey.FRIENDSDRINKS_EVENT;
 import static andrewgrant.friendsdrinks.env.Properties.load;
-import static andrewgrant.friendsdrinks.frontend.TopicNameConfigKey.FRIENDSDRINKS_API;
 import static andrewgrant.friendsdrinks.user.TopicNameConfigKey.USER_EVENT;
 
 import org.apache.kafka.common.serialization.Serdes;
@@ -14,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -23,6 +21,7 @@ import java.util.stream.Collectors;
 
 import andrewgrant.friendsdrinks.api.avro.*;
 import andrewgrant.friendsdrinks.api.avro.ApiEventType;
+import andrewgrant.friendsdrinks.api.avro.Result;
 import andrewgrant.friendsdrinks.membership.avro.*;
 import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksId;
 import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipEvent;
@@ -58,24 +57,31 @@ public class MembershipWriterService {
     public Topology buildTopology() {
         StreamsBuilder builder = new StreamsBuilder();
 
-        KStream<String, ApiEvent> apiEvents = builder.stream(envProps.getProperty(FRIENDSDRINKS_API),
-                Consumed.with(Serdes.String(), frontendAvroBuilder.apiEventSerde()));
-        KStream<String, ApiEvent> successfulApiResponses = streamOfSuccessfulInvitationReplies(apiEvents);
-        KStream<String, ApiEvent> apiRequests = streamOfAcceptedInvitations(apiEvents);
-
-        successfulApiResponses.join(apiRequests,
-                (l, r) -> new MembershipRequestResponseJoiner().join(r),
-                JoinWindows.of(Duration.ofSeconds(30)),
-                StreamJoined.with(Serdes.String(),
-                        frontendAvroBuilder.apiEventSerde(),
-                        frontendAvroBuilder.apiEventSerde()))
-                .selectKey((k, v) -> v.getMembershipId())
+        KStream<FriendsDrinksMembershipId, FriendsDrinksInvitationEvent> friendsDrinksInvitationEventKStream =
+                builder.stream(TopicNameConfigKey.FRIENDSDRINKS_INVITATION_EVENT,
+                        Consumed.with(avroBuilder.friendsDrinksMembershipIdSerdes(),
+                                avroBuilder.friendsDrinksInvitationEventSerde()));
+        friendsDrinksInvitationEventKStream
+                .filter((k, v) -> v.getEventType().equals(InvitationEventType.DELETED) &&
+                        v.getFriendsDrinksInvitationDeleted().getResponse().equals(Response.ACCEPTED))
+                .mapValues(v -> v.getFriendsDrinksInvitationDeleted())
+                .mapValues(v -> FriendsDrinksMembershipEvent
+                        .newBuilder()
+                        .setRequestId(v.getRequestId())
+                        .setEventType(EventType.ADDED)
+                        .setFriendsDrinksMembershipAdded(FriendsDrinksMembershipAdded
+                                .newBuilder()
+                                .setMembershipId(v.getMembershipId())
+                                .build())
+                        .build())
                 .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_MEMBERSHIP_EVENT),
                         Produced.with(avroBuilder.friendsDrinksMembershipIdSerdes(), avroBuilder.friendsDrinksMembershipEventSerdes()));
+
 
         KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipEvent> friendsDrinksMembershipEventKStream
                 = builder.stream(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_MEMBERSHIP_EVENT),
                 Consumed.with(avroBuilder.friendsDrinksMembershipIdSerdes(), avroBuilder.friendsDrinksMembershipEventSerdes()));
+
         buildMembershipStateKTable(friendsDrinksMembershipEventKStream)
                 .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_MEMBERSHIP_STATE),
                         Produced.with(avroBuilder.friendsDrinksMembershipIdSerdes(), avroBuilder.friendsDrinksMembershipStateSerdes()));

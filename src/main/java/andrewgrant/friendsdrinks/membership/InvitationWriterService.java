@@ -16,13 +16,12 @@ import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
 import andrewgrant.friendsdrinks.api.avro.*;
+import andrewgrant.friendsdrinks.api.avro.Result;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksId;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksState;
 import andrewgrant.friendsdrinks.avro.Status;
-import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksInvitationEvent;
-import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksInvitationState;
+import andrewgrant.friendsdrinks.membership.avro.*;
 import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId;
-import andrewgrant.friendsdrinks.membership.avro.InvitationEventType;
 
 /**
  * Owns writing to friendsdrinks-invitation-event topic.
@@ -67,7 +66,7 @@ public class InvitationWriterService {
         streamOfValidInvitations.mapValues(v -> FriendsDrinksInvitationState
                 .newBuilder()
                 .setMembershipId(v.getMembershipId())
-                .setMessage(v.getMessage())
+                .setMessage(v.getFriendsDrinksInvitationCreated().getMessage())
                 .build()).to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_INVITATION_STATE),
                 Produced.with(avroBuilder.friendsDrinksMembershipIdSerdes(),
                         avroBuilder.friendsDrinksInvitationStateSerde()));
@@ -115,11 +114,23 @@ public class InvitationWriterService {
                                     .setUserId(v.getMembershipId().getUserId().getUserId())
                                     .build())
                             .build();
+                    Response response;
+                    if (v.getReply().equals(Reply.ACCEPTED)) {
+                       response = Response.ACCEPTED;
+                    } else {
+                        response = Response.REJECTED;
+                    }
                     return KeyValue.pair(id, FriendsDrinksInvitationEvent
                             .newBuilder()
                             .setEventType(InvitationEventType.DELETED)
                             .setMembershipId(id)
                             .setRequestId(v.getRequestId())
+                            .setFriendsDrinksInvitationDeleted(FriendsDrinksInvitationDeleted
+                                    .newBuilder()
+                                    .setMembershipId(id)
+                                    .setRequestId(v.getRequestId())
+                                    .setResponse(response)
+                                    .build())
                             .build());
                 });
     }
@@ -146,24 +157,30 @@ public class InvitationWriterService {
                 .leftJoin(friendsDrinksStateKTable,
                         (request, state) -> {
                             if (state != null && (!state.getStatus().equals(Status.DELETED))) {
+                                FriendsDrinksMembershipId friendsDrinksMembershipId = FriendsDrinksMembershipId.newBuilder()
+                                        .setFriendsDrinksId(
+                                                andrewgrant.friendsdrinks.membership.avro.FriendsDrinksId
+                                                        .newBuilder()
+                                                        .setUuid(request.getMembershipId().getFriendsDrinksId().getUuid())
+                                                        .setAdminUserId(request.getMembershipId().getFriendsDrinksId().getAdminUserId())
+                                                        .build())
+                                        .setUserId(
+                                                andrewgrant.friendsdrinks.membership.avro.UserId
+                                                        .newBuilder()
+                                                        .setUserId(request.getMembershipId().getUserId().getUserId())
+                                                        .build())
+                                        .build();
                                 return FriendsDrinksInvitationEvent
                                         .newBuilder()
                                         .setEventType(InvitationEventType.CREATED)
                                         .setRequestId(request.getRequestId())
-                                        .setMembershipId(FriendsDrinksMembershipId.newBuilder()
-                                                .setFriendsDrinksId(
-                                                        andrewgrant.friendsdrinks.membership.avro.FriendsDrinksId
-                                                                .newBuilder()
-                                                                .setUuid(request.getMembershipId().getFriendsDrinksId().getUuid())
-                                                                .setAdminUserId(request.getMembershipId().getFriendsDrinksId().getAdminUserId())
-                                                                .build())
-                                                .setUserId(
-                                                        andrewgrant.friendsdrinks.membership.avro.UserId
-                                                                .newBuilder()
-                                                                .setUserId(request.getMembershipId().getUserId().getUserId())
-                                                                .build())
+                                        .setMembershipId(friendsDrinksMembershipId)
+                                        .setFriendsDrinksInvitationCreated(FriendsDrinksInvitationCreated
+                                                .newBuilder()
+                                                .setMessage(String.format("Want to join %s?!", state.getName()))
+                                                .setMembershipId(friendsDrinksMembershipId)
+                                                .setRequestId(request.getRequestId())
                                                 .build())
-                                        .setMessage(String.format("Want to join %s?!", state.getName()))
                                         .build();
                             } else {
                                 throw new RuntimeException(String.format("Failed to find FriendsDrinks state %s",

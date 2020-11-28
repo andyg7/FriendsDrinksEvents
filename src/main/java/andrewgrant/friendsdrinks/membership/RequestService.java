@@ -76,20 +76,13 @@ public class RequestService {
                         Consumed.with(avroBuilder.friendsDrinksMembershipIdSerdes(),
                                 avroBuilder.friendsDrinksInvitationEventSerde()));
 
-        KStream<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId,
-                andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipEvent> membershipEventKStream =
-                builder.stream(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_MEMBERSHIP_EVENT),
-                        Consumed.with(
-                                avroBuilder.friendsDrinksMembershipIdSerdes(),
-                                avroBuilder.friendsDrinksMembershipEventSerdes()));
-
         StoreBuilder storeBuilder = Stores.keyValueStoreBuilder(
                 Stores.persistentKeyValueStore(PENDING_FRIENDSDRINKS_MEMBERSHIP_REQUESTS_STATE_STORE),
                 frontendAvroBuilder.friendsDrinksMembershipIdSerde(),
                 Serdes.String());
         builder.addStateStore(storeBuilder);
 
-        purgePendingRequestsStore(membershipEventKStream, friendsDrinksInvitations.toStream());
+        purgePendingRequestsStore(friendsDrinksInvitations.toStream());
 
         KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipEvent> friendsDrinksMembershipEventKStream =
                 apiEvents.filter((key, value) -> value.getEventType().equals(ApiEventType.FRIENDSDRINKS_MEMBERSHIP_EVENT))
@@ -144,43 +137,8 @@ public class RequestService {
     }
 
     private void purgePendingRequestsStore(
-            KStream<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId,
-                    andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipEvent> membershipEventKStream,
             KStream<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId, FriendsDrinksInvitationEvent>
                     friendsDrinksInvitationKStream) {
-        membershipEventKStream.selectKey((key, value) -> toApi(key))
-                .repartition(Repartitioned.with(
-                        frontendAvroBuilder.friendsDrinksMembershipIdSerde(),
-                        avroBuilder.friendsDrinksMembershipEventSerdes()))
-                .process(() ->
-                        new Processor<FriendsDrinksMembershipId,
-                                andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipEvent>() {
-
-                            private KeyValueStore<FriendsDrinksMembershipId, String> stateStore;
-
-                            @Override
-                            public void init(ProcessorContext processorContext) {
-                                stateStore = (KeyValueStore) processorContext.getStateStore(PENDING_FRIENDSDRINKS_MEMBERSHIP_REQUESTS_STATE_STORE);
-                            }
-
-                            @Override
-                            public void process(
-                                    FriendsDrinksMembershipId friendsDrinksMembershipId,
-                                    andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipEvent friendsDrinksMembershipEvent) {
-                                String requestId = stateStore.get(friendsDrinksMembershipId);
-                                if (requestId != null && requestId.equals(friendsDrinksMembershipEvent.getRequestId())) {
-                                    stateStore.delete(friendsDrinksMembershipId);
-                                } else {
-                                    log.error("Failed to get request {} for FriendsDrinks UUID {} Admin ID {}",
-                                            requestId,
-                                            friendsDrinksMembershipId.getFriendsDrinksId().getUuid(),
-                                            friendsDrinksMembershipId.getFriendsDrinksId().getAdminUserId());
-                                }
-                            }
-
-                            @Override
-                            public void close() { }
-                        }, PENDING_FRIENDSDRINKS_MEMBERSHIP_REQUESTS_STATE_STORE);
 
         friendsDrinksInvitationKStream.selectKey((key, value) -> toApi(key))
                 .repartition(Repartitioned.with(
@@ -204,7 +162,7 @@ public class RequestService {
                                     stateStore.delete(friendsDrinksMembershipId);
                                 } else {
                                     log.error("Failed to get request {} for FriendsDrinks UUID {} Admin ID {}",
-                                            friendsDrinksInvitation.getRequestId(),
+                                            requestId,
                                             friendsDrinksMembershipId.getFriendsDrinksId().getUuid(),
                                             friendsDrinksMembershipId.getFriendsDrinksId().getAdminUserId());
                                 }
