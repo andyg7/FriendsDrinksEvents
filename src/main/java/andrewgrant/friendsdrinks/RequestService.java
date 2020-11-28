@@ -254,13 +254,16 @@ public class RequestService {
                         throw new RuntimeException(String.format("Unexpected event type %s", friendsDrinksEventType.name()));
                 }
                 if (result.equals(Result.FAIL)) {
-                    log.info("Releasing \"lock\" for FriendsDrinks {}", friendsDrinksEvent.getFriendsDrinksId().getUuid());
                     String requestId = stateStore.get(friendsDrinksEvent.getFriendsDrinksId());
                     if (requestId != null && requestId.equals(friendsDrinksEvent.getRequestId())) {
+                        log.info("Releasing \"lock\" for request ID {} FriendsDrinks UUID {} Admin ID",
+                                requestId,
+                                friendsDrinksEvent.getFriendsDrinksId().getUuid(),
+                                friendsDrinksEvent.getFriendsDrinksId().getAdminUserId());
                         stateStore.delete(friendsDrinksEvent.getFriendsDrinksId());
                     } else {
-                        log.error("Failed to get request for FriendsDrinks UUID {} Admin ID {}",
-                                friendsDrinksId.getUuid(), friendsDrinksId.getAdminUserId());
+                        log.error("Failed to get request ID {} for FriendsDrinks UUID {} Admin ID {}",
+                                requestId, friendsDrinksId.getUuid(), friendsDrinksId.getAdminUserId());
                     }
                 }
                 ApiEvent apiEvent = ApiEvent
@@ -409,6 +412,8 @@ public class RequestService {
         Topology topology = service.buildTopology();
         Properties streamProps = service.buildStreamProperties(envProps);
         KafkaStreams streams = new KafkaStreams(topology, streamProps);
+        TopologyDescription description = topology.describe();
+        log.info(description.toString());
 
         final CountDownLatch latch = new CountDownLatch(1);
         Runtime.getRuntime().addShutdownHook(new Thread("streams-shutdown-hook") {
