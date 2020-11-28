@@ -58,11 +58,11 @@ public class RequestService {
                 builder.table(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_STATE),
                         Consumed.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksStateSerde()));
 
-        KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> friendsDrinksEventKTable =
+        KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent> friendsDrinksEventKStream =
                 builder.stream(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_EVENT),
                         Consumed.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksEventSerde()));
 
-        friendsDrinksEventKTable.selectKey((key, value) -> FriendsDrinksId
+        friendsDrinksEventKStream.selectKey((key, value) -> FriendsDrinksId
                 .newBuilder()
                 .setAdminUserId(key.getAdminUserId())
                 .setUuid(key.getUuid())
