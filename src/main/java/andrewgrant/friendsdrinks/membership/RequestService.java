@@ -85,7 +85,7 @@ public class RequestService {
 
         StoreBuilder storeBuilder = Stores.keyValueStoreBuilder(
                 Stores.persistentKeyValueStore(PENDING_FRIENDSDRINKS_MEMBERSHIP_REQUESTS_STATE_STORE),
-                avroBuilder.friendsDrinksMembershipIdSerdes(),
+                frontendAvroBuilder.friendsDrinksMembershipIdSerde(),
                 Serdes.String());
         builder.addStateStore(storeBuilder);
 
@@ -171,7 +171,8 @@ public class RequestService {
                                 if (requestId != null && requestId.equals(friendsDrinksMembershipEvent.getRequestId())) {
                                     stateStore.delete(friendsDrinksMembershipId);
                                 } else {
-                                    log.error("Failed to get request for FriendsDrinks UUID {} Admin ID {}",
+                                    log.error("Failed to get request {} for FriendsDrinks UUID {} Admin ID {}",
+                                            requestId,
                                             friendsDrinksMembershipId.getFriendsDrinksId().getUuid(),
                                             friendsDrinksMembershipId.getFriendsDrinksId().getAdminUserId());
                                 }
@@ -342,7 +343,8 @@ public class RequestService {
                             if (requestId != null && requestId.equals(friendsDrinksMembershipEvent.getRequestId())) {
                                 stateStore.delete(friendsDrinksMembershipId);
                             } else {
-                                log.error("Failed to get request for FriendsDrinks UUID Admin ID {}",
+                                log.error("Failed to get request {} for FriendsDrinks UUID Admin ID {}",
+                                        requestId,
                                         friendsDrinksMembershipId.getFriendsDrinksId().getUuid(),
                                         friendsDrinksMembershipId.getFriendsDrinksId().getAdminUserId());
                             }
