@@ -46,7 +46,7 @@ public class RequestService {
 
         final String apiTopicName = envProps.getProperty(FRIENDSDRINKS_API);
         KStream<String, ApiEvent> apiEvents = builder.stream(apiTopicName,
-                Consumed.with(Serdes.String(), frontendAvroBuilder.apiSerde()));
+                Consumed.with(Serdes.String(), frontendAvroBuilder.apiEventSerde()));
 
         StoreBuilder storeBuilder = Stores.keyValueStoreBuilder(
                 Stores.persistentKeyValueStore(PENDING_FRIENDSDRINKS_REQUESTS_STATE_STORE),
@@ -116,7 +116,7 @@ public class RequestService {
                 );
 
         toRejectedApiEvents(friendsDrinksApiEventsBranchedOnConcurrencyCheck[0].mapValues(x -> x.friendsDrinksEvent))
-                .to(apiTopicName, Produced.with(Serdes.String(), frontendAvroBuilder.apiSerde()));
+                .to(apiTopicName, Produced.with(Serdes.String(), frontendAvroBuilder.apiEventSerde()));
         KStream<FriendsDrinksId, FriendsDrinksEvent> nonConflictingFriendsDrinksApiEvents =
                 friendsDrinksApiEventsBranchedOnConcurrencyCheck[1].mapValues(x -> x.friendsDrinksEvent);
 
@@ -125,14 +125,14 @@ public class RequestService {
                 friendsDrinksEvent.getEventType().equals(FriendsDrinksEventType.CREATE_FRIENDSDRINKS_REQUEST)))
                 .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getCreateFriendsDrinksRequest());
         KStream<FriendsDrinksId, FriendsDrinksEvent> createResponses = handleCreateRequests(createRequests, friendsDrinksStateKTable);
-        toApiEventResponse(createResponses).to(apiTopicName, Produced.with(Serdes.String(), frontendAvroBuilder.apiSerde()));
+        toApiEventResponse(createResponses).to(apiTopicName, Produced.with(Serdes.String(), frontendAvroBuilder.apiEventSerde()));
 
         // Updates.
         KStream<FriendsDrinksId, UpdateFriendsDrinksRequest> updateRequests = nonConflictingFriendsDrinksApiEvents.filter(((s, friendsDrinksEvent) ->
                 friendsDrinksEvent.getEventType().equals(FriendsDrinksEventType.UPDATE_FRIENDSDRINKS_REQUEST)))
                 .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getUpdateFriendsDrinksRequest());
         KStream<FriendsDrinksId, FriendsDrinksEvent> updateResponses = handleUpdateRequests(updateRequests, friendsDrinksStateKTable);
-        toApiEventResponse(updateResponses).to(apiTopicName, Produced.with(Serdes.String(), frontendAvroBuilder.apiSerde()));
+        toApiEventResponse(updateResponses).to(apiTopicName, Produced.with(Serdes.String(), frontendAvroBuilder.apiEventSerde()));
 
         // Deletes.
         KStream<FriendsDrinksId, DeleteFriendsDrinksRequest> deleteRequests = nonConflictingFriendsDrinksApiEvents.filter(((s, friendsDrinksEvent) ->
@@ -140,7 +140,7 @@ public class RequestService {
                         .equals(FriendsDrinksEventType.DELETE_FRIENDSDRINKS_REQUEST)))
                 .mapValues((friendsDrinksEvent) -> friendsDrinksEvent.getDeleteFriendsDrinksRequest());
         KStream<FriendsDrinksId, FriendsDrinksEvent> deleteResponses = handleDeleteRequests(deleteRequests, friendsDrinksStateKTable);
-        toApiEventResponse(deleteResponses).to(apiTopicName, Produced.with(Serdes.String(), frontendAvroBuilder.apiSerde()));
+        toApiEventResponse(deleteResponses).to(apiTopicName, Produced.with(Serdes.String(), frontendAvroBuilder.apiEventSerde()));
 
         return builder.build();
     }
@@ -421,7 +421,7 @@ public class RequestService {
         Properties streamProps = service.buildStreamProperties(envProps);
         KafkaStreams streams = new KafkaStreams(topology, streamProps);
         TopologyDescription description = topology.describe();
-        log.info(description.toString());
+        log.info("Topology description: {}", description.toString());
 
         final CountDownLatch latch = new CountDownLatch(1);
         Runtime.getRuntime().addShutdownHook(new Thread("streams-shutdown-hook") {

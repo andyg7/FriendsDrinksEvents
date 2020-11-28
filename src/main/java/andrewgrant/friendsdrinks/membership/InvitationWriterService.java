@@ -49,7 +49,7 @@ public class InvitationWriterService {
         StreamsBuilder builder = new StreamsBuilder();
 
         KStream<String, ApiEvent> apiEvents = builder.stream(envProps.getProperty(FRIENDSDRINKS_API),
-                Consumed.with(Serdes.String(), frontendAvroBuilder.apiSerde()));
+                Consumed.with(Serdes.String(), frontendAvroBuilder.apiEventSerde()));
         KStream<String, FriendsDrinksInvitationResponse> invitationResponses = streamOfSuccessfulInvitationResponses(apiEvents);
         KStream<String, FriendsDrinksInvitationRequest> invitationRequests = streamOfInvitationRequests(apiEvents);
 

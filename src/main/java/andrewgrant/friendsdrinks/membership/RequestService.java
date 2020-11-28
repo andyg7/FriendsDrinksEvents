@@ -61,7 +61,7 @@ public class RequestService {
         StreamsBuilder builder = new StreamsBuilder();
 
         KStream<String, ApiEvent> apiEvents = builder.stream(envProps.getProperty(FRIENDSDRINKS_API),
-                Consumed.with(Serdes.String(), frontendAvroBuilder.apiSerde()));
+                Consumed.with(Serdes.String(), frontendAvroBuilder.apiEventSerde()));
 
         KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable =
                 builder.table(envProps.getProperty(FRIENDSDRINKS_STATE),
@@ -115,7 +115,7 @@ public class RequestService {
                 );
 
         toRejectedResponse(branchedConcurrencyCheck[0].mapValues(v -> v.friendsDrinksMembershipEvent))
-                .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.apiSerde()));
+                .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.apiEventSerde()));
 
         InvitationRequestResult invitationRequestResult =
                 handleInvitationRequests(branchedConcurrencyCheck[1]
@@ -125,12 +125,12 @@ public class RequestService {
                         .mapValues(v -> v.getFriendsDrinksInvitationRequest()), friendsDrinksStateKTable, userState);
 
         toApiResponse(invitationRequestResult.getSuccessfulResponseKStream())
-                .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.apiSerde()));
+                .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.apiEventSerde()));
 
         for (KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipEvent> friendsDrinksEventKStream :
                 invitationRequestResult.getFailedResponseKStreams()) {
             toApiResponse(friendsDrinksEventKStream)
-                    .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.apiSerde()));
+                    .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.apiEventSerde()));
         }
 
         toApiResponse(handleInvitationReplies(branchedConcurrencyCheck[1]
@@ -138,7 +138,7 @@ public class RequestService {
                 .filter((key, value) ->
                         value.getEventType().equals(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_REPLY_REQUEST))
                 .mapValues(v -> v.getFriendsDrinksInvitationReplyRequest()),  friendsDrinksInvitations))
-                .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.apiSerde()));
+                .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.apiEventSerde()));
 
         return builder.build();
     }

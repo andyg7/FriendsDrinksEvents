@@ -47,7 +47,7 @@ public class WriterService {
     public Topology buildTopology() {
         StreamsBuilder builder = new StreamsBuilder();
         KStream<String, ApiEvent> apiEvents = builder.stream(envProps.getProperty(FRIENDSDRINKS_API),
-                Consumed.with(Serdes.String(), frontendAvroBuilder.apiSerde()));
+                Consumed.with(Serdes.String(), frontendAvroBuilder.apiEventSerde()));
         KStream<String, FriendsDrinksEvent> successfulApiResponses = streamOfSuccessfulResponses(apiEvents);
         KStream<String, FriendsDrinksEvent> apiRequests = streamOfRequests(apiEvents);
 

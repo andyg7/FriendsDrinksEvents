@@ -59,7 +59,7 @@ public class MembershipWriterService {
         StreamsBuilder builder = new StreamsBuilder();
 
         KStream<String, ApiEvent> apiEvents = builder.stream(envProps.getProperty(FRIENDSDRINKS_API),
-                Consumed.with(Serdes.String(), frontendAvroBuilder.apiSerde()));
+                Consumed.with(Serdes.String(), frontendAvroBuilder.apiEventSerde()));
         KStream<String, ApiEvent> successfulApiResponses = streamOfSuccessfulInvitationReplies(apiEvents);
         KStream<String, ApiEvent> apiRequests = streamOfAcceptedInvitations(apiEvents);
 
@@ -67,8 +67,8 @@ public class MembershipWriterService {
                 (l, r) -> new MembershipRequestResponseJoiner().join(r),
                 JoinWindows.of(Duration.ofSeconds(30)),
                 StreamJoined.with(Serdes.String(),
-                        frontendAvroBuilder.apiSerde(),
-                        frontendAvroBuilder.apiSerde()))
+                        frontendAvroBuilder.apiEventSerde(),
+                        frontendAvroBuilder.apiEventSerde()))
                 .selectKey((k, v) -> v.getMembershipId())
                 .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_MEMBERSHIP_EVENT),
                         Produced.with(avroBuilder.friendsDrinksMembershipIdSerdes(), avroBuilder.friendsDrinksMembershipEventSerdes()));

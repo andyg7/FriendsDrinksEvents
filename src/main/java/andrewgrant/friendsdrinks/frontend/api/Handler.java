@@ -646,7 +646,7 @@ public class Handler {
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(RESPONSES_STORE, QueryableStoreTypes.keyValueStore()));
         ApiEvent backendResponse = kv.get(requestId);
         if (backendResponse == null) {
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < 50; i++) {
                 if (backendResponse != null) {
                     break;
                 }

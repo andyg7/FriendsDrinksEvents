@@ -31,7 +31,7 @@ public class AvroBuilder {
     }
 
 
-    public SpecificAvroSerde<ApiEvent> apiSerde() {
+    public SpecificAvroSerde<ApiEvent> apiEventSerde() {
         SpecificAvroSerde<andrewgrant.friendsdrinks.api.avro.ApiEvent> serde;
         if (registryClient != null) {
             serde = new SpecificAvroSerde<>(registryClient);
@@ -58,8 +58,8 @@ public class AvroBuilder {
     }
 
 
-    public Serializer<ApiEvent> friendsDrinksSerializer() {
-        SpecificAvroSerde<andrewgrant.friendsdrinks.api.avro.ApiEvent> serde = apiSerde();
+    public Serializer<ApiEvent> apiEventSerializer() {
+        SpecificAvroSerde<andrewgrant.friendsdrinks.api.avro.ApiEvent> serde = apiEventSerde();
         return serde.serializer();
     }
 

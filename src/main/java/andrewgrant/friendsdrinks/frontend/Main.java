@@ -93,7 +93,7 @@ public class Main {
         return new KafkaProducer<>(
                 producerProps,
                 Serdes.String().serializer(),
-                avro.friendsDrinksSerializer());
+                avro.apiEventSerializer());
     }
 
     private static KafkaProducer<UserId, UserEvent> buildUserDrinksProducer(
