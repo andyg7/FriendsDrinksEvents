@@ -136,8 +136,7 @@ public class RequestService {
 
         // Deletes.
         KStream<FriendsDrinksId, DeleteFriendsDrinksRequest> deleteRequests = nonConflictingFriendsDrinksApiEvents.filter(((s, friendsDrinksEvent) ->
-                friendsDrinksEvent.getEventType()
-                        .equals(FriendsDrinksEventType.DELETE_FRIENDSDRINKS_REQUEST)))
+                friendsDrinksEvent.getEventType().equals(FriendsDrinksEventType.DELETE_FRIENDSDRINKS_REQUEST)))
                 .mapValues((friendsDrinksEvent) -> friendsDrinksEvent.getDeleteFriendsDrinksRequest());
         KStream<FriendsDrinksId, FriendsDrinksEvent> deleteResponses = handleDeleteRequests(deleteRequests, friendsDrinksStateKTable);
         toApiEventResponse(deleteResponses).to(apiTopicName, Produced.with(Serdes.String(), frontendAvroBuilder.apiEventSerde()));

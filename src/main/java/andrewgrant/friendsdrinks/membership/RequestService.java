@@ -307,22 +307,26 @@ public class RequestService {
     private KStream<String, ApiEvent> toApiResponse(
             KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipEvent> friendsDrinksMembershipEventKStream) {
 
-        return friendsDrinksMembershipEventKStream.transform(() ->
-                new Transformer<FriendsDrinksMembershipId, FriendsDrinksMembershipEvent, KeyValue<String, ApiEvent>>() {
+        return friendsDrinksMembershipEventKStream
+                .repartition(Repartitioned.with(
+                        frontendAvroBuilder.friendsDrinksMembershipIdSerde(),
+                        frontendAvroBuilder.friendsDrinksMembershipEventSerde()))
+                .transform(() ->
+                        new Transformer<FriendsDrinksMembershipId, FriendsDrinksMembershipEvent, KeyValue<String, ApiEvent>>() {
 
-                    private KeyValueStore<FriendsDrinksMembershipId, String> stateStore;
+                            private KeyValueStore<FriendsDrinksMembershipId, String> stateStore;
 
-                    @Override
-                    public void init(ProcessorContext processorContext) {
-                        stateStore = (KeyValueStore) processorContext.getStateStore(PENDING_FRIENDSDRINKS_MEMBERSHIP_REQUESTS_STATE_STORE);
-                    }
+                            @Override
+                            public void init(ProcessorContext processorContext) {
+                                stateStore = (KeyValueStore) processorContext.getStateStore(PENDING_FRIENDSDRINKS_MEMBERSHIP_REQUESTS_STATE_STORE);
+                            }
 
-                    @Override
-                    public KeyValue<String, ApiEvent> transform(
-                            FriendsDrinksMembershipId friendsDrinksMembershipId,
-                            FriendsDrinksMembershipEvent friendsDrinksMembershipEvent) {
-                        Result result;
-                        FriendsDrinksMembershipEventType eventType = friendsDrinksMembershipEvent.getEventType();
+                            @Override
+                            public KeyValue<String, ApiEvent> transform(
+                                    FriendsDrinksMembershipId friendsDrinksMembershipId,
+                                    FriendsDrinksMembershipEvent friendsDrinksMembershipEvent) {
+                                Result result;
+                                FriendsDrinksMembershipEventType eventType = friendsDrinksMembershipEvent.getEventType();
                         switch (eventType) {
                             case FRIENDSDRINKS_INVITATION_RESPONSE:
                                 result = friendsDrinksMembershipEvent.getFriendsDrinksInvitationResponse().getResult();
