@@ -42,19 +42,19 @@ public class RequestService {
             "pending-friendsdrinks-membership-requests-store";
 
     private Properties envProps;
-    private andrewgrant.friendsdrinks.AvroBuilder avroBuilder;
+    private andrewgrant.friendsdrinks.AvroBuilder friendsDrinksAvroBuilder;
     private AvroBuilder userAvroBuilder;
     private andrewgrant.friendsdrinks.frontend.AvroBuilder frontendAvroBuilder;
-    private andrewgrant.friendsdrinks.membership.AvroBuilder membershipAvroBuilder;
+    private andrewgrant.friendsdrinks.membership.AvroBuilder avroBuilder;
 
-    public RequestService(Properties envProps, andrewgrant.friendsdrinks.AvroBuilder avroBuilder,
+    public RequestService(Properties envProps, andrewgrant.friendsdrinks.AvroBuilder friendsDrinksAvroBuilder,
                           AvroBuilder userAvroBuilder, andrewgrant.friendsdrinks.frontend.AvroBuilder frontendAvroBuilder,
-                          andrewgrant.friendsdrinks.membership.AvroBuilder membershipAvroBuilder) {
+                          andrewgrant.friendsdrinks.membership.AvroBuilder avroBuilder) {
         this.envProps = envProps;
-        this.avroBuilder = avroBuilder;
+        this.friendsDrinksAvroBuilder = friendsDrinksAvroBuilder;
         this.userAvroBuilder = userAvroBuilder;
         this.frontendAvroBuilder = frontendAvroBuilder;
-        this.membershipAvroBuilder = membershipAvroBuilder;
+        this.avroBuilder = avroBuilder;
     }
 
     public Topology buildTopology() {
@@ -65,7 +65,7 @@ public class RequestService {
 
         KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable =
                 builder.table(envProps.getProperty(FRIENDSDRINKS_STATE),
-                        Consumed.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksStateSerde()));
+                        Consumed.with(friendsDrinksAvroBuilder.friendsDrinksIdSerde(), friendsDrinksAvroBuilder.friendsDrinksStateSerde()));
 
         KTable<andrewgrant.friendsdrinks.user.avro.UserId, UserState> userState =
                 builder.table(envProps.getProperty(USER_STATE),
@@ -73,19 +73,19 @@ public class RequestService {
 
         KTable<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId, FriendsDrinksInvitationEvent> friendsDrinksInvitations =
                 builder.table(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_INVITATION_EVENT),
-                        Consumed.with(membershipAvroBuilder.friendsDrinksMembershipIdSerdes(),
-                                membershipAvroBuilder.friendsDrinksInvitationEventSerde()));
+                        Consumed.with(avroBuilder.friendsDrinksMembershipIdSerdes(),
+                                avroBuilder.friendsDrinksInvitationEventSerde()));
 
         KStream<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId,
                 andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipEvent> membershipEventKStream =
                 builder.stream(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_MEMBERSHIP_EVENT),
                         Consumed.with(
-                                membershipAvroBuilder.friendsDrinksMembershipIdSerdes(),
-                                membershipAvroBuilder.friendsDrinksMembershipEventSerdes()));
+                                avroBuilder.friendsDrinksMembershipIdSerdes(),
+                                avroBuilder.friendsDrinksMembershipEventSerdes()));
 
         StoreBuilder storeBuilder = Stores.keyValueStoreBuilder(
                 Stores.persistentKeyValueStore(PENDING_FRIENDSDRINKS_MEMBERSHIP_REQUESTS_STATE_STORE),
-                membershipAvroBuilder.friendsDrinksMembershipIdSerdes(),
+                avroBuilder.friendsDrinksMembershipIdSerdes(),
                 Serdes.String());
         builder.addStateStore(storeBuilder);
 
@@ -149,6 +149,9 @@ public class RequestService {
             KStream<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId, FriendsDrinksInvitationEvent>
                     friendsDrinksInvitationKStream) {
         membershipEventKStream.selectKey((key, value) -> toApi(key))
+                .repartition(Repartitioned.with(
+                        frontendAvroBuilder.friendsDrinksMembershipIdSerde(),
+                        avroBuilder.friendsDrinksMembershipEventSerdes()))
                 .process(() ->
                         new Processor<FriendsDrinksMembershipId,
                                 andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipEvent>() {
@@ -178,33 +181,37 @@ public class RequestService {
                             public void close() { }
                         }, PENDING_FRIENDSDRINKS_MEMBERSHIP_REQUESTS_STATE_STORE);
 
-        friendsDrinksInvitationKStream.selectKey((key, value) -> toApi(key)).process(() ->
-                new Processor<FriendsDrinksMembershipId, FriendsDrinksInvitationEvent>() {
+        friendsDrinksInvitationKStream.selectKey((key, value) -> toApi(key))
+                .repartition(Repartitioned.with(
+                        frontendAvroBuilder.friendsDrinksMembershipIdSerde(),
+                        avroBuilder.friendsDrinksInvitationEventSerde()))
+                .process(() ->
+                        new Processor<FriendsDrinksMembershipId, FriendsDrinksInvitationEvent>() {
 
-                    private KeyValueStore<FriendsDrinksMembershipId, String> stateStore;
+                            private KeyValueStore<FriendsDrinksMembershipId, String> stateStore;
 
-                    @Override
-                    public void init(ProcessorContext processorContext) {
-                        stateStore = (KeyValueStore) processorContext.getStateStore(PENDING_FRIENDSDRINKS_MEMBERSHIP_REQUESTS_STATE_STORE);
-                    }
+                            @Override
+                            public void init(ProcessorContext processorContext) {
+                                stateStore = (KeyValueStore) processorContext.getStateStore(PENDING_FRIENDSDRINKS_MEMBERSHIP_REQUESTS_STATE_STORE);
+                            }
 
-                    @Override
-                    public void process(FriendsDrinksMembershipId friendsDrinksMembershipId,
-                                        FriendsDrinksInvitationEvent friendsDrinksInvitation) {
-                        String requestId = stateStore.get(friendsDrinksMembershipId);
-                        if (requestId != null && requestId.equals(friendsDrinksInvitation.getRequestId())) {
-                            stateStore.delete(friendsDrinksMembershipId);
-                        } else {
-                            log.error("Failed to get request {} for FriendsDrinks UUID {} Admin ID {}",
-                                    friendsDrinksInvitation.getRequestId(),
-                                    friendsDrinksMembershipId.getFriendsDrinksId().getUuid(),
-                                    friendsDrinksMembershipId.getFriendsDrinksId().getAdminUserId());
-                        }
-                    }
+                            @Override
+                            public void process(FriendsDrinksMembershipId friendsDrinksMembershipId,
+                                                FriendsDrinksInvitationEvent friendsDrinksInvitation) {
+                                String requestId = stateStore.get(friendsDrinksMembershipId);
+                                if (requestId != null && requestId.equals(friendsDrinksInvitation.getRequestId())) {
+                                    stateStore.delete(friendsDrinksMembershipId);
+                                } else {
+                                    log.error("Failed to get request {} for FriendsDrinks UUID {} Admin ID {}",
+                                            friendsDrinksInvitation.getRequestId(),
+                                            friendsDrinksMembershipId.getFriendsDrinksId().getUuid(),
+                                            friendsDrinksMembershipId.getFriendsDrinksId().getAdminUserId());
+                                }
+                            }
 
-                    @Override
-                    public void close() { }
-                }, PENDING_FRIENDSDRINKS_MEMBERSHIP_REQUESTS_STATE_STORE);
+                            @Override
+                            public void close() { }
+                        }, PENDING_FRIENDSDRINKS_MEMBERSHIP_REQUESTS_STATE_STORE);
     }
 
     private KStream<String, ApiEvent> toRejectedResponse(
@@ -256,41 +263,45 @@ public class RequestService {
     private KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipEventConcurrencyCheck> checkForConcurrentRequests(
             KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipEvent> friendsDrinksMembershipEventKStream
     ) {
-        return friendsDrinksMembershipEventKStream.transformValues(() ->
-                new ValueTransformer<FriendsDrinksMembershipEvent, FriendsDrinksMembershipEventConcurrencyCheck>() {
+        return friendsDrinksMembershipEventKStream
+                .repartition(Repartitioned.with(
+                        frontendAvroBuilder.friendsDrinksMembershipIdSerde(),
+                        frontendAvroBuilder.friendsDrinksMembershipEventSerde()))
+                .transformValues(() ->
+                        new ValueTransformer<FriendsDrinksMembershipEvent, FriendsDrinksMembershipEventConcurrencyCheck>() {
 
-                    private KeyValueStore<FriendsDrinksMembershipId, String> stateStore;
+                            private KeyValueStore<FriendsDrinksMembershipId, String> stateStore;
 
-                    @Override
-                    public void init(ProcessorContext processorContext) {
-                        stateStore = (KeyValueStore) processorContext.getStateStore(PENDING_FRIENDSDRINKS_MEMBERSHIP_REQUESTS_STATE_STORE);
-                    }
+                            @Override
+                            public void init(ProcessorContext processorContext) {
+                                stateStore = (KeyValueStore) processorContext.getStateStore(PENDING_FRIENDSDRINKS_MEMBERSHIP_REQUESTS_STATE_STORE);
+                            }
 
-                    @Override
-                    public FriendsDrinksMembershipEventConcurrencyCheck transform(FriendsDrinksMembershipEvent friendsDrinksMembershipEvent) {
-                        FriendsDrinksMembershipEventConcurrencyCheck concurrencyCheck =
-                                new FriendsDrinksMembershipEventConcurrencyCheck();
-                        concurrencyCheck.friendsDrinksMembershipEvent = friendsDrinksMembershipEvent;
-                        FriendsDrinksMembershipId friendsDrinksMembershipId = friendsDrinksMembershipEvent.getMembershipId();
-                        if (stateStore.get(friendsDrinksMembershipId) != null) {
-                            concurrencyCheck.isConcurrentRequest = true;
-                            log.info("Found a concurrent request for FriendsDrinks UUID {} Admin ID {} and User ID {} with request ID {}",
-                                    friendsDrinksMembershipId.getFriendsDrinksId().getUuid(),
-                                    friendsDrinksMembershipId.getFriendsDrinksId().getAdminUserId(),
-                                    friendsDrinksMembershipId.getUserId().getUserId(),
-                                    friendsDrinksMembershipEvent.getRequestId());
-                        } else {
-                            stateStore.put(friendsDrinksMembershipId, friendsDrinksMembershipEvent.getRequestId());
-                            concurrencyCheck.isConcurrentRequest = false;
-                        }
-                        return concurrencyCheck;
-                    }
+                            @Override
+                            public FriendsDrinksMembershipEventConcurrencyCheck transform(FriendsDrinksMembershipEvent friendsDrinksMembershipEvent) {
+                                FriendsDrinksMembershipEventConcurrencyCheck concurrencyCheck =
+                                        new FriendsDrinksMembershipEventConcurrencyCheck();
+                                concurrencyCheck.friendsDrinksMembershipEvent = friendsDrinksMembershipEvent;
+                                FriendsDrinksMembershipId friendsDrinksMembershipId = friendsDrinksMembershipEvent.getMembershipId();
+                                if (stateStore.get(friendsDrinksMembershipId) != null) {
+                                    concurrencyCheck.isConcurrentRequest = true;
+                                    log.info("Found a concurrent request for FriendsDrinks UUID {} Admin ID {} and User ID {} with request ID {}",
+                                            friendsDrinksMembershipId.getFriendsDrinksId().getUuid(),
+                                            friendsDrinksMembershipId.getFriendsDrinksId().getAdminUserId(),
+                                            friendsDrinksMembershipId.getUserId().getUserId(),
+                                            friendsDrinksMembershipEvent.getRequestId());
+                                } else {
+                                    stateStore.put(friendsDrinksMembershipId, friendsDrinksMembershipEvent.getRequestId());
+                                    concurrencyCheck.isConcurrentRequest = false;
+                                }
+                                return concurrencyCheck;
+                            }
 
-                    @Override
-                    public void close() {
+                            @Override
+                            public void close() {
 
-                    }
-                }, PENDING_FRIENDSDRINKS_MEMBERSHIP_REQUESTS_STATE_STORE);
+                            }
+                        }, PENDING_FRIENDSDRINKS_MEMBERSHIP_REQUESTS_STATE_STORE);
     }
 
     private KStream<String, ApiEvent> toApiResponse(
@@ -346,7 +357,7 @@ public class RequestService {
 
                     }
                 }, PENDING_FRIENDSDRINKS_MEMBERSHIP_REQUESTS_STATE_STORE);
-   }
+    }
 
     private InvitationRequestResult handleInvitationRequests(
             KStream<FriendsDrinksMembershipId, FriendsDrinksInvitationRequest> friendsDrinksInvitations ,
@@ -377,11 +388,11 @@ public class RequestService {
                                     }
                                     return invitationResult;
                                 },
-                                Joined.with(avroBuilder.friendsDrinksIdSerde(),
+                                Joined.with(friendsDrinksAvroBuilder.friendsDrinksIdSerde(),
                                         frontendAvroBuilder.friendsDrinksInvitationRequestSerde(),
-                                        avroBuilder.friendsDrinksStateSerde())
+                                        friendsDrinksAvroBuilder.friendsDrinksStateSerde())
                         )
-                .selectKey((key, value) -> value.invitationRequest.getMembershipId());
+                        .selectKey((key, value) -> value.invitationRequest.getMembershipId());
 
         KStream<FriendsDrinksMembershipId, InvitationResult>[] branchedResultsAfterValidatingFriendsDrinksState =
                 resultsAfterValidatingFriendsDrinksState.branch(
@@ -537,9 +548,9 @@ public class RequestService {
                                     }
                                     return friendsDrinksMembershipEvent.build();
                                 },
-                                Joined.with(membershipAvroBuilder.friendsDrinksMembershipIdSerdes(),
+                                Joined.with(avroBuilder.friendsDrinksMembershipIdSerdes(),
                                         frontendAvroBuilder.friendsDrinksInvitationReplyRequestSerde(),
-                                        membershipAvroBuilder.friendsDrinksInvitationEventSerde())
+                                        avroBuilder.friendsDrinksInvitationEventSerde())
                         );
 
         return friendsDrinksInvitationReplyResponses.selectKey((k, v) -> v.getMembershipId());

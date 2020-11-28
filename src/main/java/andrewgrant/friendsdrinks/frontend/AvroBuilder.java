@@ -260,4 +260,17 @@ public class AvroBuilder {
         serde.configure(config, true);
         return serde;
     }
+
+    public SpecificAvroSerde<andrewgrant.friendsdrinks.api.avro.FriendsDrinksMembershipEvent> friendsDrinksMembershipEventSerde() {
+        SpecificAvroSerde<andrewgrant.friendsdrinks.api.avro.FriendsDrinksMembershipEvent> serde;
+        if (registryClient != null) {
+            serde = new SpecificAvroSerde<>(registryClient);
+        } else {
+            serde = new SpecificAvroSerde<>();
+        }
+        Map<String, String> config = new HashMap<>();
+        config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, registryUrl);
+        serde.configure(config, false);
+        return serde;
+    }
 }
