@@ -253,7 +253,7 @@ public class MaterializedViewsService {
                                             .setUserId(key.getUserId().getUserId())
                                             .build())
                                     .build();
-                    if (value.getStatus().equals(andrewgrant.friendsdrinks.membership.avro.Status.DELETED)) {
+                    if (value.getStatus().equals(andrewgrant.friendsdrinks.membership.avro.Status.REMOVED)) {
                         return KeyValue.pair(apiId, null);
                     } else {
                         FriendsDrinksEnrichedMembershipState enrichedMembershipState =
@@ -265,7 +265,7 @@ public class MaterializedViewsService {
                 })
                 .toTable(
                         Materialized.<FriendsDrinksMembershipId, FriendsDrinksEnrichedMembershipState, KeyValueStore<Bytes, byte[]>>
-                                as("friendsdrinks-membership-enriched-bootstrap-state-store")
+                                as("friendsdrinks-membership-enriched-state-store")
                                 .withKeySerde(apiAvroBuilder.friendsDrinksMembershipIdSerde())
                                 .withValueSerde(apiAvroBuilder.friendsDrinksEnrichedMembershipStateSerde()));
 
