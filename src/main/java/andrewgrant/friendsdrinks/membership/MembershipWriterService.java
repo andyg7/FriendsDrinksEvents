@@ -1,8 +1,6 @@
 package andrewgrant.friendsdrinks.membership;
 
-import static andrewgrant.friendsdrinks.TopicNameConfigKey.FRIENDSDRINKS_EVENT;
 import static andrewgrant.friendsdrinks.env.Properties.load;
-import static andrewgrant.friendsdrinks.user.TopicNameConfigKey.USER_EVENT;
 
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
@@ -69,6 +67,7 @@ public class MembershipWriterService {
                         .newBuilder()
                         .setRequestId(v.getRequestId())
                         .setEventType(EventType.ADDED)
+                        .setMembershipId(v.getMembershipId())
                         .setFriendsDrinksMembershipAdded(FriendsDrinksMembershipAdded
                                 .newBuilder()
                                 .setMembershipId(v.getMembershipId())
@@ -97,29 +96,6 @@ public class MembershipWriterService {
         buildMembershipIdListKeyedByUserIdView(membershipStateKTable)
                 .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_MEMBERSHIP_KEYED_BY_USER_ID_STATE),
                         Produced.with(avroBuilder.userIdSerdes(), avroBuilder.friendsDrinksMembershipIdListSerdes()));
-
-        KTable<FriendsDrinksId, FriendsDrinksMembershipIdList> membershipIdListKeyedByFriendsDrinksIdStateKTable =
-                builder.table(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_MEMBERSHIP_KEYED_BY_FRIENDSDRINKS_ID_STATE),
-                        Consumed.with(avroBuilder.friendsDrinksIdSerdes(), avroBuilder.friendsDrinksMembershipIdListSerdes()));
-
-        KStream<andrewgrant.friendsdrinks.avro.FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksEvent>
-                friendsDrinksEventKStream = builder.stream(envProps.getProperty(FRIENDSDRINKS_EVENT),
-                Consumed.with(friendsDrinksAvroBuilder.friendsDrinksIdSerde(), friendsDrinksAvroBuilder.friendsDrinksEventSerde()));
-
-        handleDeletedFriendsDrinks(friendsDrinksEventKStream, membershipIdListKeyedByFriendsDrinksIdStateKTable)
-                .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_MEMBERSHIP_EVENT),
-                        Produced.with(avroBuilder.friendsDrinksMembershipIdSerdes(), avroBuilder.friendsDrinksMembershipEventSerdes()));
-
-        KTable<UserId, FriendsDrinksMembershipIdList> membershipIdListKeyedByUserIdStateKTable =
-                builder.table(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_MEMBERSHIP_KEYED_BY_USER_ID_STATE),
-                        Consumed.with(avroBuilder.userIdSerdes(), avroBuilder.friendsDrinksMembershipIdListSerdes()));
-
-        KStream<andrewgrant.friendsdrinks.user.avro.UserId, UserEvent> userEventKStream =
-                builder.stream(envProps.getProperty(USER_EVENT),
-                        Consumed.with(userAvroBuilder.userIdSerde(), userAvroBuilder.userEventSerde()));
-        handleDeletedUsers(userEventKStream, membershipIdListKeyedByUserIdStateKTable)
-                .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_MEMBERSHIP_EVENT),
-                        Produced.with(avroBuilder.friendsDrinksMembershipIdSerdes(), avroBuilder.friendsDrinksMembershipEventSerdes()));
 
         return builder.build();
     }
