@@ -63,10 +63,12 @@ public class InvitationWriterService {
                 Produced.with(avroBuilder.friendsDrinksMembershipIdSerdes(),
                         avroBuilder.friendsDrinksInvitationEventSerde()));
 
-        builder.stream(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_INVITATION_EVENT),
-                Consumed.with(avroBuilder.friendsDrinksMembershipIdSerdes(),
-                        avroBuilder.friendsDrinksInvitationEventSerde()))
-                .filter((k, v) -> v.getEventType().equals(InvitationEventType.CREATED))
+        KStream<FriendsDrinksMembershipId, FriendsDrinksInvitationEvent> friendsDrinksInvitationEventKStream =
+                builder.stream(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_INVITATION_EVENT),
+                        Consumed.with(avroBuilder.friendsDrinksMembershipIdSerdes(),
+                                avroBuilder.friendsDrinksInvitationEventSerde()));
+
+        friendsDrinksInvitationEventKStream.filter((k, v) -> v.getEventType().equals(InvitationEventType.CREATED))
                 .mapValues(v -> FriendsDrinksInvitationState
                         .newBuilder()
                         .setMembershipId(v.getMembershipId())
@@ -86,10 +88,7 @@ public class InvitationWriterService {
                 Produced.with(avroBuilder.friendsDrinksMembershipIdSerdes(),
                         avroBuilder.friendsDrinksInvitationEventSerde()));
 
-        builder.stream(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_INVITATION_EVENT),
-                Consumed.with(avroBuilder.friendsDrinksMembershipIdSerdes(),
-                        avroBuilder.friendsDrinksInvitationEventSerde()))
-                .filter((k, v) -> v.getEventType().equals(InvitationEventType.RESPONDED_TO))
+        friendsDrinksInvitationEventKStream.filter((k, v) -> v.getEventType().equals(InvitationEventType.RESPONDED_TO))
                 .mapValues(v -> (FriendsDrinksInvitationState) null)
                 .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_INVITATION_STATE),
                         Produced.with(avroBuilder.friendsDrinksMembershipIdSerdes(),
