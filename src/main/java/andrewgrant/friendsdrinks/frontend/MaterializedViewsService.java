@@ -20,7 +20,6 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 
 import andrewgrant.friendsdrinks.api.avro.*;
-import andrewgrant.friendsdrinks.avro.Status;
 import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipState;
 import andrewgrant.friendsdrinks.user.AvroBuilder;
 
