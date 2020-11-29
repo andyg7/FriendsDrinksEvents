@@ -18,7 +18,6 @@ public class MembershipRequestResponseJoiner {
                     .setUserId(UserId.newBuilder().setUserId(request.getMembershipId().getUserId().getUserId()).build())
                     .setFriendsDrinksId(FriendsDrinksId
                             .newBuilder()
-                            .setAdminUserId(request.getMembershipId().getFriendsDrinksId().getAdminUserId())
                             .setUuid(request.getMembershipId().getFriendsDrinksId().getUuid())
                             .build())
                     .build();

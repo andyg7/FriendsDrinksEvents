@@ -5,6 +5,7 @@
   "fields": [
       {"name": "friendsDrinksId", "type": "FriendsDrinksId"},
       {"name": "updateType", "type": {"type": "enum", "name": "UpdateType", "symbols": ["FULL", "PARTIAL"]}},
-      {"name": "name", "type": ["null", "string"], "default": null}
+      {"name": "name", "type": ["null", "string"], "default": null},
+      {"name": "adminUserId", "type": "string"}
   ]
 }

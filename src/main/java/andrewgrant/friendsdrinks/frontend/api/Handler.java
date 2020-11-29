@@ -121,7 +121,7 @@ public class Handler {
             FriendsDrinksBean friendsDrinksBean = new FriendsDrinksBean();
             friendsDrinksBean.setName(friendsDrinksState.getName());
             friendsDrinksBean.setFriendsDrinksId(friendsDrinksState.getFriendsDrinksId().getUuid());
-            friendsDrinksBean.setAdminUserId(friendsDrinksState.getFriendsDrinksId().getAdminUserId());
+            friendsDrinksBean.setAdminUserId(friendsDrinksState.getAdminUserId());
             friendsDrinksList.add(friendsDrinksBean);
         }
         allKvs.close();
@@ -134,14 +134,14 @@ public class Handler {
     @Path("/friendsdrinkses/{friendsDrinksId}")
     @Produces(MediaType.APPLICATION_JSON)
     public GetFriendsDrinksResponseBean getFriendsDrinks(@PathParam("friendsDrinksId") String friendsDrinksId) {
-        ReadOnlyKeyValueStore<String, FriendsDrinksState> kv =
-                kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_KEYED_BY_SINGLE_ID_STORE, QueryableStoreTypes.keyValueStore()));
-        FriendsDrinksState friendsDrinksState = kv.get(friendsDrinksId);
+        ReadOnlyKeyValueStore<FriendsDrinksId, FriendsDrinksState> kv =
+                kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_STORE, QueryableStoreTypes.keyValueStore()));
+        FriendsDrinksState friendsDrinksState = kv.get(FriendsDrinksId.newBuilder().setUuid(friendsDrinksId).build());
         if (friendsDrinksState == null) {
             throw new BadRequestException(String.format("%s does not exist", friendsDrinksId));
         }
         FriendsDrinksBean friendsDrinksBean = new FriendsDrinksBean();
-        friendsDrinksBean.setAdminUserId(friendsDrinksState.getFriendsDrinksId().getAdminUserId());
+        friendsDrinksBean.setAdminUserId(friendsDrinksState.getAdminUserId());
         friendsDrinksBean.setFriendsDrinksId(friendsDrinksState.getFriendsDrinksId().getUuid());
         friendsDrinksBean.setName(friendsDrinksState.getName());
 
@@ -154,15 +154,15 @@ public class Handler {
     @Path("/friendsdrinksdetailpages/{friendsDrinksId}")
     @Produces(MediaType.APPLICATION_JSON)
     public GetFriendsDrinksDetailPageResponseBean getFriendsDrinksDetailPage(@PathParam("friendsDrinksId") String friendsDrinksId) {
-        ReadOnlyKeyValueStore<String, FriendsDrinksDetailPage> kv =
+        ReadOnlyKeyValueStore<FriendsDrinksId, FriendsDrinksDetailPage> kv =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_DETAIL_PAGE_STORE, QueryableStoreTypes.keyValueStore()));
-        FriendsDrinksDetailPage friendsDrinkDetailPage = kv.get(friendsDrinksId);
+        FriendsDrinksDetailPage friendsDrinkDetailPage = kv.get(FriendsDrinksId.newBuilder().setUuid(friendsDrinksId).build());
         if (friendsDrinkDetailPage == null || friendsDrinkDetailPage.getStatus().equals(Status.DELETED)) {
             throw new BadRequestException(String.format("%s does not exist", friendsDrinksId));
         }
 
         GetFriendsDrinksDetailPageResponseBean response = new GetFriendsDrinksDetailPageResponseBean();
-        response.setAdminUserId(friendsDrinkDetailPage.getFriendsDrinksId().getAdminUserId());
+        response.setAdminUserId(friendsDrinkDetailPage.getAdminUserId());
         response.setFriendsDrinksId(friendsDrinkDetailPage.getFriendsDrinksId().getUuid());
         if (friendsDrinkDetailPage.getMembers() != null) {
             response.setMembers(friendsDrinkDetailPage.getMembers().stream().map(x -> {
@@ -201,9 +201,8 @@ public class Handler {
             for (FriendsDrinksId friendsDrinksId : adminFriendsDrinksIdList.getIds()) {
                 FriendsDrinksState friendsDrinksState = friendsDrinksStore.get(friendsDrinksId);
                 if (friendsDrinksState == null || friendsDrinksState.getFriendsDrinksId() == null) {
-                    log.error("FriendsDrinks with uuid {} and adminUserId {} could not be found from {}",
+                    log.error("FriendsDrinks {} could not be found from {}",
                             friendsDrinksId.getUuid(),
-                            friendsDrinksId.getAdminUserId(),
                             FRIENDSDRINKS_STORE);
                     continue;
                 }
@@ -211,7 +210,7 @@ public class Handler {
                     continue;
                 }
                 FriendsDrinksBean friendsDrinksBean = new FriendsDrinksBean();
-                friendsDrinksBean.setAdminUserId(friendsDrinksState.getFriendsDrinksId().getAdminUserId());
+                friendsDrinksBean.setAdminUserId(friendsDrinksState.getAdminUserId());
                 friendsDrinksBean.setFriendsDrinksId(friendsDrinksState.getFriendsDrinksId().getUuid());
                 friendsDrinksBean.setName(friendsDrinksState.getName());
                 friendsDrinksBeans.add(friendsDrinksBean);
@@ -230,9 +229,8 @@ public class Handler {
             for (FriendsDrinksId friendsDrinksId : memberFriendsDrinksList.getIds()) {
                 FriendsDrinksState friendsDrinksState = friendsDrinksStore.get(friendsDrinksId);
                 if (friendsDrinksState == null || friendsDrinksState.getFriendsDrinksId() == null) {
-                    log.error("FriendsDrinks with uuid {} and adminUserId {} could not be found from {}",
+                    log.error("FriendsDrinks {} and adminUserId {} could not be found from {}",
                             friendsDrinksId.getUuid(),
-                            friendsDrinksId.getAdminUserId(),
                             FRIENDSDRINKS_STORE);
                     continue;
                 }
@@ -240,7 +238,7 @@ public class Handler {
                     continue;
                 }
                 FriendsDrinksBean friendsDrinksBean = new FriendsDrinksBean();
-                friendsDrinksBean.setAdminUserId(friendsDrinksState.getFriendsDrinksId().getAdminUserId());
+                friendsDrinksBean.setAdminUserId(friendsDrinksState.getAdminUserId());
                 friendsDrinksBean.setFriendsDrinksId(friendsDrinksState.getFriendsDrinksId().getUuid());
                 friendsDrinksBean.setName(friendsDrinksState.getName());
                 friendsDrinksBeans.add(friendsDrinksBean);
@@ -264,7 +262,6 @@ public class Handler {
                 FriendsDrinksState friendsDrinksState = friendsDrinksStore.get(FriendsDrinksId
                         .newBuilder()
                         .setUuid(keyValue.value.getMembershipId().getFriendsDrinksId().getUuid())
-                        .setAdminUserId(keyValue.value.getMembershipId().getFriendsDrinksId().getAdminUserId())
                         .build());
                 invitationBean.setFriendsDrinksName(friendsDrinksState.getName());
                 invitationBeans.add(invitationBean);
@@ -281,9 +278,9 @@ public class Handler {
     @Produces(MediaType.APPLICATION_JSON)
     public FriendsDrinksInvitationBean getInvitation(@PathParam("userId") String userId,
                                                      @PathParam("friendsDrinksId") String friendsDrinksId) {
-        ReadOnlyKeyValueStore<String, FriendsDrinksState> fdKv =
-                kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_KEYED_BY_SINGLE_ID_STORE, QueryableStoreTypes.keyValueStore()));
-        FriendsDrinksState friendsDrinksState = fdKv.get(friendsDrinksId);
+        ReadOnlyKeyValueStore<FriendsDrinksId, FriendsDrinksState> fdKv =
+                kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_STORE, QueryableStoreTypes.keyValueStore()));
+        FriendsDrinksState friendsDrinksState = fdKv.get(FriendsDrinksId.newBuilder().setUuid(friendsDrinksId).build());
         if (friendsDrinksState == null) {
             throw new BadRequestException(String.format("friendsDrinksId %s could not be found", friendsDrinksId));
         }
@@ -296,7 +293,6 @@ public class Handler {
                 .setFriendsDrinksId(andrewgrant.friendsdrinks.membership.avro.FriendsDrinksId
                         .newBuilder()
                         .setUuid(friendsDrinksId)
-                        .setAdminUserId(friendsDrinksState.getFriendsDrinksId().getAdminUserId())
                         .build())
                 .setUserId(andrewgrant.friendsdrinks.membership.avro.UserId.newBuilder().setUserId(userId).build())
                 .build();
@@ -329,13 +325,13 @@ public class Handler {
                 FriendsDrinksId
                         .newBuilder()
                         .setUuid(friendsDrinksId)
-                        .setAdminUserId(requestBean.getAdminUserId())
                         .build();
         CreateFriendsDrinksRequest createFriendsDrinksRequest = CreateFriendsDrinksRequest
                 .newBuilder()
                 .setFriendsDrinksId(friendsDrinksIdAvro)
                 .setRequestId(requestId)
                 .setName(requestBean.getName())
+                .setAdminUserId(requestBean.getAdminUserId())
                 .build();
 
         ApiEvent friendsDrinksEvent = ApiEvent
@@ -368,21 +364,18 @@ public class Handler {
                                                                UpdateFriendsDrinksRequestBean requestBean)
             throws InterruptedException, ExecutionException {
 
-        ReadOnlyKeyValueStore<String, FriendsDrinksState> kv =
-                kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_KEYED_BY_SINGLE_ID_STORE, QueryableStoreTypes.keyValueStore()));
-        FriendsDrinksState friendsDrinksState = kv.get(friendsDrinksId);
+        ReadOnlyKeyValueStore<FriendsDrinksId, FriendsDrinksState> kv =
+                kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_STORE, QueryableStoreTypes.keyValueStore()));
+        FriendsDrinksState friendsDrinksState = kv.get(FriendsDrinksId.newBuilder().setUuid(friendsDrinksId).build());
         if (friendsDrinksState == null) {
             throw new BadRequestException(String.format("FriendsDrinksId %s could not be found", friendsDrinksId));
         }
-
-        String adminUserId = friendsDrinksState.getFriendsDrinksId().getAdminUserId();
 
         final String topicName = envProps.getProperty("friendsdrinks-api.topic.name");
         String requestId = UUID.randomUUID().toString();
         ApiEvent friendsDrinksEvent;
         FriendsDrinksId friendsDrinksIdAvro = FriendsDrinksId
                 .newBuilder()
-                .setAdminUserId(adminUserId)
                 .setUuid(friendsDrinksId)
                 .build();
         UpdateFriendsDrinksRequest updateFriendsDrinksRequest = UpdateFriendsDrinksRequest
@@ -419,21 +412,19 @@ public class Handler {
     public DeleteFriendsDrinksResponseBean deleteFriendsDrinks(@PathParam("friendsDrinksId") String friendsDrinksId)
             throws InterruptedException {
 
-        ReadOnlyKeyValueStore<String, FriendsDrinksState> kv =
-                kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_KEYED_BY_SINGLE_ID_STORE, QueryableStoreTypes.keyValueStore()));
-        FriendsDrinksState friendsDrinksState = kv.get(friendsDrinksId);
+        ReadOnlyKeyValueStore<FriendsDrinksId, FriendsDrinksState> kv =
+                kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_STORE, QueryableStoreTypes.keyValueStore()));
+        FriendsDrinksState friendsDrinksState = kv.get(FriendsDrinksId.newBuilder().setUuid(friendsDrinksId).build());
         if (friendsDrinksState == null) {
             throw new BadRequestException(String.format("FriendsDrinksId %s could not be found", friendsDrinksId));
         }
 
-        String adminUserId = friendsDrinksState.getFriendsDrinksId().getAdminUserId();
         final String topicName = envProps.getProperty("friendsdrinks-api.topic.name");
         String requestId = UUID.randomUUID().toString();
         FriendsDrinksId friendsDrinksIdAvro =
                 FriendsDrinksId
                         .newBuilder()
                         .setUuid(friendsDrinksId)
-                        .setAdminUserId(adminUserId)
                         .build();
         DeleteFriendsDrinksRequest deleteFriendsDrinksRequest = DeleteFriendsDrinksRequest
                 .newBuilder()
@@ -483,9 +474,9 @@ public class Handler {
                                                          ReplyToInvitationRequestBean requestBean)
             throws InterruptedException, ExecutionException {
 
-        ReadOnlyKeyValueStore<String, FriendsDrinksState> kv =
-                kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_KEYED_BY_SINGLE_ID_STORE, QueryableStoreTypes.keyValueStore()));
-        FriendsDrinksState friendsDrinksState = kv.get(friendsDrinksId);
+        ReadOnlyKeyValueStore<FriendsDrinksId, FriendsDrinksState> kv =
+                kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_STORE, QueryableStoreTypes.keyValueStore()));
+        FriendsDrinksState friendsDrinksState = kv.get(FriendsDrinksId.newBuilder().setUuid(friendsDrinksId).build());
         if (friendsDrinksState == null) {
             throw new BadRequestException(String.format("FriendsDrinksId %s could not be found", friendsDrinksId));
         }
@@ -497,7 +488,6 @@ public class Handler {
 
         friendsDrinksIdAvro = FriendsDrinksId
                 .newBuilder()
-                .setAdminUserId(friendsDrinksState.getFriendsDrinksId().getAdminUserId())
                 .setUuid(friendsDrinksId)
                 .build();
         FriendsDrinksInvitationReplyRequest friendsDrinksInvitationReplyRequest =
@@ -554,7 +544,6 @@ public class Handler {
 
         friendsDrinksIdAvro = FriendsDrinksId
                 .newBuilder()
-                .setAdminUserId(userId)
                 .setUuid(friendsDrinksId)
                 .build();
         FriendsDrinksInvitationRequest friendsDrinksInvitationRequest =

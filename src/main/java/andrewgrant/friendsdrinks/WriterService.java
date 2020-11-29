@@ -101,7 +101,7 @@ public class WriterService {
                 return v;
             }
         }).groupBy(((key, value) ->
-                        KeyValue.pair(value.getFriendsDrinksId().getAdminUserId(), value)),
+                        KeyValue.pair(value.getAdminUserId(), value)),
                 Grouped.with(Serdes.String(), avroBuilder.friendsDrinksStateSerde()))
                 .aggregate(
                         () -> FriendsDrinksIdList.newBuilder().setIds(new ArrayList<>()).build(),

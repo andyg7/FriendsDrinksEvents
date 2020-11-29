@@ -113,7 +113,6 @@ public class InvitationWriterService {
                             .newBuilder()
                             .setFriendsDrinksId(andrewgrant.friendsdrinks.membership.avro.FriendsDrinksId
                                     .newBuilder()
-                                    .setAdminUserId(v.getMembershipId().getFriendsDrinksId().getAdminUserId())
                                     .setUuid(v.getMembershipId().getFriendsDrinksId().getUuid())
                                     .build()
                             )
@@ -157,7 +156,6 @@ public class InvitationWriterService {
                 .map((s, request) -> {
                     FriendsDrinksId friendsDrinksId = FriendsDrinksId
                             .newBuilder()
-                            .setAdminUserId(request.getMembershipId().getFriendsDrinksId().getAdminUserId())
                             .setUuid(request.getMembershipId().getFriendsDrinksId().getUuid())
                             .build();
                     return KeyValue.pair(friendsDrinksId, request);
@@ -170,7 +168,6 @@ public class InvitationWriterService {
                                                 andrewgrant.friendsdrinks.membership.avro.FriendsDrinksId
                                                         .newBuilder()
                                                         .setUuid(request.getMembershipId().getFriendsDrinksId().getUuid())
-                                                        .setAdminUserId(request.getMembershipId().getFriendsDrinksId().getAdminUserId())
                                                         .build())
                                         .setUserId(
                                                 andrewgrant.friendsdrinks.membership.avro.UserId

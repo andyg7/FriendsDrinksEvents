@@ -161,10 +161,9 @@ public class RequestService {
                                 if (requestId != null && requestId.equals(friendsDrinksInvitation.getRequestId())) {
                                     stateStore.delete(friendsDrinksMembershipId);
                                 } else {
-                                    log.error("Failed to get request {} for FriendsDrinks UUID {} Admin ID {}",
+                                    log.error("Failed to get request {} for FriendsDrinks UUID {}",
                                             requestId,
-                                            friendsDrinksMembershipId.getFriendsDrinksId().getUuid(),
-                                            friendsDrinksMembershipId.getFriendsDrinksId().getAdminUserId());
+                                            friendsDrinksMembershipId.getFriendsDrinksId().getUuid());
                                 }
                             }
 
@@ -244,9 +243,8 @@ public class RequestService {
                                 FriendsDrinksMembershipId friendsDrinksMembershipId = friendsDrinksMembershipEvent.getMembershipId();
                                 if (stateStore.get(friendsDrinksMembershipId) != null) {
                                     concurrencyCheck.isConcurrentRequest = true;
-                                    log.info("Found a concurrent request for FriendsDrinks UUID {} Admin ID {} and User ID {} with request ID {}",
+                                    log.info("Found a concurrent request for FriendsDrinks UUID {} and User ID {} with request ID {}",
                                             friendsDrinksMembershipId.getFriendsDrinksId().getUuid(),
-                                            friendsDrinksMembershipId.getFriendsDrinksId().getAdminUserId(),
                                             friendsDrinksMembershipId.getUserId().getUserId(),
                                             friendsDrinksMembershipEvent.getRequestId());
                                 } else {
@@ -301,10 +299,8 @@ public class RequestService {
                             if (requestId != null && requestId.equals(friendsDrinksMembershipEvent.getRequestId())) {
                                 stateStore.delete(friendsDrinksMembershipId);
                             } else {
-                                log.error("Failed to get request {} for FriendsDrinks UUID Admin ID {}",
-                                        requestId,
-                                        friendsDrinksMembershipId.getFriendsDrinksId().getUuid(),
-                                        friendsDrinksMembershipId.getFriendsDrinksId().getAdminUserId());
+                                log.error("Failed to get request {} for FriendsDrinks UUID {}",
+                                        requestId, friendsDrinksMembershipId.getFriendsDrinksId().getUuid());
                             }
                         }
                         ApiEvent apiEvent = ApiEvent
@@ -332,18 +328,12 @@ public class RequestService {
                 friendsDrinksInvitations.selectKey((key, value) ->
                         andrewgrant.friendsdrinks.avro.FriendsDrinksId
                                 .newBuilder()
-                                .setAdminUserId(value.getMembershipId().getFriendsDrinksId().getAdminUserId())
                                 .setUuid(value.getMembershipId().getFriendsDrinksId().getUuid())
                                 .build())
                         .leftJoin(friendsDrinksStateKTable,
                                 (request, state) -> {
                                     InvitationResult invitationResult = new InvitationResult();
                                     invitationResult.invitationRequest = request;
-                                    if (request.getMembershipId().getUserId().getUserId().equals(
-                                            request.getMembershipId().getFriendsDrinksId().getAdminUserId())) {
-                                        invitationResult.failed = true;
-                                        return invitationResult;
-                                    }
                                     // Validate request against state of FriendsDrinks
                                     if (state != null && (!state.getStatus().equals(Status.DELETED))) {
                                         invitationResult.failed = false;
@@ -481,7 +471,6 @@ public class RequestService {
                         .setFriendsDrinksId(andrewgrant.friendsdrinks.membership.avro.FriendsDrinksId
                                 .newBuilder()
                                 .setUuid(value.getMembershipId().getFriendsDrinksId().getUuid())
-                                .setAdminUserId(value.getMembershipId().getFriendsDrinksId().getAdminUserId())
                                 .build())
                         .setUserId(andrewgrant.friendsdrinks.membership.avro.UserId
                                 .newBuilder()
@@ -531,7 +520,6 @@ public class RequestService {
                 .setFriendsDrinksId(andrewgrant.friendsdrinks.api.avro.FriendsDrinksId
                         .newBuilder()
                         .setUuid(friendsDrinksMembershipId.getFriendsDrinksId().getUuid())
-                        .setAdminUserId(friendsDrinksMembershipId.getFriendsDrinksId().getAdminUserId())
                         .build())
                 .build();
     }

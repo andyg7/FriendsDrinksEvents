@@ -6,6 +6,7 @@
       {"name": "status", "type": {"type": "enum", "name": "Status", "symbols": ["ACTIVE", "DELETED"] } },
       {"name": "friendsDrinksId", "type": "FriendsDrinksId", "default": null},
       {"name": "name", "type": "string", "default": null},
+      {"name": "adminUserId", "type": "string"},
       {"name": "members", "type": ["null", {"type": "array", "items": "UserState" }]}
   ]
 }

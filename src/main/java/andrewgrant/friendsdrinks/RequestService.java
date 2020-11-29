@@ -64,7 +64,6 @@ public class RequestService {
 
         friendsDrinksEventKStream.selectKey((key, value) -> FriendsDrinksId
                 .newBuilder()
-                .setAdminUserId(key.getAdminUserId())
                 .setUuid(key.getUuid())
                 .build())
                 .repartition(Repartitioned.with(frontendAvroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksEventSerde()))
@@ -83,12 +82,11 @@ public class RequestService {
                                                 andrewgrant.friendsdrinks.avro.FriendsDrinksEvent friendsDrinksEvent) {
                                 String requestId = stateStore.get(friendsDrinksId);
                                 if (requestId != null && requestId.equals(friendsDrinksEvent.getRequestId())) {
-                                    log.info("Deleting request {} from state store UUID {} Admin ID {}",
-                                            requestId, friendsDrinksId.getUuid(), friendsDrinksId.getAdminUserId());
+                                    log.info("Deleting request {} from state store UUID {}", requestId, friendsDrinksId.getUuid());
                                     stateStore.delete(friendsDrinksId);
                                 } else {
-                                    log.error("Failed to get request {} for FriendsDrinks UUID {} Admin ID {}",
-                                            requestId, friendsDrinksId.getUuid(), friendsDrinksId.getAdminUserId());
+                                    log.error("Failed to get request {} for FriendsDrinks UUID {}",
+                                            requestId, friendsDrinksId.getUuid());
                                 }
                             }
 
@@ -216,9 +214,8 @@ public class RequestService {
                                             friendsDrinksEvent.getRequestId(), friendsDrinksEvent.getFriendsDrinksId().getUuid());
                                     concurrencyCheck.isConcurrentRequest = true;
                                 } else {
-                                    log.info("Grabbing \"lock\" for request {} for FriendsDrinks UUID {} Admin ID {}",
-                                            friendsDrinksEvent.getRequestId(), friendsDrinksEvent.getFriendsDrinksId().getUuid(),
-                                            friendsDrinksEvent.getFriendsDrinksId().getAdminUserId());
+                                    log.info("Grabbing \"lock\" for request {} for FriendsDrinks UUID {}",
+                                            friendsDrinksEvent.getRequestId(), friendsDrinksEvent.getFriendsDrinksId().getUuid());
                                     stateStore.put(friendsDrinksId, friendsDrinksEvent.getRequestId());
                                     concurrencyCheck.isConcurrentRequest = false;
                                 }
@@ -263,14 +260,12 @@ public class RequestService {
                                 if (result.equals(Result.FAIL)) {
                                     String requestId = stateStore.get(friendsDrinksEvent.getFriendsDrinksId());
                                     if (requestId != null && requestId.equals(friendsDrinksEvent.getRequestId())) {
-                                        log.info("Releasing \"lock\" for request ID {} FriendsDrinks UUID {} Admin ID",
-                                                requestId,
-                                                friendsDrinksEvent.getFriendsDrinksId().getUuid(),
-                                                friendsDrinksEvent.getFriendsDrinksId().getAdminUserId());
+                                        log.info("Releasing \"lock\" for request ID {} FriendsDrinks UUID {}",
+                                                requestId, friendsDrinksEvent.getFriendsDrinksId().getUuid());
                                         stateStore.delete(friendsDrinksEvent.getFriendsDrinksId());
                                     } else {
-                                        log.error("Failed to get request ID {} for FriendsDrinks UUID {} Admin ID {}",
-                                                requestId, friendsDrinksId.getUuid(), friendsDrinksId.getAdminUserId());
+                                        log.error("Failed to get request ID {} for FriendsDrinks UUID {}",
+                                                requestId, friendsDrinksId.getUuid());
                                     }
                                 }
                                 ApiEvent apiEvent = ApiEvent
@@ -292,7 +287,7 @@ public class RequestService {
             KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable) {
 
         KTable<String, Long> friendsDrinksCount = friendsDrinksStateKTable.groupBy((key, value) ->
-                        KeyValue.pair(value.getFriendsDrinksId().getAdminUserId(), value),
+                        KeyValue.pair(value.getAdminUserId(), value),
                 Grouped.with(Serdes.String(), avroBuilder.friendsDrinksStateSerde()))
                 .aggregate(
                         () -> 0L,
@@ -303,7 +298,7 @@ public class RequestService {
                                 .withValueSerde(Serdes.Long())
                 );
 
-        return createRequests.selectKey((key, value) -> value.getFriendsDrinksId().getAdminUserId())
+        return createRequests.selectKey((key, value) -> value.getAdminUserId())
                 .leftJoin(friendsDrinksCount,
                         (request, count) -> {
                             CreateFriendsDrinksResponse.Builder response = CreateFriendsDrinksResponse.newBuilder();
@@ -399,7 +394,6 @@ public class RequestService {
         return andrewgrant.friendsdrinks.avro.FriendsDrinksId
                 .newBuilder()
                 .setUuid(friendsDrinksId.getUuid())
-                .setAdminUserId(friendsDrinksId.getAdminUserId())
                 .build();
     }
 

@@ -27,9 +27,9 @@ public class StateAggregator {
                         .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
                                 .newBuilder()
                                 .setUuid(newValue.getFriendsDrinksId().getUuid())
-                                .setAdminUserId(newValue.getFriendsDrinksId().getAdminUserId())
                                 .build())
                         .setStatus(Status.ACTIVE)
+                        .setAdminUserId(createdFriendsDrinks.getAdminUserId())
                         .build();
                 return FriendsDrinksStateAggregate.newBuilder()
                         .setFriendsDrinksState(friendsDrinksState)

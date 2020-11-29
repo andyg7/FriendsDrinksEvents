@@ -26,17 +26,16 @@ public class RequestResponseJoiner {
                     .newBuilder()
                     .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
                             .newBuilder()
-                            .setAdminUserId(createFriendsDrinksRequest.getFriendsDrinksId().getAdminUserId())
                             .setUuid(createFriendsDrinksRequest.getFriendsDrinksId().getUuid())
                             .build())
                     .setName(createFriendsDrinksRequest.getName())
+                    .setAdminUserId(createFriendsDrinksRequest.getAdminUserId())
                     .build();
             return andrewgrant.friendsdrinks.avro.FriendsDrinksEvent.newBuilder()
                     .setEventType(andrewgrant.friendsdrinks.avro.EventType.CREATED)
                     .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
                             .newBuilder()
                             .setUuid(r.getCreateFriendsDrinksRequest().getFriendsDrinksId().getUuid())
-                            .setAdminUserId(r.getCreateFriendsDrinksRequest().getFriendsDrinksId().getAdminUserId())
                             .build())
                     .setFriendsDrinksCreated(friendsDrinks)
                     .setRequestId(r.getRequestId())
@@ -50,7 +49,6 @@ public class RequestResponseJoiner {
                     .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
                             .newBuilder()
                             .setUuid(r.getDeleteFriendsDrinksRequest().getFriendsDrinksId().getUuid())
-                            .setAdminUserId(r.getDeleteFriendsDrinksRequest().getFriendsDrinksId().getAdminUserId())
                             .build())
                     .build();
         } else if (r.getEventType().equals(FriendsDrinksEventType.UPDATE_FRIENDSDRINKS_REQUEST)) {
@@ -64,10 +62,10 @@ public class RequestResponseJoiner {
                                     updateFriendsDrinksRequest.getUpdateType().name()))
                     .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
                             .newBuilder()
-                            .setAdminUserId(updateFriendsDrinksRequest.getFriendsDrinksId().getAdminUserId())
                             .setUuid(updateFriendsDrinksRequest.getFriendsDrinksId().getUuid())
                             .build())
                     .setName(updateFriendsDrinksRequest.getName())
+                    .setAdminUserId(updateFriendsDrinksRequest.getAdminUserId())
                     .build();
             return andrewgrant.friendsdrinks.avro.FriendsDrinksEvent
                     .newBuilder()
@@ -76,7 +74,6 @@ public class RequestResponseJoiner {
                     .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
                             .newBuilder()
                             .setUuid(r.getUpdateFriendsDrinksRequest().getFriendsDrinksId().getUuid())
-                            .setAdminUserId(r.getUpdateFriendsDrinksRequest().getFriendsDrinksId().getAdminUserId())
                             .build())
                     .setFriendsDrinksUpdated(friendsDrinks)
                     .build();

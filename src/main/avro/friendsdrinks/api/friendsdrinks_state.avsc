@@ -5,6 +5,7 @@
   "fields": [
       {"name": "status", "type": {"type": "enum", "name": "Status", "symbols": ["ACTIVE", "DELETED"] } },
       {"name": "friendsDrinksId", "type": "FriendsDrinksId"},
-      {"name": "name", "type": "string"}
+      {"name": "name", "type": "string"},
+      {"name": "adminUserId", "type": "string"}
   ]
 }
