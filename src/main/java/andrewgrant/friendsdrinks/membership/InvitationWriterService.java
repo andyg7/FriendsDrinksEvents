@@ -73,6 +73,7 @@ public class InvitationWriterService {
                         .newBuilder()
                         .setMembershipId(v.getMembershipId())
                         .setMessage(v.getFriendsDrinksInvitationCreated().getMessage())
+                        .setStatus(InvitationStatus.RESPONDED_TO)
                         .build()).to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_INVITATION_STATE),
                 Produced.with(avroBuilder.friendsDrinksMembershipIdSerdes(),
                         avroBuilder.friendsDrinksInvitationStateSerde()));
@@ -89,7 +90,12 @@ public class InvitationWriterService {
                         avroBuilder.friendsDrinksInvitationEventSerde()));
 
         friendsDrinksInvitationEventKStream.filter((k, v) -> v.getEventType().equals(InvitationEventType.RESPONDED_TO))
-                .mapValues(v -> (FriendsDrinksInvitationState) null)
+                .mapValues(v -> FriendsDrinksInvitationState
+                        .newBuilder()
+                        .setMembershipId(v.getMembershipId())
+                        .setMessage(v.getFriendsDrinksInvitationCreated().getMessage())
+                        .setStatus(InvitationStatus.RESPONDED_TO)
+                        .build())
                 .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_INVITATION_STATE),
                         Produced.with(avroBuilder.friendsDrinksMembershipIdSerdes(),
                                 avroBuilder.friendsDrinksInvitationStateSerde()));

@@ -21,7 +21,6 @@ public class GetFriendsDrinksDetailPageResponseBean {
         this.members = members;
     }
 
-
     public String getAdminUserId() {
         return adminUserId;
     }

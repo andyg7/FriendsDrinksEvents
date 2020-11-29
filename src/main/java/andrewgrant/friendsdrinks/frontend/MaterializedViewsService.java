@@ -20,7 +20,9 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 
 import andrewgrant.friendsdrinks.api.avro.*;
+import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksInvitationState;
 import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipState;
+import andrewgrant.friendsdrinks.membership.avro.InvitationStatus;
 import andrewgrant.friendsdrinks.user.AvroBuilder;
 
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
@@ -143,10 +145,18 @@ public class MaterializedViewsService {
                                 .withValueSerde(apiAvroBuilder.friendsDrinksStateSerde()));
 
         final String invitationTopicName = envProps.getProperty(FRIENDSDRINKS_INVITATION_STATE);
-        builder.table(invitationTopicName,
+        builder.stream(invitationTopicName,
                 Consumed.with(membershipAvroBuilder.friendsDrinksMembershipIdSerdes(),
-                        membershipAvroBuilder.friendsDrinksInvitationStateSerde()),
-                Materialized.as(INVITATIONS_STORE));
+                        membershipAvroBuilder.friendsDrinksInvitationStateSerde()))
+                .filter((k, v) -> v.getStatus().equals(InvitationStatus.ACTIVE))
+                .toTable(
+                        Materialized.<
+                                andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId,
+                                FriendsDrinksInvitationState, KeyValueStore<Bytes, byte[]>>
+                                as(INVITATIONS_STORE)
+                                .withKeySerde(membershipAvroBuilder.friendsDrinksMembershipIdSerdes())
+                                .withValueSerde(membershipAvroBuilder.friendsDrinksInvitationStateSerde())
+                );
 
         KTable<String, andrewgrant.friendsdrinks.api.avro.UserState> userState =
                 builder.stream(envProps.getProperty(USER_STATE),
@@ -177,8 +187,8 @@ public class MaterializedViewsService {
                         Consumed.with(membershipAvroBuilder.friendsDrinksMembershipIdSerdes(),
                                 membershipAvroBuilder.friendsDrinksMembershipStateSerdes()));
 
-        buildFriendsDrinksDetailPageStateStore(membershipStateKTable,
-                apiFriendsDrinksStateKTable, userState);
+        buildFriendsDrinksDetailPageStateStore(membershipStateKTable, apiFriendsDrinksStateKTable, userState);
+
         return builder.build();
     }
 
@@ -208,7 +218,7 @@ public class MaterializedViewsService {
                 .withKeySerde(Serdes.String())
                 .withValueSerde(apiAvroBuilder.apiEventSerde()));
 
-        // Logic to tombstone responses in responsesTopicName so the KTable doesn't grow indefinitely.
+        // Logic to tombstone responses in api-response-state-store so the KTable doesn't grow indefinitely.
         StoreBuilder storeBuilder = Stores.keyValueStoreBuilder(
                 Stores.persistentKeyValueStore(RequestsPurger.RESPONSES_PENDING_DELETION),
                 Serdes.String(),

@@ -3,6 +3,7 @@
   "type": "record",
   "name": "FriendsDrinksInvitationState",
   "fields": [
+      {"name": "status", "type": {"type": "enum", "name": "InvitationStatus", "symbols": ["ACTIVE", "RESPONDED_TO"] } },
       {"name": "membershipId", "type": "FriendsDrinksMembershipId" },
       {"name": "message", "type": "string" }
   ]
