@@ -323,17 +323,18 @@ public class MaterializedViewsService {
                     if (r != null && r.getUserStates() != null) {
                         userStates = r.getUserStates();
                     }
-                    return FriendsDrinksAggregate
+                    return FriendsDrinksDetailPage
                             .newBuilder()
                             .setName(l.getName())
                             .setFriendsDrinksId(l.getFriendsDrinksId())
                             .setMembers(userStates)
+                            .setStatus(l.getStatus())
                             .build();
                 },
-                Materialized.<String, FriendsDrinksAggregate, KeyValueStore<Bytes, byte[]>>
+                Materialized.<String, FriendsDrinksDetailPage, KeyValueStore<Bytes, byte[]>>
                         as("friendsdrinks-detail-page-state-store-tmp-1")
                         .withKeySerde(Serdes.String())
-                        .withValueSerde(apiAvroBuilder.friendsDrinksAggregateSerdes())
+                        .withValueSerde(apiAvroBuilder.friendsDrinksDetailPageSerde())
         ).leftJoin(userStateKTable,
                 (friendsDrinksAggregate -> friendsDrinksAggregate.getFriendsDrinksId().getAdminUserId()),
                 (l, r) -> {
@@ -348,15 +349,15 @@ public class MaterializedViewsService {
                                 .build();
                         members.add(adminUserState);
                     }
-                    return FriendsDrinksAggregate
+                    return FriendsDrinksDetailPage
                             .newBuilder(l)
                             .setMembers(members)
                             .build();
                 },
-                Materialized.<String, FriendsDrinksAggregate, KeyValueStore<Bytes, byte[]>>
+                Materialized.<String, FriendsDrinksDetailPage, KeyValueStore<Bytes, byte[]>>
                         as(FRIENDSDRINKS_DETAIL_PAGE_STORE)
                         .withKeySerde(Serdes.String())
-                        .withValueSerde(apiAvroBuilder.friendsDrinksAggregateSerdes())
+                        .withValueSerde(apiAvroBuilder.friendsDrinksDetailPageSerde())
         );
     }
 

@@ -154,18 +154,18 @@ public class Handler {
     @Path("/friendsdrinksdetailpages/{friendsDrinksId}")
     @Produces(MediaType.APPLICATION_JSON)
     public GetFriendsDrinksDetailPageResponseBean getFriendsDrinksDetailPage(@PathParam("friendsDrinksId") String friendsDrinksId) {
-        ReadOnlyKeyValueStore<String, FriendsDrinksAggregate> kv =
+        ReadOnlyKeyValueStore<String, FriendsDrinksDetailPage> kv =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_DETAIL_PAGE_STORE, QueryableStoreTypes.keyValueStore()));
-        FriendsDrinksAggregate friendsDrinksAggregate = kv.get(friendsDrinksId);
-        if (friendsDrinksAggregate == null) {
+        FriendsDrinksDetailPage friendsDrinkDetailPage = kv.get(friendsDrinksId);
+        if (friendsDrinkDetailPage == null || friendsDrinkDetailPage.getStatus().equals(Status.DELETED)) {
             throw new BadRequestException(String.format("%s does not exist", friendsDrinksId));
         }
 
         GetFriendsDrinksDetailPageResponseBean response = new GetFriendsDrinksDetailPageResponseBean();
-        response.setAdminUserId(friendsDrinksAggregate.getFriendsDrinksId().getAdminUserId());
-        response.setFriendsDrinksId(friendsDrinksAggregate.getFriendsDrinksId().getUuid());
-        if (friendsDrinksAggregate.getMembers() != null) {
-            response.setMembers(friendsDrinksAggregate.getMembers().stream().map(x -> {
+        response.setAdminUserId(friendsDrinkDetailPage.getFriendsDrinksId().getAdminUserId());
+        response.setFriendsDrinksId(friendsDrinkDetailPage.getFriendsDrinksId().getUuid());
+        if (friendsDrinkDetailPage.getMembers() != null) {
+            response.setMembers(friendsDrinkDetailPage.getMembers().stream().map(x -> {
                 UserBean userBean = new UserBean();
                 userBean.setUserId(x.getUserId().getUserId());
                 userBean.setFirstName(x.getFirstName());
@@ -176,7 +176,7 @@ public class Handler {
         } else {
             response.setMembers(new ArrayList<>());
         }
-        response.setName(friendsDrinksAggregate.getName());
+        response.setName(friendsDrinkDetailPage.getName());
 
         return response;
     }

@@ -235,8 +235,8 @@ public class AvroBuilder {
         return serde;
     }
 
-    public SpecificAvroSerde<andrewgrant.friendsdrinks.api.avro.FriendsDrinksAggregate> friendsDrinksAggregateSerdes() {
-        SpecificAvroSerde<andrewgrant.friendsdrinks.api.avro.FriendsDrinksAggregate> serde;
+    public SpecificAvroSerde<andrewgrant.friendsdrinks.api.avro.FriendsDrinksDetailPage> friendsDrinksDetailPageSerde() {
+        SpecificAvroSerde<andrewgrant.friendsdrinks.api.avro.FriendsDrinksDetailPage> serde;
         if (registryClient != null) {
             serde = new SpecificAvroSerde<>(registryClient);
         } else {
