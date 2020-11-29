@@ -318,6 +318,7 @@ public class MaterializedViewsService {
                             .setFriendsDrinksId(l.getFriendsDrinksId())
                             .setMembers(userStates)
                             .setStatus(l.getStatus())
+                            .setAdminUserId(l.getAdminUserId())
                             .build();
                 },
                 Materialized.<FriendsDrinksId, FriendsDrinksDetailPage, KeyValueStore<Bytes, byte[]>>
