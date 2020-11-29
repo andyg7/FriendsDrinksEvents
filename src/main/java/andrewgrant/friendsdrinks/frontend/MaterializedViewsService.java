@@ -130,9 +130,6 @@ public class MaterializedViewsService {
                             .setAdminUserId(key.getAdminUserId())
                             .setUuid(key.getUuid())
                             .build();
-                    if (value.getStatus().equals(Status.DELETED)) {
-                        return KeyValue.pair(friendsDrinksIdApi, null);
-                    }
                     FriendsDrinksState friendsDrinksStateApi = FriendsDrinksState
                             .newBuilder()
                             .setName(value.getName())

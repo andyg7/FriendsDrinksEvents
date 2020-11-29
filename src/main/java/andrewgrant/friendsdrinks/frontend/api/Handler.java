@@ -201,7 +201,7 @@ public class Handler {
             for (FriendsDrinksId friendsDrinksId : adminFriendsDrinksIdList.getIds()) {
                 FriendsDrinksState friendsDrinksState = friendsDrinksStore.get(friendsDrinksId);
                 if (friendsDrinksState == null || friendsDrinksState.getFriendsDrinksId() == null) {
-                    log.error("FriendsDrinks with uuid {} and adminUserId {} could not be found from",
+                    log.error("FriendsDrinks with uuid {} and adminUserId {} could not be found from {}",
                             friendsDrinksId.getUuid(),
                             friendsDrinksId.getAdminUserId(),
                             FRIENDSDRINKS_STORE);
@@ -230,7 +230,7 @@ public class Handler {
             for (FriendsDrinksId friendsDrinksId : memberFriendsDrinksList.getIds()) {
                 FriendsDrinksState friendsDrinksState = friendsDrinksStore.get(friendsDrinksId);
                 if (friendsDrinksState == null || friendsDrinksState.getFriendsDrinksId() == null) {
-                    log.error("FriendsDrinks with uuid {} and adminUserId {} could not be found from",
+                    log.error("FriendsDrinks with uuid {} and adminUserId {} could not be found from {}",
                             friendsDrinksId.getUuid(),
                             friendsDrinksId.getAdminUserId(),
                             FRIENDSDRINKS_STORE);
