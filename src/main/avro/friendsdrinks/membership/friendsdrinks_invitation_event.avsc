@@ -3,10 +3,10 @@
   "type": "record",
   "name": "FriendsDrinksInvitationEvent",
   "fields": [
-      {"name": "eventType", "type": {"type": "enum", "name": "InvitationEventType", "symbols": ["CREATED", "DELETED"] } },
+      {"name": "eventType", "type": {"type": "enum", "name": "InvitationEventType", "symbols": ["CREATED", "RESPONDED_TO"] } },
       {"name": "membershipId", "type": "FriendsDrinksMembershipId" },
       {"name": "requestId", "type": "string"},
       {"name": "friendsDrinksInvitationCreated", "type": ["null", "FriendsDrinksInvitationCreated"], "default": null },
-      {"name": "friendsDrinksInvitationDeleted", "type": ["null", "FriendsDrinksInvitationDeleted"], "default": null }
+      {"name": "friendsDrinksInvitationRespondedTo", "type": ["null", "FriendsDrinksInvitationRespondedTo"], "default": null }
   ]
 }

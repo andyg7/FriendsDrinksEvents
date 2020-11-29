@@ -62,9 +62,9 @@ public class MembershipWriterService {
                         Consumed.with(avroBuilder.friendsDrinksMembershipIdSerdes(),
                                 avroBuilder.friendsDrinksInvitationEventSerde()));
         friendsDrinksInvitationEventKStream
-                .filter((k, v) -> v.getEventType().equals(InvitationEventType.DELETED) &&
-                        v.getFriendsDrinksInvitationDeleted().getResponse().equals(Response.ACCEPTED))
-                .mapValues(v -> v.getFriendsDrinksInvitationDeleted())
+                .filter((k, v) -> v.getEventType().equals(InvitationEventType.RESPONDED_TO) &&
+                        v.getFriendsDrinksInvitationRespondedTo().getResponse().equals(Response.ACCEPTED))
+                .mapValues(v -> v.getFriendsDrinksInvitationRespondedTo())
                 .mapValues(v -> FriendsDrinksMembershipEvent
                         .newBuilder()
                         .setRequestId(v.getRequestId())
