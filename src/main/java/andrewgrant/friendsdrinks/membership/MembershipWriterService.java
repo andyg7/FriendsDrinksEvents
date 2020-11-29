@@ -58,7 +58,7 @@ public class MembershipWriterService {
         StreamsBuilder builder = new StreamsBuilder();
 
         KStream<FriendsDrinksMembershipId, FriendsDrinksInvitationEvent> friendsDrinksInvitationEventKStream =
-                builder.stream(TopicNameConfigKey.FRIENDSDRINKS_INVITATION_EVENT,
+                builder.stream(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_INVITATION_EVENT),
                         Consumed.with(avroBuilder.friendsDrinksMembershipIdSerdes(),
                                 avroBuilder.friendsDrinksInvitationEventSerde()));
         friendsDrinksInvitationEventKStream
