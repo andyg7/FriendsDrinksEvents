@@ -207,6 +207,9 @@ public class Handler {
                             FRIENDSDRINKS_STORE);
                     continue;
                 }
+                if (friendsDrinksState.getStatus().equals(Status.DELETED)) {
+                    continue;
+                }
                 FriendsDrinksBean friendsDrinksBean = new FriendsDrinksBean();
                 friendsDrinksBean.setAdminUserId(friendsDrinksState.getFriendsDrinksId().getAdminUserId());
                 friendsDrinksBean.setFriendsDrinksId(friendsDrinksState.getFriendsDrinksId().getUuid());
@@ -231,6 +234,9 @@ public class Handler {
                             friendsDrinksId.getUuid(),
                             friendsDrinksId.getAdminUserId(),
                             FRIENDSDRINKS_STORE);
+                    continue;
+                }
+                if (friendsDrinksState.getStatus().equals(Status.DELETED)) {
                     continue;
                 }
                 FriendsDrinksBean friendsDrinksBean = new FriendsDrinksBean();

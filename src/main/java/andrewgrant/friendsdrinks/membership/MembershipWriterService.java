@@ -24,6 +24,7 @@ import andrewgrant.friendsdrinks.membership.avro.*;
 import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksId;
 import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipEvent;
 import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId;
+import andrewgrant.friendsdrinks.membership.avro.Status;
 import andrewgrant.friendsdrinks.membership.avro.UserId;
 import andrewgrant.friendsdrinks.user.AvroBuilder;
 import andrewgrant.friendsdrinks.user.avro.UserEvent;

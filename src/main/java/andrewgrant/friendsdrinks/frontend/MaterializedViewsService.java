@@ -137,6 +137,7 @@ public class MaterializedViewsService {
                             .newBuilder()
                             .setName(value.getName())
                             .setFriendsDrinksId(friendsDrinksIdApi)
+                            .setStatus(andrewgrant.friendsdrinks.api.avro.Status.valueOf(value.getStatus().name()))
                             .build();
                     return KeyValue.pair(friendsDrinksIdApi, friendsDrinksStateApi);
                 });
