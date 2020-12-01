@@ -67,7 +67,7 @@ public class MembershipWriterService {
                 = builder.stream(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_MEMBERSHIP_EVENT),
                 Consumed.with(avroBuilder.friendsDrinksMembershipIdSerdes(), avroBuilder.friendsDrinksMembershipEventSerdes()));
 
-        buildMembershipStateKTable(friendsDrinksMembershipEventKStream)
+        buildMembershipState(friendsDrinksMembershipEventKStream)
                 .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_MEMBERSHIP_STATE),
                         Produced.with(avroBuilder.friendsDrinksMembershipIdSerdes(), avroBuilder.friendsDrinksMembershipStateSerdes()));
 
@@ -184,14 +184,14 @@ public class MembershipWriterService {
                 .toStream();
     }
 
-    private KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipState> buildMembershipStateKTable(
+    private KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipState> buildMembershipState(
             KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipEvent> membershipEventKStream) {
         return membershipEventKStream.groupByKey(Grouped.with(
                 avroBuilder.friendsDrinksMembershipIdSerdes(),
                 avroBuilder.friendsDrinksMembershipEventSerdes()))
                 .aggregate(
                         () -> FriendsDrinksMembershipStateAggregate.newBuilder().build(),
-                        (aggKey, newValue, aggValue) -> new StateAggregator().handleNewEvent(aggKey, newValue, aggValue),
+                        (aggKey, newValue, aggValue) -> new MembershipStateAggregator().handleNewEvent(aggKey, newValue, aggValue),
                         Materialized.<
                                 FriendsDrinksMembershipId,
                                 FriendsDrinksMembershipStateAggregate, KeyValueStore<Bytes, byte[]>>

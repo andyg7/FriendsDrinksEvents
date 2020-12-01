@@ -5,7 +5,7 @@ import andrewgrant.friendsdrinks.membership.avro.*;
 /**
  * Aggregates membership state.
  */
-public class StateAggregator {
+public class MembershipStateAggregator {
 
     FriendsDrinksMembershipStateAggregate handleNewEvent(FriendsDrinksMembershipId aggKey,
                                                          FriendsDrinksMembershipEvent newValue,
@@ -13,17 +13,16 @@ public class StateAggregator {
         FriendsDrinksMembershipState.Builder builder;
         if (aggValue.getFriendsDrinksMembershipState() == null) {
             builder = FriendsDrinksMembershipState.newBuilder();
+            builder.setMembershipId(aggKey);
         } else {
             builder = FriendsDrinksMembershipState.newBuilder(aggValue.getFriendsDrinksMembershipState());
         }
         EventType eventType = newValue.getEventType();
         switch (eventType) {
             case ADDED:
-                builder.setMembershipId(newValue.getMembershipId());
                 builder.setStatus(Status.ACTIVE);
                 break;
             case REMOVED:
-                builder.setMembershipId(newValue.getMembershipId());
                 builder.setStatus(Status.REMOVED);
                 break;
             default:
