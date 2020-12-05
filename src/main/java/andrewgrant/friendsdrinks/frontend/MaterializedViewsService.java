@@ -158,7 +158,7 @@ public class MaterializedViewsService {
             } else {
                 return v;
             }
-        }).leftJoin(friendsDrinksStateKTable,
+        }).join(friendsDrinksStateKTable,
                 (l -> l.getMembershipId().getFriendsDrinksId()),
                 (l, r) -> {
                     if (r.getStatus().equals(FriendsDrinksStatus.DELETED)) {
@@ -246,7 +246,7 @@ public class MaterializedViewsService {
             } else {
                 return v;
             }
-        }).leftJoin(friendsDrinksStateKTable,
+        }).join(friendsDrinksStateKTable,
                 (l -> l.getMembershipId().getFriendsDrinksId()),
                 (l, r) -> {
                     if (r.getStatus().equals(FriendsDrinksStatus.DELETED)) {
@@ -282,10 +282,7 @@ public class MaterializedViewsService {
                                     .setFriendsDrinks(friendsDrinksStates)
                                     .build();
                         },
-                        Materialized.<String, FriendsDrinksStateList, KeyValueStore<Bytes, byte[]>>
-                                as("friendsdrinks-membership-keyed-by-user-state-store")
-                                .withKeySerde(Serdes.String())
-                                .withValueSerde(apiAvroBuilder.friendsDrinksStateListSerde())
+                        Materialized.with(Serdes.String(), apiAvroBuilder.friendsDrinksStateListSerde())
                 );
     }
 
@@ -390,10 +387,7 @@ public class MaterializedViewsService {
                                     .setUserStates(userStates)
                                     .build();
                         },
-                        Materialized.<FriendsDrinksId, UserStateList, KeyValueStore<Bytes, byte[]>>
-                                as("friendsdrinks-enriched-membership-list")
-                                .withKeySerde(avroBuilder.friendsDrinksIdSerde())
-                                .withValueSerde(apiAvroBuilder.userStateListSerde())
+                        Materialized.with(avroBuilder.friendsDrinksIdSerde(), apiAvroBuilder.userStateListSerde())
                 );
 
         friendsDrinksStateKTable.leftJoin(enrichedMemberList,
@@ -411,10 +405,7 @@ public class MaterializedViewsService {
                             .setAdminUserId(l.getAdminUserId())
                             .build();
                 },
-                Materialized.<FriendsDrinksId, FriendsDrinksDetailPage, KeyValueStore<Bytes, byte[]>>
-                        as("friendsdrinks-detail-page-state-store-tmp-1")
-                        .withKeySerde(avroBuilder.friendsDrinksIdSerde())
-                        .withValueSerde(apiAvroBuilder.friendsDrinksDetailPageSerde())
+                Materialized.with(avroBuilder.friendsDrinksIdSerde(), apiAvroBuilder.friendsDrinksDetailPageSerde())
         ).leftJoin(userStateKTable,
                 (friendsDrinksAggregate -> friendsDrinksAggregate.getAdminUserId()),
                 (l, r) -> {
