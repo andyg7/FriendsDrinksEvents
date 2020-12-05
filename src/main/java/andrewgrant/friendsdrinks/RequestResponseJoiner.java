@@ -43,9 +43,6 @@ public class RequestResponseJoiner {
 
             FriendsDrinksUpdated friendsDrinks = FriendsDrinksUpdated
                     .newBuilder()
-                    .setUpdateType(
-                            UpdateType.valueOf(
-                                    updateFriendsDrinksRequest.getUpdateType().name()))
                     .setFriendsDrinksId(updateFriendsDrinksRequest.getFriendsDrinksId())
                     .setName(updateFriendsDrinksRequest.getName())
                     .setAdminUserId(updateFriendsDrinksRequest.getAdminUserId())

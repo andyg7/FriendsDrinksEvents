@@ -44,19 +44,8 @@ public class StateAggregator {
                 } else if (aggValue.getFriendsDrinksState().getStatus().equals(FriendsDrinksStatus.DELETED)) {
                     return aggValue;
                 }
-                UpdateType updateType = updatedFriendsDrinks.getUpdateType();
                 friendsDrinksStateBuilder = FriendsDrinksState.newBuilder(aggValue.getFriendsDrinksState());
-                String name;
-                if (updatedFriendsDrinks.getName() != null) {
-                    name = updatedFriendsDrinks.getName();
-                } else if (updateType.equals(UpdateType.PARTIAL)) {
-                    name = aggValue.getFriendsDrinksState().getName();
-                } else if (updateType.equals(UpdateType.FULL)) {
-                    name = null;
-                } else {
-                    throw new RuntimeException(String.format("Unknown update type %s", updateType.name()));
-                }
-                friendsDrinksStateBuilder.setName(name);
+                friendsDrinksStateBuilder.setName(updatedFriendsDrinks.getName());
 
                 return FriendsDrinksStateAggregate.newBuilder()
                         .setFriendsDrinksState(friendsDrinksStateBuilder.build())

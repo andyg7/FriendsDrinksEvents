@@ -342,7 +342,6 @@ public class Handler {
         UpdateFriendsDrinksRequest updateFriendsDrinksRequest = UpdateFriendsDrinksRequest
                 .newBuilder()
                 .setFriendsDrinksId(friendsDrinksIdAvro)
-                .setUpdateType(UpdateType.valueOf(UpdateType.PARTIAL.name()))
                 .setRequestId(requestId)
                 .setName(requestBean.getName())
                 .build();
