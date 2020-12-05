@@ -247,7 +247,7 @@ public class AvroBuilder {
         return serde;
     }
 
-    public SpecificAvroSerde<MembershipStateFriendsDrinksEnriched> membershipStateEnrichedSerde() {
+    public SpecificAvroSerde<MembershipStateFriendsDrinksEnriched> membershipStateFriendsDrinksEnrichedSerde() {
         SpecificAvroSerde<MembershipStateFriendsDrinksEnriched> serde;
         if (registryClient != null) {
             serde = new SpecificAvroSerde<>(registryClient);

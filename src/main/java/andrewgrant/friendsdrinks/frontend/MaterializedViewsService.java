@@ -131,21 +131,26 @@ public class MaterializedViewsService {
                     }
                     l.setInvitations(r);
                     return l;
-                }).leftJoin(memberships,
+                },
+                Materialized.with(Serdes.String(), apiAvroBuilder.userHomepageSerde())
+        ).leftJoin(memberships,
                 (l, r) -> {
                     if (l == null) {
                         return null;
                     }
                     l.setMemberFriendsDrinks(r);
                     return l;
-                }).leftJoin(admins,
+                },
+                Materialized.with(Serdes.String(), apiAvroBuilder.userHomepageSerde())
+        ).leftJoin(admins,
                 (l, r) -> {
                     if (l == null) {
                         return null;
                     }
                     l.setAdminFriendsDrinks(r);
                     return l;
-                }
+                },
+                Materialized.with(Serdes.String(), apiAvroBuilder.userHomepageSerde())
         ).toStream();
     }
 
@@ -194,10 +199,7 @@ public class MaterializedViewsService {
                                     .setInvitations(invitations)
                                     .build();
                         },
-                        Materialized.<String, InvitationStateEnrichedList, KeyValueStore<Bytes, byte[]>>
-                                as("friendsdrinks-invitation-keyed-by-user-state-store")
-                                .withKeySerde(Serdes.String())
-                                .withValueSerde(apiAvroBuilder.invitationStateEnrichedListSerde())
+                        Materialized.with(Serdes.String(), apiAvroBuilder.invitationStateEnrichedListSerde())
                 );
     }
 
@@ -262,9 +264,9 @@ public class MaterializedViewsService {
                 },
                 Materialized.with(
                         membershipAvroBuilder.friendsDrinksMembershipIdSerdes(),
-                        apiAvroBuilder.membershipStateEnrichedSerde())
+                        apiAvroBuilder.membershipStateFriendsDrinksEnrichedSerde())
         ).groupBy((key, value) -> KeyValue.pair(value.getMembershipId().getUserId().getUserId(), value),
-                Grouped.with(Serdes.String(), apiAvroBuilder.membershipStateEnrichedSerde()))
+                Grouped.with(Serdes.String(), apiAvroBuilder.membershipStateFriendsDrinksEnrichedSerde()))
                 .aggregate(
                         () -> FriendsDrinksStateList.newBuilder().setFriendsDrinks(new ArrayList<>()).build(),
                         (aggKey, newValue, aggValue) -> {
