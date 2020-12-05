@@ -116,7 +116,7 @@ public class MaterializedViewsService {
         KTable<String, FriendsDrinksStateList> admins = friendsDrinksKeyedByAdmin(friendsDrinksStateKTable);
 
         return userStateKTable.mapValues(v -> {
-            if (v == null) {
+            if (v == null || v.getStatus().equals(UserStatus.DELETED)) {
                 return null;
             }
             UserHomepage userHomepage = UserHomepage
@@ -244,7 +244,10 @@ public class MaterializedViewsService {
                                     .setFriendsDrinks(friendsDrinksStates)
                                     .build();
                         },
-                        Materialized.with(Serdes.String(), apiAvroBuilder.friendsDrinksStateListSerde())
+                        Materialized.<String, FriendsDrinksStateList, KeyValueStore<Bytes, byte[]>>
+                                as("friendsdrinks-keyed-by-admin-state-store")
+                                .withKeySerde(Serdes.String())
+                                .withValueSerde(apiAvroBuilder.friendsDrinksStateListSerde())
                 );
     }
 
@@ -300,7 +303,10 @@ public class MaterializedViewsService {
                                     .setFriendsDrinks(friendsDrinksStates)
                                     .build();
                         },
-                        Materialized.with(Serdes.String(), apiAvroBuilder.friendsDrinksStateListSerde())
+                        Materialized.<String, FriendsDrinksStateList, KeyValueStore<Bytes, byte[]>>
+                                as("friendsdrinks-membership-keyed-by-user-state-store")
+                                .withKeySerde(Serdes.String())
+                                .withValueSerde(apiAvroBuilder.friendsDrinksStateListSerde())
                 );
     }
 
