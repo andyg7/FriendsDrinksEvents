@@ -336,38 +336,22 @@ public class MaterializedViewsService {
     }
 
     private void buildFriendsDrinksDetailPageStateStore(
-            KTable<FriendsDrinksMembershipId, FriendsDrinksMembershipState> membershipStateKStream,
+            KTable<FriendsDrinksMembershipId, FriendsDrinksMembershipState> membershipStateKTableAll,
             KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable,
             KTable<String, UserState> userStateKTable) {
 
-        KTable<FriendsDrinksMembershipId, FriendsDrinksEnrichedMembershipState>
-                membershipStateKTable = membershipStateKStream.toStream()
-                .map((key, value) -> {
-                    FriendsDrinksMembershipId apiId =
-                            FriendsDrinksMembershipId.newBuilder()
-                                    .setFriendsDrinksId(FriendsDrinksId
-                                            .newBuilder()
-                                            .setUuid(key.getFriendsDrinksId().getUuid())
-                                            .build())
-                                    .setUserId(UserId.newBuilder()
-                                            .setUserId(key.getUserId().getUserId())
-                                            .build())
-                                    .build();
+        KTable<FriendsDrinksMembershipId, FriendsDrinksEnrichedMembershipState> membershipStateKTable = membershipStateKTableAll
+                .mapValues(value -> {
                     if (value.getStatus().equals(FriendsDrinksMembershipStatus.REMOVED)) {
-                        return KeyValue.pair(apiId, null);
+                        return null;
                     } else {
                         FriendsDrinksEnrichedMembershipState enrichedMembershipState =
                                 FriendsDrinksEnrichedMembershipState.newBuilder()
-                                        .setMembershipId(apiId)
+                                        .setMembershipId(value.getMembershipId())
                                         .build();
-                        return KeyValue.pair(apiId, enrichedMembershipState);
+                        return enrichedMembershipState;
                     }
-                })
-                .toTable(
-                        Materialized.<FriendsDrinksMembershipId, FriendsDrinksEnrichedMembershipState, KeyValueStore<Bytes, byte[]>>
-                                as("friendsdrinks-membership-enriched-state-store")
-                                .withKeySerde(membershipAvroBuilder.friendsDrinksMembershipIdSerdes())
-                                .withValueSerde(apiAvroBuilder.friendsDrinksEnrichedMembershipStateSerde()));
+                });
 
         KTable<FriendsDrinksMembershipId, FriendsDrinksEnrichedMembershipState> enrichedMembershipStateKTable =
                 membershipStateKTable.leftJoin(userStateKTable,
