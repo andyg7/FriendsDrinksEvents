@@ -216,6 +216,7 @@ public class Handler {
             getUserHomepageResponseBean.setAdminFriendsDrinksList(new ArrayList<>());
         }
 
+        /*
         ReadOnlyKeyValueStore<String, FriendsDrinksIdList> membershipStore =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(MEMBERS_STORE, QueryableStoreTypes.keyValueStore()));
         FriendsDrinksIdList memberFriendsDrinksList = membershipStore.get(userId);
@@ -243,6 +244,7 @@ public class Handler {
         } else {
             getUserHomepageResponseBean.setMemberFriendsDrinksList(new ArrayList<>());
         }
+         */
 
         /*
         ReadOnlyKeyValueStore<FriendsDrinksMembershipId, FriendsDrinksInvitationState> kv =

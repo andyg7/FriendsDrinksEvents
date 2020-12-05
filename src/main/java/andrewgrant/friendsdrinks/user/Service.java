@@ -45,6 +45,7 @@ public class Service {
                                         .newBuilder(aggValue)
                                         .setUserState(UserState
                                                 .newBuilder()
+                                                .setStatus(UserStatus.ACTIVE)
                                                 .setUserId(newValue.getUserLoggedIn().getUserId())
                                                 .setFirstName(newValue.getUserLoggedIn().getFirstName())
                                                 .setLastName(newValue.getUserLoggedIn().getLastName())
@@ -57,8 +58,9 @@ public class Service {
                             } else if (newValue.getEventType().equals(UserEventType.SIGNED_OUT_SESSION_EXPIRED)) {
                                 return aggValue;
                             } else if (newValue.getEventType().equals(UserEventType.DELETED)) {
-                                // Tombstone deleted user.
-                                return null;
+                                UserState userState = aggValue.getUserState();
+                                userState.setStatus(UserStatus.DELETED);
+                                return UserStateAggregate.newBuilder().setUserState(userState).build();
                             } else {
                                 throw new RuntimeException(String.format("Unknown event type %s", newValue.getEventType().name()));
                             }

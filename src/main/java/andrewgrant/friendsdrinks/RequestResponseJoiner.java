@@ -19,19 +19,13 @@ public class RequestResponseJoiner {
                     r.getCreateFriendsDrinksRequest();
             FriendsDrinksCreated friendsDrinks = FriendsDrinksCreated
                     .newBuilder()
-                    .setFriendsDrinksId(FriendsDrinksId
-                            .newBuilder()
-                            .setUuid(createFriendsDrinksRequest.getFriendsDrinksId().getUuid())
-                            .build())
+                    .setFriendsDrinksId(createFriendsDrinksRequest.getFriendsDrinksId())
                     .setName(createFriendsDrinksRequest.getName())
                     .setAdminUserId(createFriendsDrinksRequest.getAdminUserId())
                     .build();
             return FriendsDrinksEvent.newBuilder()
                     .setEventType(FriendsDrinksEventType.CREATED)
-                    .setFriendsDrinksId(FriendsDrinksId
-                            .newBuilder()
-                            .setUuid(r.getCreateFriendsDrinksRequest().getFriendsDrinksId().getUuid())
-                            .build())
+                    .setFriendsDrinksId(friendsDrinks.getFriendsDrinksId())
                     .setFriendsDrinksCreated(friendsDrinks)
                     .setRequestId(r.getRequestId())
                     .build();
@@ -41,10 +35,7 @@ public class RequestResponseJoiner {
                     .newBuilder()
                     .setEventType(FriendsDrinksEventType.DELETED)
                     .setRequestId(r.getRequestId())
-                    .setFriendsDrinksId(FriendsDrinksId
-                            .newBuilder()
-                            .setUuid(r.getDeleteFriendsDrinksRequest().getFriendsDrinksId().getUuid())
-                            .build())
+                    .setFriendsDrinksId(r.getDeleteFriendsDrinksRequest().getFriendsDrinksId())
                     .build();
         } else if (r.getEventType().equals(FriendsDrinksApiEventType.UPDATE_FRIENDSDRINKS_REQUEST)) {
             log.info("Got update join {}", r.getUpdateFriendsDrinksRequest().getRequestId());
@@ -55,10 +46,7 @@ public class RequestResponseJoiner {
                     .setUpdateType(
                             UpdateType.valueOf(
                                     updateFriendsDrinksRequest.getUpdateType().name()))
-                    .setFriendsDrinksId(FriendsDrinksId
-                            .newBuilder()
-                            .setUuid(updateFriendsDrinksRequest.getFriendsDrinksId().getUuid())
-                            .build())
+                    .setFriendsDrinksId(updateFriendsDrinksRequest.getFriendsDrinksId())
                     .setName(updateFriendsDrinksRequest.getName())
                     .setAdminUserId(updateFriendsDrinksRequest.getAdminUserId())
                     .build();
@@ -66,10 +54,7 @@ public class RequestResponseJoiner {
                     .newBuilder()
                     .setEventType(FriendsDrinksEventType.UPDATED)
                     .setRequestId(r.getRequestId())
-                    .setFriendsDrinksId(FriendsDrinksId
-                            .newBuilder()
-                            .setUuid(r.getUpdateFriendsDrinksRequest().getFriendsDrinksId().getUuid())
-                            .build())
+                    .setFriendsDrinksId(r.getUpdateFriendsDrinksRequest().getFriendsDrinksId())
                     .setFriendsDrinksUpdated(friendsDrinks)
                     .build();
         } else {

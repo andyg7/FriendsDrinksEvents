@@ -6,6 +6,7 @@
       {"name": "userId", "type": "UserId"},
       {"name": "firstName", "type": "string" },
       {"name": "lastName", "type": "string" },
-      {"name": "email", "type": "string" }
+      {"name": "email", "type": "string" },
+      {"name": "status", "type": {"type": "enum", "name": "UserStatus", "symbols": ["ACTIVE", "DELETED"] } }
   ]
 }

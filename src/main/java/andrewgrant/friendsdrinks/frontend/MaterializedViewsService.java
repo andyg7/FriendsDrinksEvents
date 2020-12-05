@@ -16,7 +16,6 @@ import org.apache.kafka.streams.state.Stores;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-import java.util.stream.Collectors;
 
 import andrewgrant.friendsdrinks.avro.*;
 
@@ -31,7 +30,6 @@ public class MaterializedViewsService {
     public static final String FRIENDSDRINKS_STORE = "friendsdrinks-state-store";
     public static final String FRIENDSDRINKS_DETAIL_PAGE_STORE = "friendsdrinks-detail-page-state-store";
     public static final String USER_HOMEPAGES_STORE = "user-homepages-store";
-    public static final String MEMBERS_STORE = "members-state-store";
     public static final String ADMINS_STORE = "admins-state-store";
     public static final String USERS_STORE = "users-state-store";
     public static final String INVITATIONS_STORE = "invitations-state-store";
@@ -64,79 +62,15 @@ public class MaterializedViewsService {
         final String frontendPrivateTopicName = envProps.getProperty(TopicNameConfigKey.FRONTEND_RESPONSES_TOPIC_NAME);
         buildResponsesStore(builder, apiEvents, frontendPrivateTopicName);
 
-        /*
-        builder.stream(envProps.getProperty(FRIENDSDRINKS_ADMIN_USER_ID_INDEX),
-                Consumed.with(Serdes.String(), avroBuilder.friendsDrinksIdListSerde()))
-                .mapValues(value -> {
-                    if (value == null || value.getIds() == null) {
-                        return null;
-                    }
-                    FriendsDrinksIdList idList = FriendsDrinksIdList
-                            .newBuilder()
-                            .setIds(value.getIds())
-                            .build();
-                    return idList;
-                })
-                .toTable(
-                        Materialized.<String, FriendsDrinksIdList, KeyValueStore<Bytes, byte[]>>
-                                as(ADMINS_STORE)
-                                .withKeySerde(Serdes.String())
-                                .withValueSerde(apiAvroBuilder.friendsDrinksIdListSerde()));
-         */
-
-
-        KStream<String, FriendsDrinksIdList> membersStream = builder.stream(
-                envProps.getProperty(FRIENDSDRINKS_MEMBERSHIP_USER_ID_INDEX),
-                Consumed.with(membershipAvroBuilder.userIdSerdes(), membershipAvroBuilder.friendsDrinksMembershipIdListSerdes()))
-                .map((key, value) -> {
-                    if (value == null) {
-                        return KeyValue.pair(key.getUserId(), null);
-                    }
-                    String userId = key.getUserId();
-                    FriendsDrinksIdList friendsDrinksIdList = FriendsDrinksIdList
-                            .newBuilder()
-                            .setIds(value.getIds().stream().map(x ->
-                                    FriendsDrinksId.newBuilder()
-                                            .setUuid(x.getFriendsDrinksId().getUuid())
-                                            .build()
-                            ).collect(Collectors.toList()))
-                            .build();
-                    return KeyValue.pair(userId, friendsDrinksIdList);
-                });
-        membersStream.toTable(
-                Materialized.<String, FriendsDrinksIdList, KeyValueStore<Bytes, byte[]>>
-                        as(MEMBERS_STORE)
-                        .withKeySerde(Serdes.String())
-                        .withValueSerde(apiAvroBuilder.friendsDrinksIdListSerde()));
-
-
         final String friendsDrinksStateTopicName = envProps.getProperty(FRIENDSDRINKS_STATE);
         KTable<FriendsDrinksId, FriendsDrinksState>
                 friendsDrinksKTable = builder.table(friendsDrinksStateTopicName,
-                Consumed.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksStateSerde()));
+                Consumed.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksStateSerde()),
+                Materialized.<FriendsDrinksId, FriendsDrinksState, KeyValueStore<Bytes, byte[]>>
+                        as(FRIENDSDRINKS_STORE)
+                        .withKeySerde(avroBuilder.friendsDrinksIdSerde())
+                        .withValueSerde(avroBuilder.friendsDrinksStateSerde()));
 
-        KStream<FriendsDrinksId, FriendsDrinksState> apiFriendsDrinksState = friendsDrinksKTable.toStream()
-                .map((key, value) -> {
-                    FriendsDrinksId friendsDrinksIdApi = FriendsDrinksId
-                            .newBuilder()
-                            .setUuid(key.getUuid())
-                            .build();
-                    FriendsDrinksState friendsDrinksStateApi = FriendsDrinksState
-                            .newBuilder()
-                            .setName(value.getName())
-                            .setFriendsDrinksId(friendsDrinksIdApi)
-                            .setStatus(FriendsDrinksStatus.valueOf(value.getStatus().name()))
-                            .setAdminUserId(value.getAdminUserId())
-                            .build();
-                    return KeyValue.pair(friendsDrinksIdApi, friendsDrinksStateApi);
-                });
-
-        KTable<FriendsDrinksId, FriendsDrinksState> apiFriendsDrinksStateKTable =
-                apiFriendsDrinksState.toTable(
-                        Materialized.<FriendsDrinksId, FriendsDrinksState, KeyValueStore<Bytes, byte[]>>
-                                as(FRIENDSDRINKS_STORE)
-                                .withKeySerde(apiAvroBuilder.friendsDrinksIdSerde())
-                                .withValueSerde(apiAvroBuilder.friendsDrinksStateSerde()));
 
         KTable<String, UserState> userState =
                 builder.stream(envProps.getProperty(USER_STATE),
@@ -154,20 +88,20 @@ public class MaterializedViewsService {
                         Consumed.with(membershipAvroBuilder.friendsDrinksMembershipIdSerdes(),
                                 membershipAvroBuilder.friendsDrinksMembershipStateSerdes()));
 
-        buildFriendsDrinksDetailPageStateStore(membershipStateKTable, apiFriendsDrinksStateKTable, userState);
+        buildFriendsDrinksDetailPageStateStore(membershipStateKTable, friendsDrinksKTable, userState);
 
         final String invitationTopicName = envProps.getProperty(FRIENDSDRINKS_INVITATION_STATE);
-        buildHomepageView(
+        KTable<FriendsDrinksMembershipId, FriendsDrinksInvitationState> invitationStateKTable =
                 builder.table(invitationTopicName,
                         Consumed.with(membershipAvroBuilder.friendsDrinksMembershipIdSerdes(),
                                 membershipAvroBuilder.friendsDrinksInvitationStateSerde()),
-                        Materialized.<
-                                FriendsDrinksMembershipId,
-                                FriendsDrinksInvitationState, KeyValueStore<Bytes, byte[]>>
+                        Materialized.<FriendsDrinksMembershipId, FriendsDrinksInvitationState, KeyValueStore<Bytes, byte[]>>
                                 as(INVITATIONS_STORE)
                                 .withKeySerde(membershipAvroBuilder.friendsDrinksMembershipIdSerdes())
-                                .withValueSerde(membershipAvroBuilder.friendsDrinksInvitationStateSerde())),
-                membershipStateKTable, friendsDrinksKTable, userState);
+                                .withValueSerde(membershipAvroBuilder.friendsDrinksInvitationStateSerde()));
+
+        buildHomepageView(invitationStateKTable, membershipStateKTable, friendsDrinksKTable, userState);
+
         return builder.build();
     }
 
@@ -213,7 +147,12 @@ public class MaterializedViewsService {
                     }
                     l.setAdminFriendsDrinks(r);
                     return l;
-                });
+                },
+                Materialized.<String, UserHomepage, KeyValueStore<Bytes, byte[]>>
+                        as(USER_HOMEPAGES_STORE)
+                        .withKeySerde(Serdes.String())
+                        .withValueSerde(apiAvroBuilder.userHomepageSerde())
+        );
     }
 
     private KTable<String, InvitationStateEnrichedList> buildInvitationStateEnrichedListKTable(
