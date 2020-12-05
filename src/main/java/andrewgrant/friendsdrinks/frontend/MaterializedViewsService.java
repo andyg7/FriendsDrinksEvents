@@ -58,12 +58,10 @@ public class MaterializedViewsService {
         KStream<String, ApiEvent> apiEvents = builder.stream(apiTopicName,
                 Consumed.with(Serdes.String(), apiAvroBuilder.apiEventSerde()));
 
-        final String frontendPrivateTopicName = envProps.getProperty(TopicNameConfigKey.FRONTEND_RESPONSES_TOPIC_NAME);
-        buildResponsesStore(builder, apiEvents, frontendPrivateTopicName);
+        buildResponsesStore(builder, apiEvents);
 
         final String friendsDrinksStateTopicName = envProps.getProperty(FRIENDSDRINKS_STATE);
-        KTable<FriendsDrinksId, FriendsDrinksState>
-                friendsDrinksKTable = builder.table(friendsDrinksStateTopicName,
+        KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksKTable = builder.table(friendsDrinksStateTopicName,
                 Consumed.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksStateSerde()),
                 Materialized.<FriendsDrinksId, FriendsDrinksState, KeyValueStore<Bytes, byte[]>>
                         as(FRIENDSDRINKS_STATE_STORE)
@@ -71,16 +69,15 @@ public class MaterializedViewsService {
                         .withValueSerde(avroBuilder.friendsDrinksStateSerde()));
 
 
-        KTable<String, UserState> userState =
-                builder.stream(envProps.getProperty(USER_STATE),
-                        Consumed.with(userAvroBuilder.userIdSerde(), userAvroBuilder.userStateSerde()))
-                        .selectKey((k, v) -> k.getUserId())
-                        .toTable(
-                                Materialized.<String, UserState, KeyValueStore<Bytes, byte[]>>
-                                        as(USERS_STATE_STORE)
-                                        .withKeySerde(Serdes.String())
-                                        .withValueSerde(userAvroBuilder.userStateSerde())
-                        );
+        KTable<String, UserState> userState = builder.stream(envProps.getProperty(USER_STATE),
+                Consumed.with(userAvroBuilder.userIdSerde(), userAvroBuilder.userStateSerde()))
+                .selectKey((k, v) -> k.getUserId())
+                .toTable(
+                        Materialized.<String, UserState, KeyValueStore<Bytes, byte[]>>
+                                as(USERS_STATE_STORE)
+                                .withKeySerde(Serdes.String())
+                                .withValueSerde(userAvroBuilder.userStateSerde())
+                );
 
         KTable<FriendsDrinksMembershipId, FriendsDrinksMembershipState> membershipStateKTable =
                 builder.table(envProps.getProperty(FRIENDSDRINKS_MEMBERSHIP_STATE),
@@ -90,14 +87,13 @@ public class MaterializedViewsService {
         buildFriendsDrinksDetailPageStateStore(membershipStateKTable, friendsDrinksKTable, userState);
 
         final String invitationTopicName = envProps.getProperty(FRIENDSDRINKS_INVITATION_STATE);
-        KTable<FriendsDrinksMembershipId, FriendsDrinksInvitationState> invitationStateKTable =
-                builder.table(invitationTopicName,
-                        Consumed.with(membershipAvroBuilder.friendsDrinksMembershipIdSerdes(),
-                                membershipAvroBuilder.friendsDrinksInvitationStateSerde()),
-                        Materialized.<FriendsDrinksMembershipId, FriendsDrinksInvitationState, KeyValueStore<Bytes, byte[]>>
-                                as(INVITATIONS_STORE)
-                                .withKeySerde(membershipAvroBuilder.friendsDrinksMembershipIdSerdes())
-                                .withValueSerde(membershipAvroBuilder.friendsDrinksInvitationStateSerde()));
+        KTable<FriendsDrinksMembershipId, FriendsDrinksInvitationState> invitationStateKTable = builder.table(invitationTopicName,
+                Consumed.with(membershipAvroBuilder.friendsDrinksMembershipIdSerdes(),
+                        membershipAvroBuilder.friendsDrinksInvitationStateSerde()),
+                Materialized.<FriendsDrinksMembershipId, FriendsDrinksInvitationState, KeyValueStore<Bytes, byte[]>>
+                        as(INVITATIONS_STORE)
+                        .withKeySerde(membershipAvroBuilder.friendsDrinksMembershipIdSerdes())
+                        .withValueSerde(membershipAvroBuilder.friendsDrinksInvitationStateSerde()));
 
         buildHomepageView(invitationStateKTable, membershipStateKTable, friendsDrinksKTable, userState);
 
@@ -302,8 +298,8 @@ public class MaterializedViewsService {
     }
 
     private void buildResponsesStore(StreamsBuilder builder,
-                                     KStream<String, ApiEvent> stream,
-                                     String responsesTopicName) {
+                                     KStream<String, ApiEvent> stream) {
+        final String responsesTopicName = envProps.getProperty(TopicNameConfigKey.FRONTEND_RESPONSES_TOPIC_NAME);
         stream.filter(((key, value) -> {
             ApiEventType apiEventType = value.getEventType();
             if (apiEventType.equals(ApiEventType.FRIENDSDRINKS_MEMBERSHIP_EVENT)) {

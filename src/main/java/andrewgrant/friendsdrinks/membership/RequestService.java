@@ -64,12 +64,10 @@ public class RequestService {
                                 friendsDrinksAvroBuilder.friendsDrinksIdSerde(),
                                 friendsDrinksAvroBuilder.friendsDrinksStateSerde()));
 
-        KTable<UserId, UserState> userState =
-                builder.table(envProps.getProperty(USER_STATE),
-                        Consumed.with(userAvroBuilder.userIdSerde(), userAvroBuilder.userStateSerde()));
+        KTable<UserId, UserState> userState = builder.table(envProps.getProperty(USER_STATE),
+                Consumed.with(userAvroBuilder.userIdSerde(), userAvroBuilder.userStateSerde()));
 
-        KTable<FriendsDrinksMembershipId, FriendsDrinksInvitationEvent>
-                friendsDrinksInvitations =
+        KTable<FriendsDrinksMembershipId, FriendsDrinksInvitationEvent> friendsDrinksInvitations =
                 builder.table(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_INVITATION_EVENT),
                         Consumed.with(membershipAvroBuilder.friendsDrinksMembershipIdSerdes(),
                                 membershipAvroBuilder.friendsDrinksInvitationEventSerde()));
