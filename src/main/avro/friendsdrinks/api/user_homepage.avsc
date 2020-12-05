@@ -4,8 +4,8 @@
   "name": "UserHomepage",
   "fields": [
       {"name": "userId", "type": "string"},
-      {"name": "memberFriendsDrinks", "type": "FriendsDrinksStateList" },
-      {"name": "adminFriendsDrinks", "type": "FriendsDrinksStateList" },
-      {"name": "invitations", "type": "InvitationStateEnrichedList" }
+      {"name": "memberFriendsDrinks", "type": ["null", "FriendsDrinksStateList"], "default": null },
+      {"name": "adminFriendsDrinks", "type": ["null", "FriendsDrinksStateList"], "default": null },
+      {"name": "invitations", "type": ["null", "InvitationStateEnrichedList"], "default": null }
   ]
 }
