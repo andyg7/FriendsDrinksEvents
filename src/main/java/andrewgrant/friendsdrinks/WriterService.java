@@ -13,8 +13,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
@@ -49,8 +47,8 @@ public class WriterService {
                 (l, r) -> new RequestResponseJoiner().join(r),
                 JoinWindows.of(Duration.ofSeconds(30)),
                 StreamJoined.with(Serdes.String(),
-                        frontendAvroBuilder.friendsDrinksEventSerde(),
-                        frontendAvroBuilder.friendsDrinksEventSerde()))
+                        frontendAvroBuilder.friendsDrinksApiEventSerde(),
+                        frontendAvroBuilder.friendsDrinksApiEventSerde()))
                 .selectKey((k, v) -> v.getFriendsDrinksId())
                 .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_EVENT),
                         Produced.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksEventSerde()));
@@ -75,61 +73,7 @@ public class WriterService {
         }).to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_STATE),
                 Produced.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksStateSerde()));
 
-        KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable =
-                builder.table(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_STATE),
-                        Consumed.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksStateSerde()));
-        buildFriendsDrinksAdminUserIdIndex(friendsDrinksStateKTable)
-                .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_ADMIN_USER_ID_INDEX),
-                        Produced.with(Serdes.String(), avroBuilder.friendsDrinksIdListSerde()));
-
         return builder.build();
-    }
-
-    private KStream<String, FriendsDrinksIdList> buildFriendsDrinksAdminUserIdIndex(
-            KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable) {
-        return friendsDrinksStateKTable.mapValues(v -> {
-            if (v.getStatus().equals(FriendsDrinksStatus.DELETED)) {
-                return null;
-            } else {
-                return v;
-            }
-        }).groupBy(((key, value) ->
-                        KeyValue.pair(value.getAdminUserId(), value)),
-                Grouped.with(Serdes.String(), avroBuilder.friendsDrinksStateSerde()))
-                .aggregate(
-                        () -> FriendsDrinksIdList.newBuilder().setIds(new ArrayList<>()).build(),
-                        (aggKey, newValue, aggValue) -> {
-                            List<FriendsDrinksId> ids = aggValue.getIds();
-                            ids.add(newValue.getFriendsDrinksId());
-                            FriendsDrinksIdList idList = FriendsDrinksIdList
-                                    .newBuilder(aggValue)
-                                    .setIds(ids)
-                                    .build();
-                            return idList;
-                        },
-                        (aggKey, oldValue, aggValue) -> {
-                            List<FriendsDrinksId> ids = aggValue.getIds();
-                            for (int i = 0; i < ids.size(); i++) {
-                                if (ids.get(i).equals(oldValue.getFriendsDrinksId())) {
-                                    ids.remove(i);
-                                    break;
-                                }
-                            }
-                            if (ids.size() == 0) {
-                                return null;
-                            }
-                            FriendsDrinksIdList idList = FriendsDrinksIdList
-                                    .newBuilder(aggValue)
-                                    .setIds(ids)
-                                    .build();
-                            return idList;
-                        },
-                        Materialized.<String, FriendsDrinksIdList, KeyValueStore<Bytes, byte[]>>
-                                as("friendsdrinks-keyed-by-admin-user-id-state-store")
-                                .withKeySerde(Serdes.String())
-                                .withValueSerde(avroBuilder.friendsDrinksIdListSerde())
-                )
-                .toStream();
     }
 
     private KStream<String, FriendsDrinksApiEvent> streamOfSuccessfulResponses(KStream<String, ApiEvent> apiEvents) {

@@ -10,7 +10,7 @@ public class StateAggregator {
     public FriendsDrinksStateAggregate handleNewEvent(FriendsDrinksId aggKey, FriendsDrinksEvent newValue,
                                                       FriendsDrinksStateAggregate aggValue) {
 
-            if (newValue.getEventType().equals(andrewgrant.friendsdrinks.avro.FriendsDrinksEventType.CREATED)) {
+            if (newValue.getEventType().equals(FriendsDrinksEventType.CREATED)) {
                 FriendsDrinksCreated createdFriendsDrinks = newValue.getFriendsDrinksCreated();
                 FriendsDrinksState.Builder friendsDrinksStateBuilder;
                 if (aggValue.getFriendsDrinksState() == null) {
@@ -24,7 +24,7 @@ public class StateAggregator {
 
                 FriendsDrinksState friendsDrinksState = friendsDrinksStateBuilder
                         .setName(createdFriendsDrinks.getName())
-                        .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
+                        .setFriendsDrinksId(FriendsDrinksId
                                 .newBuilder()
                                 .setUuid(newValue.getFriendsDrinksId().getUuid())
                                 .build())
@@ -34,7 +34,7 @@ public class StateAggregator {
                 return FriendsDrinksStateAggregate.newBuilder()
                         .setFriendsDrinksState(friendsDrinksState)
                         .build();
-            } else if (newValue.getEventType().equals(andrewgrant.friendsdrinks.avro.FriendsDrinksEventType.UPDATED)) {
+            } else if (newValue.getEventType().equals(FriendsDrinksEventType.UPDATED)) {
                 FriendsDrinksUpdated updatedFriendsDrinks = newValue.getFriendsDrinksUpdated();
                 FriendsDrinksState.Builder friendsDrinksStateBuilder;
                 if (aggValue.getFriendsDrinksState() == null) {
@@ -44,14 +44,14 @@ public class StateAggregator {
                 } else if (aggValue.getFriendsDrinksState().getStatus().equals(FriendsDrinksStatus.DELETED)) {
                     return aggValue;
                 }
-                andrewgrant.friendsdrinks.avro.UpdateType updateType = updatedFriendsDrinks.getUpdateType();
+                UpdateType updateType = updatedFriendsDrinks.getUpdateType();
                 friendsDrinksStateBuilder = FriendsDrinksState.newBuilder(aggValue.getFriendsDrinksState());
                 String name;
                 if (updatedFriendsDrinks.getName() != null) {
                     name = updatedFriendsDrinks.getName();
-                } else if (updateType.equals(andrewgrant.friendsdrinks.avro.UpdateType.PARTIAL)) {
+                } else if (updateType.equals(UpdateType.PARTIAL)) {
                     name = aggValue.getFriendsDrinksState().getName();
-                } else if (updateType.equals(andrewgrant.friendsdrinks.avro.UpdateType.FULL)) {
+                } else if (updateType.equals(UpdateType.FULL)) {
                     name = null;
                 } else {
                     throw new RuntimeException(String.format("Unknown update type %s", updateType.name()));
@@ -61,7 +61,7 @@ public class StateAggregator {
                 return FriendsDrinksStateAggregate.newBuilder()
                         .setFriendsDrinksState(friendsDrinksStateBuilder.build())
                         .build();
-            } else if (newValue.getEventType().equals(andrewgrant.friendsdrinks.avro.FriendsDrinksEventType.DELETED)) {
+            } else if (newValue.getEventType().equals(FriendsDrinksEventType.DELETED)) {
                 FriendsDrinksState.Builder friendsDrinksStateBuilder;
                 if (aggValue.getFriendsDrinksState() == null) {
                     friendsDrinksStateBuilder = FriendsDrinksState.newBuilder();

@@ -1,6 +1,5 @@
 package andrewgrant.friendsdrinks.frontend;
 
-import static andrewgrant.friendsdrinks.TopicNameConfigKey.FRIENDSDRINKS_ADMIN_USER_ID_INDEX;
 import static andrewgrant.friendsdrinks.TopicNameConfigKey.FRIENDSDRINKS_STATE;
 import static andrewgrant.friendsdrinks.frontend.TopicNameConfigKey.FRIENDSDRINKS_API;
 import static andrewgrant.friendsdrinks.membership.TopicNameConfigKey.*;
@@ -65,6 +64,7 @@ public class MaterializedViewsService {
         final String frontendPrivateTopicName = envProps.getProperty(TopicNameConfigKey.FRONTEND_RESPONSES_TOPIC_NAME);
         buildResponsesStore(builder, apiEvents, frontendPrivateTopicName);
 
+        /*
         builder.stream(envProps.getProperty(FRIENDSDRINKS_ADMIN_USER_ID_INDEX),
                 Consumed.with(Serdes.String(), avroBuilder.friendsDrinksIdListSerde()))
                 .mapValues(value -> {
@@ -82,6 +82,7 @@ public class MaterializedViewsService {
                                 as(ADMINS_STORE)
                                 .withKeySerde(Serdes.String())
                                 .withValueSerde(apiAvroBuilder.friendsDrinksIdListSerde()));
+         */
 
 
         KStream<String, FriendsDrinksIdList> membersStream = builder.stream(
@@ -110,7 +111,7 @@ public class MaterializedViewsService {
 
 
         final String friendsDrinksStateTopicName = envProps.getProperty(FRIENDSDRINKS_STATE);
-        KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState>
+        KTable<FriendsDrinksId, FriendsDrinksState>
                 friendsDrinksKTable = builder.table(friendsDrinksStateTopicName,
                 Consumed.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksStateSerde()));
 
@@ -227,10 +228,7 @@ public class MaterializedViewsService {
                         return v;
                     }
                 }).leftJoin(friendsDrinksStateKTable,
-                        (l -> andrewgrant.friendsdrinks.avro.FriendsDrinksId
-                                .newBuilder()
-                                .setUuid(l.getMembershipId().getFriendsDrinksId().getUuid())
-                                .build()),
+                        (l -> l.getMembershipId().getFriendsDrinksId()),
                         (l, r) -> {
                             if (r.getStatus().equals(FriendsDrinksStatus.DELETED)) {
                                 return null;
@@ -274,8 +272,7 @@ public class MaterializedViewsService {
     }
 
     private KTable<String, FriendsDrinksStateList> buildFriendsDrinksStateList(
-            KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState>
-                    friendsDrinksStateKTable) {
+            KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable) {
 
         return friendsDrinksStateKTable.mapValues(v -> {
             if (v == null || v.getStatus().equals(FriendsDrinksStatus.DELETED)) {
@@ -311,10 +308,8 @@ public class MaterializedViewsService {
     }
 
     private KTable<String, FriendsDrinksStateList> buildMembershipStateEnrichedList(
-            KTable<FriendsDrinksMembershipId, FriendsDrinksMembershipState>
-                    membershipStateKTable,
-            KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksId, andrewgrant.friendsdrinks.avro.FriendsDrinksState>
-                    friendsDrinksStateKTable) {
+            KTable<FriendsDrinksMembershipId, FriendsDrinksMembershipState> membershipStateKTable,
+            KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable) {
 
         KTable<String, FriendsDrinksStateList> membershipStateEnrichedListKTable =
                 membershipStateKTable.mapValues(v -> {
@@ -324,10 +319,7 @@ public class MaterializedViewsService {
                         return v;
                     }
                 }).leftJoin(friendsDrinksStateKTable,
-                        (l -> andrewgrant.friendsdrinks.avro.FriendsDrinksId
-                                .newBuilder()
-                                .setUuid(l.getMembershipId().getFriendsDrinksId().getUuid())
-                                .build()),
+                        (l -> l.getMembershipId().getFriendsDrinksId()),
                         (l, r) -> {
                             if (r.getStatus().equals(FriendsDrinksStatus.DELETED)) {
                                 return null;

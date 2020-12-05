@@ -68,7 +68,7 @@ public class RequestService {
                 builder.table(envProps.getProperty(USER_STATE),
                         Consumed.with(userAvroBuilder.userIdSerde(), userAvroBuilder.userStateSerde()));
 
-        KTable<andrewgrant.friendsdrinks.avro.FriendsDrinksMembershipId, FriendsDrinksInvitationEvent>
+        KTable<FriendsDrinksMembershipId, FriendsDrinksInvitationEvent>
                 friendsDrinksInvitations =
                 builder.table(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_INVITATION_EVENT),
                         Consumed.with(avroBuilder.friendsDrinksMembershipIdSerdes(),
@@ -138,7 +138,7 @@ public class RequestService {
             KStream<FriendsDrinksMembershipId, FriendsDrinksInvitationEvent>
                     friendsDrinksInvitationKStream) {
 
-        friendsDrinksInvitationKStream.selectKey((key, value) -> toApi(key))
+        friendsDrinksInvitationKStream.selectKey((key, value) -> key)
                 .repartition(Repartitioned.with(
                         frontendAvroBuilder.friendsDrinksMembershipIdSerde(),
                         avroBuilder.friendsDrinksInvitationEventSerde()))
@@ -325,7 +325,7 @@ public class RequestService {
 
         KStream<FriendsDrinksMembershipId, InvitationResult> resultsAfterValidatingFriendsDrinksState =
                 friendsDrinksInvitations.selectKey((key, value) ->
-                        andrewgrant.friendsdrinks.avro.FriendsDrinksId
+                        FriendsDrinksId
                                 .newBuilder()
                                 .setUuid(value.getMembershipId().getFriendsDrinksId().getUuid())
                                 .build())
@@ -467,16 +467,10 @@ public class RequestService {
             KTable<FriendsDrinksMembershipId, FriendsDrinksInvitationEvent> friendsDrinksInvitations) {
         KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipApiEvent>
                 friendsDrinksInvitationReplyResponses =
-                invitationReplyRequestKStream.selectKey((key, value) -> andrewgrant.friendsdrinks.avro.FriendsDrinksMembershipId
+                invitationReplyRequestKStream.selectKey((key, value) -> FriendsDrinksMembershipId
                         .newBuilder()
-                        .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
-                                .newBuilder()
-                                .setUuid(value.getMembershipId().getFriendsDrinksId().getUuid())
-                                .build())
-                        .setUserId(andrewgrant.friendsdrinks.avro.UserId
-                                .newBuilder()
-                                .setUserId(value.getMembershipId().getUserId().getUserId())
-                                .build())
+                        .setFriendsDrinksId(value.getMembershipId().getFriendsDrinksId())
+                        .setUserId(value.getMembershipId().getUserId())
                         .build())
                         .leftJoin(friendsDrinksInvitations,
                                 (request, state) -> {
@@ -508,21 +502,6 @@ public class RequestService {
                         );
 
         return friendsDrinksInvitationReplyResponses.selectKey((k, v) -> v.getMembershipId());
-    }
-
-    private FriendsDrinksMembershipId toApi(andrewgrant.friendsdrinks.avro.FriendsDrinksMembershipId friendsDrinksMembershipId) {
-        return FriendsDrinksMembershipId
-                .newBuilder()
-                .setUserId(
-                        andrewgrant.friendsdrinks.avro.UserId
-                                .newBuilder()
-                                .setUserId(friendsDrinksMembershipId.getUserId().getUserId())
-                                .build())
-                .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
-                        .newBuilder()
-                        .setUuid(friendsDrinksMembershipId.getFriendsDrinksId().getUuid())
-                        .build())
-                .build();
     }
 
     public Properties buildStreamProperties(Properties envProps) {

@@ -12,23 +12,23 @@ public class RequestResponseJoiner {
 
     private static final Logger log = LoggerFactory.getLogger(RequestResponseJoiner.class);
 
-    public FriendsDrinksEvent join(andrewgrant.friendsdrinks.avro.FriendsDrinksApiEvent r) {
+    public FriendsDrinksEvent join(FriendsDrinksApiEvent r) {
         if (r.getEventType().equals(FriendsDrinksApiEventType.CREATE_FRIENDSDRINKS_REQUEST)) {
             log.info("Got create join {}", r.getCreateFriendsDrinksRequest().getRequestId());
             CreateFriendsDrinksRequest createFriendsDrinksRequest =
                     r.getCreateFriendsDrinksRequest();
             FriendsDrinksCreated friendsDrinks = FriendsDrinksCreated
                     .newBuilder()
-                    .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
+                    .setFriendsDrinksId(FriendsDrinksId
                             .newBuilder()
                             .setUuid(createFriendsDrinksRequest.getFriendsDrinksId().getUuid())
                             .build())
                     .setName(createFriendsDrinksRequest.getName())
                     .setAdminUserId(createFriendsDrinksRequest.getAdminUserId())
                     .build();
-            return andrewgrant.friendsdrinks.avro.FriendsDrinksEvent.newBuilder()
-                    .setEventType(andrewgrant.friendsdrinks.avro.FriendsDrinksEventType.CREATED)
-                    .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
+            return FriendsDrinksEvent.newBuilder()
+                    .setEventType(FriendsDrinksEventType.CREATED)
+                    .setFriendsDrinksId(FriendsDrinksId
                             .newBuilder()
                             .setUuid(r.getCreateFriendsDrinksRequest().getFriendsDrinksId().getUuid())
                             .build())
@@ -37,11 +37,11 @@ public class RequestResponseJoiner {
                     .build();
         } else if (r.getEventType().equals(FriendsDrinksApiEventType.DELETE_FRIENDSDRINKS_REQUEST)) {
             log.info("Got delete join {}", r.getDeleteFriendsDrinksRequest().getRequestId());
-            return andrewgrant.friendsdrinks.avro.FriendsDrinksEvent
+            return FriendsDrinksEvent
                     .newBuilder()
-                    .setEventType(andrewgrant.friendsdrinks.avro.FriendsDrinksEventType.DELETED)
+                    .setEventType(FriendsDrinksEventType.DELETED)
                     .setRequestId(r.getRequestId())
-                    .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
+                    .setFriendsDrinksId(FriendsDrinksId
                             .newBuilder()
                             .setUuid(r.getDeleteFriendsDrinksRequest().getFriendsDrinksId().getUuid())
                             .build())
@@ -53,20 +53,20 @@ public class RequestResponseJoiner {
             FriendsDrinksUpdated friendsDrinks = FriendsDrinksUpdated
                     .newBuilder()
                     .setUpdateType(
-                            andrewgrant.friendsdrinks.avro.UpdateType.valueOf(
+                            UpdateType.valueOf(
                                     updateFriendsDrinksRequest.getUpdateType().name()))
-                    .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
+                    .setFriendsDrinksId(FriendsDrinksId
                             .newBuilder()
                             .setUuid(updateFriendsDrinksRequest.getFriendsDrinksId().getUuid())
                             .build())
                     .setName(updateFriendsDrinksRequest.getName())
                     .setAdminUserId(updateFriendsDrinksRequest.getAdminUserId())
                     .build();
-            return andrewgrant.friendsdrinks.avro.FriendsDrinksEvent
+            return FriendsDrinksEvent
                     .newBuilder()
-                    .setEventType(andrewgrant.friendsdrinks.avro.FriendsDrinksEventType.UPDATED)
+                    .setEventType(FriendsDrinksEventType.UPDATED)
                     .setRequestId(r.getRequestId())
-                    .setFriendsDrinksId(andrewgrant.friendsdrinks.avro.FriendsDrinksId
+                    .setFriendsDrinksId(FriendsDrinksId
                             .newBuilder()
                             .setUuid(r.getUpdateFriendsDrinksRequest().getFriendsDrinksId().getUuid())
                             .build())

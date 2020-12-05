@@ -596,7 +596,7 @@ public class Handler {
             userEvent = UserEvent
                     .newBuilder()
                     .setRequestId(requestId)
-                    .setEventType(andrewgrant.friendsdrinks.avro.UserEventType.LOGGED_IN)
+                    .setEventType(UserEventType.LOGGED_IN)
                     .setUserLoggedIn(UserLoggedIn
                             .newBuilder()
                             .setFirstName(requestBean.getLoggedInEvent().getFirstName())
@@ -610,21 +610,21 @@ public class Handler {
             userEvent = UserEvent
                     .newBuilder()
                     .setRequestId(requestId)
-                    .setEventType(andrewgrant.friendsdrinks.avro.UserEventType.LOGGED_OUT)
+                    .setEventType(UserEventType.LOGGED_OUT)
                     .setUserId(userIdAvro)
                     .build();
         } else if (eventType.equals(SIGNED_OUT_SESSION_EXPIRED)) {
             userEvent = UserEvent
                     .newBuilder()
                     .setRequestId(requestId)
-                    .setEventType(andrewgrant.friendsdrinks.avro.UserEventType.SIGNED_OUT_SESSION_EXPIRED)
+                    .setEventType(UserEventType.SIGNED_OUT_SESSION_EXPIRED)
                     .setUserId(userIdAvro)
                     .build();
         } else if (eventType.equals(DELETED)) {
             userEvent = UserEvent
                     .newBuilder()
                     .setRequestId(requestId)
-                    .setEventType(andrewgrant.friendsdrinks.avro.UserEventType.DELETED)
+                    .setEventType(UserEventType.DELETED)
                     .setUserId(userIdAvro)
                     .build();
         } else {

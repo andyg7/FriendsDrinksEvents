@@ -44,7 +44,7 @@ public class AvroBuilder {
         return serde;
     }
 
-    public SpecificAvroSerde<FriendsDrinksApiEvent> friendsDrinksEventSerde() {
+    public SpecificAvroSerde<FriendsDrinksApiEvent> friendsDrinksApiEventSerde() {
         SpecificAvroSerde<FriendsDrinksApiEvent> serde;
         if (registryClient != null) {
             serde = new SpecificAvroSerde<>(registryClient);
