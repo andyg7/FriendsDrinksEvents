@@ -95,12 +95,17 @@ public class MaterializedViewsService {
                         .withKeySerde(membershipAvroBuilder.friendsDrinksMembershipIdSerdes())
                         .withValueSerde(membershipAvroBuilder.friendsDrinksInvitationStateSerde()));
 
-        buildHomepageView(invitationStateKTable, membershipStateKTable, friendsDrinksKTable, userState);
-
+        KStream<String, UserHomepage> userHomepageKStream =
+                buildHomepageView(invitationStateKTable, membershipStateKTable, friendsDrinksKTable, userState);
+        userHomepageKStream.toTable(
+                Materialized.<String, UserHomepage, KeyValueStore<Bytes, byte[]>>
+                        as(USER_HOMEPAGES_STATE_STORE)
+                        .withKeySerde(Serdes.String())
+                        .withValueSerde(apiAvroBuilder.userHomepageSerde()));
         return builder.build();
     }
 
-    private KTable<String, UserHomepage> buildHomepageView(
+    private KStream<String, UserHomepage> buildHomepageView(
             KTable<FriendsDrinksMembershipId, FriendsDrinksInvitationState> invitationStateKTable,
             KTable<FriendsDrinksMembershipId, FriendsDrinksMembershipState> membershipStateKTable,
             KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable,
@@ -119,33 +124,29 @@ public class MaterializedViewsService {
                     .setUserId(v.getUserId().getUserId())
                     .build();
             return userHomepage;
-        }).outerJoin(invitations,
+        }).leftJoin(invitations,
                 (l, r) -> {
                     if (l == null) {
                         return null;
                     }
                     l.setInvitations(r);
                     return l;
-                }).outerJoin(memberships,
+                }).leftJoin(memberships,
                 (l, r) -> {
                     if (l == null) {
                         return null;
                     }
                     l.setMemberFriendsDrinks(r);
                     return l;
-                }).outerJoin(admins,
+                }).leftJoin(admins,
                 (l, r) -> {
                     if (l == null) {
                         return null;
                     }
                     l.setAdminFriendsDrinks(r);
                     return l;
-                },
-                Materialized.<String, UserHomepage, KeyValueStore<Bytes, byte[]>>
-                        as(USER_HOMEPAGES_STATE_STORE)
-                        .withKeySerde(Serdes.String())
-                        .withValueSerde(apiAvroBuilder.userHomepageSerde())
-        );
+                }
+        ).toStream();
     }
 
     private KTable<String, InvitationStateEnrichedList> invitationsKeyedByUser(
