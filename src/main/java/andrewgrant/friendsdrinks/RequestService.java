@@ -50,7 +50,7 @@ public class RequestService {
 
         StoreBuilder storeBuilder = Stores.keyValueStoreBuilder(
                 Stores.persistentKeyValueStore(PENDING_FRIENDSDRINKS_REQUESTS_STATE_STORE),
-                frontendAvroBuilder.friendsDrinksIdSerde(),
+                avroBuilder.friendsDrinksIdSerde(),
                 Serdes.String());
         builder.addStateStore(storeBuilder);
 
@@ -188,7 +188,7 @@ public class RequestService {
     private KStream<FriendsDrinksId, FriendsDrinksEventConcurrencyCheck> checkForConcurrentRequest(
             KStream<FriendsDrinksId, FriendsDrinksApiEvent> friendsDrinksEventKStream) {
         return friendsDrinksEventKStream.repartition(
-                Repartitioned.with(frontendAvroBuilder.friendsDrinksIdSerde(), frontendAvroBuilder.friendsDrinksApiEventSerde()))
+                Repartitioned.with(avroBuilder.friendsDrinksIdSerde(), frontendAvroBuilder.friendsDrinksApiEventSerde()))
                 .transformValues(() ->
                         new ValueTransformer<FriendsDrinksApiEvent, FriendsDrinksEventConcurrencyCheck>() {
                             private KeyValueStore<FriendsDrinksId, String> stateStore;
@@ -223,7 +223,7 @@ public class RequestService {
 
     private KStream<String, ApiEvent> toApiEventResponse(KStream<FriendsDrinksId, FriendsDrinksApiEvent> friendsDrinksEventKStream) {
         return friendsDrinksEventKStream
-                .repartition(Repartitioned.with(frontendAvroBuilder.friendsDrinksIdSerde(), frontendAvroBuilder.friendsDrinksApiEventSerde()))
+                .repartition(Repartitioned.with(avroBuilder.friendsDrinksIdSerde(), frontendAvroBuilder.friendsDrinksApiEventSerde()))
                 .transform(() ->
                         new Transformer<FriendsDrinksId, FriendsDrinksApiEvent, KeyValue<String, ApiEvent>>() {
 
