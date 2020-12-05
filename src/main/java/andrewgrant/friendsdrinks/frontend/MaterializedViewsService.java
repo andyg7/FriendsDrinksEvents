@@ -152,55 +152,53 @@ public class MaterializedViewsService {
             KTable<FriendsDrinksMembershipId, FriendsDrinksInvitationState> invitationStateKTable,
             KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable) {
 
-        KTable<String, InvitationStateEnrichedList> invitationStateEnrichedListKTable =
-                invitationStateKTable.mapValues(v -> {
-                    if (v == null || v.getStatus().equals(InvitationStatus.RESPONDED_TO)) {
+        return invitationStateKTable.mapValues(v -> {
+            if (v == null || v.getStatus().equals(InvitationStatus.RESPONDED_TO)) {
+                return null;
+            } else {
+                return v;
+            }
+        }).leftJoin(friendsDrinksStateKTable,
+                (l -> l.getMembershipId().getFriendsDrinksId()),
+                (l, r) -> {
+                    if (r.getStatus().equals(FriendsDrinksStatus.DELETED)) {
                         return null;
                     } else {
-                        return v;
+                        return InvitationStateEnriched
+                                .newBuilder()
+                                .setMembershipId(l.getMembershipId())
+                                .setFriendsDrinksName(r.getName())
+                                .setMessage(l.getMessage())
+                                .build();
                     }
-                }).leftJoin(friendsDrinksStateKTable,
-                        (l -> l.getMembershipId().getFriendsDrinksId()),
-                        (l, r) -> {
-                            if (r.getStatus().equals(FriendsDrinksStatus.DELETED)) {
-                                return null;
-                            } else {
-                                return InvitationStateEnriched
-                                        .newBuilder()
-                                        .setMembershipId(l.getMembershipId())
-                                        .setFriendsDrinksName(r.getName())
-                                        .setMessage(l.getMessage())
-                                        .build();
-                            }
+                },
+                Materialized.with(membershipAvroBuilder.friendsDrinksMembershipIdSerdes(), apiAvroBuilder.invitationStateEnrichedSerde())
+        )
+                .groupBy((key, value) -> KeyValue.pair(value.getMembershipId().getUserId().getUserId(), value),
+                        Grouped.with(Serdes.String(), apiAvroBuilder.invitationStateEnrichedSerde()))
+                .aggregate(
+                        () -> InvitationStateEnrichedList.newBuilder().setInvitations(new ArrayList<>()).build(),
+                        (aggKey, newValue, aggValue) -> {
+                            List<InvitationStateEnriched> invitations = aggValue.getInvitations();
+                            invitations.add(newValue);
+                            return InvitationStateEnrichedList
+                                    .newBuilder()
+                                    .setInvitations(invitations)
+                                    .build();
                         },
-                        Materialized.with(membershipAvroBuilder.friendsDrinksMembershipIdSerdes(), apiAvroBuilder.invitationStateEnrichedSerde())
-                )
-                        .groupBy((key, value) -> KeyValue.pair(value.getMembershipId().getUserId().getUserId(), value),
-                                Grouped.with(Serdes.String(), apiAvroBuilder.invitationStateEnrichedSerde()))
-                        .aggregate(
-                                () -> InvitationStateEnrichedList.newBuilder().setInvitations(new ArrayList<>()).build(),
-                                (aggKey, newValue, aggValue) -> {
-                                    List<InvitationStateEnriched> invitations = aggValue.getInvitations();
-                                    invitations.add(newValue);
-                                    return InvitationStateEnrichedList
-                                            .newBuilder()
-                                            .setInvitations(invitations)
-                                            .build();
-                                },
-                                (aggKey, oldValue, aggValue) -> {
-                                    List<InvitationStateEnriched> invitations = aggValue.getInvitations();
-                                    invitations.remove(oldValue);
-                                    return InvitationStateEnrichedList
-                                            .newBuilder()
-                                            .setInvitations(invitations)
-                                            .build();
-                                },
-                                Materialized.<String, InvitationStateEnrichedList, KeyValueStore<Bytes, byte[]>>
-                                        as("friendsdrinks-enriched-invitation-list")
-                                        .withKeySerde(Serdes.String())
-                                        .withValueSerde(apiAvroBuilder.invitationStateEnrichedListSerde())
-                        );
-        return invitationStateEnrichedListKTable;
+                        (aggKey, oldValue, aggValue) -> {
+                            List<InvitationStateEnriched> invitations = aggValue.getInvitations();
+                            invitations.remove(oldValue);
+                            return InvitationStateEnrichedList
+                                    .newBuilder()
+                                    .setInvitations(invitations)
+                                    .build();
+                        },
+                        Materialized.<String, InvitationStateEnrichedList, KeyValueStore<Bytes, byte[]>>
+                                as("friendsdrinks-invitation-keyed-by-user-state-store")
+                                .withKeySerde(Serdes.String())
+                                .withValueSerde(apiAvroBuilder.invitationStateEnrichedListSerde())
+                );
     }
 
     private KTable<String, FriendsDrinksStateList> friendsDrinksKeyedByAdmin(
@@ -233,7 +231,7 @@ public class MaterializedViewsService {
                                     .build();
                         },
                         Materialized.<String, FriendsDrinksStateList, KeyValueStore<Bytes, byte[]>>
-                                as("friendsdrinks-enriched-list")
+                                as("friendsdrinks-keyed-by-admin-state-store")
                                 .withKeySerde(Serdes.String())
                                 .withValueSerde(apiAvroBuilder.friendsDrinksStateListSerde())
                 );
@@ -243,8 +241,7 @@ public class MaterializedViewsService {
             KTable<FriendsDrinksMembershipId, FriendsDrinksMembershipState> membershipStateKTable,
             KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable) {
 
-        KTable<String, FriendsDrinksStateList> membershipStateEnrichedListKTable =
-                membershipStateKTable.mapValues(v -> {
+        return membershipStateKTable.mapValues(v -> {
                     if (v == null || v.getStatus().equals(FriendsDrinksMembershipStatus.REMOVED)) {
                         return null;
                     } else {
@@ -287,12 +284,10 @@ public class MaterializedViewsService {
                                             .build();
                                 },
                                 Materialized.<String, FriendsDrinksStateList, KeyValueStore<Bytes, byte[]>>
-                                        as("friendsdrinks-enriched-invitation-list")
+                                        as("friendsdrinks-membership-keyed-by-user-state-store")
                                         .withKeySerde(Serdes.String())
                                         .withValueSerde(apiAvroBuilder.friendsDrinksStateListSerde())
                         );
-        return membershipStateEnrichedListKTable;
-
     }
 
     private void buildResponsesStore(StreamsBuilder builder,
