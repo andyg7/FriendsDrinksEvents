@@ -1,9 +1,9 @@
 {
   "namespace": "andrewgrant.friendsdrinks.avro",
   "type": "record",
-  "name": "MembershipStateEnriched",
+  "name": "MembershipStateFriendsDrinksEnriched",
   "fields": [
       {"name": "membershipId", "type": "FriendsDrinksMembershipId" },
-      {"name": "friendsDrinks", "type": "FriendsDrinksState"}
+      {"name": "friendsDrinksState", "type": "FriendsDrinksState"}
   ]
 }

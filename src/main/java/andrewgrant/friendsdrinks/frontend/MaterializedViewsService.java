@@ -258,10 +258,10 @@ public class MaterializedViewsService {
                             if (r.getStatus().equals(FriendsDrinksStatus.DELETED)) {
                                 return null;
                             } else {
-                                return MembershipStateEnriched
+                                return MembershipStateFriendsDrinksEnriched
                                         .newBuilder()
                                         .setMembershipId(l.getMembershipId())
-                                        .setFriendsDrinks(r)
+                                        .setFriendsDrinksState(r)
                                         .build();
                             }
                         },
@@ -274,7 +274,7 @@ public class MaterializedViewsService {
                                 () -> FriendsDrinksStateList.newBuilder().setFriendsDrinks(new ArrayList<>()).build(),
                                 (aggKey, newValue, aggValue) -> {
                                     List<FriendsDrinksState> friendsDrinksStates = aggValue.getFriendsDrinks();
-                                    friendsDrinksStates.add(newValue.getFriendsDrinks());
+                                    friendsDrinksStates.add(newValue.getFriendsDrinksState());
                                     return FriendsDrinksStateList
                                             .newBuilder()
                                             .setFriendsDrinks(friendsDrinksStates)
@@ -282,7 +282,7 @@ public class MaterializedViewsService {
                                 },
                                 (aggKey, oldValue, aggValue) -> {
                                     List<FriendsDrinksState> friendsDrinksStates = aggValue.getFriendsDrinks();
-                                    friendsDrinksStates.remove(oldValue.getFriendsDrinks());
+                                    friendsDrinksStates.remove(oldValue.getFriendsDrinksState());
                                     return FriendsDrinksStateList
                                             .newBuilder()
                                             .setFriendsDrinks(friendsDrinksStates)
@@ -340,23 +340,22 @@ public class MaterializedViewsService {
             KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable,
             KTable<String, UserState> userStateKTable) {
 
-        KTable<FriendsDrinksMembershipId, FriendsDrinksEnrichedMembershipState> membershipStateKTable = membershipStateKTableAll
+        KTable<FriendsDrinksMembershipId, MembershipStateUserEnriched> membershipStateKTable = membershipStateKTableAll
                 .mapValues(value -> {
                     if (value.getStatus().equals(FriendsDrinksMembershipStatus.REMOVED)) {
                         return null;
                     } else {
-                        FriendsDrinksEnrichedMembershipState enrichedMembershipState =
-                                FriendsDrinksEnrichedMembershipState.newBuilder()
-                                        .setMembershipId(value.getMembershipId())
-                                        .build();
+                        MembershipStateUserEnriched enrichedMembershipState = MembershipStateUserEnriched.newBuilder()
+                                .setMembershipId(value.getMembershipId())
+                                .build();
                         return enrichedMembershipState;
                     }
                 });
 
-        KTable<FriendsDrinksMembershipId, FriendsDrinksEnrichedMembershipState> enrichedMembershipStateKTable =
+        KTable<FriendsDrinksMembershipId, MembershipStateUserEnriched> enrichedMembershipStateKTable =
                 membershipStateKTable.leftJoin(userStateKTable,
                         (enrichedMembershipState -> enrichedMembershipState.getMembershipId().getUserId().getUserId()),
-                        (l, r) -> FriendsDrinksEnrichedMembershipState
+                        (l, r) -> MembershipStateUserEnriched
                                 .newBuilder(l)
                                 .setUserEmail(r.getEmail())
                                 .setUserFirstName(r.getFirstName())

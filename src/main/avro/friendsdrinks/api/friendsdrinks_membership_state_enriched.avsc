@@ -1,7 +1,7 @@
 {
   "namespace": "andrewgrant.friendsdrinks.avro",
   "type": "record",
-  "name": "FriendsDrinksEnrichedMembershipState",
+  "name": "MembershipStateUserEnriched",
   "fields": [
       {"name": "membershipId", "type": "FriendsDrinksMembershipId" },
       {"name": "userFirstName", "type": ["null", "string"], "default": null },
