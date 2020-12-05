@@ -1,6 +1,6 @@
 package andrewgrant.friendsdrinks.membership;
 
-import andrewgrant.friendsdrinks.api.avro.FriendsDrinksInvitationRequest;
+import andrewgrant.friendsdrinks.avro.FriendsDrinksInvitationRequest;
 
 /**
  * Holds result for FriendsDrinksInvitationRequest.

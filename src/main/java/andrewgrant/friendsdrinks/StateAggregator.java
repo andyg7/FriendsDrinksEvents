@@ -10,12 +10,12 @@ public class StateAggregator {
     public FriendsDrinksStateAggregate handleNewEvent(FriendsDrinksId aggKey, FriendsDrinksEvent newValue,
                                                       FriendsDrinksStateAggregate aggValue) {
 
-            if (newValue.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.CREATED)) {
+            if (newValue.getEventType().equals(andrewgrant.friendsdrinks.avro.FriendsDrinksEventType.CREATED)) {
                 FriendsDrinksCreated createdFriendsDrinks = newValue.getFriendsDrinksCreated();
                 FriendsDrinksState.Builder friendsDrinksStateBuilder;
                 if (aggValue.getFriendsDrinksState() == null) {
                     friendsDrinksStateBuilder = FriendsDrinksState.newBuilder();
-                } else if (aggValue.getFriendsDrinksState().getStatus().equals(Status.DELETED)) {
+                } else if (aggValue.getFriendsDrinksState().getStatus().equals(FriendsDrinksStatus.DELETED)) {
                     return aggValue;
                 } else {
                     friendsDrinksStateBuilder = FriendsDrinksState
@@ -28,20 +28,20 @@ public class StateAggregator {
                                 .newBuilder()
                                 .setUuid(newValue.getFriendsDrinksId().getUuid())
                                 .build())
-                        .setStatus(Status.ACTIVE)
+                        .setStatus(FriendsDrinksStatus.ACTIVE)
                         .setAdminUserId(createdFriendsDrinks.getAdminUserId())
                         .build();
                 return FriendsDrinksStateAggregate.newBuilder()
                         .setFriendsDrinksState(friendsDrinksState)
                         .build();
-            } else if (newValue.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.UPDATED)) {
+            } else if (newValue.getEventType().equals(andrewgrant.friendsdrinks.avro.FriendsDrinksEventType.UPDATED)) {
                 FriendsDrinksUpdated updatedFriendsDrinks = newValue.getFriendsDrinksUpdated();
                 FriendsDrinksState.Builder friendsDrinksStateBuilder;
                 if (aggValue.getFriendsDrinksState() == null) {
                     friendsDrinksStateBuilder = FriendsDrinksState.newBuilder();
                     friendsDrinksStateBuilder.setFriendsDrinksId(aggKey);
-                    friendsDrinksStateBuilder.setStatus(Status.ACTIVE);
-                } else if (aggValue.getFriendsDrinksState().getStatus().equals(Status.DELETED)) {
+                    friendsDrinksStateBuilder.setStatus(FriendsDrinksStatus.ACTIVE);
+                } else if (aggValue.getFriendsDrinksState().getStatus().equals(FriendsDrinksStatus.DELETED)) {
                     return aggValue;
                 }
                 andrewgrant.friendsdrinks.avro.UpdateType updateType = updatedFriendsDrinks.getUpdateType();
@@ -61,7 +61,7 @@ public class StateAggregator {
                 return FriendsDrinksStateAggregate.newBuilder()
                         .setFriendsDrinksState(friendsDrinksStateBuilder.build())
                         .build();
-            } else if (newValue.getEventType().equals(andrewgrant.friendsdrinks.avro.EventType.DELETED)) {
+            } else if (newValue.getEventType().equals(andrewgrant.friendsdrinks.avro.FriendsDrinksEventType.DELETED)) {
                 FriendsDrinksState.Builder friendsDrinksStateBuilder;
                 if (aggValue.getFriendsDrinksState() == null) {
                     friendsDrinksStateBuilder = FriendsDrinksState.newBuilder();
@@ -69,7 +69,7 @@ public class StateAggregator {
                 } else {
                     friendsDrinksStateBuilder = FriendsDrinksState.newBuilder(aggValue.getFriendsDrinksState());
                 }
-                friendsDrinksStateBuilder.setStatus(Status.DELETED);
+                friendsDrinksStateBuilder.setStatus(FriendsDrinksStatus.DELETED);
                 return FriendsDrinksStateAggregate.newBuilder()
                         .setFriendsDrinksState(friendsDrinksStateBuilder.build())
                         .build();

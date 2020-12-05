@@ -1,5 +1,5 @@
 {
-  "namespace": "andrewgrant.friendsdrinks.api.avro",
+  "namespace": "andrewgrant.friendsdrinks.avro",
   "type": "record",
   "name": "FriendsDrinksEnrichedMembershipState",
   "fields": [

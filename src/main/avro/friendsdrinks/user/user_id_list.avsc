@@ -1,5 +1,5 @@
 {
-  "namespace": "andrewgrant.friendsdrinks.membership.avro",
+  "namespace": "andrewgrant.friendsdrinks.avro",
   "type": "record",
   "name": "UserIdList",
   "fields": [

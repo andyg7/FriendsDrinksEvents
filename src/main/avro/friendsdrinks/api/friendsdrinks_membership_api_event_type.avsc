@@ -1,0 +1,6 @@
+{
+  "namespace": "andrewgrant.friendsdrinks.avro",
+  "type": "enum",
+  "name": "FriendsDrinksMembershipApiEventType",
+  "symbols" : ["FRIENDSDRINKS_INVITATION_REQUEST", "FRIENDSDRINKS_INVITATION_RESPONSE" ,"FRIENDSDRINKS_INVITATION_REPLY_REQUEST", "FRIENDSDRINKS_INVITATION_REPLY_RESPONSE"]
+}

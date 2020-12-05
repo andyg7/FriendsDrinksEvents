@@ -1,9 +1,9 @@
 {
-  "namespace": "andrewgrant.friendsdrinks.user.avro",
+  "namespace": "andrewgrant.friendsdrinks.avro",
   "type": "record",
   "name": "UserEvent",
   "fields": [
-      {"name": "eventType", "type": {"type": "enum", "name": "EventType", "symbols": ["LOGGED_IN", "LOGGED_OUT", "SIGNED_OUT_SESSION_EXPIRED", "DELETED"] } },
+      {"name": "eventType", "type": "UserEventType" },
       {"name": "requestId", "type": "string"},
       {"name": "userId", "type": "UserId"},
       {"name": "userLoggedIn", "type": ["null", "UserLoggedIn"], "default": null}

@@ -14,7 +14,7 @@ import java.io.IOException;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
-import andrewgrant.friendsdrinks.user.avro.*;
+import andrewgrant.friendsdrinks.avro.*;
 
 /**
  * Contains user service.
@@ -40,7 +40,7 @@ public class Service {
                 .aggregate(
                         () -> UserStateAggregate.newBuilder().build(),
                         (aggKey, newValue, aggValue) -> {
-                            if (newValue.getEventType().equals(EventType.LOGGED_IN)) {
+                            if (newValue.getEventType().equals(UserEventType.LOGGED_IN)) {
                                 UserStateAggregate userStateAggregate = UserStateAggregate
                                         .newBuilder(aggValue)
                                         .setUserState(UserState
@@ -52,11 +52,11 @@ public class Service {
                                                 .build())
                                         .build();
                                 return userStateAggregate;
-                            } else if (newValue.getEventType().equals(EventType.LOGGED_OUT)) {
+                            } else if (newValue.getEventType().equals(UserEventType.LOGGED_OUT)) {
                                 return aggValue;
-                            } else if (newValue.getEventType().equals(EventType.SIGNED_OUT_SESSION_EXPIRED)) {
+                            } else if (newValue.getEventType().equals(UserEventType.SIGNED_OUT_SESSION_EXPIRED)) {
                                 return aggValue;
-                            } else if (newValue.getEventType().equals(EventType.DELETED)) {
+                            } else if (newValue.getEventType().equals(UserEventType.DELETED)) {
                                 // Tombstone deleted user.
                                 return null;
                             } else {

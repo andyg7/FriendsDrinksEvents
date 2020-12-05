@@ -15,12 +15,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
-import andrewgrant.friendsdrinks.membership.avro.*;
-import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksId;
-import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipEvent;
-import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId;
-import andrewgrant.friendsdrinks.membership.avro.Status;
-import andrewgrant.friendsdrinks.membership.avro.UserId;
+import andrewgrant.friendsdrinks.avro.*;
 
 /**
  * Owns writing to friendsdrinks-membership-event.
@@ -52,7 +47,7 @@ public class MembershipWriterService {
                 .mapValues(v -> FriendsDrinksMembershipEvent
                         .newBuilder()
                         .setRequestId(v.getRequestId())
-                        .setEventType(EventType.ADDED)
+                        .setEventType(FriendsDrinksMembershipEventType.ADDED)
                         .setMembershipId(v.getMembershipId())
                         .setFriendsDrinksMembershipAdded(FriendsDrinksMembershipAdded
                                 .newBuilder()
@@ -89,7 +84,7 @@ public class MembershipWriterService {
     private KStream<FriendsDrinksId, FriendsDrinksMembershipIdList> buildMembershipFriendsDrinksIndex(
             KTable<FriendsDrinksMembershipId, FriendsDrinksMembershipState> friendsDrinksMembershipStateKTable) {
         return friendsDrinksMembershipStateKTable.mapValues(v -> {
-            if (v.getStatus().equals(Status.REMOVED)) {
+            if (v.getStatus().equals(FriendsDrinksMembershipStatus.REMOVED)) {
                 return null;
             } else {
                 return v;
@@ -137,7 +132,7 @@ public class MembershipWriterService {
             KTable<FriendsDrinksMembershipId, FriendsDrinksMembershipState> friendsDrinksMembershipStateKTable) {
 
         return friendsDrinksMembershipStateKTable.mapValues(v -> {
-            if (v.getStatus().equals(Status.REMOVED)) {
+            if (v.getStatus().equals(FriendsDrinksMembershipStatus.REMOVED)) {
                 return null;
             } else {
                 return v;

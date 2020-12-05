@@ -1,8 +1,0 @@
-{
-  "namespace": "andrewgrant.friendsdrinks.api.avro",
-  "type": "record",
-  "name": "FriendsDrinksId",
-  "fields": [
-    {"name": "uuid", "type": "string"}
-  ]
-}

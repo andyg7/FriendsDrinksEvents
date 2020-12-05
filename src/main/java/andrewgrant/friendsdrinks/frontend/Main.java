@@ -20,10 +20,9 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Properties;
 
-import andrewgrant.friendsdrinks.api.avro.ApiEvent;
-import andrewgrant.friendsdrinks.user.AvroBuilder;
-import andrewgrant.friendsdrinks.user.avro.UserEvent;
-import andrewgrant.friendsdrinks.user.avro.UserId;
+import andrewgrant.friendsdrinks.avro.ApiEvent;
+import andrewgrant.friendsdrinks.avro.UserEvent;
+import andrewgrant.friendsdrinks.avro.UserId;
 
 /**
  * Hooks up dependencies for the Frontend REST API.
@@ -45,13 +44,16 @@ public class Main {
         andrewgrant.friendsdrinks.AvroBuilder avroBuilder = new andrewgrant.friendsdrinks.AvroBuilder(schemaRegistryUrl);
         andrewgrant.friendsdrinks.frontend.AvroBuilder apiAvroBuilder =
                 new andrewgrant.friendsdrinks.frontend.AvroBuilder(schemaRegistryUrl);
-        AvroBuilder userAvroBuilder = new AvroBuilder(schemaRegistryUrl);
+        andrewgrant.friendsdrinks.user.AvroBuilder userAvroBuilder =
+                new andrewgrant.friendsdrinks.user.AvroBuilder(schemaRegistryUrl);
 
         String portStr = args[1];
         String streamsUri = "localhost:" + portStr;
 
-        MaterializedViewsService streamsService = new MaterializedViewsService(envProps, avroBuilder, apiAvroBuilder,
-                new andrewgrant.friendsdrinks.membership.AvroBuilder(schemaRegistryUrl), new AvroBuilder(schemaRegistryUrl));
+        MaterializedViewsService streamsService = new MaterializedViewsService(
+                envProps, avroBuilder, apiAvroBuilder,
+                new andrewgrant.friendsdrinks.membership.AvroBuilder(schemaRegistryUrl),
+                new andrewgrant.friendsdrinks.user.AvroBuilder(schemaRegistryUrl));
         Topology topology = streamsService.buildTopology();
         Properties streamProps = streamsService.buildStreamsProperties(streamsUri);
         KafkaStreams streams = new KafkaStreams(topology, streamProps);
@@ -98,17 +100,14 @@ public class Main {
 
     private static KafkaProducer<UserId, UserEvent> buildUserDrinksProducer(
             Properties envProps,
-            AvroBuilder avro) {
+            andrewgrant.friendsdrinks.user.AvroBuilder avro) {
         Properties producerProps = new Properties();
         producerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, envProps.getProperty("bootstrap.servers"));
-        return new KafkaProducer<>(
-                producerProps,
-                avro.userIdSerializer(),
-                avro.userEventSerializer());
+        return new KafkaProducer<>(producerProps, avro.userIdSerializer(), avro.userEventSerializer());
     }
 
     private static Server buildServer(Properties envProps, KafkaStreams streams,
-                                      AvroBuilder userAvroBuilder,
+                                      andrewgrant.friendsdrinks.user.AvroBuilder userAvroBuilder,
                                       andrewgrant.friendsdrinks.frontend.AvroBuilder apiAvroBuilder,
                                       int port) {
         // Jetty server context handler.
@@ -123,7 +122,7 @@ public class Main {
     }
 
     private static ServletHolder buildFriendsDrinksHolder(KafkaStreams streams,
-                                                          AvroBuilder userAvroBuilder,
+                                                          andrewgrant.friendsdrinks.user.AvroBuilder userAvroBuilder,
                                                           andrewgrant.friendsdrinks.frontend.AvroBuilder apiAvroBuilder,
                                                           Properties envProps) {
         KafkaProducer<String, ApiEvent> friendsDrinksProducer =

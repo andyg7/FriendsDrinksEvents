@@ -1,8 +1,0 @@
-{
-  "namespace": "andrewgrant.friendsdrinks.membership.avro",
-  "type": "record",
-  "name": "FriendsDrinksIdList",
-  "fields": [
-      {"name": "ids", "type": ["null", {"type": "array", "items": "FriendsDrinksId" }], "default": null}
-  ]
-}

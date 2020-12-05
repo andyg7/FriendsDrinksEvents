@@ -1,6 +1,6 @@
 package andrewgrant.friendsdrinks.membership;
 
-import andrewgrant.friendsdrinks.membership.avro.*;
+import andrewgrant.friendsdrinks.avro.*;
 
 /**
  * Aggregates membership state.
@@ -17,13 +17,13 @@ public class MembershipStateAggregator {
         } else {
             builder = FriendsDrinksMembershipState.newBuilder(aggValue.getFriendsDrinksMembershipState());
         }
-        EventType eventType = newValue.getEventType();
+        FriendsDrinksMembershipEventType eventType = newValue.getEventType();
         switch (eventType) {
             case ADDED:
-                builder.setStatus(Status.ACTIVE);
+                builder.setStatus(FriendsDrinksMembershipStatus.ACTIVE);
                 break;
             case REMOVED:
-                builder.setStatus(Status.REMOVED);
+                builder.setStatus(FriendsDrinksMembershipStatus.REMOVED);
                 break;
             default:
                 throw new RuntimeException(String.format("Unexpected event type %s", eventType.name()));

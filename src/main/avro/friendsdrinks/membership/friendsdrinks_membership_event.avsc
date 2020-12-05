@@ -1,9 +1,9 @@
 {
-  "namespace": "andrewgrant.friendsdrinks.membership.avro",
+  "namespace": "andrewgrant.friendsdrinks.avro",
   "type": "record",
   "name": "FriendsDrinksMembershipEvent",
   "fields": [
-      {"name": "eventType", "type": {"type": "enum", "name": "EventType", "symbols": ["ADDED", "REMOVED"] } },
+      {"name": "eventType", "type": "FriendsDrinksMembershipEventType" },
       {"name": "requestId", "type": "string"},
       {"name": "membershipId", "type": "FriendsDrinksMembershipId" },
       {"name": "friendsDrinksMembershipAdded", "type": ["null", "FriendsDrinksMembershipAdded"], "default": null},

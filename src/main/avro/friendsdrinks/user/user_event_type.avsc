@@ -1,0 +1,6 @@
+{
+  "namespace": "andrewgrant.friendsdrinks.avro",
+  "type": "enum",
+  "name": "UserEventType",
+  "symbols": ["LOGGED_IN", "LOGGED_OUT", "SIGNED_OUT_SESSION_EXPIRED", "DELETED"]
+}

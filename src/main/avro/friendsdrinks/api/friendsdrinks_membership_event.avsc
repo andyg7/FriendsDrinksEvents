@@ -1,9 +1,9 @@
 {
-  "namespace": "andrewgrant.friendsdrinks.api.avro",
+  "namespace": "andrewgrant.friendsdrinks.avro",
   "type": "record",
-  "name": "FriendsDrinksMembershipEvent",
+  "name": "FriendsDrinksMembershipApiEvent",
   "fields": [
-    {"name": "eventType", "type": {"type": "enum", "name": "FriendsDrinksMembershipEventType", "symbols" : ["FRIENDSDRINKS_INVITATION_REQUEST", "FRIENDSDRINKS_INVITATION_RESPONSE" ,"FRIENDSDRINKS_INVITATION_REPLY_REQUEST", "FRIENDSDRINKS_INVITATION_REPLY_RESPONSE"] } },
+    {"name": "eventType", "type": "FriendsDrinksMembershipApiEventType" },
     {"name": "requestId", "type": "string"},
     {"name": "membershipId", "type": "FriendsDrinksMembershipId" },
     {"name": "friendsDrinksInvitationRequest", "type": ["null", "FriendsDrinksInvitationRequest"], "default": null},

@@ -17,13 +17,7 @@ import java.time.Duration;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
-import andrewgrant.friendsdrinks.api.avro.*;
-import andrewgrant.friendsdrinks.api.avro.Result;
-import andrewgrant.friendsdrinks.avro.FriendsDrinksId;
-import andrewgrant.friendsdrinks.avro.FriendsDrinksState;
-import andrewgrant.friendsdrinks.avro.Status;
-import andrewgrant.friendsdrinks.membership.avro.*;
-import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId;
+import andrewgrant.friendsdrinks.avro.*;
 
 /**
  * Owns writing to friendsdrinks-invitation-event topic.
@@ -115,12 +109,12 @@ public class InvitationWriterService {
                 .map((k, v) -> {
                     FriendsDrinksMembershipId id = FriendsDrinksMembershipId
                             .newBuilder()
-                            .setFriendsDrinksId(andrewgrant.friendsdrinks.membership.avro.FriendsDrinksId
+                            .setFriendsDrinksId(FriendsDrinksId
                                     .newBuilder()
                                     .setUuid(v.getMembershipId().getFriendsDrinksId().getUuid())
                                     .build()
                             )
-                            .setUserId(andrewgrant.friendsdrinks.membership.avro.UserId
+                            .setUserId(UserId
                                     .newBuilder()
                                     .setUserId(v.getMembershipId().getUserId().getUserId())
                                     .build())
@@ -166,16 +160,14 @@ public class InvitationWriterService {
                 })
                 .leftJoin(friendsDrinksStateKTable,
                         (request, state) -> {
-                            if (state != null && (!state.getStatus().equals(Status.DELETED))) {
+                            if (state != null && (!state.getStatus().equals(FriendsDrinksStatus.DELETED))) {
                                 FriendsDrinksMembershipId friendsDrinksMembershipId = FriendsDrinksMembershipId.newBuilder()
                                         .setFriendsDrinksId(
-                                                andrewgrant.friendsdrinks.membership.avro.FriendsDrinksId
-                                                        .newBuilder()
+                                                FriendsDrinksId.newBuilder()
                                                         .setUuid(request.getMembershipId().getFriendsDrinksId().getUuid())
                                                         .build())
                                         .setUserId(
-                                                andrewgrant.friendsdrinks.membership.avro.UserId
-                                                        .newBuilder()
+                                                UserId.newBuilder()
                                                         .setUserId(request.getMembershipId().getUserId().getUserId())
                                                         .build())
                                         .build();
@@ -207,7 +199,7 @@ public class InvitationWriterService {
         return apiEvents.filter((friendsDrinksId, friendsDrinksEvent) -> friendsDrinksEvent.getEventType()
                 .equals(ApiEventType.FRIENDSDRINKS_MEMBERSHIP_EVENT) &&
                 (friendsDrinksEvent.getFriendsDrinksMembershipEvent().getEventType()
-                        .equals(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_RESPONSE) &&
+                        .equals(FriendsDrinksMembershipApiEventType.FRIENDSDRINKS_INVITATION_RESPONSE) &&
                         friendsDrinksEvent.getFriendsDrinksMembershipEvent()
                                 .getFriendsDrinksInvitationResponse().getResult().equals(Result.SUCCESS)))
                 .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getFriendsDrinksMembershipEvent().getFriendsDrinksInvitationResponse());
@@ -218,7 +210,7 @@ public class InvitationWriterService {
         return apiEvents.filter((friendsDrinksId, friendsDrinksEvent) -> friendsDrinksEvent.getEventType()
                 .equals(ApiEventType.FRIENDSDRINKS_MEMBERSHIP_EVENT) &&
                 (friendsDrinksEvent.getFriendsDrinksMembershipEvent().getEventType()
-                        .equals(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_REPLY_RESPONSE) &&
+                        .equals(FriendsDrinksMembershipApiEventType.FRIENDSDRINKS_INVITATION_REPLY_RESPONSE) &&
                         friendsDrinksEvent.getFriendsDrinksMembershipEvent()
                                 .getFriendsDrinksInvitationReplyResponse().getResult().equals(Result.SUCCESS)))
                 .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getFriendsDrinksMembershipEvent()
@@ -228,7 +220,7 @@ public class InvitationWriterService {
     private KStream<String, FriendsDrinksInvitationRequest> invitationRequests(KStream<String, ApiEvent> apiEvents) {
         return apiEvents.filter((k, v) -> v.getEventType().equals(ApiEventType.FRIENDSDRINKS_MEMBERSHIP_EVENT) &&
                 v.getFriendsDrinksMembershipEvent().getEventType()
-                        .equals(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_REQUEST))
+                        .equals(FriendsDrinksMembershipApiEventType.FRIENDSDRINKS_INVITATION_REQUEST))
                 .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getFriendsDrinksMembershipEvent()
                         .getFriendsDrinksInvitationRequest());
     }
@@ -236,7 +228,7 @@ public class InvitationWriterService {
     private KStream<String, FriendsDrinksInvitationReplyRequest> streamOfInvitationReplyRequests(KStream<String, ApiEvent> apiEvents) {
         return apiEvents.filter((k, v) -> v.getEventType().equals(ApiEventType.FRIENDSDRINKS_MEMBERSHIP_EVENT) &&
                 v.getFriendsDrinksMembershipEvent().getEventType()
-                        .equals(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_REPLY_REQUEST))
+                        .equals(FriendsDrinksMembershipApiEventType.FRIENDSDRINKS_INVITATION_REPLY_REQUEST))
                 .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getFriendsDrinksMembershipEvent()
                         .getFriendsDrinksInvitationReplyRequest());
     }

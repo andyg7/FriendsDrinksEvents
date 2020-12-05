@@ -3,7 +3,7 @@
   "type": "record",
   "name": "FriendsDrinksState",
   "fields": [
-      {"name": "status", "type": {"type": "enum", "name": "Status", "symbols": ["ACTIVE", "DELETED"] } },
+      {"name": "status", "type": "FriendsDrinksStatus" },
       {"name": "friendsDrinksId", "type": "FriendsDrinksId"},
       {"name": "name", "type": ["null", "string"], "default": null},
       {"name": "adminUserId", "type": "string"}

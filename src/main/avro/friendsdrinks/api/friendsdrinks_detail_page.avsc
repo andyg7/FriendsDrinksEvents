@@ -1,9 +1,9 @@
 {
-  "namespace": "andrewgrant.friendsdrinks.api.avro",
+  "namespace": "andrewgrant.friendsdrinks.avro",
   "type": "record",
   "name": "FriendsDrinksDetailPage",
   "fields": [
-      {"name": "status", "type": {"type": "enum", "name": "Status", "symbols": ["ACTIVE", "DELETED"] } },
+      {"name": "status", "type": "FriendsDrinksStatus" },
       {"name": "friendsDrinksId", "type": "FriendsDrinksId", "default": null},
       {"name": "name", "type": "string", "default": null},
       {"name": "adminUserId", "type": "string"},

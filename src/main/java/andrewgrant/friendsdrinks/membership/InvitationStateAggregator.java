@@ -1,6 +1,6 @@
 package andrewgrant.friendsdrinks.membership;
 
-import andrewgrant.friendsdrinks.membership.avro.*;
+import andrewgrant.friendsdrinks.avro.*;
 
 /**
  * Aggregates invitation state.

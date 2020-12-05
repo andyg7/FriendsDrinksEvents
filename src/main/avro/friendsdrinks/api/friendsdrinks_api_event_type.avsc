@@ -1,0 +1,6 @@
+{
+  "namespace": "andrewgrant.friendsdrinks.avro",
+  "type": "enum",
+  "name": "FriendsDrinksApiEventType",
+  "symbols" : ["CREATE_FRIENDSDRINKS_REQUEST", "CREATE_FRIENDSDRINKS_RESPONSE", "UPDATE_FRIENDSDRINKS_REQUEST", "UPDATE_FRIENDSDRINKS_RESPONSE", "DELETE_FRIENDSDRINKS_REQUEST", "DELETE_FRIENDSDRINKS_RESPONSE"]
+}

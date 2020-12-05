@@ -3,7 +3,7 @@ package andrewgrant.friendsdrinks.membership;
 import java.util.HashMap;
 import java.util.Map;
 
-import andrewgrant.friendsdrinks.membership.avro.*;
+import andrewgrant.friendsdrinks.avro.*;
 
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;

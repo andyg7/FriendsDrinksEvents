@@ -5,10 +5,10 @@ import org.apache.kafka.common.serialization.Serializer;
 import java.util.HashMap;
 import java.util.Map;
 
-import andrewgrant.friendsdrinks.user.avro.UserEvent;
-import andrewgrant.friendsdrinks.user.avro.UserId;
-import andrewgrant.friendsdrinks.user.avro.UserState;
-import andrewgrant.friendsdrinks.user.avro.UserStateAggregate;
+import andrewgrant.friendsdrinks.avro.UserEvent;
+import andrewgrant.friendsdrinks.avro.UserId;
+import andrewgrant.friendsdrinks.avro.UserState;
+import andrewgrant.friendsdrinks.avro.UserStateAggregate;
 
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;

@@ -3,7 +3,7 @@
   "type": "record",
   "name": "FriendsDrinksEvent",
   "fields": [
-      {"name": "eventType", "type": {"type": "enum", "name": "EventType", "symbols": ["CREATED", "UPDATED", "DELETED"]}},
+      {"name": "eventType", "type": "FriendsDrinksEventType" },
       {"name": "friendsDrinksId", "type": "FriendsDrinksId"},
       {"name": "requestId", "type": "string"},
       {"name": "friendsDrinksCreated", "type": ["null", "FriendsDrinksCreated"], "default": null},

@@ -1,0 +1,6 @@
+{
+  "namespace": "andrewgrant.friendsdrinks.avro",
+  "type": "enum",
+  "name": "FriendsDrinksStatus",
+  "symbols" : ["ACTIVE", "DELETED"]
+}

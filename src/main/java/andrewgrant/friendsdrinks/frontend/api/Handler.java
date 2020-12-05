@@ -24,17 +24,13 @@ import java.util.stream.Collectors;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
-import andrewgrant.friendsdrinks.api.avro.*;
+import andrewgrant.friendsdrinks.avro.*;
 import andrewgrant.friendsdrinks.frontend.api.friendsdrinks.*;
 import andrewgrant.friendsdrinks.frontend.api.membership.*;
 import andrewgrant.friendsdrinks.frontend.api.user.GetUsersResponseBean;
 import andrewgrant.friendsdrinks.frontend.api.user.PostUsersRequestBean;
 import andrewgrant.friendsdrinks.frontend.api.user.PostUsersResponseBean;
 import andrewgrant.friendsdrinks.frontend.api.user.UserBean;
-import andrewgrant.friendsdrinks.membership.avro.FriendsDrinksInvitationState;
-import andrewgrant.friendsdrinks.user.avro.UserEvent;
-import andrewgrant.friendsdrinks.user.avro.UserId;
-import andrewgrant.friendsdrinks.user.avro.UserLoggedIn;
 
 /**
  * Implements frontend REST API.
@@ -157,7 +153,7 @@ public class Handler {
         ReadOnlyKeyValueStore<FriendsDrinksId, FriendsDrinksDetailPage> kv =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_DETAIL_PAGE_STORE, QueryableStoreTypes.keyValueStore()));
         FriendsDrinksDetailPage friendsDrinkDetailPage = kv.get(FriendsDrinksId.newBuilder().setUuid(friendsDrinksId).build());
-        if (friendsDrinkDetailPage == null || friendsDrinkDetailPage.getStatus().equals(Status.DELETED)) {
+        if (friendsDrinkDetailPage == null || friendsDrinkDetailPage.getStatus().equals(FriendsDrinksStatus.DELETED)) {
             throw new BadRequestException(String.format("%s does not exist", friendsDrinksId));
         }
 
@@ -206,7 +202,7 @@ public class Handler {
                             FRIENDSDRINKS_STORE);
                     continue;
                 }
-                if (friendsDrinksState.getStatus().equals(Status.DELETED)) {
+                if (friendsDrinksState.getStatus().equals(FriendsDrinksStatus.DELETED)) {
                     continue;
                 }
                 FriendsDrinksBean friendsDrinksBean = new FriendsDrinksBean();
@@ -234,7 +230,7 @@ public class Handler {
                             FRIENDSDRINKS_STORE);
                     continue;
                 }
-                if (friendsDrinksState.getStatus().equals(Status.DELETED)) {
+                if (friendsDrinksState.getStatus().equals(FriendsDrinksStatus.DELETED)) {
                     continue;
                 }
                 FriendsDrinksBean friendsDrinksBean = new FriendsDrinksBean();
@@ -249,12 +245,12 @@ public class Handler {
         }
 
         /*
-        ReadOnlyKeyValueStore<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId, FriendsDrinksInvitationState> kv =
+        ReadOnlyKeyValueStore<FriendsDrinksMembershipId, FriendsDrinksInvitationState> kv =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(INVITATIONS_STORE, QueryableStoreTypes.keyValueStore()));
-        KeyValueIterator<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId, FriendsDrinksInvitationState> allKvs = kv.all();
+        KeyValueIterator<FriendsDrinksMembershipId, FriendsDrinksInvitationState> allKvs = kv.all();
         List<FriendsDrinksInvitationBean> invitationBeans = new ArrayList<>();
         while (allKvs.hasNext()) {
-            KeyValue<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId, FriendsDrinksInvitationState> keyValue = allKvs.next();
+            KeyValue<FriendsDrinksMembershipId, FriendsDrinksInvitationState> keyValue = allKvs.next();
             if (keyValue.key.getUserId().getUserId().equals(userId)) {
                 FriendsDrinksInvitationBean invitationBean = new FriendsDrinksInvitationBean();
                 invitationBean.setFriendsDrinksId(
@@ -287,16 +283,16 @@ public class Handler {
             throw new BadRequestException(String.format("friendsDrinksId %s could not be found", friendsDrinksId));
         }
 
-        ReadOnlyKeyValueStore<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId, FriendsDrinksInvitationState> kv =
+        ReadOnlyKeyValueStore<FriendsDrinksMembershipId, FriendsDrinksInvitationState> kv =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(INVITATIONS_STORE, QueryableStoreTypes.keyValueStore()));
-        andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId invitationId =
-                andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId
+        FriendsDrinksMembershipId invitationId =
+                FriendsDrinksMembershipId
                 .newBuilder()
-                .setFriendsDrinksId(andrewgrant.friendsdrinks.membership.avro.FriendsDrinksId
+                .setFriendsDrinksId(FriendsDrinksId
                         .newBuilder()
                         .setUuid(friendsDrinksId)
                         .build())
-                .setUserId(andrewgrant.friendsdrinks.membership.avro.UserId.newBuilder().setUserId(userId).build())
+                .setUserId(UserId.newBuilder().setUserId(userId).build())
                 .build();
 
         FriendsDrinksInvitationState invitation = kv.get(invitationId);
@@ -340,8 +336,8 @@ public class Handler {
                 .newBuilder()
                 .setRequestId(createFriendsDrinksRequest.getRequestId())
                 .setEventType(ApiEventType.FRIENDSDRINKS_EVENT)
-                .setFriendsDrinksEvent(FriendsDrinksEvent.newBuilder()
-                        .setEventType(FriendsDrinksEventType.CREATE_FRIENDSDRINKS_REQUEST)
+                .setFriendsDrinksEvent(FriendsDrinksApiEvent.newBuilder()
+                        .setEventType(FriendsDrinksApiEventType.CREATE_FRIENDSDRINKS_REQUEST)
                         .setCreateFriendsDrinksRequest(createFriendsDrinksRequest)
                         .setRequestId(createFriendsDrinksRequest.getRequestId())
                         .setFriendsDrinksId(friendsDrinksIdAvro)
@@ -391,8 +387,8 @@ public class Handler {
                 .newBuilder()
                 .setRequestId(updateFriendsDrinksRequest.getRequestId())
                 .setEventType(ApiEventType.FRIENDSDRINKS_EVENT)
-                .setFriendsDrinksEvent(FriendsDrinksEvent.newBuilder()
-                        .setEventType(FriendsDrinksEventType.UPDATE_FRIENDSDRINKS_REQUEST)
+                .setFriendsDrinksEvent(FriendsDrinksApiEvent.newBuilder()
+                        .setEventType(FriendsDrinksApiEventType.UPDATE_FRIENDSDRINKS_REQUEST)
                         .setUpdateFriendsDrinksRequest(updateFriendsDrinksRequest)
                         .setRequestId(updateFriendsDrinksRequest.getRequestId())
                         .setFriendsDrinksId(friendsDrinksIdAvro)
@@ -438,8 +434,8 @@ public class Handler {
                 .newBuilder()
                 .setRequestId(deleteFriendsDrinksRequest.getRequestId())
                 .setEventType(ApiEventType.FRIENDSDRINKS_EVENT)
-                .setFriendsDrinksEvent(FriendsDrinksEvent.newBuilder()
-                        .setEventType(FriendsDrinksEventType.DELETE_FRIENDSDRINKS_REQUEST)
+                .setFriendsDrinksEvent(FriendsDrinksApiEvent.newBuilder()
+                        .setEventType(FriendsDrinksApiEventType.DELETE_FRIENDSDRINKS_REQUEST)
                         .setDeleteFriendsDrinksRequest(deleteFriendsDrinksRequest)
                         .setRequestId(deleteFriendsDrinksRequest.getRequestId())
                         .setFriendsDrinksId(friendsDrinksIdAvro)
@@ -497,7 +493,7 @@ public class Handler {
                         .setMembershipId(FriendsDrinksMembershipId.newBuilder()
                                 .setFriendsDrinksId(friendsDrinksIdAvro)
                                 .setUserId(
-                                        andrewgrant.friendsdrinks.api.avro.UserId
+                                        UserId
                                                 .newBuilder()
                                                 .setUserId(userId)
                                                 .build()
@@ -510,14 +506,14 @@ public class Handler {
                 .newBuilder()
                 .setRequestId(friendsDrinksInvitationReplyRequest.getRequestId())
                 .setEventType(ApiEventType.FRIENDSDRINKS_MEMBERSHIP_EVENT)
-                .setFriendsDrinksMembershipEvent(FriendsDrinksMembershipEvent.newBuilder()
-                        .setEventType(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_REPLY_REQUEST)
+                .setFriendsDrinksMembershipEvent(FriendsDrinksMembershipApiEvent.newBuilder()
+                        .setEventType(FriendsDrinksMembershipApiEventType.FRIENDSDRINKS_INVITATION_REPLY_REQUEST)
                         .setFriendsDrinksInvitationReplyRequest(friendsDrinksInvitationReplyRequest)
                         .setRequestId(friendsDrinksInvitationReplyRequest.getRequestId())
                         .setMembershipId(FriendsDrinksMembershipId.newBuilder()
                                 .setFriendsDrinksId(friendsDrinksIdAvro)
                                 .setUserId(
-                                        andrewgrant.friendsdrinks.api.avro.UserId
+                                        UserId
                                                 .newBuilder()
                                                 .setUserId(userId)
                                                 .build()
@@ -555,7 +551,7 @@ public class Handler {
                         .setMembershipId(FriendsDrinksMembershipId.newBuilder()
                                 .setFriendsDrinksId(friendsDrinksIdAvro)
                                 .setUserId(
-                                        andrewgrant.friendsdrinks.api.avro.UserId
+                                        andrewgrant.friendsdrinks.avro.UserId
                                                 .newBuilder()
                                                 .setUserId(requestBean.getUserId())
                                                 .build())
@@ -565,14 +561,14 @@ public class Handler {
                 .newBuilder()
                 .setRequestId(friendsDrinksInvitationRequest.getRequestId())
                 .setEventType(ApiEventType.FRIENDSDRINKS_MEMBERSHIP_EVENT)
-                .setFriendsDrinksMembershipEvent(FriendsDrinksMembershipEvent.newBuilder()
-                        .setEventType(FriendsDrinksMembershipEventType.FRIENDSDRINKS_INVITATION_REQUEST)
+                .setFriendsDrinksMembershipEvent(FriendsDrinksMembershipApiEvent.newBuilder()
+                        .setEventType(FriendsDrinksMembershipApiEventType.FRIENDSDRINKS_INVITATION_REQUEST)
                         .setFriendsDrinksInvitationRequest(friendsDrinksInvitationRequest)
                         .setRequestId(friendsDrinksInvitationRequest.getRequestId())
                         .setMembershipId(FriendsDrinksMembershipId.newBuilder()
                                 .setFriendsDrinksId(friendsDrinksIdAvro)
                                 .setUserId(
-                                        andrewgrant.friendsdrinks.api.avro.UserId
+                                        UserId
                                                 .newBuilder()
                                                 .setUserId(requestBean.getUserId())
                                                 .build())
@@ -600,7 +596,7 @@ public class Handler {
             userEvent = UserEvent
                     .newBuilder()
                     .setRequestId(requestId)
-                    .setEventType(andrewgrant.friendsdrinks.user.avro.EventType.LOGGED_IN)
+                    .setEventType(andrewgrant.friendsdrinks.avro.UserEventType.LOGGED_IN)
                     .setUserLoggedIn(UserLoggedIn
                             .newBuilder()
                             .setFirstName(requestBean.getLoggedInEvent().getFirstName())
@@ -614,21 +610,21 @@ public class Handler {
             userEvent = UserEvent
                     .newBuilder()
                     .setRequestId(requestId)
-                    .setEventType(andrewgrant.friendsdrinks.user.avro.EventType.LOGGED_OUT)
+                    .setEventType(andrewgrant.friendsdrinks.avro.UserEventType.LOGGED_OUT)
                     .setUserId(userIdAvro)
                     .build();
         } else if (eventType.equals(SIGNED_OUT_SESSION_EXPIRED)) {
             userEvent = UserEvent
                     .newBuilder()
                     .setRequestId(requestId)
-                    .setEventType(andrewgrant.friendsdrinks.user.avro.EventType.SIGNED_OUT_SESSION_EXPIRED)
+                    .setEventType(andrewgrant.friendsdrinks.avro.UserEventType.SIGNED_OUT_SESSION_EXPIRED)
                     .setUserId(userIdAvro)
                     .build();
         } else if (eventType.equals(DELETED)) {
             userEvent = UserEvent
                     .newBuilder()
                     .setRequestId(requestId)
-                    .setEventType(andrewgrant.friendsdrinks.user.avro.EventType.DELETED)
+                    .setEventType(andrewgrant.friendsdrinks.avro.UserEventType.DELETED)
                     .setUserId(userIdAvro)
                     .build();
         } else {

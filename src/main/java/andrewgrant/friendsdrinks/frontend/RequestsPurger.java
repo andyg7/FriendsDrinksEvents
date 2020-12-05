@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
-import andrewgrant.friendsdrinks.api.avro.ApiEvent;
+import andrewgrant.friendsdrinks.avro.ApiEvent;
 
 /**
  * Purges old requests.
