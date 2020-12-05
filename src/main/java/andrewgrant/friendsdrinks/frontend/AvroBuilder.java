@@ -155,8 +155,8 @@ public class AvroBuilder {
         return serde;
     }
 
-    public SpecificAvroSerde<andrewgrant.friendsdrinks.avro.FriendsDrinksStateList> friendsDrinksStateListSerde() {
-        SpecificAvroSerde<andrewgrant.friendsdrinks.avro.FriendsDrinksStateList> serde;
+    public SpecificAvroSerde<FriendsDrinksStateList> friendsDrinksStateListSerde() {
+        SpecificAvroSerde<FriendsDrinksStateList> serde;
         if (registryClient != null) {
             serde = new SpecificAvroSerde<>(registryClient);
         } else {
@@ -168,8 +168,8 @@ public class AvroBuilder {
         return serde;
     }
 
-    public SpecificAvroSerde<andrewgrant.friendsdrinks.avro.UserStateList> userStateListSerde() {
-        SpecificAvroSerde<andrewgrant.friendsdrinks.avro.UserStateList> serde;
+    public SpecificAvroSerde<UserStateList> userStateListSerde() {
+        SpecificAvroSerde<UserStateList> serde;
         if (registryClient != null) {
             serde = new SpecificAvroSerde<>(registryClient);
         } else {
@@ -182,9 +182,9 @@ public class AvroBuilder {
     }
 
 
-    public SpecificAvroSerde<andrewgrant.friendsdrinks.avro.FriendsDrinksEnrichedMembershipState>
+    public SpecificAvroSerde<FriendsDrinksEnrichedMembershipState>
     friendsDrinksEnrichedMembershipStateSerde() {
-        SpecificAvroSerde<andrewgrant.friendsdrinks.avro.FriendsDrinksEnrichedMembershipState> serde;
+        SpecificAvroSerde<FriendsDrinksEnrichedMembershipState> serde;
         if (registryClient != null) {
             serde = new SpecificAvroSerde<>(registryClient);
         } else {
@@ -196,8 +196,8 @@ public class AvroBuilder {
         return serde;
     }
 
-    public SpecificAvroSerde<andrewgrant.friendsdrinks.avro.FriendsDrinksDetailPage> friendsDrinksDetailPageSerde() {
-        SpecificAvroSerde<andrewgrant.friendsdrinks.avro.FriendsDrinksDetailPage> serde;
+    public SpecificAvroSerde<FriendsDrinksDetailPage> friendsDrinksDetailPageSerde() {
+        SpecificAvroSerde<FriendsDrinksDetailPage> serde;
         if (registryClient != null) {
             serde = new SpecificAvroSerde<>(registryClient);
         } else {
@@ -209,21 +209,8 @@ public class AvroBuilder {
         return serde;
     }
 
-    public SpecificAvroSerde<andrewgrant.friendsdrinks.avro.FriendsDrinksMembershipId> friendsDrinksMembershipIdSerde() {
-        SpecificAvroSerde<andrewgrant.friendsdrinks.avro.FriendsDrinksMembershipId> serde;
-        if (registryClient != null) {
-            serde = new SpecificAvroSerde<>(registryClient);
-        } else {
-            serde = new SpecificAvroSerde<>();
-        }
-        Map<String, String> config = new HashMap<>();
-        config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, registryUrl);
-        serde.configure(config, true);
-        return serde;
-    }
-
-    public SpecificAvroSerde<andrewgrant.friendsdrinks.avro.FriendsDrinksMembershipApiEvent> friendsDrinksMembershipEventSerde() {
-        SpecificAvroSerde<andrewgrant.friendsdrinks.avro.FriendsDrinksMembershipApiEvent> serde;
+    public SpecificAvroSerde<FriendsDrinksMembershipApiEvent> friendsDrinksMembershipApiEventSerde() {
+        SpecificAvroSerde<FriendsDrinksMembershipApiEvent> serde;
         if (registryClient != null) {
             serde = new SpecificAvroSerde<>(registryClient);
         } else {

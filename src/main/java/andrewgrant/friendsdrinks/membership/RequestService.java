@@ -38,18 +38,18 @@ public class RequestService {
     private andrewgrant.friendsdrinks.AvroBuilder friendsDrinksAvroBuilder;
     private andrewgrant.friendsdrinks.user.AvroBuilder userAvroBuilder;
     private andrewgrant.friendsdrinks.frontend.AvroBuilder frontendAvroBuilder;
-    private andrewgrant.friendsdrinks.membership.AvroBuilder avroBuilder;
+    private andrewgrant.friendsdrinks.membership.AvroBuilder membershipAvroBuilder;
 
     public RequestService(Properties envProps,
                           andrewgrant.friendsdrinks.AvroBuilder friendsDrinksAvroBuilder,
                           andrewgrant.friendsdrinks.user.AvroBuilder userAvroBuilder,
                           andrewgrant.friendsdrinks.frontend.AvroBuilder frontendAvroBuilder,
-                          andrewgrant.friendsdrinks.membership.AvroBuilder avroBuilder) {
+                          andrewgrant.friendsdrinks.membership.AvroBuilder membershipAvroBuilder) {
         this.envProps = envProps;
         this.friendsDrinksAvroBuilder = friendsDrinksAvroBuilder;
         this.userAvroBuilder = userAvroBuilder;
         this.frontendAvroBuilder = frontendAvroBuilder;
-        this.avroBuilder = avroBuilder;
+        this.membershipAvroBuilder = membershipAvroBuilder;
     }
 
     public Topology buildTopology() {
@@ -71,13 +71,12 @@ public class RequestService {
         KTable<FriendsDrinksMembershipId, FriendsDrinksInvitationEvent>
                 friendsDrinksInvitations =
                 builder.table(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_INVITATION_EVENT),
-                        Consumed.with(avroBuilder.friendsDrinksMembershipIdSerdes(),
-                                avroBuilder.friendsDrinksInvitationEventSerde()));
+                        Consumed.with(membershipAvroBuilder.friendsDrinksMembershipIdSerdes(),
+                                membershipAvroBuilder.friendsDrinksInvitationEventSerde()));
 
         StoreBuilder storeBuilder = Stores.keyValueStoreBuilder(
                 Stores.persistentKeyValueStore(PENDING_FRIENDSDRINKS_MEMBERSHIP_REQUESTS_STATE_STORE),
-                frontendAvroBuilder.friendsDrinksMembershipIdSerde(),
-                Serdes.String());
+                membershipAvroBuilder.friendsDrinksMembershipIdSerdes(), Serdes.String());
         builder.addStateStore(storeBuilder);
 
         purgePendingRequestsStore(friendsDrinksInvitations.toStream());
@@ -140,8 +139,8 @@ public class RequestService {
 
         friendsDrinksInvitationKStream.selectKey((key, value) -> key)
                 .repartition(Repartitioned.with(
-                        frontendAvroBuilder.friendsDrinksMembershipIdSerde(),
-                        avroBuilder.friendsDrinksInvitationEventSerde()))
+                        membershipAvroBuilder.friendsDrinksMembershipIdSerdes(),
+                        membershipAvroBuilder.friendsDrinksInvitationEventSerde()))
                 .process(() ->
                         new Processor<FriendsDrinksMembershipId, FriendsDrinksInvitationEvent>() {
 
@@ -221,8 +220,8 @@ public class RequestService {
     ) {
         return friendsDrinksMembershipEventKStream
                 .repartition(Repartitioned.with(
-                        frontendAvroBuilder.friendsDrinksMembershipIdSerde(),
-                        frontendAvroBuilder.friendsDrinksMembershipEventSerde()))
+                        membershipAvroBuilder.friendsDrinksMembershipIdSerdes(),
+                        frontendAvroBuilder.friendsDrinksMembershipApiEventSerde()))
                 .transformValues(() ->
                         new ValueTransformer<FriendsDrinksMembershipApiEvent, FriendsDrinksMembershipEventConcurrencyCheck>() {
 
@@ -265,8 +264,8 @@ public class RequestService {
 
         return friendsDrinksMembershipEventKStream
                 .repartition(Repartitioned.with(
-                        frontendAvroBuilder.friendsDrinksMembershipIdSerde(),
-                        frontendAvroBuilder.friendsDrinksMembershipEventSerde()))
+                        membershipAvroBuilder.friendsDrinksMembershipIdSerdes(),
+                        frontendAvroBuilder.friendsDrinksMembershipApiEventSerde()))
                 .transform(() ->
                         new Transformer<FriendsDrinksMembershipId, FriendsDrinksMembershipApiEvent, KeyValue<String, ApiEvent>>() {
 
@@ -496,9 +495,9 @@ public class RequestService {
                                     }
                                     return friendsDrinksMembershipEvent.build();
                                 },
-                                Joined.with(avroBuilder.friendsDrinksMembershipIdSerdes(),
+                                Joined.with(membershipAvroBuilder.friendsDrinksMembershipIdSerdes(),
                                         frontendAvroBuilder.friendsDrinksInvitationReplyRequestSerde(),
-                                        avroBuilder.friendsDrinksInvitationEventSerde())
+                                        membershipAvroBuilder.friendsDrinksInvitationEventSerde())
                         );
 
         return friendsDrinksInvitationReplyResponses.selectKey((k, v) -> v.getMembershipId());

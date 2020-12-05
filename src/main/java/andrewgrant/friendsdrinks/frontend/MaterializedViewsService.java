@@ -370,7 +370,7 @@ public class MaterializedViewsService {
                 .toTable(
                         Materialized.<FriendsDrinksMembershipId, FriendsDrinksEnrichedMembershipState, KeyValueStore<Bytes, byte[]>>
                                 as("friendsdrinks-membership-enriched-state-store")
-                                .withKeySerde(apiAvroBuilder.friendsDrinksMembershipIdSerde())
+                                .withKeySerde(membershipAvroBuilder.friendsDrinksMembershipIdSerdes())
                                 .withValueSerde(apiAvroBuilder.friendsDrinksEnrichedMembershipStateSerde()));
 
         KTable<FriendsDrinksMembershipId, FriendsDrinksEnrichedMembershipState> enrichedMembershipStateKTable =
@@ -382,7 +382,7 @@ public class MaterializedViewsService {
                                 .setUserFirstName(r.getFirstName())
                                 .setUserLastName(r.getLastName())
                                 .build(),
-                        Materialized.with(apiAvroBuilder.friendsDrinksMembershipIdSerde(),
+                        Materialized.with(membershipAvroBuilder.friendsDrinksMembershipIdSerdes(),
                                 apiAvroBuilder.friendsDrinksEnrichedMembershipStateSerde())
                 );
 
