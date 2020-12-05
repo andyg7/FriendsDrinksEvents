@@ -104,15 +104,13 @@ public class MaterializedViewsService {
             KTable<FriendsDrinksMembershipId, FriendsDrinksInvitationState> invitationStateKTable,
             KTable<FriendsDrinksMembershipId, FriendsDrinksMembershipState> membershipStateKTable,
             KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable,
-            KTable<String, UserState> userState) {
+            KTable<String, UserState> userStateKTable) {
 
-        KTable<String, InvitationStateEnrichedList> invitations =
-                buildInvitationStateEnrichedListKTable(invitationStateKTable, friendsDrinksStateKTable);
-        KTable<String, FriendsDrinksStateList> memberships =
-                buildMembershipStateEnrichedList(membershipStateKTable, friendsDrinksStateKTable);
-        KTable<String, FriendsDrinksStateList> admins = buildFriendsDrinksStateList(friendsDrinksStateKTable);
+        KTable<String, InvitationStateEnrichedList> invitations = invitationsKeyedByUser(invitationStateKTable, friendsDrinksStateKTable);
+        KTable<String, FriendsDrinksStateList> memberships = membershipsKeyedByUser(membershipStateKTable, friendsDrinksStateKTable);
+        KTable<String, FriendsDrinksStateList> admins = friendsDrinksKeyedByAdmin(friendsDrinksStateKTable);
 
-        return userState.mapValues(v -> {
+        return userStateKTable.mapValues(v -> {
             if (v == null) {
                 return null;
             }
@@ -150,7 +148,7 @@ public class MaterializedViewsService {
         );
     }
 
-    private KTable<String, InvitationStateEnrichedList> buildInvitationStateEnrichedListKTable(
+    private KTable<String, InvitationStateEnrichedList> invitationsKeyedByUser(
             KTable<FriendsDrinksMembershipId, FriendsDrinksInvitationState> invitationStateKTable,
             KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable) {
 
@@ -205,7 +203,7 @@ public class MaterializedViewsService {
         return invitationStateEnrichedListKTable;
     }
 
-    private KTable<String, FriendsDrinksStateList> buildFriendsDrinksStateList(
+    private KTable<String, FriendsDrinksStateList> friendsDrinksKeyedByAdmin(
             KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable) {
 
         return friendsDrinksStateKTable.mapValues(v -> {
@@ -241,7 +239,7 @@ public class MaterializedViewsService {
                 );
     }
 
-    private KTable<String, FriendsDrinksStateList> buildMembershipStateEnrichedList(
+    private KTable<String, FriendsDrinksStateList> membershipsKeyedByUser(
             KTable<FriendsDrinksMembershipId, FriendsDrinksMembershipState> membershipStateKTable,
             KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable) {
 
