@@ -26,11 +26,11 @@ import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
  */
 public class MaterializedViewsService {
 
-    public static final String RESPONSES_STORE = "api-response-state-store";
-    public static final String FRIENDSDRINKS_STORE = "friendsdrinks-state-store";
-    public static final String FRIENDSDRINKS_DETAIL_PAGE_STORE = "friendsdrinks-detail-page-state-store";
-    public static final String USER_HOMEPAGES_STORE = "user-homepages-store";
-    public static final String USERS_STORE = "users-state-store";
+    public static final String RESPONSES_STATE_STORE = "api-response-state-store";
+    public static final String FRIENDSDRINKS_STATE_STORE = "friendsdrinks-state-store";
+    public static final String FRIENDSDRINKS_DETAIL_PAGE_STATE_STORE = "friendsdrinks-detail-page-state-store";
+    public static final String USER_HOMEPAGES_STATE_STORE = "user-homepages-state-store";
+    public static final String USERS_STATE_STORE = "users-state-store";
     public static final String INVITATIONS_STORE = "invitations-state-store";
 
     private Properties envProps;
@@ -66,7 +66,7 @@ public class MaterializedViewsService {
                 friendsDrinksKTable = builder.table(friendsDrinksStateTopicName,
                 Consumed.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksStateSerde()),
                 Materialized.<FriendsDrinksId, FriendsDrinksState, KeyValueStore<Bytes, byte[]>>
-                        as(FRIENDSDRINKS_STORE)
+                        as(FRIENDSDRINKS_STATE_STORE)
                         .withKeySerde(avroBuilder.friendsDrinksIdSerde())
                         .withValueSerde(avroBuilder.friendsDrinksStateSerde()));
 
@@ -77,7 +77,7 @@ public class MaterializedViewsService {
                         .selectKey((k, v) -> k.getUserId())
                         .toTable(
                                 Materialized.<String, UserState, KeyValueStore<Bytes, byte[]>>
-                                        as(USERS_STORE)
+                                        as(USERS_STATE_STORE)
                                         .withKeySerde(Serdes.String())
                                         .withValueSerde(userAvroBuilder.userStateSerde())
                         );
@@ -148,7 +148,7 @@ public class MaterializedViewsService {
                     return l;
                 },
                 Materialized.<String, UserHomepage, KeyValueStore<Bytes, byte[]>>
-                        as(USER_HOMEPAGES_STORE)
+                        as(USER_HOMEPAGES_STATE_STORE)
                         .withKeySerde(Serdes.String())
                         .withValueSerde(apiAvroBuilder.userHomepageSerde())
         );
@@ -323,7 +323,7 @@ public class MaterializedViewsService {
 
         // KTable for getting response results.
         responsesStream.toTable(Materialized.<String, ApiEvent, KeyValueStore<Bytes, byte[]>>
-                as(RESPONSES_STORE)
+                as(RESPONSES_STATE_STORE)
                 .withKeySerde(Serdes.String())
                 .withValueSerde(apiAvroBuilder.apiEventSerde()));
 
@@ -464,7 +464,7 @@ public class MaterializedViewsService {
                             .build();
                 },
                 Materialized.<FriendsDrinksId, FriendsDrinksDetailPage, KeyValueStore<Bytes, byte[]>>
-                        as(FRIENDSDRINKS_DETAIL_PAGE_STORE)
+                        as(FRIENDSDRINKS_DETAIL_PAGE_STATE_STORE)
                         .withKeySerde(apiAvroBuilder.friendsDrinksIdSerde())
                         .withValueSerde(apiAvroBuilder.friendsDrinksDetailPageSerde())
         );
