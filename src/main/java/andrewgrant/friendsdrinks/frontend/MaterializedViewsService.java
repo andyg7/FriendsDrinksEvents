@@ -30,7 +30,6 @@ public class MaterializedViewsService {
     public static final String FRIENDSDRINKS_STORE = "friendsdrinks-state-store";
     public static final String FRIENDSDRINKS_DETAIL_PAGE_STORE = "friendsdrinks-detail-page-state-store";
     public static final String USER_HOMEPAGES_STORE = "user-homepages-store";
-    public static final String ADMINS_STORE = "admins-state-store";
     public static final String USERS_STORE = "users-state-store";
     public static final String INVITATIONS_STORE = "invitations-state-store";
 
@@ -126,21 +125,21 @@ public class MaterializedViewsService {
                     .setUserId(v.getUserId().getUserId())
                     .build();
             return userHomepage;
-        }).join(invitations,
+        }).outerJoin(invitations,
                 (l, r) -> {
                     if (l == null) {
                         return null;
                     }
                     l.setInvitations(r);
                     return l;
-                }).join(memberships,
+                }).outerJoin(memberships,
                 (l, r) -> {
                     if (l == null) {
                         return null;
                     }
                     l.setMemberFriendsDrinks(r);
                     return l;
-                }).join(admins,
+                }).outerJoin(admins,
                 (l, r) -> {
                     if (l == null) {
                         return null;
