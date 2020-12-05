@@ -184,91 +184,52 @@ public class Handler {
     public GetUserHomepageResponseBean getUserFriendsDrinksHomepage(@PathParam("userId") String userId) {
         GetUserHomepageResponseBean getUserHomepageResponseBean = new GetUserHomepageResponseBean();
 
-        ReadOnlyKeyValueStore<FriendsDrinksId, FriendsDrinksState> friendsDrinksStore =
-                kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_STORE, QueryableStoreTypes.keyValueStore()));
+        ReadOnlyKeyValueStore<String, UserHomepage> userHomepageStore =
+                kafkaStreams.store(StoreQueryParameters.fromNameAndType(USER_HOMEPAGES_STORE, QueryableStoreTypes.keyValueStore()));
 
-        ReadOnlyKeyValueStore<String, FriendsDrinksIdList> adminStore =
-                kafkaStreams.store(StoreQueryParameters.fromNameAndType(ADMINS_STORE, QueryableStoreTypes.keyValueStore()));
-        FriendsDrinksIdList adminFriendsDrinksIdList = adminStore.get(userId);
+        UserHomepage userHomepage = userHomepageStore.get(userId);
+        if (userHomepage == null) {
+            throw new BadRequestException(String.format("User ID %s could not be found", userId));
+        }
 
-        if (adminFriendsDrinksIdList != null && adminFriendsDrinksIdList.getIds() != null &&
-                adminFriendsDrinksIdList.getIds().size() > 0) {
-            List<FriendsDrinksBean> friendsDrinksBeans = new ArrayList<>();
-            for (FriendsDrinksId friendsDrinksId : adminFriendsDrinksIdList.getIds()) {
-                FriendsDrinksState friendsDrinksState = friendsDrinksStore.get(friendsDrinksId);
-                if (friendsDrinksState == null || friendsDrinksState.getFriendsDrinksId() == null) {
-                    log.error("FriendsDrinks {} could not be found from {}",
-                            friendsDrinksId.getUuid(),
-                            FRIENDSDRINKS_STORE);
-                    continue;
-                }
-                if (friendsDrinksState.getStatus().equals(FriendsDrinksStatus.DELETED)) {
-                    continue;
-                }
+        if (userHomepage.getAdminFriendsDrinks() != null &&
+                userHomepage.getAdminFriendsDrinks().getFriendsDrinks() != null &&
+                userHomepage.getAdminFriendsDrinks().getFriendsDrinks().size() > 0) {
+            List<FriendsDrinksState> friendsDrinksStates = userHomepage.getAdminFriendsDrinks().getFriendsDrinks();
+            getUserHomepageResponseBean.setAdminFriendsDrinksList(friendsDrinksStates.stream().map(x -> {
                 FriendsDrinksBean friendsDrinksBean = new FriendsDrinksBean();
-                friendsDrinksBean.setAdminUserId(friendsDrinksState.getAdminUserId());
-                friendsDrinksBean.setFriendsDrinksId(friendsDrinksState.getFriendsDrinksId().getUuid());
-                friendsDrinksBean.setName(friendsDrinksState.getName());
-                friendsDrinksBeans.add(friendsDrinksBean);
-            }
-            getUserHomepageResponseBean.setAdminFriendsDrinksList(friendsDrinksBeans);
-        } else {
-            getUserHomepageResponseBean.setAdminFriendsDrinksList(new ArrayList<>());
+                friendsDrinksBean.setFriendsDrinksId(x.getFriendsDrinksId().getUuid());
+                friendsDrinksBean.setAdminUserId(x.getAdminUserId());
+                friendsDrinksBean.setName(x.getName());
+                return friendsDrinksBean;
+            }).collect(Collectors.toList()));
         }
 
-        /*
-        ReadOnlyKeyValueStore<String, FriendsDrinksIdList> membershipStore =
-                kafkaStreams.store(StoreQueryParameters.fromNameAndType(MEMBERS_STORE, QueryableStoreTypes.keyValueStore()));
-        FriendsDrinksIdList memberFriendsDrinksList = membershipStore.get(userId);
-        if (memberFriendsDrinksList != null && memberFriendsDrinksList.getIds() != null &&
-                memberFriendsDrinksList.getIds().size() > 0) {
-            List<FriendsDrinksBean> friendsDrinksBeans = new ArrayList<>();
-            for (FriendsDrinksId friendsDrinksId : memberFriendsDrinksList.getIds()) {
-                FriendsDrinksState friendsDrinksState = friendsDrinksStore.get(friendsDrinksId);
-                if (friendsDrinksState == null || friendsDrinksState.getFriendsDrinksId() == null) {
-                    log.error("FriendsDrinks {} and adminUserId {} could not be found from {}",
-                            friendsDrinksId.getUuid(),
-                            FRIENDSDRINKS_STORE);
-                    continue;
-                }
-                if (friendsDrinksState.getStatus().equals(FriendsDrinksStatus.DELETED)) {
-                    continue;
-                }
+        if (userHomepage.getMemberFriendsDrinks() != null &&
+                userHomepage.getMemberFriendsDrinks().getFriendsDrinks() != null &&
+                userHomepage.getMemberFriendsDrinks().getFriendsDrinks().size() > 0) {
+            List<FriendsDrinksState> friendsDrinksStates = userHomepage.getMemberFriendsDrinks().getFriendsDrinks();
+            getUserHomepageResponseBean.setMemberFriendsDrinksList(friendsDrinksStates.stream().map(x -> {
                 FriendsDrinksBean friendsDrinksBean = new FriendsDrinksBean();
-                friendsDrinksBean.setAdminUserId(friendsDrinksState.getAdminUserId());
-                friendsDrinksBean.setFriendsDrinksId(friendsDrinksState.getFriendsDrinksId().getUuid());
-                friendsDrinksBean.setName(friendsDrinksState.getName());
-                friendsDrinksBeans.add(friendsDrinksBean);
-            }
-            getUserHomepageResponseBean.setMemberFriendsDrinksList(friendsDrinksBeans);
-        } else {
-            getUserHomepageResponseBean.setMemberFriendsDrinksList(new ArrayList<>());
+                friendsDrinksBean.setFriendsDrinksId(x.getFriendsDrinksId().getUuid());
+                friendsDrinksBean.setAdminUserId(x.getAdminUserId());
+                friendsDrinksBean.setName(x.getName());
+                return friendsDrinksBean;
+            }).collect(Collectors.toList()));
         }
-         */
 
-        /*
-        ReadOnlyKeyValueStore<FriendsDrinksMembershipId, FriendsDrinksInvitationState> kv =
-                kafkaStreams.store(StoreQueryParameters.fromNameAndType(INVITATIONS_STORE, QueryableStoreTypes.keyValueStore()));
-        KeyValueIterator<FriendsDrinksMembershipId, FriendsDrinksInvitationState> allKvs = kv.all();
-        List<FriendsDrinksInvitationBean> invitationBeans = new ArrayList<>();
-        while (allKvs.hasNext()) {
-            KeyValue<FriendsDrinksMembershipId, FriendsDrinksInvitationState> keyValue = allKvs.next();
-            if (keyValue.key.getUserId().getUserId().equals(userId)) {
-                FriendsDrinksInvitationBean invitationBean = new FriendsDrinksInvitationBean();
-                invitationBean.setFriendsDrinksId(
-                        keyValue.value.getMembershipId().getFriendsDrinksId().getUuid());
-                invitationBean.setMessage(keyValue.value.getMessage());
-                FriendsDrinksState friendsDrinksState = friendsDrinksStore.get(FriendsDrinksId
-                        .newBuilder()
-                        .setUuid(keyValue.value.getMembershipId().getFriendsDrinksId().getUuid())
-                        .build());
-                invitationBean.setFriendsDrinksName(friendsDrinksState.getName());
-                invitationBeans.add(invitationBean);
-            }
+        if (userHomepage.getInvitations() != null &&
+                userHomepage.getInvitations().getInvitations() != null &&
+                userHomepage.getInvitations().getInvitations().size() > 0) {
+            List<InvitationStateEnriched> invitations = userHomepage.getInvitations().getInvitations();
+            getUserHomepageResponseBean.setInvitations(invitations.stream().map(x -> {
+                FriendsDrinksInvitationBean friendsDrinksInvitationBean = new FriendsDrinksInvitationBean();
+                friendsDrinksInvitationBean.setFriendsDrinksId(x.getMembershipId().getFriendsDrinksId().getUuid());
+                friendsDrinksInvitationBean.setMessage(x.getMessage());
+                friendsDrinksInvitationBean.setFriendsDrinksName(x.getFriendsDrinksName());
+                return friendsDrinksInvitationBean;
+            }).collect(Collectors.toList()));
         }
-        allKvs.close();
-        getUserHomepageResponseBean.setInvitations(invitationBeans);
-        */
 
         return getUserHomepageResponseBean;
     }
