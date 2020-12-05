@@ -181,6 +181,19 @@ public class AvroBuilder {
         return serde;
     }
 
+    public SpecificAvroSerde<andrewgrant.friendsdrinks.api.avro.FriendsDrinksStateList> friendsDrinksStateListSerde() {
+        SpecificAvroSerde<andrewgrant.friendsdrinks.api.avro.FriendsDrinksStateList> serde;
+        if (registryClient != null) {
+            serde = new SpecificAvroSerde<>(registryClient);
+        } else {
+            serde = new SpecificAvroSerde<>();
+        }
+        Map<String, String> config = new HashMap<>();
+        config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, registryUrl);
+        serde.configure(config, false);
+        return serde;
+    }
+
     public SpecificAvroSerde<andrewgrant.friendsdrinks.api.avro.FriendsDrinksIdList> friendsDrinksIdListSerde() {
         SpecificAvroSerde<andrewgrant.friendsdrinks.api.avro.FriendsDrinksIdList> serde;
         if (registryClient != null) {
@@ -263,6 +276,45 @@ public class AvroBuilder {
 
     public SpecificAvroSerde<andrewgrant.friendsdrinks.api.avro.FriendsDrinksMembershipEvent> friendsDrinksMembershipEventSerde() {
         SpecificAvroSerde<andrewgrant.friendsdrinks.api.avro.FriendsDrinksMembershipEvent> serde;
+        if (registryClient != null) {
+            serde = new SpecificAvroSerde<>(registryClient);
+        } else {
+            serde = new SpecificAvroSerde<>();
+        }
+        Map<String, String> config = new HashMap<>();
+        config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, registryUrl);
+        serde.configure(config, false);
+        return serde;
+    }
+
+    public SpecificAvroSerde<InvitationStateEnriched> invitationStateEnrichedSerde() {
+        SpecificAvroSerde<InvitationStateEnriched> serde;
+        if (registryClient != null) {
+            serde = new SpecificAvroSerde<>(registryClient);
+        } else {
+            serde = new SpecificAvroSerde<>();
+        }
+        Map<String, String> config = new HashMap<>();
+        config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, registryUrl);
+        serde.configure(config, false);
+        return serde;
+    }
+
+    public SpecificAvroSerde<MembershipStateEnriched> membershipStateEnrichedSerde() {
+        SpecificAvroSerde<MembershipStateEnriched> serde;
+        if (registryClient != null) {
+            serde = new SpecificAvroSerde<>(registryClient);
+        } else {
+            serde = new SpecificAvroSerde<>();
+        }
+        Map<String, String> config = new HashMap<>();
+        config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, registryUrl);
+        serde.configure(config, false);
+        return serde;
+    }
+
+    public SpecificAvroSerde<InvitationStateEnrichedList> invitationStateEnrichedListSerde() {
+        SpecificAvroSerde<InvitationStateEnrichedList> serde;
         if (registryClient != null) {
             serde = new SpecificAvroSerde<>(registryClient);
         } else {

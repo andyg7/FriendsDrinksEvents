@@ -248,6 +248,7 @@ public class Handler {
             getUserHomepageResponseBean.setMemberFriendsDrinksList(new ArrayList<>());
         }
 
+        /*
         ReadOnlyKeyValueStore<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId, FriendsDrinksInvitationState> kv =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(INVITATIONS_STORE, QueryableStoreTypes.keyValueStore()));
         KeyValueIterator<andrewgrant.friendsdrinks.membership.avro.FriendsDrinksMembershipId, FriendsDrinksInvitationState> allKvs = kv.all();
@@ -269,6 +270,7 @@ public class Handler {
         }
         allKvs.close();
         getUserHomepageResponseBean.setInvitations(invitationBeans);
+        */
 
         return getUserHomepageResponseBean;
     }

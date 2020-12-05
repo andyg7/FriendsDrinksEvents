@@ -1,0 +1,9 @@
+{
+  "namespace": "andrewgrant.friendsdrinks.api.avro",
+  "type": "record",
+  "name": "MembershipStateEnriched",
+  "fields": [
+      {"name": "membershipId", "type": "FriendsDrinksMembershipId" },
+      {"name": "friendsDrinks", "type": "FriendsDrinksState"}
+  ]
+}

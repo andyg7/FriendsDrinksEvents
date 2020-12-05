@@ -1,0 +1,11 @@
+{
+  "namespace": "andrewgrant.friendsdrinks.api.avro",
+  "type": "record",
+  "name": "UserHomepage",
+  "fields": [
+      {"name": "userId", "type": "string"},
+      {"name": "memberFriendsDrinks", "type": "FriendsDrinksStateList" },
+      {"name": "adminFriendsDrinks", "type": "FriendsDrinksStateList" },
+      {"name": "invitations", "type": "InvitationStateEnrichedList" }
+  ]
+}

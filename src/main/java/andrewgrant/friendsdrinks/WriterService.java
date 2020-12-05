@@ -85,14 +85,14 @@ public class WriterService {
         KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable =
                 builder.table(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_STATE),
                         Consumed.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksStateSerde()));
-        buildFriendsDrinksIdListKeyedByAdminUserIdView(friendsDrinksStateKTable)
-                .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_KEYED_BY_ADMIN_USER_ID_STATE),
+        buildFriendsDrinksAdminUserIdIndex(friendsDrinksStateKTable)
+                .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_ADMIN_USER_ID_INDEX),
                         Produced.with(Serdes.String(), avroBuilder.friendsDrinksIdListSerde()));
 
         return builder.build();
     }
 
-    private KStream<String, FriendsDrinksIdList> buildFriendsDrinksIdListKeyedByAdminUserIdView(
+    private KStream<String, FriendsDrinksIdList> buildFriendsDrinksAdminUserIdIndex(
             KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable) {
         return friendsDrinksStateKTable.mapValues(v -> {
             if (v.getStatus().equals(Status.DELETED)) {

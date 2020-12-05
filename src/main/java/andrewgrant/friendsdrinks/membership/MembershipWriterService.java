@@ -75,18 +75,18 @@ public class MembershipWriterService {
                 builder.table(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_MEMBERSHIP_STATE),
                         Consumed.with(avroBuilder.friendsDrinksMembershipIdSerdes(), avroBuilder.friendsDrinksMembershipStateSerdes()));
 
-        buildMembershipIdListKeyedByFriendsDrinksIdView(membershipStateKTable)
-                .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_MEMBERSHIP_KEYED_BY_FRIENDSDRINKS_ID_STATE),
+        buildMembershipFriendsDrinksIndex(membershipStateKTable)
+                .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_MEMBERSHIP_FRIENDSDRINKS_ID_INDEX),
                         Produced.with(avroBuilder.friendsDrinksIdSerdes(), avroBuilder.friendsDrinksMembershipIdListSerdes()));
 
-        buildMembershipIdListKeyedByUserIdView(membershipStateKTable)
-                .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_MEMBERSHIP_KEYED_BY_USER_ID_STATE),
+        buildMembershipUserIdIndex(membershipStateKTable)
+                .to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_MEMBERSHIP_USER_ID_INDEX),
                         Produced.with(avroBuilder.userIdSerdes(), avroBuilder.friendsDrinksMembershipIdListSerdes()));
 
         return builder.build();
     }
 
-    private KStream<FriendsDrinksId, FriendsDrinksMembershipIdList> buildMembershipIdListKeyedByFriendsDrinksIdView(
+    private KStream<FriendsDrinksId, FriendsDrinksMembershipIdList> buildMembershipFriendsDrinksIndex(
             KTable<FriendsDrinksMembershipId, FriendsDrinksMembershipState> friendsDrinksMembershipStateKTable) {
         return friendsDrinksMembershipStateKTable.mapValues(v -> {
             if (v.getStatus().equals(Status.REMOVED)) {
@@ -133,7 +133,7 @@ public class MembershipWriterService {
                 .toStream();
     }
 
-    private KStream<UserId, FriendsDrinksMembershipIdList> buildMembershipIdListKeyedByUserIdView(
+    private KStream<UserId, FriendsDrinksMembershipIdList> buildMembershipUserIdIndex(
             KTable<FriendsDrinksMembershipId, FriendsDrinksMembershipState> friendsDrinksMembershipStateKTable) {
 
         return friendsDrinksMembershipStateKTable.mapValues(v -> {
