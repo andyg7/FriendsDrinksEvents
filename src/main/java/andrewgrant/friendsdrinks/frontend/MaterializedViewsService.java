@@ -193,7 +193,13 @@ public class MaterializedViewsService {
                         },
                         (aggKey, oldValue, aggValue) -> {
                             List<InvitationStateEnriched> invitations = aggValue.getInvitations();
-                            invitations.remove(oldValue);
+                            for (int i = 0; i < invitations.size(); i++) {
+                                FriendsDrinksMembershipId friendsDrinksMembershipId = invitations.get(i).getMembershipId();
+                                if (oldValue.getMembershipId().equals(friendsDrinksMembershipId)) {
+                                    invitations.remove(i);
+                                    break;
+                                }
+                            }
                             return InvitationStateEnrichedList
                                     .newBuilder()
                                     .setInvitations(invitations)
@@ -226,7 +232,13 @@ public class MaterializedViewsService {
                         },
                         (aggKey, oldValue, aggValue) -> {
                             List<FriendsDrinksState> friendsDrinksStates = aggValue.getFriendsDrinks();
-                            friendsDrinksStates.remove(oldValue);
+                            for (int i = 0; i < friendsDrinksStates.size(); i++) {
+                                FriendsDrinksId friendsDrinksId = friendsDrinksStates.get(i).getFriendsDrinksId();
+                                if (friendsDrinksId.equals(oldValue.getFriendsDrinksId())) {
+                                    friendsDrinksStates.remove(i);
+                                    break;
+                                }
+                            }
                             return FriendsDrinksStateList
                                     .newBuilder()
                                     .setFriendsDrinks(friendsDrinksStates)
@@ -279,7 +291,13 @@ public class MaterializedViewsService {
                         },
                         (aggKey, oldValue, aggValue) -> {
                             List<FriendsDrinksState> friendsDrinksStates = aggValue.getFriendsDrinks();
-                            friendsDrinksStates.remove(oldValue.getFriendsDrinksState());
+                            for (int i = 0; i < friendsDrinksStates.size(); i++) {
+                                FriendsDrinksId friendsDrinksId = friendsDrinksStates.get(i).getFriendsDrinksId();
+                                if (friendsDrinksId.equals(oldValue.getFriendsDrinksState().getFriendsDrinksId())) {
+                                    friendsDrinksStates.remove(i);
+                                    break;
+                                }
+                            }
                             return FriendsDrinksStateList
                                     .newBuilder()
                                     .setFriendsDrinks(friendsDrinksStates)
@@ -420,6 +438,7 @@ public class MaterializedViewsService {
                                 .setFirstName(r.getFirstName())
                                 .setLastName(r.getLastName())
                                 .setEmail(r.getEmail())
+                                .setStatus(r.getStatus())
                                 .build();
                         members.add(adminUserState);
                     }
