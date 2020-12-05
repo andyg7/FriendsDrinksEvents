@@ -244,10 +244,7 @@ public class MaterializedViewsService {
                                     .setFriendsDrinks(friendsDrinksStates)
                                     .build();
                         },
-                        Materialized.<String, FriendsDrinksStateList, KeyValueStore<Bytes, byte[]>>
-                                as("friendsdrinks-keyed-by-admin-state-store")
-                                .withKeySerde(Serdes.String())
-                                .withValueSerde(apiAvroBuilder.friendsDrinksStateListSerde())
+                        Materialized.with(Serdes.String(), apiAvroBuilder.friendsDrinksStateListSerde())
                 );
     }
 
