@@ -57,35 +57,10 @@ public class RequestService {
                 builder.table(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_STATE),
                         Consumed.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksStateSerde()));
 
-        KStream<FriendsDrinksId, FriendsDrinksEvent> friendsDrinksEventKStream =
+        processFriendsDrinksEvents(
                 builder.stream(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_EVENT),
-                        Consumed.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksEventSerde()));
+                        Consumed.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksEventSerde())));
 
-        friendsDrinksEventKStream.process(() ->
-                new Processor<FriendsDrinksId, FriendsDrinksEvent>() {
-
-                    private KeyValueStore<FriendsDrinksId, String> stateStore;
-
-                    @Override
-                    public void init(ProcessorContext processorContext) {
-                        stateStore = (KeyValueStore) processorContext.getStateStore(PENDING_FRIENDSDRINKS_REQUESTS_STATE_STORE);
-                    }
-
-                    @Override
-                    public void process(FriendsDrinksId friendsDrinksId, FriendsDrinksEvent friendsDrinksEvent) {
-                        String requestId = stateStore.get(friendsDrinksId);
-                        if (requestId != null && requestId.equals(friendsDrinksEvent.getRequestId())) {
-                            log.info("Deleting request {} from state store UUID {}", requestId, friendsDrinksId.getUuid());
-                            stateStore.delete(friendsDrinksId);
-                        } else {
-                            log.error("Failed to get request {} for FriendsDrinks UUID {}",
-                                    requestId, friendsDrinksId.getUuid());
-                        }
-                    }
-
-                    @Override
-                    public void close() { }
-                }, PENDING_FRIENDSDRINKS_REQUESTS_STATE_STORE);
 
         KStream<FriendsDrinksId, FriendsDrinksApiEvent> friendsDrinksApiRequests =
                 apiEvents.filter((s, friendsDrinksEvent) -> friendsDrinksEvent.getEventType().equals(ApiEventType.FRIENDSDRINKS_EVENT))
@@ -136,6 +111,34 @@ public class RequestService {
         return builder.build();
     }
 
+    private void processFriendsDrinksEvents(KStream<FriendsDrinksId, FriendsDrinksEvent> friendsDrinksEventKStream) {
+        friendsDrinksEventKStream.process(() ->
+                new Processor<FriendsDrinksId, FriendsDrinksEvent>() {
+
+                    private KeyValueStore<FriendsDrinksId, String> stateStore;
+
+                    @Override
+                    public void init(ProcessorContext processorContext) {
+                        stateStore = (KeyValueStore) processorContext.getStateStore(PENDING_FRIENDSDRINKS_REQUESTS_STATE_STORE);
+                    }
+
+                    @Override
+                    public void process(FriendsDrinksId friendsDrinksId, FriendsDrinksEvent friendsDrinksEvent) {
+                        String requestId = stateStore.get(friendsDrinksId);
+                        if (requestId != null && requestId.equals(friendsDrinksEvent.getRequestId())) {
+                            log.info("Deleting request {} from state store UUID {}", requestId, friendsDrinksId.getUuid());
+                            stateStore.delete(friendsDrinksId);
+                        } else {
+                            log.error("Failed to get request {} for FriendsDrinks UUID {}",
+                                    requestId, friendsDrinksId.getUuid());
+                        }
+                    }
+
+                    @Override
+                    public void close() { }
+                }, PENDING_FRIENDSDRINKS_REQUESTS_STATE_STORE);
+    }
+
     private KStream<String, ApiEvent> toRejectedApiEventResponses(KStream<FriendsDrinksId, FriendsDrinksApiEvent> friendsDrinksEventKStream) {
         return friendsDrinksEventKStream.map(((friendsDrinksId, friendsDrinksEvent) -> {
             FriendsDrinksApiEventType friendsDrinksEventType = friendsDrinksEvent.getEventType();
@@ -176,12 +179,13 @@ public class RequestService {
                     throw new RuntimeException(String.format("Unexpected event type %s", friendsDrinksEventType.name()));
             }
 
-            ApiEvent.Builder apiEventBuilder = ApiEvent
+            ApiEvent apiEvent = ApiEvent
                     .newBuilder()
                     .setRequestId(friendsDrinksEvent.getRequestId())
                     .setEventType(ApiEventType.FRIENDSDRINKS_EVENT)
-                    .setFriendsDrinksEvent(responseFriendsDrinksEvent.build());
-            return KeyValue.pair(requestId, apiEventBuilder.build());
+                    .setFriendsDrinksEvent(responseFriendsDrinksEvent.build())
+                    .build();
+            return KeyValue.pair(requestId, apiEvent);
         }));
     }
 
