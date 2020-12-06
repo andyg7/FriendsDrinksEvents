@@ -240,7 +240,7 @@ public class Handler {
     public FriendsDrinksInvitationBean getInvitation(@PathParam("userId") String userId,
                                                      @PathParam("friendsDrinksId") String friendsDrinksId) {
 
-        ReadOnlyKeyValueStore<FriendsDrinksMembershipId, FriendsDrinksInvitationState> kv =
+        ReadOnlyKeyValueStore<FriendsDrinksMembershipId, InvitationStateFriendsDrinksEnriched> kv =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(INVITATIONS_STORE, QueryableStoreTypes.keyValueStore()));
         FriendsDrinksMembershipId invitationId =
                 FriendsDrinksMembershipId
@@ -252,7 +252,7 @@ public class Handler {
                 .setUserId(UserId.newBuilder().setUserId(userId).build())
                 .build();
 
-        FriendsDrinksInvitationState invitation = kv.get(invitationId);
+        InvitationStateFriendsDrinksEnriched invitation = kv.get(invitationId);
         if (invitation == null) {
             throw new BadRequestException(String.format("Invitation for userId %s and friendsDrinksId %s could not be found",
                     userId, friendsDrinksId));
@@ -260,7 +260,7 @@ public class Handler {
 
         FriendsDrinksInvitationBean response = new FriendsDrinksInvitationBean();
         response.setFriendsDrinksId(invitation.getMembershipId().getFriendsDrinksId().getUuid());
-        response.setFriendsDrinksName("TODO");
+        response.setFriendsDrinksName(invitation.getFriendsDrinksState().getName());
         response.setMessage(invitation.getMessage());
 
         return response;
