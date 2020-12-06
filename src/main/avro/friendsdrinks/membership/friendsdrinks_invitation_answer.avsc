@@ -2,5 +2,5 @@
   "namespace": "andrewgrant.friendsdrinks.avro",
   "type": "enum",
   "name": "FriendsDrinksInvitationAnswer",
-  "symbols": ["PENDING", "ACCEPTED", "REJECTED"]
+  "symbols": ["ACCEPTED", "REJECTED"]
 }

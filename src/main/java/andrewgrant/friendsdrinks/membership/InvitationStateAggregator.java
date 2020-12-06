@@ -20,14 +20,24 @@ public class InvitationStateAggregator {
         InvitationEventType eventType = newValue.getEventType();
         switch (eventType) {
             case CREATED:
-                builder.setStatus(InvitationStatus.ACTIVE);
+                builder.setStatus(InvitationStatus.PENDING);
                 builder.setMessage(newValue.getFriendsDrinksInvitationCreated().getMessage());
-                builder.setAnswer(FriendsDrinksInvitationAnswer.PENDING);
                 break;
             case RESPONDED_TO:
-                builder.setStatus(InvitationStatus.RESPONDED_TO);
+                InvitationStatus invitationStatus;
+                FriendsDrinksInvitationAnswer answer = newValue.getFriendsDrinksInvitationRespondedTo().getAnswer();
+                switch (answer) {
+                    case ACCEPTED:
+                        invitationStatus = InvitationStatus.ACCEPTED;
+                        break;
+                    case REJECTED:
+                        invitationStatus = InvitationStatus.REJECTED;
+                        break;
+                    default:
+                        throw new RuntimeException(String.format("Unexpected event type %s", answer.name()));
+                }
+                builder.setStatus(invitationStatus);
                 builder.setMessage(null);
-                builder.setAnswer(newValue.getFriendsDrinksInvitationRespondedTo().getAnswer());
                 break;
             default:
                 throw new RuntimeException(String.format("Unexpected event type %s", eventType.name()));

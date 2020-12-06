@@ -111,7 +111,7 @@ public class MaterializedViewsService {
             KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable,
             KTable<String, UserState> userStateKTable) {
 
-        KTable<String, InvitationStateEnrichedList> invitations = invitationsKeyedByUser(invitationStateKTable, friendsDrinksStateKTable);
+        KTable<String, InvitationStateEnrichedList> invitations = pendingInvitationsKeyedByUser(invitationStateKTable, friendsDrinksStateKTable);
         KTable<String, FriendsDrinksStateList> memberships = membershipsKeyedByUser(membershipStateKTable, friendsDrinksStateKTable);
         KTable<String, FriendsDrinksStateList> admins = friendsDrinksKeyedByAdmin(friendsDrinksStateKTable);
 
@@ -154,12 +154,12 @@ public class MaterializedViewsService {
         ).toStream();
     }
 
-    private KTable<String, InvitationStateEnrichedList> invitationsKeyedByUser(
+    private KTable<String, InvitationStateEnrichedList> pendingInvitationsKeyedByUser(
             KTable<FriendsDrinksMembershipId, FriendsDrinksInvitationState> invitationStateKTable,
             KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable) {
 
         return invitationStateKTable.mapValues(v -> {
-            if (v == null || v.getStatus().equals(InvitationStatus.RESPONDED_TO)) {
+            if (v == null || !v.getStatus().equals(InvitationStatus.PENDING)) {
                 return null;
             } else {
                 return v;

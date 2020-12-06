@@ -3,9 +3,8 @@
   "type": "record",
   "name": "FriendsDrinksInvitationState",
   "fields": [
-      {"name": "status", "type": {"type": "enum", "name": "InvitationStatus", "symbols": ["ACTIVE", "RESPONDED_TO"] } },
+      {"name": "status", "type": {"type": "enum", "name": "InvitationStatus", "symbols": ["PENDING", "ACCEPTED", "REJECTED"] } },
       {"name": "membershipId", "type": "FriendsDrinksMembershipId" },
-      {"name": "message", "type": ["null", "string"], "default": null },
-      {"name": "answer", "type": "FriendsDrinksInvitationAnswer" }
+      {"name": "message", "type": ["null", "string"], "default": null }
   ]
 }
