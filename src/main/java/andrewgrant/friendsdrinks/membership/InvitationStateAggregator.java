@@ -22,12 +22,12 @@ public class InvitationStateAggregator {
             case CREATED:
                 builder.setStatus(InvitationStatus.ACTIVE);
                 builder.setMessage(newValue.getFriendsDrinksInvitationCreated().getMessage());
-                builder.setResponse(null);
+                builder.setAnswer(FriendsDrinksInvitationAnswer.PENDING);
                 break;
             case RESPONDED_TO:
                 builder.setStatus(InvitationStatus.RESPONDED_TO);
                 builder.setMessage(null);
-                builder.setResponse(newValue.getFriendsDrinksInvitationRespondedTo().getResponse());
+                builder.setAnswer(newValue.getFriendsDrinksInvitationRespondedTo().getAnswer());
                 break;
             default:
                 throw new RuntimeException(String.format("Unexpected event type %s", eventType.name()));

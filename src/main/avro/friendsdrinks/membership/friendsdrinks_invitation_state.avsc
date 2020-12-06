@@ -6,6 +6,6 @@
       {"name": "status", "type": {"type": "enum", "name": "InvitationStatus", "symbols": ["ACTIVE", "RESPONDED_TO"] } },
       {"name": "membershipId", "type": "FriendsDrinksMembershipId" },
       {"name": "message", "type": ["null", "string"], "default": null },
-      {"name": "response", "type": {"type": "enum", "name": "Response", "symbols": ["ACCEPTED", "REJECTED"] } }
+      {"name": "answer", "type": "FriendsDrinksInvitationAnswer" }
   ]
 }

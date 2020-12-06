@@ -119,11 +119,11 @@ public class InvitationWriterService {
                                     .setUserId(v.getMembershipId().getUserId().getUserId())
                                     .build())
                             .build();
-                    Response response;
+                    FriendsDrinksInvitationAnswer answer;
                     if (v.getReply().equals(Reply.ACCEPTED)) {
-                        response = Response.ACCEPTED;
+                        answer = FriendsDrinksInvitationAnswer.ACCEPTED;
                     } else {
-                        response = Response.REJECTED;
+                        answer = FriendsDrinksInvitationAnswer.REJECTED;
                     }
                     return KeyValue.pair(id, FriendsDrinksInvitationEvent
                             .newBuilder()
@@ -134,7 +134,7 @@ public class InvitationWriterService {
                                     .newBuilder()
                                     .setMembershipId(id)
                                     .setRequestId(v.getRequestId())
-                                    .setResponse(response)
+                                    .setAnswer(answer)
                                     .build())
                             .build());
                 });
