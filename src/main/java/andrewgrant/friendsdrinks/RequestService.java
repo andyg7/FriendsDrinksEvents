@@ -4,7 +4,6 @@ import static andrewgrant.friendsdrinks.env.Properties.load;
 import static andrewgrant.friendsdrinks.frontend.TopicNameConfigKey.FRIENDSDRINKS_API;
 
 import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.*;
 import org.apache.kafka.streams.processor.Processor;
@@ -88,18 +87,19 @@ public class RequestService {
                     public void close() { }
                 }, PENDING_FRIENDSDRINKS_REQUESTS_STATE_STORE);
 
-        KStream<FriendsDrinksId, FriendsDrinksApiEvent> friendsDrinksApiEvents = apiEvents.filter((s, friendsDrinksEvent) ->
-                friendsDrinksEvent.getEventType().equals(ApiEventType.FRIENDSDRINKS_EVENT))
-                .mapValues(x -> x.getFriendsDrinksEvent())
-                .filter(((s, friendsDrinksEvent) -> {
-                    FriendsDrinksApiEventType friendsDrinksEventType = friendsDrinksEvent.getEventType();
-                    return friendsDrinksEventType.equals(FriendsDrinksApiEventType.CREATE_FRIENDSDRINKS_REQUEST) ||
-                            friendsDrinksEventType.equals(FriendsDrinksApiEventType.UPDATE_FRIENDSDRINKS_REQUEST) ||
-                            friendsDrinksEventType.equals(FriendsDrinksApiEventType.DELETE_FRIENDSDRINKS_REQUEST);
-                }))
-                .selectKey((key, value) -> value.getFriendsDrinksId());
+        KStream<FriendsDrinksId, FriendsDrinksApiEvent> friendsDrinksApiRequests =
+                apiEvents.filter((s, friendsDrinksEvent) -> friendsDrinksEvent.getEventType().equals(ApiEventType.FRIENDSDRINKS_EVENT))
+                        .mapValues(x -> x.getFriendsDrinksEvent())
+                        .filter(((s, friendsDrinksEvent) -> {
+                            FriendsDrinksApiEventType friendsDrinksEventType = friendsDrinksEvent.getEventType();
+                            return friendsDrinksEventType.equals(FriendsDrinksApiEventType.CREATE_FRIENDSDRINKS_REQUEST) ||
+                                    friendsDrinksEventType.equals(FriendsDrinksApiEventType.UPDATE_FRIENDSDRINKS_REQUEST) ||
+                                    friendsDrinksEventType.equals(FriendsDrinksApiEventType.DELETE_FRIENDSDRINKS_REQUEST);
+                        }))
+                        .selectKey((key, value) -> value.getFriendsDrinksId());
+
         KStream<FriendsDrinksId, FriendsDrinksEventConcurrencyCheck> friendsDrinksApiEventsWithConcurrencyCheck =
-                checkForConcurrentRequest(friendsDrinksApiEvents);
+                checkForConcurrentRequest(friendsDrinksApiRequests);
 
         KStream<FriendsDrinksId, FriendsDrinksEventConcurrencyCheck>[] friendsDrinksApiEventsBranchedOnConcurrencyCheck =
                 friendsDrinksApiEventsWithConcurrencyCheck.branch(
@@ -107,7 +107,7 @@ public class RequestService {
                         (key, value) -> true
                 );
 
-        toRejectedApiEvents(friendsDrinksApiEventsBranchedOnConcurrencyCheck[0].mapValues(x -> x.friendsDrinksEvent))
+        toRejectedApiEventResponses(friendsDrinksApiEventsBranchedOnConcurrencyCheck[0].mapValues(x -> x.friendsDrinksEvent))
                 .to(apiTopicName, Produced.with(Serdes.String(), frontendAvroBuilder.apiEventSerde()));
         KStream<FriendsDrinksId, FriendsDrinksApiEvent> nonConflictingFriendsDrinksApiEvents =
                 friendsDrinksApiEventsBranchedOnConcurrencyCheck[1].mapValues(x -> x.friendsDrinksEvent);
@@ -136,7 +136,7 @@ public class RequestService {
         return builder.build();
     }
 
-    private KStream<String, ApiEvent> toRejectedApiEvents(KStream<FriendsDrinksId, FriendsDrinksApiEvent> friendsDrinksEventKStream) {
+    private KStream<String, ApiEvent> toRejectedApiEventResponses(KStream<FriendsDrinksId, FriendsDrinksApiEvent> friendsDrinksEventKStream) {
         return friendsDrinksEventKStream.map(((friendsDrinksId, friendsDrinksEvent) -> {
             FriendsDrinksApiEventType friendsDrinksEventType = friendsDrinksEvent.getEventType();
             String requestId = friendsDrinksEvent.getRequestId();
@@ -280,17 +280,10 @@ public class RequestService {
             KStream<FriendsDrinksId, CreateFriendsDrinksRequest> createRequests,
             KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable) {
 
-        KTable<String, Long> friendsDrinksCount = friendsDrinksStateKTable.groupBy((key, value) ->
-                        KeyValue.pair(value.getAdminUserId(), value),
-                Grouped.with(Serdes.String(), avroBuilder.friendsDrinksStateSerde()))
-                .aggregate(
-                        () -> 0L,
-                        (aggKey, newValue, aggValue) -> aggValue + 1,
-                        (aggKey, oldValue, aggValue) -> aggValue - 1,
-                        Materialized.<String, Long, KeyValueStore<Bytes, byte[]>>as("friendsdrinks-count-state-store")
-                                .withKeySerde(Serdes.String())
-                                .withValueSerde(Serdes.Long())
-                );
+        KTable<String, Long> friendsDrinksCount = friendsDrinksStateKTable
+                .groupBy((key, value) -> KeyValue.pair(value.getAdminUserId(), value),
+                        Grouped.with(Serdes.String(), avroBuilder.friendsDrinksStateSerde()))
+                .count();
 
         return createRequests.selectKey((key, value) -> value.getAdminUserId())
                 .leftJoin(friendsDrinksCount,
@@ -317,32 +310,30 @@ public class RequestService {
             KStream<FriendsDrinksId, DeleteFriendsDrinksRequest> deleteRequests,
             KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable) {
 
-        KStream<FriendsDrinksId, DeleteFriendsDrinksRequest> deleteRequestsKeyed =
-                deleteRequests.selectKey((key, value) -> value.getFriendsDrinksId());
-
-        return deleteRequestsKeyed.leftJoin(friendsDrinksStateKTable,
-                (request, state) -> {
-                    FriendsDrinksApiEvent friendsDrinksEvent =
-                            FriendsDrinksApiEvent
-                                    .newBuilder()
-                                    .setEventType(FriendsDrinksApiEventType.DELETE_FRIENDSDRINKS_RESPONSE)
-                                    .setFriendsDrinksId(request.getFriendsDrinksId())
-                                    .setRequestId(request.getRequestId())
-                                    .setDeleteFriendsDrinksResponse(DeleteFriendsDrinksResponse
+        return deleteRequests.selectKey((key, value) -> value.getFriendsDrinksId())
+                .leftJoin(friendsDrinksStateKTable,
+                        (request, state) -> {
+                            FriendsDrinksApiEvent friendsDrinksEvent =
+                                    FriendsDrinksApiEvent
                                             .newBuilder()
-                                            .setResult(Result.SUCCESS)
+                                            .setEventType(FriendsDrinksApiEventType.DELETE_FRIENDSDRINKS_RESPONSE)
+                                            .setFriendsDrinksId(request.getFriendsDrinksId())
                                             .setRequestId(request.getRequestId())
-                                            .build())
-                                    .build();
-                    if (state == null) {
-                        log.warn(String.format("Failed to find FriendsDrinks state for requestId %s", request.getRequestId()));
-                    }
-                    return friendsDrinksEvent;
-                },
-                Joined.with(
-                        avroBuilder.friendsDrinksIdSerde(),
-                        frontendAvroBuilder.deleteFriendsDrinksRequestSerde(),
-                        avroBuilder.friendsDrinksStateSerde()))
+                                            .setDeleteFriendsDrinksResponse(DeleteFriendsDrinksResponse
+                                                    .newBuilder()
+                                                    .setResult(Result.SUCCESS)
+                                                    .setRequestId(request.getRequestId())
+                                                    .build())
+                                            .build();
+                            if (state == null) {
+                                log.warn(String.format("Failed to find FriendsDrinks state for requestId %s", request.getRequestId()));
+                            }
+                            return friendsDrinksEvent;
+                        },
+                        Joined.with(
+                                avroBuilder.friendsDrinksIdSerde(),
+                                frontendAvroBuilder.deleteFriendsDrinksRequestSerde(),
+                                avroBuilder.friendsDrinksStateSerde()))
                 .selectKey((key, value) -> value.getFriendsDrinksId());
     }
 
@@ -350,37 +341,36 @@ public class RequestService {
             KStream<FriendsDrinksId, UpdateFriendsDrinksRequest> updateRequests,
             KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable) {
 
-        KStream<FriendsDrinksId, UpdateFriendsDrinksRequest> updateRequestsKeyed =
-                updateRequests.selectKey((key, value) -> value.getFriendsDrinksId());
-        return updateRequestsKeyed.leftJoin(friendsDrinksStateKTable,
-                (updateRequest, state) -> {
-                    if (state != null) {
-                        return FriendsDrinksApiEvent.newBuilder()
-                                .setRequestId(updateRequest.getRequestId())
-                                .setEventType(FriendsDrinksApiEventType.UPDATE_FRIENDSDRINKS_RESPONSE)
-                                .setFriendsDrinksId(updateRequest.getFriendsDrinksId())
-                                .setUpdateFriendsDrinksResponse(
-                                        UpdateFriendsDrinksResponse
-                                                .newBuilder()
-                                                .setRequestId(updateRequest.getRequestId())
-                                                .setResult(Result.SUCCESS).build())
-                                .build();
-                    } else {
-                        return FriendsDrinksApiEvent.newBuilder()
-                                .setEventType(FriendsDrinksApiEventType.UPDATE_FRIENDSDRINKS_RESPONSE)
-                                .setFriendsDrinksId(updateRequest.getFriendsDrinksId())
-                                .setUpdateFriendsDrinksResponse(
-                                        UpdateFriendsDrinksResponse
-                                                .newBuilder()
-                                                .setRequestId(updateRequest.getRequestId())
-                                                .setResult(Result.FAIL).build())
-                                .build();
-                    }
-                },
-                Joined.with(
-                        avroBuilder.friendsDrinksIdSerde(),
-                        frontendAvroBuilder.updateFriendsDrinksRequestSerde(),
-                        avroBuilder.friendsDrinksStateSerde()))
+        return updateRequests.selectKey((key, value) -> value.getFriendsDrinksId())
+                .leftJoin(friendsDrinksStateKTable,
+                        (updateRequest, state) -> {
+                            if (state != null) {
+                                return FriendsDrinksApiEvent.newBuilder()
+                                        .setRequestId(updateRequest.getRequestId())
+                                        .setEventType(FriendsDrinksApiEventType.UPDATE_FRIENDSDRINKS_RESPONSE)
+                                        .setFriendsDrinksId(updateRequest.getFriendsDrinksId())
+                                        .setUpdateFriendsDrinksResponse(
+                                                UpdateFriendsDrinksResponse
+                                                        .newBuilder()
+                                                        .setRequestId(updateRequest.getRequestId())
+                                                        .setResult(Result.SUCCESS).build())
+                                        .build();
+                            } else {
+                                return FriendsDrinksApiEvent.newBuilder()
+                                        .setEventType(FriendsDrinksApiEventType.UPDATE_FRIENDSDRINKS_RESPONSE)
+                                        .setFriendsDrinksId(updateRequest.getFriendsDrinksId())
+                                        .setUpdateFriendsDrinksResponse(
+                                                UpdateFriendsDrinksResponse
+                                                        .newBuilder()
+                                                        .setRequestId(updateRequest.getRequestId())
+                                                        .setResult(Result.FAIL).build())
+                                        .build();
+                            }
+                        },
+                        Joined.with(
+                                avroBuilder.friendsDrinksIdSerde(),
+                                frontendAvroBuilder.updateFriendsDrinksRequestSerde(),
+                                avroBuilder.friendsDrinksStateSerde()))
                 .selectKey(((key, value) -> value.getFriendsDrinksId()));
     }
 
