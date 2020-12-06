@@ -106,7 +106,7 @@ public class MaterializedViewsService {
         );
 
         KStream<String, UserHomepage> userHomepageKStream =
-                buildHomepageView(invitationStateKTable, membershipStateKTable, friendsDrinksKTable, userState);
+                buildUserHomepageView(invitationStateKTable, membershipStateKTable, friendsDrinksKTable, userState);
         userHomepageKStream.toTable(
                 Materialized.<String, UserHomepage, KeyValueStore<Bytes, byte[]>>
                         as(USER_HOMEPAGES_STATE_STORE)
@@ -115,7 +115,7 @@ public class MaterializedViewsService {
         return builder.build();
     }
 
-    private KStream<String, UserHomepage> buildHomepageView(
+    private KStream<String, UserHomepage> buildUserHomepageView(
             KTable<FriendsDrinksMembershipId, FriendsDrinksInvitationState> invitationStateKTable,
             KTable<FriendsDrinksMembershipId, FriendsDrinksMembershipState> membershipStateKTable,
             KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable,
