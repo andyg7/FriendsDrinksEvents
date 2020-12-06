@@ -91,21 +91,21 @@ public class RequestService {
         KStream<FriendsDrinksId, CreateFriendsDrinksRequest> createRequests = nonConflictingFriendsDrinksApiEvents.filter(((s, friendsDrinksEvent) ->
                 friendsDrinksEvent.getEventType().equals(FriendsDrinksApiEventType.CREATE_FRIENDSDRINKS_REQUEST)))
                 .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getCreateFriendsDrinksRequest());
-        KStream<FriendsDrinksId, FriendsDrinksApiEvent> createResponses = handleCreateRequests(createRequests, friendsDrinksStateKTable);
+        KStream<FriendsDrinksId, FriendsDrinksApiEvent> createResponses = toCreateResponses(createRequests, friendsDrinksStateKTable);
         toApiEventResponse(createResponses).to(apiTopicName, Produced.with(Serdes.String(), frontendAvroBuilder.apiEventSerde()));
 
         // Updates.
         KStream<FriendsDrinksId, UpdateFriendsDrinksRequest> updateRequests = nonConflictingFriendsDrinksApiEvents.filter(((s, friendsDrinksEvent) ->
                 friendsDrinksEvent.getEventType().equals(FriendsDrinksApiEventType.UPDATE_FRIENDSDRINKS_REQUEST)))
                 .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getUpdateFriendsDrinksRequest());
-        KStream<FriendsDrinksId, FriendsDrinksApiEvent> updateResponses = handleUpdateRequests(updateRequests, friendsDrinksStateKTable);
+        KStream<FriendsDrinksId, FriendsDrinksApiEvent> updateResponses = toUpdateResponses(updateRequests, friendsDrinksStateKTable);
         toApiEventResponse(updateResponses).to(apiTopicName, Produced.with(Serdes.String(), frontendAvroBuilder.apiEventSerde()));
 
         // Deletes.
         KStream<FriendsDrinksId, DeleteFriendsDrinksRequest> deleteRequests = nonConflictingFriendsDrinksApiEvents.filter(((s, friendsDrinksEvent) ->
                 friendsDrinksEvent.getEventType().equals(FriendsDrinksApiEventType.DELETE_FRIENDSDRINKS_REQUEST)))
                 .mapValues((friendsDrinksEvent) -> friendsDrinksEvent.getDeleteFriendsDrinksRequest());
-        KStream<FriendsDrinksId, FriendsDrinksApiEvent> deleteResponses = handleDeleteRequests(deleteRequests, friendsDrinksStateKTable);
+        KStream<FriendsDrinksId, FriendsDrinksApiEvent> deleteResponses = toDeleteResponses(deleteRequests, friendsDrinksStateKTable);
         toApiEventResponse(deleteResponses).to(apiTopicName, Produced.with(Serdes.String(), frontendAvroBuilder.apiEventSerde()));
 
         return builder.build();
@@ -280,7 +280,7 @@ public class RequestService {
                         }, PENDING_FRIENDSDRINKS_REQUESTS_STATE_STORE);
     }
 
-    private KStream<FriendsDrinksId, FriendsDrinksApiEvent> handleCreateRequests(
+    private KStream<FriendsDrinksId, FriendsDrinksApiEvent> toCreateResponses(
             KStream<FriendsDrinksId, CreateFriendsDrinksRequest> createRequests,
             KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable) {
 
@@ -310,7 +310,7 @@ public class RequestService {
                 .selectKey(((key, value) -> value.getFriendsDrinksId()));
     }
 
-    private KStream<FriendsDrinksId, FriendsDrinksApiEvent> handleDeleteRequests(
+    private KStream<FriendsDrinksId, FriendsDrinksApiEvent> toDeleteResponses(
             KStream<FriendsDrinksId, DeleteFriendsDrinksRequest> deleteRequests,
             KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable) {
 
@@ -341,7 +341,7 @@ public class RequestService {
                 .selectKey((key, value) -> value.getFriendsDrinksId());
     }
 
-    private KStream<FriendsDrinksId, FriendsDrinksApiEvent> handleUpdateRequests(
+    private KStream<FriendsDrinksId, FriendsDrinksApiEvent> toUpdateResponses(
             KStream<FriendsDrinksId, UpdateFriendsDrinksRequest> updateRequests,
             KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable) {
 
