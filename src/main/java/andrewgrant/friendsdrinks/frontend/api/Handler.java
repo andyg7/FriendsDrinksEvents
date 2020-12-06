@@ -221,12 +221,12 @@ public class Handler {
         if (userHomepage.getInvitations() != null &&
                 userHomepage.getInvitations().getInvitations() != null &&
                 userHomepage.getInvitations().getInvitations().size() > 0) {
-            List<InvitationStateEnriched> invitations = userHomepage.getInvitations().getInvitations();
+            List<InvitationStateFriendsDrinksEnriched> invitations = userHomepage.getInvitations().getInvitations();
             getUserHomepageResponseBean.setInvitations(invitations.stream().map(x -> {
                 FriendsDrinksInvitationBean friendsDrinksInvitationBean = new FriendsDrinksInvitationBean();
                 friendsDrinksInvitationBean.setFriendsDrinksId(x.getMembershipId().getFriendsDrinksId().getUuid());
                 friendsDrinksInvitationBean.setMessage(x.getMessage());
-                friendsDrinksInvitationBean.setFriendsDrinksName(x.getFriendsDrinksName());
+                friendsDrinksInvitationBean.setFriendsDrinksName(x.getFriendsDrinksState().getName());
                 return friendsDrinksInvitationBean;
             }).collect(Collectors.toList()));
         }

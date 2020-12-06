@@ -6,6 +6,6 @@
       {"name": "userId", "type": "string"},
       {"name": "memberFriendsDrinks", "type": ["null", "FriendsDrinksStateList"], "default": null },
       {"name": "adminFriendsDrinks", "type": ["null", "FriendsDrinksStateList"], "default": null },
-      {"name": "invitations", "type": ["null", "InvitationStateEnrichedList"], "default": null }
+      {"name": "invitations", "type": ["null", "InvitationStateFriendsDrinksEnrichedList"], "default": null }
   ]
 }

@@ -1,8 +1,8 @@
 {
   "namespace": "andrewgrant.friendsdrinks.avro",
   "type": "record",
-  "name": "InvitationStateEnrichedList",
+  "name": "InvitationStateFriendsDrinksEnrichedList",
   "fields": [
-      {"name": "invitations", "type": ["null", {"type": "array", "items": "InvitationStateEnriched" }], "default": null}
+      {"name": "invitations", "type": ["null", {"type": "array", "items": "InvitationStateFriendsDrinksEnriched" }], "default": null}
   ]
 }

@@ -1,10 +1,10 @@
 {
   "namespace": "andrewgrant.friendsdrinks.avro",
   "type": "record",
-  "name": "InvitationStateEnriched",
+  "name": "InvitationStateFriendsDrinksEnriched",
   "fields": [
       {"name": "membershipId", "type": "FriendsDrinksMembershipId" },
       {"name": "message", "type": ["null", "string"], "default": null },
-      {"name": "friendsDrinksName", "type": "string"}
+      {"name": "friendsDrinksState", "type": "FriendsDrinksState"}
   ]
 }

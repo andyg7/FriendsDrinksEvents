@@ -111,7 +111,8 @@ public class MaterializedViewsService {
             KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable,
             KTable<String, UserState> userStateKTable) {
 
-        KTable<String, InvitationStateEnrichedList> invitations = pendingInvitationsKeyedByUser(invitationStateKTable, friendsDrinksStateKTable);
+        KTable<String, InvitationStateFriendsDrinksEnrichedList> invitations =
+                pendingInvitationsKeyedByUser(invitationStateKTable, friendsDrinksStateKTable);
         KTable<String, FriendsDrinksStateList> memberships = membershipsKeyedByUser(membershipStateKTable, friendsDrinksStateKTable);
         KTable<String, FriendsDrinksStateList> admins = friendsDrinksKeyedByAdmin(friendsDrinksStateKTable);
 
@@ -154,7 +155,7 @@ public class MaterializedViewsService {
         ).toStream();
     }
 
-    private KTable<String, InvitationStateEnrichedList> pendingInvitationsKeyedByUser(
+    private KTable<String, InvitationStateFriendsDrinksEnrichedList> pendingInvitationsKeyedByUser(
             KTable<FriendsDrinksMembershipId, FriendsDrinksInvitationState> invitationStateKTable,
             KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable) {
 
@@ -170,10 +171,10 @@ public class MaterializedViewsService {
                     if (r.getStatus().equals(FriendsDrinksStatus.DELETED)) {
                         return null;
                     } else {
-                        return InvitationStateEnriched
+                        return InvitationStateFriendsDrinksEnriched
                                 .newBuilder()
                                 .setMembershipId(l.getMembershipId())
-                                .setFriendsDrinksName(r.getName())
+                                .setFriendsDrinksState(r)
                                 .setMessage(l.getMessage())
                                 .build();
                     }
@@ -182,17 +183,17 @@ public class MaterializedViewsService {
                 .groupBy((key, value) -> KeyValue.pair(value.getMembershipId().getUserId().getUserId(), value),
                         Grouped.with(Serdes.String(), apiAvroBuilder.invitationStateEnrichedSerde()))
                 .aggregate(
-                        () -> InvitationStateEnrichedList.newBuilder().setInvitations(new ArrayList<>()).build(),
+                        () -> InvitationStateFriendsDrinksEnrichedList.newBuilder().setInvitations(new ArrayList<>()).build(),
                         (aggKey, newValue, aggValue) -> {
-                            List<InvitationStateEnriched> invitations = aggValue.getInvitations();
+                            List<InvitationStateFriendsDrinksEnriched> invitations = aggValue.getInvitations();
                             invitations.add(newValue);
-                            return InvitationStateEnrichedList
+                            return InvitationStateFriendsDrinksEnrichedList
                                     .newBuilder()
                                     .setInvitations(invitations)
                                     .build();
                         },
                         (aggKey, oldValue, aggValue) -> {
-                            List<InvitationStateEnriched> invitations = aggValue.getInvitations();
+                            List<InvitationStateFriendsDrinksEnriched> invitations = aggValue.getInvitations();
                             for (int i = 0; i < invitations.size(); i++) {
                                 FriendsDrinksMembershipId friendsDrinksMembershipId = invitations.get(i).getMembershipId();
                                 if (oldValue.getMembershipId().equals(friendsDrinksMembershipId)) {
@@ -200,7 +201,7 @@ public class MaterializedViewsService {
                                     break;
                                 }
                             }
-                            return InvitationStateEnrichedList
+                            return InvitationStateFriendsDrinksEnrichedList
                                     .newBuilder()
                                     .setInvitations(invitations)
                                     .build();

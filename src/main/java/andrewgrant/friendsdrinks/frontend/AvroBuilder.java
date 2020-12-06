@@ -221,8 +221,8 @@ public class AvroBuilder {
         return serde;
     }
 
-    public SpecificAvroSerde<InvitationStateEnriched> invitationStateEnrichedSerde() {
-        SpecificAvroSerde<InvitationStateEnriched> serde;
+    public SpecificAvroSerde<InvitationStateFriendsDrinksEnriched> invitationStateEnrichedSerde() {
+        SpecificAvroSerde<InvitationStateFriendsDrinksEnriched> serde;
         if (registryClient != null) {
             serde = new SpecificAvroSerde<>(registryClient);
         } else {
@@ -260,8 +260,8 @@ public class AvroBuilder {
         return serde;
     }
 
-    public SpecificAvroSerde<InvitationStateEnrichedList> invitationStateEnrichedListSerde() {
-        SpecificAvroSerde<InvitationStateEnrichedList> serde;
+    public SpecificAvroSerde<InvitationStateFriendsDrinksEnrichedList> invitationStateEnrichedListSerde() {
+        SpecificAvroSerde<InvitationStateFriendsDrinksEnrichedList> serde;
         if (registryClient != null) {
             serde = new SpecificAvroSerde<>(registryClient);
         } else {
