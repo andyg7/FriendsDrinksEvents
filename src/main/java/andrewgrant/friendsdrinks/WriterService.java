@@ -4,10 +4,8 @@ import static andrewgrant.friendsdrinks.env.Properties.load;
 import static andrewgrant.friendsdrinks.frontend.TopicNameConfigKey.FRIENDSDRINKS_API;
 
 import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.*;
-import org.apache.kafka.streams.state.KeyValueStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,7 +44,8 @@ public class WriterService {
         successfulApiResponses.join(apiRequests,
                 (l, r) -> new RequestResponseJoiner().join(r),
                 JoinWindows.of(Duration.ofSeconds(30)),
-                StreamJoined.with(Serdes.String(),
+                StreamJoined.with(
+                        Serdes.String(),
                         frontendAvroBuilder.friendsDrinksApiEventSerde(),
                         frontendAvroBuilder.friendsDrinksApiEventSerde()))
                 .selectKey((k, v) -> v.getFriendsDrinksId())
@@ -59,12 +58,7 @@ public class WriterService {
                 .aggregate(
                         () -> FriendsDrinksStateAggregate.newBuilder().build(),
                         (aggKey, newValue, aggValue) -> new StateAggregator().handleNewEvent(aggKey, newValue, aggValue),
-                        Materialized.<
-                                andrewgrant.friendsdrinks.avro.FriendsDrinksId,
-                                FriendsDrinksStateAggregate, KeyValueStore<Bytes, byte[]>>
-                                as("friendsdrinks-state-aggregate-state-store")
-                                .withKeySerde(avroBuilder.friendsDrinksIdSerde())
-                                .withValueSerde(avroBuilder.friendsDrinksStateAggregateSerde())
+                        Materialized.with(avroBuilder.friendsDrinksIdSerde(), avroBuilder.friendsDrinksStateAggregateSerde())
                 ).toStream().mapValues(value -> {
             if (value == null) {
                 return null;
