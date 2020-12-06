@@ -434,7 +434,7 @@ public class Handler {
                                                 .build()
                                 )
                                 .build())
-                        .setReply(Reply.valueOf(requestBean.getResponse()))
+                        .setReply(FriendsDrinksInvitationReply.valueOf(requestBean.getResponse()))
                         .setRequestId(requestId)
                         .build();
         friendsDrinksEvent = ApiEvent

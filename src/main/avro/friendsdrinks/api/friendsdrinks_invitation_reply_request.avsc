@@ -5,6 +5,6 @@
   "fields": [
       {"name": "membershipId", "type": "FriendsDrinksMembershipId" },
       {"name": "requestId", "type": "string"},
-      {"name": "reply", "type": {"type": "enum", "name": "Reply", "symbols": ["ACCEPTED", "REJECTED"]}}
+      {"name": "reply", "type": {"type": "enum", "name": "FriendsDrinksInvitationReply", "symbols": ["ACCEPTED", "REJECTED"]}}
   ]
 }

@@ -120,7 +120,7 @@ public class InvitationWriterService {
                                     .build())
                             .build();
                     FriendsDrinksInvitationAnswer answer;
-                    if (v.getReply().equals(Reply.ACCEPTED)) {
+                    if (v.getReply().equals(FriendsDrinksInvitationReply.ACCEPTED)) {
                         answer = FriendsDrinksInvitationAnswer.ACCEPTED;
                     } else {
                         answer = FriendsDrinksInvitationAnswer.REJECTED;
