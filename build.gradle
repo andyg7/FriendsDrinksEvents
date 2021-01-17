@@ -11,7 +11,7 @@ buildscript {
 plugins {
     id 'java'
     id 'com.google.cloud.tools.jib' version '1.1.1'
-    id 'com.github.spotbugs' version '2.0.1'
+    id 'com.github.spotbugs' version '4.6.0'
     id 'checkstyle'
 }
 
@@ -31,12 +31,6 @@ repositories {
     }
 }
 
-// To generate an HTML report instead of XML
-tasks.withType(com.github.spotbugs.SpotBugsTask) {
-    reports.xml.enabled = false
-    reports.html.enabled = true
-}
-
 apply plugin: 'com.commercehub.gradle.plugin.avro'
 apply plugin: 'com.github.johnrengelman.shadow'
 
@@ -52,7 +46,7 @@ checkstyleTest {
 }
 
 dependencies {
-    compile 'org.apache.avro:avro:1.8.2'
+    implementation 'org.apache.avro:avro:1.8.2'
     implementation 'org.apache.logging.log4j:log4j-core:2.13.3'
     implementation 'org.apache.logging.log4j:log4j-api:2.13.3'
     implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.13.3'
@@ -65,7 +59,7 @@ dependencies {
     implementation 'org.glassfish.jersey.containers:jersey-container-servlet-core:2.29.1'
     implementation 'org.glassfish.jersey.inject:jersey-hk2:2.29.1'
     implementation 'javax.ws.rs:javax.ws.rs-api:2.1.1'
-    testCompile 'junit:junit:4.12'
+    testImplementation 'junit:junit:4.12'
 }
 
 test {
