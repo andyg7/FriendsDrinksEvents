@@ -3,7 +3,7 @@ version: '3.7'
 
 services:
   friendsdrinks-request-service:
-    image: friendsdrinks:latest
+    image: andyg001/friendsdrinks:latest
     networks:
       - kafka-network
     command:
@@ -13,7 +13,7 @@ services:
           '"
 
   friendsdrinks-membership-request-service:
-    image: friendsdrinks:latest
+    image: andyg001/friendsdrinks:latest
     networks:
       - kafka-network
     command:
@@ -23,7 +23,7 @@ services:
           '"
 
   friendsdrinks-membership-writer-service:
-    image: friendsdrinks:latest
+    image: andyg001/friendsdrinks:latest
     networks:
       - kafka-network
     command:
@@ -33,7 +33,7 @@ services:
           '"
 
   friendsdrinks-invitation-writer-service:
-    image: friendsdrinks:latest
+    image: andyg001/friendsdrinks:latest
     networks:
       - kafka-network
     command:
@@ -43,7 +43,7 @@ services:
           '"
 
   friendsdrinks-writer-service:
-    image: friendsdrinks:latest
+    image: andyg001/friendsdrinks:latest
     networks:
       - kafka-network
     command:
@@ -52,7 +52,7 @@ services:
           '"
 
   frontend-api:
-    image: friendsdrinks:latest
+    image: andyg001/friendsdrinks:latest
     networks:
       - kafka-network
     ports:
@@ -63,7 +63,7 @@ services:
           '"
 
   user-service:
-    image: friendsdrinks:latest
+    image: andyg001/friendsdrinks:latest
     networks:
       - kafka-network
     command:
