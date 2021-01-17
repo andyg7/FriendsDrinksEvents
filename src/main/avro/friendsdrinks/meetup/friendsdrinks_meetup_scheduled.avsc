@@ -1,0 +1,8 @@
+{
+  "namespace": "andrewgrant.friendsdrinks.avro",
+  "type": "record",
+  "name": "FriendsDrinksMeetupScheduled",
+  "fields": [
+      {"name": "requestId", "type": "string"}
+  ]
+}

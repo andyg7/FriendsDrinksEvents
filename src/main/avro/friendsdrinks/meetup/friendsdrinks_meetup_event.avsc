@@ -1,0 +1,12 @@
+{
+  "namespace": "andrewgrant.friendsdrinks.avro",
+  "type": "record",
+  "name": "FriendsDrinksMeetupEvent",
+  "fields": [
+      {"name": "eventType", "type": "FriendsDrinksMeetupEventType" },
+      {"name": "meetupId", "type": "FriendsDrinksMeetupId" },
+      {"name": "friendsDrinksId", "type": "FriendsDrinksId"},
+      {"name": "meetupScheduled", "type": ["null", "FriendsDrinksMeetupScheduled"], "default": null},
+      {"name": "meetupHappened", "type": ["null", "FriendsDrinksMeetupHappened"], "default": null}
+  ]
+}

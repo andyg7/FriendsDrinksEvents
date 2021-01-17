@@ -1,0 +1,10 @@
+{
+  "namespace": "andrewgrant.friendsdrinks.avro",
+  "type": "record",
+  "name": "FriendsDrinksMeetupState",
+  "fields": [
+      {"name": "status", "type": "string" },
+      {"name": "meetupId", "type": "FriendsDrinksMeetupId" },
+      {"name": "friendsDrinksId", "type": "FriendsDrinksId"}
+  ]
+}
