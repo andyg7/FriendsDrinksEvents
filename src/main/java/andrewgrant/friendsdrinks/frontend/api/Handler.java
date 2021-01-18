@@ -26,6 +26,8 @@ import javax.ws.rs.core.MediaType;
 
 import andrewgrant.friendsdrinks.avro.*;
 import andrewgrant.friendsdrinks.frontend.api.friendsdrinks.*;
+import andrewgrant.friendsdrinks.frontend.api.meetup.ScheduleFriendsDrinksMeetupRequestBean;
+import andrewgrant.friendsdrinks.frontend.api.meetup.ScheduleFriendsDrinksMeetupResponseBean;
 import andrewgrant.friendsdrinks.frontend.api.membership.*;
 import andrewgrant.friendsdrinks.frontend.api.user.GetUsersResponseBean;
 import andrewgrant.friendsdrinks.frontend.api.user.PostUsersRequestBean;
@@ -42,16 +44,19 @@ public class Handler {
 
     private KafkaStreams kafkaStreams;
     private KafkaProducer<String, ApiEvent> friendsDrinksKafkaProducer;
+    private KafkaProducer<FriendsDrinksMeetupId, FriendsDrinksMeetupEvent> friendsDrinksMeetupKafkaProducer;
     private KafkaProducer<UserId, UserEvent> userKafkaProducer;
     private Properties envProps;
 
     public Handler(KafkaStreams kafkaStreams,
                    KafkaProducer<String, ApiEvent> friendsDrinksKafkaProducer,
                    KafkaProducer<UserId, UserEvent> userKafkaProducer,
+                   KafkaProducer<FriendsDrinksMeetupId, FriendsDrinksMeetupEvent> friendsDrinksMeetupKafkaProducer,
                    Properties envProps) {
         this.kafkaStreams = kafkaStreams;
         this.friendsDrinksKafkaProducer = friendsDrinksKafkaProducer;
         this.userKafkaProducer = userKafkaProducer;
+        this.friendsDrinksMeetupKafkaProducer = friendsDrinksMeetupKafkaProducer;
         this.envProps = envProps;
     }
 
@@ -309,6 +314,29 @@ public class Handler {
         responseBean.setResult(result.name());
         responseBean.setFriendsDrinksId(friendsDrinksId);
         return responseBean;
+    }
+
+    @POST
+    @Path("/friendsdrinks/meetups")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public ScheduleFriendsDrinksMeetupResponseBean scheduleFriendsDrinksMeetup(ScheduleFriendsDrinksMeetupRequestBean requestBean) {
+        ReadOnlyKeyValueStore<FriendsDrinksId, FriendsDrinksState> kv =
+                kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_STATE_STORE, QueryableStoreTypes.keyValueStore()));
+        FriendsDrinksId friendsDrinksId = FriendsDrinksId.newBuilder().setUuid(requestBean.getFriendsDrinksId()).build();
+        FriendsDrinksState friendsDrinksState = kv.get(friendsDrinksId);
+        if (friendsDrinksState == null) {
+            throw new BadRequestException(String.format("%s does not exist", friendsDrinksId.getUuid()));
+        }
+        String meetupId = UUID.randomUUID().toString();
+        FriendsDrinksMeetupEvent friendsDrinksMeetupEvent = FriendsDrinksMeetupEvent
+                .newBuilder()
+                .setEventType(FriendsDrinksMeetupEventType.SCHEDULED)
+                .setMeetupId(FriendsDrinksMeetupId.newBuilder().setUuid(meetupId).build())
+                .build();
+
+        // TODO(andyg7): emit event
+        return new ScheduleFriendsDrinksMeetupResponseBean();
     }
 
     @POST

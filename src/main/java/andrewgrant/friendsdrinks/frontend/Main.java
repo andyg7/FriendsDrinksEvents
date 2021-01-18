@@ -20,9 +20,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Properties;
 
-import andrewgrant.friendsdrinks.avro.ApiEvent;
-import andrewgrant.friendsdrinks.avro.UserEvent;
-import andrewgrant.friendsdrinks.avro.UserId;
+import andrewgrant.friendsdrinks.avro.*;
 
 /**
  * Hooks up dependencies for the Frontend REST API.
@@ -46,6 +44,8 @@ public class Main {
                 new andrewgrant.friendsdrinks.frontend.AvroBuilder(schemaRegistryUrl);
         andrewgrant.friendsdrinks.user.AvroBuilder userAvroBuilder =
                 new andrewgrant.friendsdrinks.user.AvroBuilder(schemaRegistryUrl);
+        andrewgrant.friendsdrinks.meetup.AvroBuilder meetupAvroBuilder =
+                new andrewgrant.friendsdrinks.meetup.AvroBuilder(schemaRegistryUrl);
 
         String portStr = args[1];
         String streamsUri = "localhost:" + portStr;
@@ -59,7 +59,7 @@ public class Main {
         KafkaStreams streams = new KafkaStreams(topology, streamProps);
 
         int port = Integer.parseInt(portStr);
-        Server jettyServer = Main.buildServer(envProps, streams, userAvroBuilder, apiAvroBuilder, port);
+        Server jettyServer = Main.buildServer(envProps, streams, userAvroBuilder, apiAvroBuilder, meetupAvroBuilder, port);
         // Attach shutdown handler to catch Control-C.
         Runtime.getRuntime().addShutdownHook(new Thread("shutdown-hook") {
             @Override
@@ -98,6 +98,17 @@ public class Main {
                 avro.apiEventSerializer());
     }
 
+    private static KafkaProducer<FriendsDrinksMeetupId, FriendsDrinksMeetupEvent> buildFriendsDrinksMeetupProducer(
+            Properties envProps,
+            andrewgrant.friendsdrinks.meetup.AvroBuilder avro) {
+        Properties producerProps = new Properties();
+        producerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, envProps.getProperty("bootstrap.servers"));
+        return new KafkaProducer<>(
+                producerProps,
+                avro.friendsDrinksMeetupIdSerializer(),
+                avro.friendsDrinksMeetupEventSerializer());
+    }
+
     private static KafkaProducer<UserId, UserEvent> buildUserDrinksProducer(
             Properties envProps,
             andrewgrant.friendsdrinks.user.AvroBuilder avro) {
@@ -109,6 +120,7 @@ public class Main {
     private static Server buildServer(Properties envProps, KafkaStreams streams,
                                       andrewgrant.friendsdrinks.user.AvroBuilder userAvroBuilder,
                                       andrewgrant.friendsdrinks.frontend.AvroBuilder apiAvroBuilder,
+                                      andrewgrant.friendsdrinks.meetup.AvroBuilder meetupAvroBuilder,
                                       int port) {
         // Jetty server context handler.
         final ServletContextHandler context = new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
@@ -116,7 +128,8 @@ public class Main {
         final Server jettyServer = new Server(port);
         jettyServer.setHandler(context);
 
-        context.addServlet(buildFriendsDrinksHolder(streams, userAvroBuilder, apiAvroBuilder, envProps), "/*");
+        context.addServlet(buildFriendsDrinksHolder(streams, userAvroBuilder,
+                apiAvroBuilder, meetupAvroBuilder, envProps), "/*");
 
         return jettyServer;
     }
@@ -124,14 +137,17 @@ public class Main {
     private static ServletHolder buildFriendsDrinksHolder(KafkaStreams streams,
                                                           andrewgrant.friendsdrinks.user.AvroBuilder userAvroBuilder,
                                                           andrewgrant.friendsdrinks.frontend.AvroBuilder apiAvroBuilder,
+                                                          andrewgrant.friendsdrinks.meetup.AvroBuilder meetupAvroBuilder,
                                                           Properties envProps) {
         KafkaProducer<String, ApiEvent> friendsDrinksProducer =
                 buildFriendsDrinksProducer(envProps, apiAvroBuilder);
         KafkaProducer<UserId, UserEvent> userProducer =
                 buildUserDrinksProducer(envProps, userAvroBuilder);
+        KafkaProducer<FriendsDrinksMeetupId, FriendsDrinksMeetupEvent> friendsDrinksMeetupEventKafkaProducer =
+                buildFriendsDrinksMeetupProducer(envProps, meetupAvroBuilder);
         andrewgrant.friendsdrinks.frontend.api.Handler handler =
                 new andrewgrant.friendsdrinks.frontend.api.Handler(
-                        streams, friendsDrinksProducer, userProducer, envProps);
+                        streams, friendsDrinksProducer, userProducer, friendsDrinksMeetupEventKafkaProducer, envProps);
         final ResourceConfig rc = new ResourceConfig();
         rc.register(handler);
         rc.register(JacksonFeature.class);

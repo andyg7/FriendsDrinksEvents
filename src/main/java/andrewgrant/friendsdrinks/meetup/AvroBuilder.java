@@ -1,5 +1,7 @@
 package andrewgrant.friendsdrinks.meetup;
 
+import org.apache.kafka.common.serialization.Serializer;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -38,6 +40,16 @@ public class AvroBuilder {
         config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, registryUrl);
         serde.configure(config, false);
         return serde;
+    }
+
+    public Serializer<FriendsDrinksMeetupEvent> friendsDrinksMeetupEventSerializer() {
+        SpecificAvroSerde<FriendsDrinksMeetupEvent> serde = friendsDrinksMeetupEventSpecificAvroSerde();
+        return serde.serializer();
+    }
+
+    public Serializer<FriendsDrinksMeetupId> friendsDrinksMeetupIdSerializer() {
+        SpecificAvroSerde<FriendsDrinksMeetupId> serde = friendsDrinksMeetupIdSpecificAvroSerde();
+        return serde.serializer();
     }
 
     public SpecificAvroSerde<FriendsDrinksMeetupState> friendsDrinksMeetupStateSpecificAvroSerde() {
