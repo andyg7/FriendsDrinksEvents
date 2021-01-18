@@ -38,17 +38,20 @@ public class MaterializedViewsService {
     private andrewgrant.friendsdrinks.frontend.AvroBuilder apiAvroBuilder;
     private andrewgrant.friendsdrinks.membership.AvroBuilder membershipAvroBuilder;
     private andrewgrant.friendsdrinks.user.AvroBuilder userAvroBuilder;
+    private andrewgrant.friendsdrinks.meetup.AvroBuilder meetupAvroBuilder;
 
     public MaterializedViewsService(Properties envProps,
                                     andrewgrant.friendsdrinks.AvroBuilder avroBuilder,
                                     andrewgrant.friendsdrinks.frontend.AvroBuilder apiAvroBuilder,
                                     andrewgrant.friendsdrinks.membership.AvroBuilder membershipAvroBuilder,
-                                    andrewgrant.friendsdrinks.user.AvroBuilder userAvroBuilder) {
+                                    andrewgrant.friendsdrinks.user.AvroBuilder userAvroBuilder,
+                                    andrewgrant.friendsdrinks.meetup.AvroBuilder meetupAvroBuilder) {
         this.envProps = envProps;
         this.avroBuilder = avroBuilder;
         this.apiAvroBuilder = apiAvroBuilder;
         this.membershipAvroBuilder = membershipAvroBuilder;
         this.userAvroBuilder = userAvroBuilder;
+        this.meetupAvroBuilder = meetupAvroBuilder;
     }
 
     public Topology buildTopology() {
@@ -84,7 +87,12 @@ public class MaterializedViewsService {
                         Consumed.with(membershipAvroBuilder.friendsDrinksMembershipIdSerdes(),
                                 membershipAvroBuilder.friendsDrinksMembershipStateSerdes()));
 
-        buildFriendsDrinksDetailPageStateStore(membershipStateKTable, friendsDrinksKTable, userState);
+        KTable<FriendsDrinksMeetupId, FriendsDrinksMeetupState> friendsDrinksMeetupStateKTable =
+                builder.table(envProps.getProperty(FRIENDSDRINKS_MEMBERSHIP_STATE),
+                        Consumed.with(meetupAvroBuilder.friendsDrinksMeetupIdSpecificAvroSerde(),
+                                meetupAvroBuilder.friendsDrinksMeetupStateSpecificAvroSerde()));
+
+        buildFriendsDrinksDetailPageStateStore(membershipStateKTable, friendsDrinksKTable, userState, friendsDrinksMeetupStateKTable);
 
         final String invitationTopicName = envProps.getProperty(FRIENDSDRINKS_INVITATION_STATE);
         KTable<FriendsDrinksMembershipId, FriendsDrinksInvitationState> invitationStateKTable = builder.table(invitationTopicName,
@@ -362,7 +370,8 @@ public class MaterializedViewsService {
     private void buildFriendsDrinksDetailPageStateStore(
             KTable<FriendsDrinksMembershipId, FriendsDrinksMembershipState> membershipStateKTableAll,
             KTable<FriendsDrinksId, FriendsDrinksState> friendsDrinksStateKTable,
-            KTable<String, UserState> userStateKTable) {
+            KTable<String, UserState> userStateKTable,
+            KTable<FriendsDrinksMeetupId, FriendsDrinksMeetupState> friendsDrinksMeetupStateKTable) {
 
         KTable<FriendsDrinksMembershipId, MembershipStateUserEnriched> membershipStateKTable = membershipStateKTableAll
                 .mapValues(value -> {
@@ -387,6 +396,39 @@ public class MaterializedViewsService {
                                 .build(),
                         Materialized.with(membershipAvroBuilder.friendsDrinksMembershipIdSerdes(),
                                 apiAvroBuilder.friendsDrinksEnrichedMembershipStateSerde())
+                );
+
+
+        KTable<FriendsDrinksId, FriendsDrinksMeetupStateList> friendsDrinksMeetupStateListKTable =
+                friendsDrinksMeetupStateKTable.groupBy((key, value) -> KeyValue.pair(value.getFriendsDrinksId(), value),
+                        Grouped.with(avroBuilder.friendsDrinksIdSerde(), meetupAvroBuilder.friendsDrinksMeetupStateSpecificAvroSerde()))
+                        .aggregate(
+                                () -> FriendsDrinksMeetupStateList.newBuilder().setFriendsDrinksMeetupStates(new ArrayList<>()).build(),
+                                (aggKey, newValue, aggValue) -> {
+                                    List<FriendsDrinksMeetupState> states = aggValue.getFriendsDrinksMeetupStates();
+                                    states.add(FriendsDrinksMeetupState
+                                            .newBuilder()
+                                            .build());
+                                    return FriendsDrinksMeetupStateList
+                                            .newBuilder()
+                                            .setFriendsDrinksMeetupStates(states)
+                                            .build();
+                                },
+                                (aggKey, oldValue, aggValue) ->  {
+                                    List<FriendsDrinksMeetupState> states = aggValue.getFriendsDrinksMeetupStates();
+                                    for (int i = 0; i < states.size(); i++) {
+                                        if (states.get(i).getMeetupId().getUuid().equals(
+                                                oldValue.getMeetupId().getUuid())) {
+                                            states.remove(i);
+                                            break;
+                                        }
+                                    }
+                                    return FriendsDrinksMeetupStateList
+                                            .newBuilder()
+                                            .setFriendsDrinksMeetupStates(states)
+                                            .build();
+                                },
+                        Materialized.with(avroBuilder.friendsDrinksIdSerde(), meetupAvroBuilder.friendsDrinksMeetupStateListSpecificAvroSerde())
                 );
 
         KTable<FriendsDrinksId, UserStateList> enrichedMemberList = enrichedMembershipStateKTable.groupBy((key, value) ->
@@ -438,6 +480,18 @@ public class MaterializedViewsService {
                             .setMembers(userStates)
                             .setStatus(l.getStatus())
                             .setAdminUserId(l.getAdminUserId())
+                            .build();
+                },
+                Materialized.with(avroBuilder.friendsDrinksIdSerde(), apiAvroBuilder.friendsDrinksDetailPageSerde())
+        ).leftJoin(friendsDrinksMeetupStateListKTable,
+                (l, r) -> {
+                    List<FriendsDrinksMeetupState> meetupStates = new ArrayList<>();
+                    if (r != null && (r.getFriendsDrinksMeetupStates() != null)) {
+                        meetupStates = r.getFriendsDrinksMeetupStates();
+                    }
+                    return FriendsDrinksDetailPage
+                            .newBuilder(l)
+                            .setMeetups(meetupStates)
                             .build();
                 },
                 Materialized.with(avroBuilder.friendsDrinksIdSerde(), apiAvroBuilder.friendsDrinksDetailPageSerde())

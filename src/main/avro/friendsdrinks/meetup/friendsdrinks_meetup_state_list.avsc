@@ -1,0 +1,8 @@
+{
+  "namespace": "andrewgrant.friendsdrinks.avro",
+  "type": "record",
+  "name": "FriendsDrinksMeetupStateList",
+  "fields": [
+    {"name": "friendsDrinksMeetupStates", "type": ["null", {"type": "array", "items": "FriendsDrinksMeetupState" }], "default": null}
+  ]
+}

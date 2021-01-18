@@ -53,7 +53,8 @@ public class Main {
         MaterializedViewsService streamsService = new MaterializedViewsService(
                 envProps, avroBuilder, apiAvroBuilder,
                 new andrewgrant.friendsdrinks.membership.AvroBuilder(schemaRegistryUrl),
-                new andrewgrant.friendsdrinks.user.AvroBuilder(schemaRegistryUrl));
+                new andrewgrant.friendsdrinks.user.AvroBuilder(schemaRegistryUrl),
+                new andrewgrant.friendsdrinks.meetup.AvroBuilder(schemaRegistryUrl));
         Topology topology = streamsService.buildTopology();
         Properties streamProps = streamsService.buildStreamsProperties(streamsUri);
         KafkaStreams streams = new KafkaStreams(topology, streamProps);
