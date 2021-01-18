@@ -3,6 +3,7 @@
   "type": "record",
   "name": "FriendsDrinksMeetupHappened",
   "fields": [
-    {"name": "requestId", "type": "string"}
+    {"name": "requestId", "type": "string"},
+    {"name": "meetupId", "type": "FriendsDrinksMeetupId" }
   ]
 }

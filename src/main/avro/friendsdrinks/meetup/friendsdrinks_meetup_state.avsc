@@ -5,6 +5,7 @@
   "fields": [
       {"name": "status", "type": "string" },
       {"name": "meetupId", "type": "FriendsDrinksMeetupId" },
-      {"name": "friendsDrinksId", "type": "FriendsDrinksId"}
+      {"name": "friendsDrinksId", "type": "FriendsDrinksId"},
+      {"name": "userIds", "type": ["null", {"type": "array", "items": "UserId" }], "default": null}
   ]
 }
