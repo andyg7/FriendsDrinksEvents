@@ -2,6 +2,7 @@ package andrewgrant.friendsdrinks.frontend.api;
 
 import java.util.List;
 
+import andrewgrant.friendsdrinks.frontend.api.meetup.MeetupBean;
 import andrewgrant.friendsdrinks.frontend.api.user.UserBean;
 
 /**
@@ -12,6 +13,7 @@ public class GetFriendsDrinksDetailPageResponseBean {
     private String friendsDrinksId;
     private String name;
     private List<UserBean> members;
+    private List<MeetupBean> meetups;
 
     public List<UserBean> getMembers() {
         return members;
@@ -45,4 +47,11 @@ public class GetFriendsDrinksDetailPageResponseBean {
         this.name = name;
     }
 
+    public List<MeetupBean> getMeetups() {
+        return meetups;
+    }
+
+    public void setMeetups(List<MeetupBean> meetups) {
+        this.meetups = meetups;
+    }
 }

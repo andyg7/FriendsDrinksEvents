@@ -26,6 +26,7 @@ import javax.ws.rs.core.MediaType;
 
 import andrewgrant.friendsdrinks.avro.*;
 import andrewgrant.friendsdrinks.frontend.api.friendsdrinks.*;
+import andrewgrant.friendsdrinks.frontend.api.meetup.MeetupBean;
 import andrewgrant.friendsdrinks.frontend.api.meetup.ScheduleFriendsDrinksMeetupRequestBean;
 import andrewgrant.friendsdrinks.frontend.api.meetup.ScheduleFriendsDrinksMeetupResponseBean;
 import andrewgrant.friendsdrinks.frontend.api.membership.*;
@@ -176,6 +177,20 @@ public class Handler {
             }).collect(Collectors.toList()));
         } else {
             response.setMembers(new ArrayList<>());
+        }
+
+        if (friendsDrinkDetailPage.getMeetups() != null) {
+            response.setMeetups(friendsDrinkDetailPage.getMeetups().stream().map(x -> {
+                MeetupBean meetupBean = new MeetupBean();
+                meetupBean.setUsers(x.getUserIds().stream().map(z-> {
+                    UserBean userBean = new UserBean();
+                    userBean.setUserId(z.getUserId());
+                    return userBean;
+                }).collect(Collectors.toList()));
+                return meetupBean;
+            }).collect(Collectors.toList()));
+        } else {
+            response.setMeetups(new ArrayList<>());
         }
         response.setName(friendsDrinkDetailPage.getName());
 
