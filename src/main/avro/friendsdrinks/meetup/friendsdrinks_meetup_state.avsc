@@ -3,7 +3,7 @@
   "type": "record",
   "name": "FriendsDrinksMeetupState",
   "fields": [
-      {"name": "status", "type": "string" },
+      {"name": "status", "type": "FriendsDrinksMeetupStatus" },
       {"name": "meetupId", "type": "FriendsDrinksMeetupId" },
       {"name": "friendsDrinksId", "type": "FriendsDrinksId"},
       {"name": "userIds", "type": ["null", {"type": "array", "items": "UserId" }], "default": null}
