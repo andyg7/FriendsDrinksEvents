@@ -320,7 +320,8 @@ public class Handler {
     @Path("/friendsdrinks/meetups")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public ScheduleFriendsDrinksMeetupResponseBean scheduleFriendsDrinksMeetup(ScheduleFriendsDrinksMeetupRequestBean requestBean) {
+    public ScheduleFriendsDrinksMeetupResponseBean scheduleFriendsDrinksMeetup(ScheduleFriendsDrinksMeetupRequestBean requestBean)
+            throws ExecutionException, InterruptedException {
         ReadOnlyKeyValueStore<FriendsDrinksId, FriendsDrinksState> kv =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_STATE_STORE, QueryableStoreTypes.keyValueStore()));
         FriendsDrinksId friendsDrinksId = FriendsDrinksId.newBuilder().setUuid(requestBean.getFriendsDrinksId()).build();
@@ -335,7 +336,10 @@ public class Handler {
                 .setMeetupId(FriendsDrinksMeetupId.newBuilder().setUuid(meetupId).build())
                 .build();
 
-        // TODO(andyg7): emit event
+        final String topicName = envProps.getProperty("friendsdrinks-meetup-event.topic.name");
+        ProducerRecord<FriendsDrinksMeetupId, FriendsDrinksMeetupEvent> record = new ProducerRecord<>(topicName,
+                friendsDrinksMeetupEvent.getMeetupId(), friendsDrinksMeetupEvent);
+        friendsDrinksMeetupKafkaProducer.send(record).get();
         return new ScheduleFriendsDrinksMeetupResponseBean();
     }
 
