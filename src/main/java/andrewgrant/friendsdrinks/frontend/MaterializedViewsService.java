@@ -32,6 +32,7 @@ public class MaterializedViewsService {
     public static final String USER_HOMEPAGES_STATE_STORE = "user-homepages-state-store";
     public static final String USERS_STATE_STORE = "users-state-store";
     public static final String INVITATIONS_STORE = "invitations-state-store";
+    public static final String MEMBERSHIP_FRIENDSDRINKS_ID_STORE = "membership-friendsdrinks-id-state-store";
 
     private Properties envProps;
     private andrewgrant.friendsdrinks.AvroBuilder avroBuilder;
@@ -86,6 +87,41 @@ public class MaterializedViewsService {
                 builder.table(envProps.getProperty(FRIENDSDRINKS_MEMBERSHIP_STATE),
                         Consumed.with(membershipAvroBuilder.friendsDrinksMembershipIdSerdes(),
                                 membershipAvroBuilder.friendsDrinksMembershipStateSerdes()));
+
+        membershipStateKTable.groupBy((key, value) -> KeyValue.pair(value.getMembershipId().getFriendsDrinksId(), value),
+                Grouped.with(avroBuilder.friendsDrinksIdSerde(), membershipAvroBuilder.friendsDrinksMembershipStateSerdes())
+        ).aggregate(
+                () -> FriendsDrinksMembershipIdList.newBuilder().build(),
+                (aggKey, newValue, aggValue) -> {
+                    List<FriendsDrinksMembershipId> membershipIds = aggValue.getIds();
+                    if (membershipIds == null) {
+                        membershipIds = new ArrayList<>();
+                    }
+                    membershipIds.add(newValue.getMembershipId());
+                    return FriendsDrinksMembershipIdList
+                            .newBuilder(aggValue)
+                            .setIds(membershipIds)
+                            .build();
+                },
+                (aggKey, oldValue, aggValue) -> {
+                    List<FriendsDrinksMembershipId> membershipIds = aggValue.getIds();
+                    if (membershipIds == null) {
+                        return aggValue;
+                    }
+                    for (int i = 0; i < membershipIds.size(); i++) {
+                        FriendsDrinksMembershipId friendsDrinksMembershipId = membershipIds.get(i);
+                        if (oldValue.getMembershipId().equals(friendsDrinksMembershipId)) {
+                            membershipIds.remove(i);
+                            break;
+                        }
+                    }
+                    return aggValue;
+                },
+                Materialized.<FriendsDrinksId, FriendsDrinksMembershipIdList, KeyValueStore<Bytes, byte[]>>
+                        as(MEMBERSHIP_FRIENDSDRINKS_ID_STORE)
+                        .withKeySerde(avroBuilder.friendsDrinksIdSerde())
+                        .withValueSerde(membershipAvroBuilder.friendsDrinksMembershipIdListSerdes())
+        );
 
         KTable<FriendsDrinksMeetupId, FriendsDrinksMeetupState> friendsDrinksMeetupStateKTable =
                 builder.table(envProps.getProperty(FRIENDSDRINKS_MEMBERSHIP_STATE),

@@ -329,11 +329,27 @@ public class Handler {
         if (friendsDrinksState == null) {
             throw new BadRequestException(String.format("%s does not exist", friendsDrinksId.getUuid()));
         }
+        ReadOnlyKeyValueStore<FriendsDrinksId, FriendsDrinksMembershipIdList> memberships =
+                kafkaStreams.store(StoreQueryParameters.fromNameAndType(MEMBERSHIP_FRIENDSDRINKS_ID_STORE, QueryableStoreTypes.keyValueStore()));
+        List<UserId> userIds = new ArrayList<>();
+        FriendsDrinksMembershipIdList membershipIdList = memberships.get(friendsDrinksId);
+        if (membershipIdList != null) {
+            for (FriendsDrinksMembershipId membershipId : membershipIdList.getIds()) {
+                userIds.add(UserId.newBuilder().setUserId(membershipId.getUserId().getUserId()).build());
+            }
+        }
         String meetupId = UUID.randomUUID().toString();
+        FriendsDrinksMeetupScheduled friendsDrinksMeetupScheduled = FriendsDrinksMeetupScheduled
+                .newBuilder()
+                .setMeetupId(FriendsDrinksMeetupId.newBuilder().setUuid(meetupId).build())
+                .setFriendsDrinksId(friendsDrinksId)
+                .setUserIds(userIds)
+                .build();
         FriendsDrinksMeetupEvent friendsDrinksMeetupEvent = FriendsDrinksMeetupEvent
                 .newBuilder()
                 .setEventType(FriendsDrinksMeetupEventType.SCHEDULED)
                 .setMeetupId(FriendsDrinksMeetupId.newBuilder().setUuid(meetupId).build())
+                .setMeetupScheduled(friendsDrinksMeetupScheduled)
                 .build();
 
         final String topicName = envProps.getProperty("friendsdrinks-meetup-event.topic.name");
