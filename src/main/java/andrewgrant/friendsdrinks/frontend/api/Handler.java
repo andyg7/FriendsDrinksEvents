@@ -27,7 +27,6 @@ import javax.ws.rs.core.MediaType;
 import andrewgrant.friendsdrinks.avro.*;
 import andrewgrant.friendsdrinks.frontend.api.friendsdrinks.*;
 import andrewgrant.friendsdrinks.frontend.api.meetup.MeetupBean;
-import andrewgrant.friendsdrinks.frontend.api.meetup.ScheduleFriendsDrinksMeetupRequestBean;
 import andrewgrant.friendsdrinks.frontend.api.meetup.ScheduleFriendsDrinksMeetupResponseBean;
 import andrewgrant.friendsdrinks.frontend.api.membership.*;
 import andrewgrant.friendsdrinks.frontend.api.user.GetUsersResponseBean;
@@ -184,6 +183,7 @@ public class Handler {
         if (friendsDrinkDetailPage.getMeetups() != null) {
             response.setMeetups(friendsDrinkDetailPage.getMeetups().stream().map(x -> {
                 MeetupBean meetupBean = new MeetupBean();
+                meetupBean.setDate(x.getDate());
                 meetupBean.setUsers(x.getUserIds().stream().map(z-> {
                     UserBean userBean = new UserBean();
                     userBean.setUserId(z.getUserId());
@@ -342,22 +342,22 @@ public class Handler {
     }
 
     @POST
-    @Path("/friendsdrinks/meetups")
+    @Path("/friendsdrinkess/{friendsDrinksId}/meetups")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public ScheduleFriendsDrinksMeetupResponseBean scheduleFriendsDrinksMeetup(ScheduleFriendsDrinksMeetupRequestBean requestBean)
+    public ScheduleFriendsDrinksMeetupResponseBean scheduleFriendsDrinksMeetup(@PathParam("friendsDrinksId") String friendsDrinksId)
             throws ExecutionException, InterruptedException {
         ReadOnlyKeyValueStore<FriendsDrinksId, FriendsDrinksState> kv =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_STATE_STORE, QueryableStoreTypes.keyValueStore()));
-        FriendsDrinksId friendsDrinksId = FriendsDrinksId.newBuilder().setUuid(requestBean.getFriendsDrinksId()).build();
-        FriendsDrinksState friendsDrinksState = kv.get(friendsDrinksId);
+        FriendsDrinksId avroFriendsDrinksId = FriendsDrinksId.newBuilder().setUuid(friendsDrinksId).build();
+        FriendsDrinksState friendsDrinksState = kv.get(avroFriendsDrinksId);
         if (friendsDrinksState == null) {
-            throw new BadRequestException(String.format("%s does not exist", friendsDrinksId.getUuid()));
+            throw new BadRequestException(String.format("%s does not exist", avroFriendsDrinksId.getUuid()));
         }
         ReadOnlyKeyValueStore<FriendsDrinksId, FriendsDrinksMembershipIdList> memberships =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(MEMBERSHIP_FRIENDSDRINKS_ID_STORE, QueryableStoreTypes.keyValueStore()));
         List<UserId> userIds = new ArrayList<>();
-        FriendsDrinksMembershipIdList membershipIdList = memberships.get(friendsDrinksId);
+        FriendsDrinksMembershipIdList membershipIdList = memberships.get(avroFriendsDrinksId);
         if (membershipIdList != null) {
             for (FriendsDrinksMembershipId membershipId : membershipIdList.getIds()) {
                 userIds.add(UserId.newBuilder().setUserId(membershipId.getUserId().getUserId()).build());
@@ -367,8 +367,9 @@ public class Handler {
         FriendsDrinksMeetupScheduled friendsDrinksMeetupScheduled = FriendsDrinksMeetupScheduled
                 .newBuilder()
                 .setMeetupId(FriendsDrinksMeetupId.newBuilder().setUuid(meetupId).build())
-                .setFriendsDrinksId(friendsDrinksId)
+                .setFriendsDrinksId(avroFriendsDrinksId)
                 .setUserIds(userIds)
+                .setDate("TODO")
                 .build();
         FriendsDrinksMeetupEvent friendsDrinksMeetupEvent = FriendsDrinksMeetupEvent
                 .newBuilder()

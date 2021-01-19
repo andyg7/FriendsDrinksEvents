@@ -51,6 +51,7 @@ public class WriterService {
                                     aggValue.setFriendsDrinksId(newValue.getMeetupScheduled().getFriendsDrinksId());
                                     aggValue.setUserIds(newValue.getMeetupScheduled().getUserIds());
                                     aggValue.setStatus(FriendsDrinksMeetupStatus.SCHEDULED);
+                                    aggValue.setDate(newValue.getMeetupScheduled().getDate());
                                     return aggValue;
                                 case HAPPENED:
                                     aggValue.setStatus(FriendsDrinksMeetupStatus.HAPPENED);

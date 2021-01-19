@@ -6,6 +6,7 @@
     {"name": "requestId", "type": "string"},
     {"name": "meetupId", "type": "FriendsDrinksMeetupId" },
     {"name": "friendsDrinksId", "type": "FriendsDrinksId"},
+    {"name": "date", "type": "string" },
     {"name": "userIds", "type": ["null", {"type": "array", "items": "UserId" }], "default": null}
   ]
 }
