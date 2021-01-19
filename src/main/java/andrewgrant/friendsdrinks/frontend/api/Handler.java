@@ -179,12 +179,22 @@ public class Handler {
             response.setMembers(new ArrayList<>());
         }
 
+        ReadOnlyKeyValueStore<String, UserState> usersKv =
+                kafkaStreams.store(StoreQueryParameters.fromNameAndType(USERS_STATE_STORE, QueryableStoreTypes.keyValueStore()));
         if (friendsDrinkDetailPage.getMeetups() != null) {
             response.setMeetups(friendsDrinkDetailPage.getMeetups().stream().map(x -> {
                 MeetupBean meetupBean = new MeetupBean();
                 meetupBean.setUsers(x.getUserIds().stream().map(z-> {
                     UserBean userBean = new UserBean();
                     userBean.setUserId(z.getUserId());
+                    UserState userState = usersKv.get(z.getUserId());
+                    if (userState == null) {
+                        log.error(String.format("Failed to get user state for %s", z.getUserId()));
+                    } else {
+                        userBean.setEmail(userState.getEmail());
+                        userBean.setFirstName(userState.getFirstName());
+                        userBean.setLastName(userState.getLastName());
+                    }
                     return userBean;
                 }).collect(Collectors.toList()));
                 return meetupBean;
