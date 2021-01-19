@@ -38,7 +38,7 @@ public class WriterService {
     public Topology buildTopology() {
         StreamsBuilder builder = new StreamsBuilder();
         KStream<FriendsDrinksMeetupId, FriendsDrinksMeetupEvent> friendsDrinksMeetupEventKStream =
-                builder.stream(TopicNameConfigKey.FRIENDSDRINKS_MEETUP_EVENT,
+                builder.stream(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_MEETUP_EVENT),
                         Consumed.with(avroBuilder.friendsDrinksMeetupIdSpecificAvroSerde(), avroBuilder.friendsDrinksMeetupEventSpecificAvroSerde()));
         friendsDrinksMeetupEventKStream.groupByKey(
                 Grouped.with(avroBuilder.friendsDrinksMeetupIdSpecificAvroSerde(), avroBuilder.friendsDrinksMeetupEventSpecificAvroSerde()))

@@ -32,6 +32,16 @@ services:
           -DlogPath=/app/
           '"
 
+  friendsdrinks-meetup-writer-service:
+    image: andyg001/friendsdrinksbackend:latest
+    networks:
+      - kafka-network
+    command:
+      "bash -c '
+          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.meetup.WriterService /app/dev.properties \
+          -DlogPath=/app/
+          '"
+
   friendsdrinks-invitation-writer-service:
     image: andyg001/friendsdrinksbackend:latest
     networks:
@@ -63,7 +73,6 @@ services:
           '"
 
   user-service:
-
     image: andyg001/friendsdrinksbackend:latest
     networks:
       - kafka-network

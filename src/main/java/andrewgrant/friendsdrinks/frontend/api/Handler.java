@@ -27,6 +27,7 @@ import javax.ws.rs.core.MediaType;
 import andrewgrant.friendsdrinks.avro.*;
 import andrewgrant.friendsdrinks.frontend.api.friendsdrinks.*;
 import andrewgrant.friendsdrinks.frontend.api.meetup.MeetupBean;
+import andrewgrant.friendsdrinks.frontend.api.meetup.ScheduleFriendsDrinksMeetupRequestBean;
 import andrewgrant.friendsdrinks.frontend.api.meetup.ScheduleFriendsDrinksMeetupResponseBean;
 import andrewgrant.friendsdrinks.frontend.api.membership.*;
 import andrewgrant.friendsdrinks.frontend.api.user.GetUsersResponseBean;
@@ -342,10 +343,11 @@ public class Handler {
     }
 
     @POST
-    @Path("/friendsdrinkess/{friendsDrinksId}/meetups")
+    @Path("/friendsdrinkses/{friendsDrinksId}/meetups")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public ScheduleFriendsDrinksMeetupResponseBean scheduleFriendsDrinksMeetup(@PathParam("friendsDrinksId") String friendsDrinksId)
+    public ScheduleFriendsDrinksMeetupResponseBean scheduleFriendsDrinksMeetup(@PathParam("friendsDrinksId") String friendsDrinksId,
+                                                                               ScheduleFriendsDrinksMeetupRequestBean requestBean)
             throws ExecutionException, InterruptedException {
         ReadOnlyKeyValueStore<FriendsDrinksId, FriendsDrinksState> kv =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_STATE_STORE, QueryableStoreTypes.keyValueStore()));
@@ -369,7 +371,8 @@ public class Handler {
                 .setMeetupId(FriendsDrinksMeetupId.newBuilder().setUuid(meetupId).build())
                 .setFriendsDrinksId(avroFriendsDrinksId)
                 .setUserIds(userIds)
-                .setDate("TODO")
+                .setDate(requestBean.getDate())
+                .setRequestId(UUID.randomUUID().toString())
                 .build();
         FriendsDrinksMeetupEvent friendsDrinksMeetupEvent = FriendsDrinksMeetupEvent
                 .newBuilder()

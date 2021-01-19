@@ -2,6 +2,7 @@ package andrewgrant.friendsdrinks.frontend;
 
 import static andrewgrant.friendsdrinks.TopicNameConfigKey.FRIENDSDRINKS_STATE;
 import static andrewgrant.friendsdrinks.frontend.TopicNameConfigKey.FRIENDSDRINKS_API;
+import static andrewgrant.friendsdrinks.meetup.TopicNameConfigKey.FRIENDSDRINKS_MEETUP_STATE;
 import static andrewgrant.friendsdrinks.membership.TopicNameConfigKey.*;
 import static andrewgrant.friendsdrinks.user.TopicNameConfigKey.USER_STATE;
 
@@ -124,7 +125,7 @@ public class MaterializedViewsService {
         );
 
         KTable<FriendsDrinksMeetupId, FriendsDrinksMeetupState> friendsDrinksMeetupStateKTable =
-                builder.table(envProps.getProperty(FRIENDSDRINKS_MEMBERSHIP_STATE),
+                builder.table(envProps.getProperty(FRIENDSDRINKS_MEETUP_STATE),
                         Consumed.with(meetupAvroBuilder.friendsDrinksMeetupIdSpecificAvroSerde(),
                                 meetupAvroBuilder.friendsDrinksMeetupStateSpecificAvroSerde()));
 

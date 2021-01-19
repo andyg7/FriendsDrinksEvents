@@ -7,7 +7,7 @@
       {"name": "friendsDrinksId", "type": "FriendsDrinksId", "default": null},
       {"name": "name", "type": "string", "default": null},
       {"name": "adminUserId", "type": "string"},
-      {"name": "members", "type": ["null", {"type": "array", "items": "UserState" }]},
-      {"name": "meetups", "type": ["null", {"type": "array", "items": "FriendsDrinksMeetupState" }]}
+      {"name": "members", "type": ["null", {"type": "array", "items": "UserState" }], "default": null },
+      {"name": "meetups", "type": ["null", {"type": "array", "items": "FriendsDrinksMeetupState" }], "default": null }
   ]
 }
