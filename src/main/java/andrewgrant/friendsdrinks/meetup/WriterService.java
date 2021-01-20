@@ -14,10 +14,7 @@ import java.io.IOException;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
-import andrewgrant.friendsdrinks.avro.FriendsDrinksMeetupEvent;
-import andrewgrant.friendsdrinks.avro.FriendsDrinksMeetupId;
-import andrewgrant.friendsdrinks.avro.FriendsDrinksMeetupState;
-import andrewgrant.friendsdrinks.avro.FriendsDrinksMeetupStatus;
+import andrewgrant.friendsdrinks.avro.*;
 
 /**
  * Owns writing to meetup topics.
@@ -43,19 +40,28 @@ public class WriterService {
         friendsDrinksMeetupEventKStream.groupByKey(
                 Grouped.with(avroBuilder.friendsDrinksMeetupIdSpecificAvroSerde(), avroBuilder.friendsDrinksMeetupEventSpecificAvroSerde()))
                 .aggregate(
-                        () -> FriendsDrinksMeetupState.newBuilder().build(),
+                        () -> FriendsDrinksMeetupStateAggregate.newBuilder().build(),
                         (aggKey, newValue, aggValue) -> {
                             switch (newValue.getEventType()) {
                                 case SCHEDULED:
-                                    aggValue.setMeetupId(newValue.getMeetupScheduled().getMeetupId());
-                                    aggValue.setFriendsDrinksId(newValue.getMeetupScheduled().getFriendsDrinksId());
-                                    aggValue.setUserIds(newValue.getMeetupScheduled().getUserIds());
-                                    aggValue.setStatus(FriendsDrinksMeetupStatus.SCHEDULED);
-                                    aggValue.setDate(newValue.getMeetupScheduled().getDate());
-                                    return aggValue;
+                                    FriendsDrinksMeetupState.Builder friendsDrinksMeetupStateBuilder
+                                            = FriendsDrinksMeetupState.newBuilder();
+                                    friendsDrinksMeetupStateBuilder.setMeetupId(newValue.getMeetupScheduled().getMeetupId());
+                                    friendsDrinksMeetupStateBuilder.setFriendsDrinksId(newValue.getMeetupScheduled().getFriendsDrinksId());
+                                    friendsDrinksMeetupStateBuilder.setUserIds(newValue.getMeetupScheduled().getUserIds());
+                                    friendsDrinksMeetupStateBuilder.setStatus(FriendsDrinksMeetupStatus.SCHEDULED);
+                                    friendsDrinksMeetupStateBuilder.setDate(newValue.getMeetupScheduled().getDate());
+                                    return FriendsDrinksMeetupStateAggregate
+                                            .newBuilder(aggValue)
+                                            .setFriendsDrinksMeetupState(friendsDrinksMeetupStateBuilder.build())
+                                            .build();
                                 case HAPPENED:
-                                    aggValue.setStatus(FriendsDrinksMeetupStatus.HAPPENED);
-                                    return aggValue;
+                                    FriendsDrinksMeetupState friendsDrinksMeetupState = aggValue.getFriendsDrinksMeetupState();
+                                    friendsDrinksMeetupState.setStatus(FriendsDrinksMeetupStatus.HAPPENED);
+                                    return FriendsDrinksMeetupStateAggregate
+                                            .newBuilder(aggValue)
+                                            .setFriendsDrinksMeetupState(friendsDrinksMeetupState)
+                                            .build();
                                 default:
                                     throw new RuntimeException(
                                             String.format("Unknown event type %s", newValue.getEventType().name()));
@@ -63,8 +69,14 @@ public class WriterService {
                         },
                         Materialized.with(
                                 avroBuilder.friendsDrinksMeetupIdSpecificAvroSerde(),
-                                avroBuilder.friendsDrinksMeetupStateSpecificAvroSerde())
-                ).toStream().to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_MEETUP_STATE),
+                                avroBuilder.friendsDrinksMeetupStateAggregateSpecificAvroSerde())
+                ).toStream().mapValues(v -> {
+            if (v == null) {
+                return null;
+            } else {
+                return v.getFriendsDrinksMeetupState();
+            }
+        }).to(envProps.getProperty(TopicNameConfigKey.FRIENDSDRINKS_MEETUP_STATE),
                 Produced.with(avroBuilder.friendsDrinksMeetupIdSpecificAvroSerde(), avroBuilder.friendsDrinksMeetupStateSpecificAvroSerde()));
         return builder.build();
     }

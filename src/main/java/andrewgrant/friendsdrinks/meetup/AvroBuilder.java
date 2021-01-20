@@ -65,6 +65,19 @@ public class AvroBuilder {
         return serde;
     }
 
+    public SpecificAvroSerde<FriendsDrinksMeetupStateAggregate> friendsDrinksMeetupStateAggregateSpecificAvroSerde() {
+        SpecificAvroSerde<FriendsDrinksMeetupStateAggregate> serde;
+        if (registryClient != null) {
+            serde = new SpecificAvroSerde<>(registryClient);
+        } else {
+            serde = new SpecificAvroSerde<>();
+        }
+        Map<String, String> config = new HashMap<>();
+        config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, registryUrl);
+        serde.configure(config, false);
+        return serde;
+    }
+
     public SpecificAvroSerde<FriendsDrinksMeetupStateList> friendsDrinksMeetupStateListSpecificAvroSerde() {
         SpecificAvroSerde<FriendsDrinksMeetupStateList> serde;
         if (registryClient != null) {
