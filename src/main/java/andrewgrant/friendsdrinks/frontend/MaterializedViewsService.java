@@ -443,9 +443,7 @@ public class MaterializedViewsService {
                                 () -> FriendsDrinksMeetupStateList.newBuilder().setFriendsDrinksMeetupStates(new ArrayList<>()).build(),
                                 (aggKey, newValue, aggValue) -> {
                                     List<FriendsDrinksMeetupState> states = aggValue.getFriendsDrinksMeetupStates();
-                                    states.add(FriendsDrinksMeetupState
-                                            .newBuilder()
-                                            .build());
+                                    states.add(newValue);
                                     return FriendsDrinksMeetupStateList
                                             .newBuilder()
                                             .setFriendsDrinksMeetupStates(states)
@@ -465,8 +463,10 @@ public class MaterializedViewsService {
                                             .setFriendsDrinksMeetupStates(states)
                                             .build();
                                 },
-                        Materialized.with(avroBuilder.friendsDrinksIdSerde(), meetupAvroBuilder.friendsDrinksMeetupStateListSpecificAvroSerde())
-                );
+                                Materialized.with(
+                                        avroBuilder.friendsDrinksIdSerde(),
+                                        meetupAvroBuilder.friendsDrinksMeetupStateListSpecificAvroSerde())
+                        );
 
         KTable<FriendsDrinksId, UserStateList> enrichedMemberList = enrichedMembershipStateKTable.groupBy((key, value) ->
                         KeyValue.pair(value.getMembershipId().getFriendsDrinksId(), value),
