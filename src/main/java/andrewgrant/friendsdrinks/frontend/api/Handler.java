@@ -365,6 +365,7 @@ public class Handler {
                 userIds.add(UserId.newBuilder().setUserId(membershipId.getUserId().getUserId()).build());
             }
         }
+        userIds.add(UserId.newBuilder().setUserId(friendsDrinksState.getAdminUserId()).build());
         String meetupId = UUID.randomUUID().toString();
         FriendsDrinksMeetupScheduled friendsDrinksMeetupScheduled = FriendsDrinksMeetupScheduled
                 .newBuilder()
