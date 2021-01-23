@@ -4,6 +4,9 @@ metadata:
   name: friendsdrinks-request-service
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: friendsdrinks-request-service
   template:
     metadata:
       labels:
@@ -24,6 +27,9 @@ metadata:
   name: friendsdrinks-membership-request-service
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: friendsdrinks-membership-request-service
   template:
     metadata:
       labels:
@@ -44,6 +50,9 @@ metadata:
   name: friendsdrinks-membership-writer-service
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: friendsdrinks-membership-writer-service
   template:
     metadata:
       labels:
@@ -64,6 +73,9 @@ metadata:
   name: friendsdrinks-meetup-writer-service
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: friendsdrinks-meetup-writer-service
   template:
     metadata:
       labels:
@@ -84,6 +96,9 @@ metadata:
   name: friendsdrinks-invitation-writer-service
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: friendsdrinks-invitation-writer-service
   template:
     metadata:
       labels:
@@ -104,6 +119,9 @@ metadata:
   name: friendsdrinks-writer-service
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: friendsdrinks-writer-service
   template:
     metadata:
       labels:
@@ -124,6 +142,9 @@ metadata:
   name: user-service
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: user-service
   template:
     metadata:
       labels:
@@ -144,6 +165,9 @@ metadata:
   name: friendsdrinks-api-service
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: friendsdrinks-api-service
   template:
     metadata:
       labels:
