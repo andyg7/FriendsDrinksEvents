@@ -1,0 +1,174 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: friendsdrinks-request-service
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: friendsdrinks-request-service
+    spec:
+      containers:
+        - name: friendsdrinks-request-service
+          image: andyg001/friendsdrinksbackend:latest
+          imagePullPolicy: Always
+          command:
+            - sh
+            - -c
+            - "java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.RequestService /app/dev-kubernetes.properties"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: friendsdrinks-membership-request-service
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: friendsdrinks-membership-request-service
+    spec:
+      containers:
+        - name: friendsdrinks-memberhip-request-service
+          image: andyg001/friendsdrinksbackend:latest
+          imagePullPolicy: Always
+          command:
+            - sh
+            - -c
+            - "java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.membership.RequestService /app/dev-kubernetes.properties"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: friendsdrinks-membership-writer-service
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: friendsdrinks-membership-writer-service
+    spec:
+      containers:
+        - name: friendsdrinks-membership-writer-service
+          image: andyg001/friendsdrinksbackend:latest
+          imagePullPolicy: Always
+          command:
+            - sh
+            - -c
+            - "java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.membership.MembershipWriterService /app/dev-kubernetes.properties"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: friendsdrinks-meetup-writer-service
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: friendsdrinks-meetup-writer-service
+    spec:
+      containers:
+        - name: friendsdrinks-meetup-writer-service
+          image: andyg001/friendsdrinksbackend:latest
+          imagePullPolicy: Always
+          command:
+            - sh
+            - -c
+            - "java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.meetup.WriterService /app/dev-kubernetes.properties"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: friendsdrinks-invitation-writer-service
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: friendsdrinks-invitation-writer-service
+    spec:
+      containers:
+        - name: friendsdrinks-invitation-writer-service
+          image: andyg001/friendsdrinksbackend:latest
+          imagePullPolicy: Always
+          command:
+            - sh
+            - -c
+            - "java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.membership.InvitationWriterService /app/dev-kubernetes.properties"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: friendsdrinks-writer-service
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: friendsdrinks-writer-service
+    spec:
+      containers:
+        - name: friendsdrinks-writer-service
+          image: andyg001/friendsdrinksbackend:latest
+          imagePullPolicy: Always
+          command:
+            - sh
+            - -c
+            - "java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.WriterService /app/dev-kubernetes.properties"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: user-service
+    spec:
+      containers:
+        - name: user-service
+          image: andyg001/friendsdrinksbackend:latest
+          imagePullPolicy: Always
+          command:
+            - sh
+            - -c
+            - "java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.user.Service /app/dev-kubernetes.properties"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: friendsdrinks-api-service
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: friendsdrinks-api-service
+    spec:
+      containers:
+        - name: friendsdrinks-api-service
+          image: andyg001/friendsdrinksbackend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          command:
+            - sh
+            - -c
+            - "java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.frontend.Main /app/dev-kubernetes.properties"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontendapi-cs
+spec:
+  type: NodePort
+  ports:
+    - port: 8080
+      name: client
+  selector:
+    app: friendsdrinks-api-service
+---
