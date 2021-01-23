@@ -182,7 +182,7 @@ spec:
           command:
             - sh
             - -c
-            - "java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.frontend.Main /app/dev-kubernetes.properties"
+            - "java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.frontend.Main /app/dev-kubernetes.properties 8080"
 ---
 apiVersion: v1
 kind: Service
