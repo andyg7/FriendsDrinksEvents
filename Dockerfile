@@ -5,7 +5,7 @@ WORKDIR /home/gradle/src
 RUN gradle build
 RUN gradle shadowJar
 
-FROM openjdk:8-jre-slim
+FROM openjdk:8-jre
 
 RUN mkdir /app
 
