@@ -62,6 +62,16 @@ public class Handler {
     }
 
     @GET
+    @Path("/ping")
+    @Produces(MediaType.APPLICATION_JSON)
+    public PingResponseBean ping() {
+        // TODO(andyg7): check status of kafka streams app.
+        PingResponseBean pingResponseBean = new PingResponseBean();
+        pingResponseBean.setStatus("HEALTHY");
+        return pingResponseBean;
+    }
+
+    @GET
     @Path("/users")
     @Produces(MediaType.APPLICATION_JSON)
     public GetUsersResponseBean getAllUsers() {

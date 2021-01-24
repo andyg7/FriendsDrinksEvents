@@ -177,6 +177,11 @@ spec:
         - name: friendsdrinks-api-service
           image: andyg001/friendsdrinksbackend:latest
           imagePullPolicy: Always
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: 8080
+            initialDelaySeconds: 60
           ports:
             - containerPort: 8080
           command:
