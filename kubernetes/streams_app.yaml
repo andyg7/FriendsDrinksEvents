@@ -179,12 +179,12 @@ spec:
           imagePullPolicy: Always
           livenessProbe:
             httpGet:
-              path: /ping
+              path: /v1/ping
               port: 8080
             initialDelaySeconds: 60
           readinessProbe:
             httpGet:
-              path: /ping
+              path: /v1/ping
               port: 8080
             initialDelaySeconds: 60
           ports:
