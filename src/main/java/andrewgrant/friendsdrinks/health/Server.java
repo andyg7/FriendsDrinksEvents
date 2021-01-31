@@ -37,7 +37,7 @@ public class Server {
         final ServletContainer sc = new ServletContainer(rc);
         // Jetty class that holds sc which is an
         // implementation of the javax Servlet interface.
-        context.addServlet(new ServletHolder(sc), "/v1/*");
+        context.addServlet(new ServletHolder(sc), "/*");
 
         return jettyServer;
     }
