@@ -13,6 +13,7 @@ import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
+import org.eclipse.jetty.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -522,10 +523,13 @@ public class RequestService {
         Properties streamProps = service.buildStreamProperties(envProps);
         KafkaStreams streams = new KafkaStreams(topology, streamProps);
 
+        Server healthCheckServer = andrewgrant.friendsdrinks.health.Server.buildServer(8080, streams);
+
         final CountDownLatch latch = new CountDownLatch(1);
         Runtime.getRuntime().addShutdownHook(new Thread("streams-shutdown-hook") {
             @Override
             public void run() {
+                andrewgrant.friendsdrinks.health.Server.stop(healthCheckServer);
                 streams.close();
                 latch.countDown();
             }
@@ -533,6 +537,7 @@ public class RequestService {
 
         try {
             streams.start();
+            andrewgrant.friendsdrinks.health.Server.start(healthCheckServer, 8080);
             latch.await();
         } catch (Throwable e) {
             System.exit(1);

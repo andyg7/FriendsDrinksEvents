@@ -65,7 +65,10 @@ public class Handler {
     @Path("/ping")
     @Produces(MediaType.APPLICATION_JSON)
     public PingResponseBean ping() {
-        // TODO(andyg7): check status of kafka streams app.
+        KafkaStreams.State state = kafkaStreams.state();
+        if (!state.isRunningOrRebalancing()) {
+            throw new RuntimeException(String.format("State is %s", state.name()));
+        }
         PingResponseBean pingResponseBean = new PingResponseBean();
         pingResponseBean.setStatus("HEALTHY");
         return pingResponseBean;
