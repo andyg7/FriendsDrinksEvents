@@ -8,6 +8,7 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.Topology;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.glassfish.jersey.jackson.JacksonFeature;
@@ -126,7 +127,11 @@ public class Main {
         // Jetty server context handler.
         final ServletContextHandler context = new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
         context.setContextPath("/v1");
-        final Server jettyServer = new Server(port);
+        final Server jettyServer = new Server();
+        ServerConnector serverConnector = new ServerConnector(jettyServer);
+        serverConnector.setHost("0.0.0.0");
+        serverConnector.setPort(port);
+        jettyServer.addConnector(serverConnector);
         jettyServer.setHandler(context);
 
         context.addServlet(buildFriendsDrinksHolder(streams, userAvroBuilder,
