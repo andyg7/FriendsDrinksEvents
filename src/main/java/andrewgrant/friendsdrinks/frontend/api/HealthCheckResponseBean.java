@@ -1,9 +1,9 @@
 package andrewgrant.friendsdrinks.frontend.api;
 
 /**
- * Bean for PingResponse.
+ * Bean for HealthCheckResponse.
  */
-public class PingResponseBean {
+public class HealthCheckResponseBean {
     private String status;
 
     public String getStatus() {

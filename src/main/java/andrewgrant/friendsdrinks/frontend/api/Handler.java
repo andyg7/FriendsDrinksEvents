@@ -62,16 +62,16 @@ public class Handler {
     }
 
     @GET
-    @Path("/ping")
+    @Path("/health")
     @Produces(MediaType.APPLICATION_JSON)
-    public PingResponseBean ping() {
+    public HealthCheckResponseBean healthCheck() {
         KafkaStreams.State state = kafkaStreams.state();
         if (!state.isRunningOrRebalancing()) {
             throw new RuntimeException(String.format("State is %s", state.name()));
         }
-        PingResponseBean pingResponseBean = new PingResponseBean();
-        pingResponseBean.setStatus("HEALTHY");
-        return pingResponseBean;
+        HealthCheckResponseBean healthCheckResponseBean = new HealthCheckResponseBean();
+        healthCheckResponseBean.setStatus("HEALTHY");
+        return healthCheckResponseBean;
     }
 
     @GET
