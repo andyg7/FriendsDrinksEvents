@@ -12,6 +12,7 @@ import andrewgrant.friendsdrinks.frontend.api.HealthCheckResponseBean;
 /**
  * Handler for simple Kafka streams health check.
  */
+@Path("")
 public class Handler {
 
     private KafkaStreams kafkaStreams;
