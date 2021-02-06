@@ -21,6 +21,8 @@ spec:
               path: /v1/health
               port: 8080
             initialDelaySeconds: 60
+          ports:
+            - containerPort: 8080
           command: ["java"]
           args: ["-DlogPath=/app/", "-cp", "/app/friendsdrinks-0.0.1.jar", "andrewgrant.friendsdrinks.RequestService", "/app/dev-kubernetes.properties"]
 ---
@@ -47,6 +49,8 @@ spec:
               path: /v1/health
               port: 8080
             initialDelaySeconds: 60
+          ports:
+            - containerPort: 8080
           command: ["java"]
           args: ["-DlogPath=/app/", "-cp", "/app/friendsdrinks-0.0.1.jar", "andrewgrant.friendsdrinks.membership.RequestService", "/app/dev-kubernetes.properties"]
 ---
@@ -73,6 +77,8 @@ spec:
               path: /v1/health
               port: 8080
             initialDelaySeconds: 60
+          ports:
+            - containerPort: 8080
           command: ["java"]
           args: ["-DlogPath=/app/", "-cp", "/app/friendsdrinks-0.0.1.jar", "andrewgrant.friendsdrinks.membership.MembershipWriterService", "/app/dev-kubernetes.properties"]
 ---
@@ -99,6 +105,8 @@ spec:
               path: /v1/health
               port: 8080
             initialDelaySeconds: 60
+          ports:
+            - containerPort: 8080
           command: ["java"]
           args: ["-DlogPath=/app/", "-cp", "/app/friendsdrinks-0.0.1.jar", "andrewgrant.friendsdrinks.meetup.WriterService", "/app/dev-kubernetes.properties"]
 ---
@@ -125,6 +133,8 @@ spec:
               path: /v1/health
               port: 8080
             initialDelaySeconds: 60
+          ports:
+            - containerPort: 8080
           command: ["java"]
           args: ["-DlogPath=/app/", "-cp", "/app/friendsdrinks-0.0.1.jar", "andrewgrant.friendsdrinks.membership.InvitationWriterService", "/app/dev-kubernetes.properties"]
 ---
@@ -151,6 +161,8 @@ spec:
               path: /v1/health
               port: 8080
             initialDelaySeconds: 60
+          ports:
+            - containerPort: 8080
           command: ["java"]
           args: ["-DlogPath=/app/", "-cp", "/app/friendsdrinks-0.0.1.jar", "andrewgrant.friendsdrinks.WriterService", "/app/dev-kubernetes.properties"]
 ---
@@ -177,6 +189,8 @@ spec:
               path: /v1/health
               port: 8080
             initialDelaySeconds: 60
+          ports:
+            - containerPort: 8080
           command: ["java"]
           args: ["-DlogPath=/app/", "-cp", "/app/friendsdrinks-0.0.1.jar", "andrewgrant.friendsdrinks.user.Service", "/app/dev-kubernetes.properties"]
 ---
@@ -203,13 +217,13 @@ spec:
               path: /v1/health
               port: 8080
             initialDelaySeconds: 60
+          ports:
+            - containerPort: 8080
           readinessProbe:
             httpGet:
               path: /v1/health
               port: 8080
             initialDelaySeconds: 60
-          ports:
-            - containerPort: 8080
           command: ["java"]
           args: ["-DlogPath=/app/", "-cp", "/app/friendsdrinks-0.0.1.jar", "andrewgrant.friendsdrinks.frontend.Main", "/app/dev-kubernetes.properties", "8080"]
 ---
