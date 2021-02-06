@@ -50,6 +50,7 @@ public class Server {
                 throw new RuntimeException(String.format("Failed to bind to port %d. " +
                         "Instead we're listening on %d", port, uri.getPort()));
             }
+            log.info("Listening on " + server.getURI());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
