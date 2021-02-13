@@ -16,6 +16,11 @@ spec:
         - name: friendsdrinks-request-service
           image: andyg001/friendsdrinksbackend:latest
           imagePullPolicy: Always
+          volumeMounts:
+            - name: config
+              mountPath: /app/dev-kubernetes.properties
+              subPath: dev-kubernetes.properties
+              readOnly: true
           livenessProbe:
             httpGet:
               path: /v1/health
@@ -25,6 +30,11 @@ spec:
             - containerPort: 8080
           command: ["java"]
           args: ["-DlogPath=/app/", "-cp", "/app/friendsdrinks-0.0.1.jar", "andrewgrant.friendsdrinks.RequestService", "/app/dev-kubernetes.properties"]
+      volumes:
+        - name: config
+          configMap:
+            name: streams-config
+
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -44,6 +54,11 @@ spec:
         - name: friendsdrinks-memberhip-request-service
           image: andyg001/friendsdrinksbackend:latest
           imagePullPolicy: Always
+          volumeMounts:
+            - name: config
+              mountPath: /app/dev-kubernetes.properties
+              subPath: dev-kubernetes.properties
+              readOnly: true
           livenessProbe:
             httpGet:
               path: /v1/health
@@ -53,6 +68,10 @@ spec:
             - containerPort: 8080
           command: ["java"]
           args: ["-DlogPath=/app/", "-cp", "/app/friendsdrinks-0.0.1.jar", "andrewgrant.friendsdrinks.membership.RequestService", "/app/dev-kubernetes.properties"]
+      volumes:
+        - name: config
+          configMap:
+            name: streams-config
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -72,6 +91,11 @@ spec:
         - name: friendsdrinks-membership-writer-service
           image: andyg001/friendsdrinksbackend:latest
           imagePullPolicy: Always
+          volumeMounts:
+            - name: config
+              mountPath: /app/dev-kubernetes.properties
+              subPath: dev-kubernetes.properties
+              readOnly: true
           livenessProbe:
             httpGet:
               path: /v1/health
@@ -81,6 +105,10 @@ spec:
             - containerPort: 8080
           command: ["java"]
           args: ["-DlogPath=/app/", "-cp", "/app/friendsdrinks-0.0.1.jar", "andrewgrant.friendsdrinks.membership.MembershipWriterService", "/app/dev-kubernetes.properties"]
+      volumes:
+        - name: config
+          configMap:
+            name: streams-config
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -100,6 +128,11 @@ spec:
         - name: friendsdrinks-meetup-writer-service
           image: andyg001/friendsdrinksbackend:latest
           imagePullPolicy: Always
+          volumeMounts:
+            - name: config
+              mountPath: /app/dev-kubernetes.properties
+              subPath: dev-kubernetes.properties
+              readOnly: true
           livenessProbe:
             httpGet:
               path: /v1/health
@@ -109,6 +142,10 @@ spec:
             - containerPort: 8080
           command: ["java"]
           args: ["-DlogPath=/app/", "-cp", "/app/friendsdrinks-0.0.1.jar", "andrewgrant.friendsdrinks.meetup.WriterService", "/app/dev-kubernetes.properties"]
+      volumes:
+        - name: config
+          configMap:
+            name: streams-config
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -128,6 +165,11 @@ spec:
         - name: friendsdrinks-invitation-writer-service
           image: andyg001/friendsdrinksbackend:latest
           imagePullPolicy: Always
+          volumeMounts:
+            - name: config
+              mountPath: /app/dev-kubernetes.properties
+              subPath: dev-kubernetes.properties
+              readOnly: true
           livenessProbe:
             httpGet:
               path: /v1/health
@@ -137,6 +179,10 @@ spec:
             - containerPort: 8080
           command: ["java"]
           args: ["-DlogPath=/app/", "-cp", "/app/friendsdrinks-0.0.1.jar", "andrewgrant.friendsdrinks.membership.InvitationWriterService", "/app/dev-kubernetes.properties"]
+      volumes:
+        - name: config
+          configMap:
+            name: streams-config
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -156,6 +202,11 @@ spec:
         - name: friendsdrinks-writer-service
           image: andyg001/friendsdrinksbackend:latest
           imagePullPolicy: Always
+          volumeMounts:
+            - name: config
+              mountPath: /app/dev-kubernetes.properties
+              subPath: dev-kubernetes.properties
+              readOnly: true
           livenessProbe:
             httpGet:
               path: /v1/health
@@ -165,6 +216,10 @@ spec:
             - containerPort: 8080
           command: ["java"]
           args: ["-DlogPath=/app/", "-cp", "/app/friendsdrinks-0.0.1.jar", "andrewgrant.friendsdrinks.WriterService", "/app/dev-kubernetes.properties"]
+      volumes:
+        - name: config
+          configMap:
+            name: streams-config
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -184,6 +239,11 @@ spec:
         - name: user-service
           image: andyg001/friendsdrinksbackend:latest
           imagePullPolicy: Always
+          volumeMounts:
+            - name: config
+              mountPath: /app/dev-kubernetes.properties
+              subPath: dev-kubernetes.properties
+              readOnly: true
           livenessProbe:
             httpGet:
               path: /v1/health
@@ -193,6 +253,10 @@ spec:
             - containerPort: 8080
           command: ["java"]
           args: ["-DlogPath=/app/", "-cp", "/app/friendsdrinks-0.0.1.jar", "andrewgrant.friendsdrinks.user.Service", "/app/dev-kubernetes.properties"]
+      volumes:
+        - name: config
+          configMap:
+            name: streams-config
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -212,6 +276,11 @@ spec:
         - name: friendsdrinks-api-service
           image: andyg001/friendsdrinksbackend:latest
           imagePullPolicy: Always
+          volumeMounts:
+            - name: config
+              mountPath: /app/dev-kubernetes.properties
+              subPath: dev-kubernetes.properties
+              readOnly: true
           livenessProbe:
             httpGet:
               path: /v1/health
@@ -226,6 +295,10 @@ spec:
             initialDelaySeconds: 240
           command: ["java"]
           args: ["-DlogPath=/app/", "-cp", "/app/friendsdrinks-0.0.1.jar", "andrewgrant.friendsdrinks.frontend.Main", "/app/dev-kubernetes.properties", "8080"]
+      volumes:
+        - name: config
+          configMap:
+            name: streams-config
 ---
 apiVersion: v1
 kind: Service
