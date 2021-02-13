@@ -6,9 +6,11 @@ services:
     image: andyg001/friendsdrinksbackend:latest
     networks:
       - kafka-network
+    volumes:
+      - ./dockercompose:/app/config
     command:
       "bash -c '
-          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.RequestService /app/dev.properties \
+          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.RequestService /app/config/dev.properties \
           -DlogPath=/app/
           '"
 
@@ -16,9 +18,11 @@ services:
     image: andyg001/friendsdrinksbackend:latest
     networks:
       - kafka-network
+    volumes:
+      - ./dockercompose:/app/config
     command:
       "bash -c '
-          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.membership.RequestService /app/dev.properties \
+          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.membership.RequestService /app/config/dev.properties \
           -DlogPath=/app/
           '"
 
@@ -26,9 +30,11 @@ services:
     image: andyg001/friendsdrinksbackend:latest
     networks:
       - kafka-network
+    volumes:
+      - ./dockercompose:/app/config
     command:
       "bash -c '
-          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.membership.MembershipWriterService /app/dev.properties \
+          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.membership.MembershipWriterService /app/config/dev.properties \
           -DlogPath=/app/
           '"
 
@@ -36,9 +42,11 @@ services:
     image: andyg001/friendsdrinksbackend:latest
     networks:
       - kafka-network
+    volumes:
+      - ./dockercompose:/app/config
     command:
       "bash -c '
-          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.meetup.WriterService /app/dev.properties \
+          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.meetup.WriterService /app/config/dev.properties \
           -DlogPath=/app/
           '"
 
@@ -46,9 +54,11 @@ services:
     image: andyg001/friendsdrinksbackend:latest
     networks:
       - kafka-network
+    volumes:
+      - ./dockercompose:/app/config
     command:
       "bash -c '
-          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.membership.InvitationWriterService /app/dev.properties \
+          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.membership.InvitationWriterService /app/config/dev.properties \
           -DlogPath=/app/
           '"
 
@@ -56,29 +66,35 @@ services:
     image: andyg001/friendsdrinksbackend:latest
     networks:
       - kafka-network
+    volumes:
+      - ./dockercompose:/app/config
     command:
       "bash -c '
-          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.WriterService /app/dev.properties \
+          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.WriterService /app/config/dev.properties \
           '"
 
   frontend-api:
     image: andyg001/friendsdrinksbackend:latest
     networks:
       - kafka-network
+    volumes:
+      - ./dockercompose:/app/config
     ports:
       - "32778:8080"
     command:
       "bash -c '
-          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.frontend.Main /app/dev.properties 8080 \
+          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.frontend.Main /app/config/dev.properties 8080 \
           '"
 
   user-service:
     image: andyg001/friendsdrinksbackend:latest
     networks:
       - kafka-network
+    volumes:
+      - ./dockercompose:/app/config
     command:
       "bash -c '
-          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.user.Service /app/dev.properties \
+          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.user.Service /app/config/dev.properties \
           -DlogPath=/app/
           '"
 
