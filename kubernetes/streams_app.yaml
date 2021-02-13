@@ -20,7 +20,7 @@ spec:
             httpGet:
               path: /v1/health
               port: 8080
-            initialDelaySeconds: 60
+            initialDelaySeconds: 240
           ports:
             - containerPort: 8080
           command: ["java"]
@@ -48,7 +48,7 @@ spec:
             httpGet:
               path: /v1/health
               port: 8080
-            initialDelaySeconds: 60
+            initialDelaySeconds: 240
           ports:
             - containerPort: 8080
           command: ["java"]
@@ -76,7 +76,7 @@ spec:
             httpGet:
               path: /v1/health
               port: 8080
-            initialDelaySeconds: 60
+            initialDelaySeconds: 240
           ports:
             - containerPort: 8080
           command: ["java"]
@@ -104,7 +104,7 @@ spec:
             httpGet:
               path: /v1/health
               port: 8080
-            initialDelaySeconds: 60
+            initialDelaySeconds: 240
           ports:
             - containerPort: 8080
           command: ["java"]
@@ -132,7 +132,7 @@ spec:
             httpGet:
               path: /v1/health
               port: 8080
-            initialDelaySeconds: 60
+            initialDelaySeconds: 240
           ports:
             - containerPort: 8080
           command: ["java"]
@@ -160,7 +160,7 @@ spec:
             httpGet:
               path: /v1/health
               port: 8080
-            initialDelaySeconds: 60
+            initialDelaySeconds: 240
           ports:
             - containerPort: 8080
           command: ["java"]
@@ -188,7 +188,7 @@ spec:
             httpGet:
               path: /v1/health
               port: 8080
-            initialDelaySeconds: 60
+            initialDelaySeconds: 240
           ports:
             - containerPort: 8080
           command: ["java"]
@@ -216,14 +216,14 @@ spec:
             httpGet:
               path: /v1/health
               port: 8080
-            initialDelaySeconds: 60
+            initialDelaySeconds: 240
           ports:
             - containerPort: 8080
           readinessProbe:
             httpGet:
               path: /v1/health
               port: 8080
-            initialDelaySeconds: 60
+            initialDelaySeconds: 240
           command: ["java"]
           args: ["-DlogPath=/app/", "-cp", "/app/friendsdrinks-0.0.1.jar", "andrewgrant.friendsdrinks.frontend.Main", "/app/dev-kubernetes.properties", "8080"]
 ---
