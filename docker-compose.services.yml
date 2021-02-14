@@ -8,10 +8,7 @@ services:
       - kafka-network
     volumes:
       - ./dockercompose:/app/config
-    command:
-      "bash -c '
-          java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.RequestService /app/config/dev.properties \
-          '"
+    command: "java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.RequestService /app/config/dev.properties"
 
   friendsdrinks-membership-request-service:
     image: andyg001/friendsdrinksbackend:latest
@@ -19,10 +16,7 @@ services:
       - kafka-network
     volumes:
       - ./dockercompose:/app/config
-    command:
-      "bash -c '
-          java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.membership.RequestService /app/config/dev.properties \
-          '"
+    command: "java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.membership.RequestService /app/config/dev.properties"
 
   friendsdrinks-membership-writer-service:
     image: andyg001/friendsdrinksbackend:latest
@@ -30,10 +24,7 @@ services:
       - kafka-network
     volumes:
       - ./dockercompose:/app/config
-    command:
-      "bash -c '
-          java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.membership.MembershipWriterService /app/config/dev.properties \
-          '"
+    command: "java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.membership.MembershipWriterService /app/config/dev.properties"
 
   friendsdrinks-meetup-writer-service:
     image: andyg001/friendsdrinksbackend:latest
@@ -41,10 +32,7 @@ services:
       - kafka-network
     volumes:
       - ./dockercompose:/app/config
-    command:
-      "bash -c '
-          java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.meetup.WriterService /app/config/dev.properties \
-          '"
+    command: "java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.meetup.WriterService /app/config/dev.properties"
 
   friendsdrinks-invitation-writer-service:
     image: andyg001/friendsdrinksbackend:latest
@@ -52,10 +40,7 @@ services:
       - kafka-network
     volumes:
       - ./dockercompose:/app/config
-    command:
-      "bash -c '
-          java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.membership.InvitationWriterService /app/config/dev.properties \
-          '"
+    command: "java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.membership.InvitationWriterService /app/config/dev.properties"
 
   friendsdrinks-writer-service:
     image: andyg001/friendsdrinksbackend:latest
@@ -63,10 +48,7 @@ services:
       - kafka-network
     volumes:
       - ./dockercompose:/app/config
-    command:
-      "bash -c '
-          java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.WriterService /app/config/dev.properties \
-          '"
+    command: "java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.WriterService /app/config/dev.properties"
 
   frontend-api:
     image: andyg001/friendsdrinksbackend:latest
@@ -76,10 +58,7 @@ services:
       - ./dockercompose:/app/config
     ports:
       - "32778:8080"
-    command:
-      "bash -c '
-          java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.frontend.Main /app/config/dev.properties 8080 \
-          '"
+    command: "java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.frontend.Main /app/config/dev.properties 8080"
 
   user-service:
     image: andyg001/friendsdrinksbackend:latest
@@ -87,10 +66,7 @@ services:
       - kafka-network
     volumes:
       - ./dockercompose:/app/config
-    command:
-      "bash -c '
-          java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.user.Service /app/config/dev.properties \
-          '"
+    command: "java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.user.Service /app/config/dev.properties"
 
 networks:
   kafka-network:
