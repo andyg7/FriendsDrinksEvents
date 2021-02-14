@@ -10,8 +10,7 @@ services:
       - ./dockercompose:/app/config
     command:
       "bash -c '
-          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.RequestService /app/config/dev.properties \
-          -DlogPath=/app/
+          java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.RequestService /app/config/dev.properties \
           '"
 
   friendsdrinks-membership-request-service:
@@ -22,8 +21,7 @@ services:
       - ./dockercompose:/app/config
     command:
       "bash -c '
-          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.membership.RequestService /app/config/dev.properties \
-          -DlogPath=/app/
+          java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.membership.RequestService /app/config/dev.properties \
           '"
 
   friendsdrinks-membership-writer-service:
@@ -34,8 +32,7 @@ services:
       - ./dockercompose:/app/config
     command:
       "bash -c '
-          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.membership.MembershipWriterService /app/config/dev.properties \
-          -DlogPath=/app/
+          java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.membership.MembershipWriterService /app/config/dev.properties \
           '"
 
   friendsdrinks-meetup-writer-service:
@@ -46,8 +43,7 @@ services:
       - ./dockercompose:/app/config
     command:
       "bash -c '
-          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.meetup.WriterService /app/config/dev.properties \
-          -DlogPath=/app/
+          java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.meetup.WriterService /app/config/dev.properties \
           '"
 
   friendsdrinks-invitation-writer-service:
@@ -58,8 +54,7 @@ services:
       - ./dockercompose:/app/config
     command:
       "bash -c '
-          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.membership.InvitationWriterService /app/config/dev.properties \
-          -DlogPath=/app/
+          java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.membership.InvitationWriterService /app/config/dev.properties \
           '"
 
   friendsdrinks-writer-service:
@@ -70,7 +65,7 @@ services:
       - ./dockercompose:/app/config
     command:
       "bash -c '
-          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.WriterService /app/config/dev.properties \
+          java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.WriterService /app/config/dev.properties \
           '"
 
   frontend-api:
@@ -83,7 +78,7 @@ services:
       - "32778:8080"
     command:
       "bash -c '
-          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.frontend.Main /app/config/dev.properties 8080 \
+          java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.frontend.Main /app/config/dev.properties 8080 \
           '"
 
   user-service:
@@ -94,8 +89,7 @@ services:
       - ./dockercompose:/app/config
     command:
       "bash -c '
-          java -DlogPath=/app/ -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.user.Service /app/config/dev.properties \
-          -DlogPath=/app/
+          java -cp /app/friendsdrinks-0.0.1.jar andrewgrant.friendsdrinks.user.Service /app/config/dev.properties \
           '"
 
 networks:
