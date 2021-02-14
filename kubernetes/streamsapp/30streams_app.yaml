@@ -27,7 +27,6 @@ spec:
             initialDelaySeconds: 240
           ports:
             - containerPort: 8080
-          command: ["java", "-cp", "/app/friendsdrinks-0.0.1.jar"]
           args: ["andrewgrant.friendsdrinks.RequestService", "/app/config/dev-kubernetes.properties"]
       volumes:
         - name: config
@@ -64,7 +63,6 @@ spec:
             initialDelaySeconds: 240
           ports:
             - containerPort: 8080
-          command: ["java", "-cp", "/app/friendsdrinks-0.0.1.jar"]
           args: ["andrewgrant.friendsdrinks.membership.RequestService", "/app/config/dev-kubernetes.properties"]
       volumes:
         - name: config
@@ -100,7 +98,6 @@ spec:
             initialDelaySeconds: 240
           ports:
             - containerPort: 8080
-          command: ["java", "-cp", "/app/friendsdrinks-0.0.1.jar"]
           args: ["andrewgrant.friendsdrinks.membership.MembershipWriterService", "/app/config/dev-kubernetes.properties"]
       volumes:
         - name: config
@@ -136,7 +133,6 @@ spec:
             initialDelaySeconds: 240
           ports:
             - containerPort: 8080
-          command: ["java", "-cp", "/app/friendsdrinks-0.0.1.jar"]
           args: ["andrewgrant.friendsdrinks.meetup.WriterService", "/app/config/dev-kubernetes.properties"]
       volumes:
         - name: config
@@ -172,7 +168,6 @@ spec:
             initialDelaySeconds: 240
           ports:
             - containerPort: 8080
-          command: ["java", "-cp", "/app/friendsdrinks-0.0.1.jar"]
           args: ["andrewgrant.friendsdrinks.membership.InvitationWriterService", "/app/config/dev-kubernetes.properties"]
       volumes:
         - name: config
@@ -208,7 +203,6 @@ spec:
             initialDelaySeconds: 240
           ports:
             - containerPort: 8080
-          command: ["java", "-cp", "/app/friendsdrinks-0.0.1.jar"]
           args: ["andrewgrant.friendsdrinks.WriterService", "/app/config/dev-kubernetes.properties"]
       volumes:
         - name: config
@@ -244,7 +238,6 @@ spec:
             initialDelaySeconds: 240
           ports:
             - containerPort: 8080
-          command: ["java", "-cp", "/app/friendsdrinks-0.0.1.jar"]
           args: ["andrewgrant.friendsdrinks.user.Service", "/app/config/dev-kubernetes.properties"]
       volumes:
         - name: config
@@ -285,7 +278,6 @@ spec:
               path: /v1/health
               port: 8080
             initialDelaySeconds: 240
-          command: ["java", "-cp", "/app/friendsdrinks-0.0.1.jar"]
           args: ["andrewgrant.friendsdrinks.frontend.Main", "/app/config/dev-kubernetes.properties", "8080"]
       volumes:
         - name: config
