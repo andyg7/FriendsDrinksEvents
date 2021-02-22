@@ -32,8 +32,7 @@ public class Main {
 
     public static void main(String[] args) throws IOException, InterruptedException {
         if (args.length != 2) {
-            throw new IllegalArgumentException("Program expects " +
-                    "1) path to config 2) app port");
+            throw new IllegalArgumentException("Program requires path to config as first argument");
         }
 
         log.info("Starting Frontend API application");
@@ -48,7 +47,8 @@ public class Main {
         andrewgrant.friendsdrinks.meetup.AvroBuilder meetupAvroBuilder =
                 new andrewgrant.friendsdrinks.meetup.AvroBuilder(schemaRegistryUrl);
 
-        String portStr = args[1];
+        int port = 8080;
+        String portStr = String.valueOf(port);
         String streamsUri = "localhost:" + portStr;
 
         MaterializedViewsService streamsService = new MaterializedViewsService(
@@ -60,7 +60,6 @@ public class Main {
         Properties streamProps = streamsService.buildStreamsProperties(streamsUri);
         KafkaStreams streams = new KafkaStreams(topology, streamProps);
 
-        int port = Integer.parseInt(portStr);
         Server jettyServer = Main.buildServer(envProps, streams, userAvroBuilder, apiAvroBuilder, meetupAvroBuilder, port);
         // Attach shutdown handler to catch Control-C.
         Runtime.getRuntime().addShutdownHook(new Thread("shutdown-hook") {

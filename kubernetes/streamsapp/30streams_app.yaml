@@ -278,7 +278,7 @@ spec:
               path: /v1/health
               port: 8080
             initialDelaySeconds: 240
-          args: ["andrewgrant.friendsdrinks.frontend.Main", "/app/config/dev-kubernetes.properties", "8080"]
+          args: ["andrewgrant.friendsdrinks.frontend.Main", "/app/config/dev-kubernetes.properties"]
       volumes:
         - name: config
           configMap:

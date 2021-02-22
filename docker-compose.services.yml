@@ -58,7 +58,7 @@ services:
       - ./dockercompose:/app/config
     ports:
       - "32778:8080"
-    command: "andrewgrant.friendsdrinks.frontend.Main /app/config/dev.properties 8080"
+    command: "andrewgrant.friendsdrinks.frontend.Main /app/config/dev.properties"
 
   user-service:
     image: andyg001/friendsdrinksbackend:latest
