@@ -12,11 +12,8 @@ blocks:
           commands:
             - checkout
             - echo $DOCKER_PASSWORD | docker login --username "$DOCKER_USERNAME" --password-stdin
-            - docker pull $REPO/friendsdrinksbackend:latest || true
-            - docker build -t $REPO/friendsdrinksbackend:$SEMAPHORE_WORKFLOW_ID .
-            - docker push $REPO/friendsdrinksbackend:$SEMAPHORE_WORKFLOW_ID
+            - docker pull $DOCKER_USERNAME/friendsdrinksbackend:latest || true
+            - docker build -t $DOCKER_USERNAME/friendsdrinksbackend:$SEMAPHORE_WORKFLOW_ID .
+            - docker push $DOCKER_USERNAME/friendsdrinksbackend:$SEMAPHORE_WORKFLOW_ID
       secrets:
         - name: docker-hub-secret
-      env_vars:
-        - name: REPO
-          value: andyg001
