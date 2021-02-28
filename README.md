@@ -12,3 +12,6 @@ Used to build the application JAR.
 Used to build the application's Docker image.
 ### Kubernetes
 Used for running the various containers that make up the application.
+
+### Semaphore
+CI/CD solution.
