@@ -12,3 +12,5 @@ blocks:
           commands:
             - checkout
             - docker build -t your-image .
+      secrets:
+        - name: docker-hub-secret
