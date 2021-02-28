@@ -12,9 +12,9 @@ blocks:
           commands:
             - checkout
             - echo $DOCKER_PASSWORD | docker login --username "$DOCKER_USERNAME" --password-stdin
-            - 'docker pull $REPO/friendsdrinksbackend:latest || true'
-            - 'docker build -t friendsdrinksbackend:$SEMAPHORE_WORKFLOW_ID .'
-            - 'docker push $REPO/friendsdrinksbackend:$SEMAPHORE_WORKFLOW_ID'
+            - docker pull $REPO/friendsdrinksbackend:latest || true
+            - docker build -t friendsdrinksbackend:$SEMAPHORE_WORKFLOW_ID .
+            - docker push $REPO/friendsdrinksbackend:$SEMAPHORE_WORKFLOW_ID
       secrets:
         - name: docker-hub-secret
       env_vars:
