@@ -22,4 +22,4 @@ blocks:
       jobs:
         - name: Kubernetes deployment
           commands:
-            - echo 'TODO: deploy to Kubernetes'
+            - 'echo ''TODO: deploy to Kubernetes'''
