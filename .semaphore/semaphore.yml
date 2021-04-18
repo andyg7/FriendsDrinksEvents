@@ -16,10 +16,10 @@ blocks:
             - 'docker push $DOCKER_USERNAME/friendsdrinksbackend:$SEMAPHORE_WORKFLOW_ID'
       secrets:
         - name: docker-hub-secret
-  - name: Download AWS cli
+  - name: Download AWS CLI
     task:
       jobs:
-        - name: Download AWS cli
+        - name: Download AWS CLI
           commands:
             - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
             - unzip awscliv2.zip
