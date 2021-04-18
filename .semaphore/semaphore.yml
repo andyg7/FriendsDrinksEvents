@@ -53,4 +53,5 @@ blocks:
         - name: Kubernetes deployment
           commands:
             - test -f awskubeconfig
+            - kubectl --kubeconfig awskubeconfig cluster-info
 
