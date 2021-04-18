@@ -12,7 +12,6 @@ blocks:
           commands:
             - checkout
             - echo $DOCKER_PASSWORD | docker login --username "$DOCKER_USERNAME" --password-stdin
-            - 'docker pull $DOCKER_USERNAME/friendsdrinksbackend:latest || true'
             - 'docker build -t $DOCKER_USERNAME/friendsdrinksbackend:$SEMAPHORE_WORKFLOW_ID .'
             - 'docker push $DOCKER_USERNAME/friendsdrinksbackend:$SEMAPHORE_WORKFLOW_ID'
       secrets:
