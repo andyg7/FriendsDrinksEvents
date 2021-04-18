@@ -1,0 +1,8 @@
+apiVersion: v1beta
+kind: Secret
+metadata:
+  name: iam-role
+data:
+  env_vars:
+    - name: IAM_ROLE
+      value: $IAM_ROLE
