@@ -26,8 +26,6 @@ blocks:
             - sudo ./aws/install
             - aws --version
             - cache store awsclipath $(which aws)
-      secrets:
-        - name: iam-user-secret
       env_vars:
         - name: AWS_DEFAULT_REGION
           value: us-east-1
@@ -46,6 +44,8 @@ blocks:
             - source semaphore/set_iam_assumed_role_env_vars.sh 2>&1
             - aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
             - kubectl --kubeconfig awskubeconfig cluster-info
+      secrets:
+        - name: iam-user-secret
       env_vars:
         - name: AWS_DEFAULT_REGION
           value: us-east-1
