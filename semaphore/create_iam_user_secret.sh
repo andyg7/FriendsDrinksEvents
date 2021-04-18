@@ -18,6 +18,6 @@ then
 fi
 
 compiled_secret=$(mktemp)
-cat semaphore/dockerhubsecret.yaml | envsubst | tee compiled_secret
+cat semaphore/awsiamusersecret.yaml | envsubst | tee compiled_secret
 sem create -f compiled_secret
 rm -rf compiled_secret
