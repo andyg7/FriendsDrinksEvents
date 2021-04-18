@@ -25,3 +25,8 @@ blocks:
             - unzip awscliv2.zip
             - sudo ./aws/install
             - aws --version
+            - aws cloudformation list-exports | jq -r '.Exports[] | select(.Name=="KubernetesClusterAdminRole-RoleArn") | .Value'
+      secrets:
+        - name: docker-hub-secret
+        - name: iam-user-secret
+
