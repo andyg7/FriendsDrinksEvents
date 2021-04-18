@@ -25,7 +25,6 @@ blocks:
             - unzip awscliv2.zip
             - sudo ./aws/install
             - aws --version
-            - export AWS_DEFAULT_REGION="us-east-1"
             - export AWS_ROLE_ARN=$(aws cloudformation list-exports | jq -r '.Exports[] | select(.Name=="KubernetesClusterAdminRole-RoleArn") | .Value')
             - export STS_CREDENTIALS=$(aws sts assume-role --role-arn $AWS_ROLE_ARN --role-session-name KubeconfigSession | jq -r '.Credentials') >/dev/null 2>&1
             - export AWS_ACCESS_KEY_ID_STS=$(echo $STS_CREDENTIALS | jq -r '.AccessKeyId') >/dev/null 2>&1
@@ -38,6 +37,9 @@ blocks:
             - cache store awskubeconfigpath awskubeconfig
       secrets:
         - name: iam-user-secret
+      env_vars:
+        - name: AWS_DEFAULT_REGION
+          value: us-east-1
 
   - name: Deploy to Kubernetes
     task:
