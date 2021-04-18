@@ -2,11 +2,11 @@
 
 set -e
 
-aws iam create-user --user-name KubernetesManifestDeployerUserTest
-aws iam put-user-policy --user-name KubernetesManifestDeployerUserTest --policy-name AWSCloudFormationReadOnlyAccess
+aws iam create-user --user-name KubernetesManifestDeployerUser
+aws iam attach-user-policy --user-name KubernetesManifestDeployerUser --policy-arn arn:aws:iam::aws:policy/AWSCloudFormationReadOnlyAccess
 access_key=$(mktemp)
 echo "$access_key"
-aws iam create-access-key --user-name KubernetesManifestDeployerUserTest | jq -r '.AccessKey' > "$access_key"
+aws iam create-access-key --user-name KubernetesManifestDeployerUser | jq -r '.AccessKey' > "$access_key"
 
 cat $access_key
 
