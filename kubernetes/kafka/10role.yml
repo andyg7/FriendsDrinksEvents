@@ -8,9 +8,8 @@ rules:
     resources: ["pods", "nodes"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
+kind: ClusterRoleBinding
 metadata:
-  namespace: kafka
   name: cluster-reader-role-binding
 subjects:
   - kind: ServiceAccount
