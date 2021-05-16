@@ -1,6 +1,6 @@
 #!/bin/zsh
 
-set -e
+set -eu
 
 export DOCKER_USERNAME=$1
 export DOCKER_PASSWORD=$2

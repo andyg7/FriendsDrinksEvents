@@ -1,0 +1,4 @@
+#!/bin/zsh
+
+set -eu
+
