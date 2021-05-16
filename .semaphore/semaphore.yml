@@ -44,6 +44,7 @@ blocks:
             - source semaphore/iamenvsetup 2>&1
             - aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
             - kubectl --kubeconfig awskubeconfig cluster-info
+            - kubectl --kubeconfig awskubeconfig get nodes
       secrets:
         - name: iam-user-secret
       env_vars:
