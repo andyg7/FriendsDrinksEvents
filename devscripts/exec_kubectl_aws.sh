@@ -31,3 +31,5 @@ export AWS_SESSION_TOKEN=$(echo $AWS_SESSION_TOKEN_STS) >/dev/null 2>&1
 aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
 cat awskubeconfig
 kubectl --kubeconfig awskubeconfig $kubectl_args
+
+rm -rf awskubeconfig
