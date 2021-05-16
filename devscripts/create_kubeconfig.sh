@@ -5,7 +5,7 @@ set -eu
 export AWS_ACCESS_KEY_ID=$1
 export AWS_SECRET_ACCESS_KEY=$2
 export AWS_ROLE_ARN=$3
-kubectl_cmd=$4
+kubectl_args=$4
 export AWS_DEFAULT_REGION=us-east-1
 
 if [ -z "$AWS_ACCESS_KEY_ID" ]
@@ -30,4 +30,4 @@ export AWS_SESSION_TOKEN=$(echo $AWS_SESSION_TOKEN_STS) >/dev/null 2>&1
 
 aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
 cat awskubeconfig
-kubectl --kubeconfig awskubeconfig $kubectl_cmd
+kubectl --kubeconfig awskubeconfig $kubectl_args
