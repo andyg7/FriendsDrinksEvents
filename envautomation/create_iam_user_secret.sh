@@ -32,6 +32,6 @@ then
 fi
 
 compiled_secret=$(mktemp)
-cat bootstrap/awsiamusersecret.yaml | envsubst | tee $compiled_secret
+cat envautomation/awsiamusersecret.yaml | envsubst | tee $compiled_secret
 sem create -f $compiled_secret
 rm -rf $compiled_secret
