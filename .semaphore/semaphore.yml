@@ -104,3 +104,30 @@ blocks:
       env_vars:
         - name: AWS_DEFAULT_REGION
           value: us-east-1
+  - name: Deploy schema registry to Kubernetes
+    task:
+      prologue:
+        commands:
+          - checkout
+          - cache list
+          - cache restore awsclipath
+      jobs:
+        - name: Schema registry Kubernetes deployment
+          commands:
+            - aws --version
+            - source semaphore/iamenvsetup 2>&1
+            - aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
+            - kubectl --kubeconfig awskubeconfig cluster-info
+            - kubectl --kubeconfig awskubeconfig get nodes
+            - kubectl --kubeconfig awskubeconfig apply -f kubernetes/schemaregistry/avro-tools-config.yml
+            - kubectl --kubeconfig awskubeconfig apply -f kubernetes/schemaregistry/rest-service.yml
+            - kubectl --kubeconfig awskubeconfig apply -f kubernetes/schemaregistry/schemas-service.yml
+            - kubectl --kubeconfig awskubeconfig apply -f kubernetes/schemaregistry/rest.yml
+            - kubectl --kubeconfig awskubeconfig rollout status -f kubernetes/schemaregistry/rest.yml
+            - kubectl --kubeconfig awskubeconfig apply -f kubernetes/schemaregistry/schemas.yml
+            - kubectl --kubeconfig awskubeconfig rollout status -f kubernetes/schemaregistry/schemas.yml
+      secrets:
+        - name: iam-user-secret
+      env_vars:
+        - name: AWS_DEFAULT_REGION
+          value: us-east-1
