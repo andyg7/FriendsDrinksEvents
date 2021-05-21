@@ -29,8 +29,7 @@ blocks:
       env_vars:
         - name: AWS_DEFAULT_REGION
           value: us-east-1
-
-  - name: Deploy to Kubernetes
+  - name: Deploy bootstrap namespace to Kubernetes
     task:
       prologue:
         commands:
@@ -45,9 +44,9 @@ blocks:
             - aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
             - kubectl --kubeconfig awskubeconfig cluster-info
             - kubectl --kubeconfig awskubeconfig get nodes
+            - kubectl --kubeconfig awskubeconfig apply -f kubernetes/00-namespace.yaml
       secrets:
         - name: iam-user-secret
       env_vars:
         - name: AWS_DEFAULT_REGION
           value: us-east-1
-
