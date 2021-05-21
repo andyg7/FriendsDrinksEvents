@@ -44,7 +44,7 @@ blocks:
             - aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
             - kubectl --kubeconfig awskubeconfig cluster-info
             - kubectl --kubeconfig awskubeconfig get nodes
-            - kubectl --kubeconfig awskubeconfig apply -f kubernetes/00-namespace.yaml
+            - kubectl --kubeconfig awskubeconfig apply -f kubernetes/00-namespace.yml
       secrets:
         - name: iam-user-secret
       env_vars:
