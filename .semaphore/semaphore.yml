@@ -37,7 +37,7 @@ blocks:
           - cache list
           - cache restore awsclipath
       jobs:
-        - name: Kubernetes deployment
+        - name: Namespace Kubernetes deployment
           commands:
             - aws --version
             - source semaphore/iamenvsetup 2>&1
@@ -58,7 +58,7 @@ blocks:
           - cache list
           - cache restore awsclipath
       jobs:
-        - name: Kubernetes deployment
+        - name: ZooKeeper Kubernetes deployment
           commands:
             - aws --version
             - source semaphore/iamenvsetup 2>&1
@@ -73,6 +73,32 @@ blocks:
             - kubectl --kubeconfig awskubeconfig rollout status -f kubernetes/zookeeper/50pzoo.yml --timeout=600s
             - kubectl --kubeconfig awskubeconfig apply -f kubernetes/zookeeper/51zoo.yml
             - kubectl --kubeconfig awskubeconfig rollout status -f kubernetes/zookeeper/51zoo.yml --timeout=600s
+      secrets:
+        - name: iam-user-secret
+      env_vars:
+        - name: AWS_DEFAULT_REGION
+          value: us-east-1
+  - name: Deploy Kafka to Kubernetes
+    task:
+      prologue:
+        commands:
+          - checkout
+          - cache list
+          - cache restore awsclipath
+      jobs:
+        - name: Kafka Kubernetes deployment
+          commands:
+            - aws --version
+            - source semaphore/iamenvsetup 2>&1
+            - aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
+            - kubectl --kubeconfig awskubeconfig cluster-info
+            - kubectl --kubeconfig awskubeconfig get nodes
+            - kubectl --kubeconfig awskubeconfig apply -f kubernetes/kafka/10role.yml
+            - kubectl --kubeconfig awskubeconfig apply -f kubernetes/kafka/11broker-config.yml
+            - kubectl --kubeconfig awskubeconfig apply -f kubernetes/kafka/20dns.yml
+            - kubectl --kubeconfig awskubeconfig apply -f kubernetes/kafka/30bootstrap-service.yml
+            - kubectl --kubeconfig awskubeconfig apply -f kubernetes/kafka/50kafka.yml
+            - kubectl --kubeconfig awskubeconfig rollout status -f kubernetes/kafka/50kafka.yml
       secrets:
         - name: iam-user-secret
       env_vars:
