@@ -8,30 +8,19 @@ auto_cancel:
   queued:
     when: "true" # enable auto-cancel for branches, tags and pull-requests
 blocks:
-  - name: Download AWS CLI
-    task:
-      jobs:
-        - name: Download AWS CLI
-          commands:
-            - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-            - unzip awscliv2.zip
-            - sudo ./aws/install
-            - aws --version
-            - cache store awsclipath $(which aws)
-      env_vars:
-        - name: AWS_DEFAULT_REGION
-          value: us-east-1
   - name: Create topics and deploy app config to Kubernetes
     task:
       prologue:
         commands:
           - checkout
           - cache list
-          - cache restore awsclipath
+          - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          - unzip awscliv2.zip
+          - sudo ./aws/install
+          - aws --version
       jobs:
         - name: Config deployment and job to create topics
           commands:
-            - aws --version
             - source semaphore/iamenvsetup 2>&1
             - aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
             - kubectl --kubeconfig awskubeconfig cluster-info
@@ -50,11 +39,13 @@ blocks:
         commands:
           - checkout
           - cache list
-          - cache restore awsclipath
+          - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          - unzip awscliv2.zip
+          - sudo ./aws/install
+          - aws --version
       jobs:
         - name: FriendsDrinks API service service deployment
           commands:
-            - aws --version
             - source semaphore/iamenvsetup 2>&1
             - aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
             - kubectl --kubeconfig awskubeconfig cluster-info
@@ -66,7 +57,6 @@ blocks:
             - rm -f $apply_tmp
         - name: FriendsDrinks API service deployment
           commands:
-            - aws --version
             - source semaphore/iamenvsetup 2>&1
             - aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
             - kubectl --kubeconfig awskubeconfig cluster-info
@@ -79,7 +69,6 @@ blocks:
             - rm -f $apply_tmp
         - name: FriendsDrinks invitation writer service deployment
           commands:
-            - aws --version
             - source semaphore/iamenvsetup 2>&1
             - aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
             - kubectl --kubeconfig awskubeconfig cluster-info
@@ -92,7 +81,6 @@ blocks:
             - rm -f $apply_tmp
         - name: FriendsDrinks meetup writer service deployment
           commands:
-            - aws --version
             - source semaphore/iamenvsetup 2>&1
             - aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
             - kubectl --kubeconfig awskubeconfig cluster-info
@@ -105,7 +93,6 @@ blocks:
             - rm -f $apply_tmp
         - name: FriendsDrinks membership request service deployment
           commands:
-            - aws --version
             - source semaphore/iamenvsetup 2>&1
             - aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
             - kubectl --kubeconfig awskubeconfig cluster-info
@@ -118,7 +105,6 @@ blocks:
             - rm -f $apply_tmp
         - name: FriendsDrinks membershpi writer service deployment
           commands:
-            - aws --version
             - source semaphore/iamenvsetup 2>&1
             - aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
             - kubectl --kubeconfig awskubeconfig cluster-info
@@ -131,7 +117,6 @@ blocks:
             - rm -f $apply_tmp
         - name: FriendsDrinks request service deployment
           commands:
-            - aws --version
             - source semaphore/iamenvsetup 2>&1
             - aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
             - kubectl --kubeconfig awskubeconfig cluster-info
@@ -144,7 +129,6 @@ blocks:
             - rm -f $apply_tmp
         - name: FriendsDrinks writer service deployment
           commands:
-            - aws --version
             - source semaphore/iamenvsetup 2>&1
             - aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
             - kubectl --kubeconfig awskubeconfig cluster-info
