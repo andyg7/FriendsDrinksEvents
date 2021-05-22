@@ -131,3 +131,24 @@ blocks:
       env_vars:
         - name: AWS_DEFAULT_REGION
           value: us-east-1
+  - name: Deploy app to Kubernetes
+    task:
+      prologue:
+        commands:
+          - checkout
+          - cache list
+          - cache restore awsclipath
+      jobs:
+        - name: Application Kubernetes deployment
+          commands:
+            - aws --version
+            - source semaphore/iamenvsetup 2>&1
+            - aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
+            - kubectl --kubeconfig awskubeconfig cluster-info
+            - kubectl --kubeconfig awskubeconfig get nodes
+            - kubectl --kubeconfig awskubeconfig apply -f kubernetes/streamsapp/10create_kafka_topics.yaml
+            - kubectl --kubeconfig awskubeconfig wait --for=condition=complete job/kafka-create-topics-job --timeout=600s
+        - name: iam-user-secret
+      env_vars:
+        - name: AWS_DEFAULT_REGION
+          value: us-east-1
