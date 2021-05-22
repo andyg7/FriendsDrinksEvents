@@ -61,6 +61,7 @@ blocks:
             - ./kubernetes/streamsapp/generate_manifest.sh kubernetes/streamsapp/friendsdrinks_api_service_service.yml $DOCKER_USERNAME/friendsdrinksbackend:$SEMAPHORE_WORKFLOW_ID $apply_tmp
             - cat $apply_tmp
             - kubectl --kubeconfig awskubeconfig apply -f $apply_tmp
+            - kubectl --kubeconfig awskubeconfig rollout status -f $apply_tmp
             - rm -f $apply_tmp
         - name: FriendsDrinks API service deployment
           commands:
@@ -73,6 +74,7 @@ blocks:
             - ./kubernetes/streamsapp/generate_manifest.sh kubernetes/streamsapp/friendsdrinks_api_service.yml $DOCKER_USERNAME/friendsdrinksbackend:$SEMAPHORE_WORKFLOW_ID $apply_tmp
             - cat $apply_tmp
             - kubectl --kubeconfig awskubeconfig apply -f $apply_tmp
+            - kubectl --kubeconfig awskubeconfig rollout status -f $apply_tmp
             - rm -f $apply_tmp
         - name: FriendsDrinks invitation writer service deployment
           commands:
@@ -85,6 +87,7 @@ blocks:
             - ./kubernetes/streamsapp/generate_manifest.sh kubernetes/streamsapp/friendsdrinks_invitation_writer_service.yml $DOCKER_USERNAME/friendsdrinksbackend:$SEMAPHORE_WORKFLOW_ID $apply_tmp
             - cat $apply_tmp
             - kubectl --kubeconfig awskubeconfig apply -f $apply_tmp
+            - kubectl --kubeconfig awskubeconfig rollout status -f $apply_tmp
             - rm -f $apply_tmp
         - name: FriendsDrinks meetup writer service deployment
           commands:
@@ -97,6 +100,7 @@ blocks:
             - ./kubernetes/streamsapp/generate_manifest.sh kubernetes/streamsapp/friendsdrinks_meetup_writer_service.yml $DOCKER_USERNAME/friendsdrinksbackend:$SEMAPHORE_WORKFLOW_ID $apply_tmp
             - cat $apply_tmp
             - kubectl --kubeconfig awskubeconfig apply -f $apply_tmp
+            - kubectl --kubeconfig awskubeconfig rollout status -f $apply_tmp
             - rm -f $apply_tmp
         - name: FriendsDrinks membership request service deployment
           commands:
@@ -109,6 +113,7 @@ blocks:
             - ./kubernetes/streamsapp/generate_manifest.sh kubernetes/streamsapp/friendsdrinks_membership_request_service.yml $DOCKER_USERNAME/friendsdrinksbackend:$SEMAPHORE_WORKFLOW_ID $apply_tmp
             - cat $apply_tmp
             - kubectl --kubeconfig awskubeconfig apply -f $apply_tmp
+            - kubectl --kubeconfig awskubeconfig rollout status -f $apply_tmp
             - rm -f $apply_tmp
         - name: FriendsDrinks membershpi writer service deployment
           commands:
@@ -121,6 +126,7 @@ blocks:
             - ./kubernetes/streamsapp/generate_manifest.sh kubernetes/streamsapp/friendsdrinks_membership_writer_service.yml $DOCKER_USERNAME/friendsdrinksbackend:$SEMAPHORE_WORKFLOW_ID $apply_tmp
             - cat $apply_tmp
             - kubectl --kubeconfig awskubeconfig apply -f $apply_tmp
+            - kubectl --kubeconfig awskubeconfig rollout status -f $apply_tmp
             - rm -f $apply_tmp
         - name: FriendsDrinks request service deployment
           commands:
@@ -133,6 +139,7 @@ blocks:
             - ./kubernetes/streamsapp/generate_manifest.sh kubernetes/streamsapp/friendsdrinks_request_service.yml $DOCKER_USERNAME/friendsdrinksbackend:$SEMAPHORE_WORKFLOW_ID $apply_tmp
             - cat $apply_tmp
             - kubectl --kubeconfig awskubeconfig apply -f $apply_tmp
+            - kubectl --kubeconfig awskubeconfig rollout status -f $apply_tmp
             - rm -f $apply_tmp
         - name: FriendsDrinks writer service deployment
           commands:
@@ -145,6 +152,7 @@ blocks:
             - ./kubernetes/streamsapp/generate_manifest.sh kubernetes/streamsapp/friendsdrinks_writer_service.yml $DOCKER_USERNAME/friendsdrinksbackend:$SEMAPHORE_WORKFLOW_ID $apply_tmp
             - cat $apply_tmp
             - kubectl --kubeconfig awskubeconfig apply -f $apply_tmp
+            - kubectl --kubeconfig awskubeconfig rollout status -f $apply_tmp
             - rm -f $apply_tmp
       secrets:
         - name: iam-user-secret
