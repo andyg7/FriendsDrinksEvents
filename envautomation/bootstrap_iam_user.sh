@@ -5,18 +5,14 @@ set -eu
 region=$1
 
 aws iam create-user --user-name KubernetesManifestDeployerUser
-access_key=$(mktemp)
-echo "$access_key"
-aws iam create-access-key --user-name KubernetesManifestDeployerUser | jq -r '.AccessKey' > "$access_key"
-
-cat $access_key
-
-export AWS_ACCESS_KEY_ID=$(jq -r '.AccessKeyId' "$access_key")
-export AWS_SECRET_ACCESS_KEY=$(jq -r '.SecretAccessKey' "$access_key")
+aws iam attach-user-policy --user-name KubernetesManifestDeployerUser --policy-arn arn:aws:iam::aws:policy/AWSCloudFormationReadOnlyAccess
+new_access_key=$(aws iam create-access-key --user-name $user | jq -r '.AccessKey')
+echo "New access key $new_access_key"
 
 aws secretsmanager --region $region create-secret --name KubernetesManifestDeployerUserCredentials --secret-string "{\"AWS_ACCESS_KEY_ID\": \"$AWS_ACCESS_KEY_ID\", \"AWS_SECRET_ACCESS_KEY\":\"$AWS_SECRET_ACCESS_KEY\"}"
 
-rm -rf $access_key
+export AWS_ACCESS_KEY_ID=$(echo $new_access_key | jq -r '.AccessKeyId')
+export AWS_SECRET_ACCESS_KEY=$(echo $new_access_key | jq -r '.SecretAccessKey')
 
 if [ -z "$AWS_ACCESS_KEY_ID" ]
 then
