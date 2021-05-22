@@ -148,6 +148,7 @@ blocks:
             - kubectl --kubeconfig awskubeconfig get nodes
             - kubectl --kubeconfig awskubeconfig apply -f kubernetes/streamsapp/10create_kafka_topics.yaml
             - kubectl --kubeconfig awskubeconfig wait --for=condition=complete job/kafka-create-topics-job --timeout=600s
+      secrets:
         - name: iam-user-secret
       env_vars:
         - name: AWS_DEFAULT_REGION
