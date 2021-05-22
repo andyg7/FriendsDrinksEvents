@@ -153,7 +153,6 @@ blocks:
             - ./kubernetes/streamsapp/generate_manifest.sh kubernetes/streamsapp/30streams_app.yml friendsdrinksbackend:$SEMAPHORE_WORKFLOW_ID $apply_tmp
             - cat $apply_tmp
             - kubectl --kubeconfig awskubeconfig apply -f $apply_tmp
-            - kubectl --kubeconfig awskubeconfig rollout status -f $apply_tmp --timeout=600s
             - rm -f $apply_tmp
       secrets:
         - name: iam-user-secret
