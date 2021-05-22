@@ -9,7 +9,7 @@ aws iam attach-user-policy --user-name KubernetesManifestDeployerUser --policy-a
 new_access_key=$(aws iam create-access-key --user-name $user | jq -r '.AccessKey')
 echo "New access key $new_access_key"
 
-aws secretsmanager --region $region create-secret --name KubernetesManifestDeployerUserCredentials --secret-string "{\"AWS_ACCESS_KEY_ID\": \"$AWS_ACCESS_KEY_ID\", \"AWS_SECRET_ACCESS_KEY\":\"$AWS_SECRET_ACCESS_KEY\"}"
+aws secretsmanager --region $region create-secret --name KubernetesManifestDeployerUserCredentials --secret-string "$new_access_key"
 
 export AWS_ACCESS_KEY_ID=$(echo $new_access_key | jq -r '.AccessKeyId')
 export AWS_SECRET_ACCESS_KEY=$(echo $new_access_key | jq -r '.SecretAccessKey')
