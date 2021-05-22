@@ -41,7 +41,6 @@ blocks:
             - kubectl --kubeconfig awskubeconfig apply -f kubernetes/streamsapp/20streams_config.yml
       secrets:
         - name: iam-user-secret
-        - name: docker-hub-secret
       env_vars:
         - name: AWS_DEFAULT_REGION
           value: us-east-1
