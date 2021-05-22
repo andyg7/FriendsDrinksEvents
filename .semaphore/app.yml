@@ -4,6 +4,9 @@ agent:
   machine:
     type: e1-standard-2
     os_image: ubuntu1804
+auto_cancel:
+  queued:
+    when: "true" # enable auto-cancel for branches, tags and pull-requests
 blocks:
   - name: Download AWS CLI
     task:
