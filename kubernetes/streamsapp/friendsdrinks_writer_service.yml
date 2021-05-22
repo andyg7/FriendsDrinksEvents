@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: friendsdrinks-writer-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: friendsdrinks-writer-service
+  template:
+    metadata:
+      labels:
+        app: friendsdrinks-writer-service
+    spec:
+      containers:
+        - name: friendsdrinks-writer-service
+          image: $img
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: config
+              mountPath: /app/config
+              readOnly: true
+          livenessProbe:
+            httpGet:
+              path: /v1/health
+              port: 8080
+            initialDelaySeconds: 240
+          ports:
+            - containerPort: 8080
+          args: ["andrewgrant.friendsdrinks.WriterService", "/app/config/dev-kubernetes.properties"]
+      volumes:
+        - name: config
+          configMap:
+            name: streams-config

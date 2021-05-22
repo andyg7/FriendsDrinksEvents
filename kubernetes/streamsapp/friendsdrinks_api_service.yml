@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: friendsdrinks-api-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: friendsdrinks-api-service
+  template:
+    metadata:
+      labels:
+        app: friendsdrinks-api-service
+    spec:
+      containers:
+        - name: friendsdrinks-api-service
+          image: $img
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: config
+              mountPath: /app/config
+              readOnly: true
+          livenessProbe:
+            httpGet:
+              path: /v1/health
+              port: 8080
+            initialDelaySeconds: 240
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /v1/health
+              port: 8080
+            initialDelaySeconds: 240
+          args: ["andrewgrant.friendsdrinks.frontend.Main", "/app/config/dev-kubernetes.properties"]
+      volumes:
+        - name: config
+          configMap:
+            name: streams-config

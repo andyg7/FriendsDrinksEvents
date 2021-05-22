@@ -1,0 +1,155 @@
+version: v1.0
+name: Infrastructure deploy
+agent:
+  machine:
+    type: e1-standard-2
+    os_image: ubuntu1804
+blocks:
+  - name: Download AWS CLI
+    task:
+      jobs:
+        - name: Download AWS CLI
+          commands:
+            - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            - unzip awscliv2.zip
+            - sudo ./aws/install
+            - aws --version
+            - cache store awsclipath $(which aws)
+      env_vars:
+        - name: AWS_DEFAULT_REGION
+          value: us-east-1
+  - name: Deploy bootstrap namespace to Kubernetes
+    task:
+      prologue:
+        commands:
+          - checkout
+          - cache list
+          - cache restore awsclipath
+      jobs:
+        - name: Namespace Kubernetes deployment
+          commands:
+            - aws --version
+            - source semaphore/iamenvsetup 2>&1
+            - aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
+            - kubectl --kubeconfig awskubeconfig cluster-info
+            - kubectl --kubeconfig awskubeconfig get nodes
+            - kubectl --kubeconfig awskubeconfig apply -f kubernetes/00-namespace.yml
+      secrets:
+        - name: iam-user-secret
+      env_vars:
+        - name: AWS_DEFAULT_REGION
+          value: us-east-1
+  - name: Deploy ZooKeeper to Kubernetes
+    task:
+      prologue:
+        commands:
+          - checkout
+          - cache list
+          - cache restore awsclipath
+      jobs:
+        - name: ZooKeeper Kubernetes deployment
+          commands:
+            - aws --version
+            - source semaphore/iamenvsetup 2>&1
+            - aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
+            - kubectl --kubeconfig awskubeconfig cluster-info
+            - kubectl --kubeconfig awskubeconfig get nodes
+            - kubectl --kubeconfig awskubeconfig apply -f kubernetes/zookeeper/10zookeeper-config.yml
+            - kubectl --kubeconfig awskubeconfig apply -f kubernetes/zookeeper/20pzoo-service.yml
+            - kubectl --kubeconfig awskubeconfig apply -f kubernetes/zookeeper/21zoo-service.yml
+            - kubectl --kubeconfig awskubeconfig apply -f kubernetes/zookeeper/30service.yml
+            - kubectl --kubeconfig awskubeconfig apply -f kubernetes/zookeeper/50pzoo.yml
+            - kubectl --kubeconfig awskubeconfig rollout status -f kubernetes/zookeeper/50pzoo.yml --timeout=600s
+            - kubectl --kubeconfig awskubeconfig apply -f kubernetes/zookeeper/51zoo.yml
+            - kubectl --kubeconfig awskubeconfig rollout status -f kubernetes/zookeeper/51zoo.yml --timeout=600s
+      secrets:
+        - name: iam-user-secret
+      env_vars:
+        - name: AWS_DEFAULT_REGION
+          value: us-east-1
+  - name: Deploy Kafka to Kubernetes
+    task:
+      prologue:
+        commands:
+          - checkout
+          - cache list
+          - cache restore awsclipath
+      jobs:
+        - name: Kafka Kubernetes deployment
+          commands:
+            - aws --version
+            - source semaphore/iamenvsetup 2>&1
+            - aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
+            - kubectl --kubeconfig awskubeconfig cluster-info
+            - kubectl --kubeconfig awskubeconfig get nodes
+            - kubectl --kubeconfig awskubeconfig apply -f kubernetes/kafka/10role.yml
+            - kubectl --kubeconfig awskubeconfig apply -f kubernetes/kafka/11broker-config.yml
+            - kubectl --kubeconfig awskubeconfig apply -f kubernetes/kafka/20dns.yml
+            - kubectl --kubeconfig awskubeconfig apply -f kubernetes/kafka/30bootstrap-service.yml
+            - kubectl --kubeconfig awskubeconfig apply -f kubernetes/kafka/50kafka.yml
+            - kubectl --kubeconfig awskubeconfig rollout status -f kubernetes/kafka/50kafka.yml
+      secrets:
+        - name: iam-user-secret
+      env_vars:
+        - name: AWS_DEFAULT_REGION
+          value: us-east-1
+  - name: Deploy schema registry to Kubernetes
+    task:
+      prologue:
+        commands:
+          - checkout
+          - cache list
+          - cache restore awsclipath
+      jobs:
+        - name: Schema registry Kubernetes deployment
+          commands:
+            - aws --version
+            - source semaphore/iamenvsetup 2>&1
+            - aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
+            - kubectl --kubeconfig awskubeconfig cluster-info
+            - kubectl --kubeconfig awskubeconfig get nodes
+            - kubectl --kubeconfig awskubeconfig apply -f kubernetes/schemaregistry/avro-tools-config.yml
+            - kubectl --kubeconfig awskubeconfig apply -f kubernetes/schemaregistry/rest-service.yml
+            - kubectl --kubeconfig awskubeconfig apply -f kubernetes/schemaregistry/schemas-service.yml
+            - kubectl --kubeconfig awskubeconfig apply -f kubernetes/schemaregistry/rest.yml
+            - kubectl --kubeconfig awskubeconfig rollout status -f kubernetes/schemaregistry/rest.yml
+            - kubectl --kubeconfig awskubeconfig apply -f kubernetes/schemaregistry/schemas.yml
+            - kubectl --kubeconfig awskubeconfig rollout status -f kubernetes/schemaregistry/schemas.yml
+      secrets:
+        - name: iam-user-secret
+      env_vars:
+        - name: AWS_DEFAULT_REGION
+          value: us-east-1
+  - name: Deploy app to Kubernetes
+    task:
+      prologue:
+        commands:
+          - checkout
+          - cache list
+          - cache restore awsclipath
+      jobs:
+        - name: Application Kubernetes deployment
+          commands:
+            - aws --version
+            - source semaphore/iamenvsetup 2>&1
+            - aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
+            - kubectl --kubeconfig awskubeconfig cluster-info
+            - kubectl --kubeconfig awskubeconfig get nodes
+            - kubectl --kubeconfig awskubeconfig apply -f kubernetes/streamsapp/10create_kafka_topics_job.yml
+            - kubectl --kubeconfig awskubeconfig wait --for=condition=complete job/kafka-create-topics-job --timeout=600s
+            - kubectl --kubeconfig awskubeconfig apply -f kubernetes/streamsapp/20streams_config.yml
+            - apply_tmp=$(mktemp)
+            - ./kubernetes/streamsapp/generate_manifest.sh kubernetes/streamsapp/friendsdrinks_api_service_service.yml $DOCKER_USERNAME/friendsdrinksbackend:$SEMAPHORE_WORKFLOW_ID $apply_tmp
+            - cat $apply_tmp
+            - kubectl --kubeconfig awskubeconfig apply -f $apply_tmp
+            - rm -f $apply_tmp
+      secrets:
+        - name: iam-user-secret
+        - name: docker-hub-secret
+      env_vars:
+        - name: AWS_DEFAULT_REGION
+          value: us-east-1
+
+promotions:
+  - name: Application deploy
+    pipeline_file: app.yml

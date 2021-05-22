@@ -1,0 +1,49 @@
+version: v1.0
+name: Application deploy
+agent:
+  machine:
+    type: e1-standard-2
+    os_image: ubuntu1804
+blocks:
+  - name: Download AWS CLI
+    task:
+      jobs:
+        - name: Download AWS CLI
+          commands:
+            - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            - unzip awscliv2.zip
+            - sudo ./aws/install
+            - aws --version
+            - cache store awsclipath $(which aws)
+      env_vars:
+        - name: AWS_DEFAULT_REGION
+          value: us-east-1
+  - name: Deploy app to Kubernetes
+    task:
+      prologue:
+        commands:
+          - checkout
+          - cache list
+          - cache restore awsclipath
+      jobs:
+        - name: Application Kubernetes deployment
+          commands:
+            - aws --version
+            - source semaphore/iamenvsetup 2>&1
+            - aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
+            - kubectl --kubeconfig awskubeconfig cluster-info
+            - kubectl --kubeconfig awskubeconfig get nodes
+            - kubectl --kubeconfig awskubeconfig apply -f kubernetes/streamsapp/10create_kafka_topics_job.yml
+            - kubectl --kubeconfig awskubeconfig wait --for=condition=complete job/kafka-create-topics-job --timeout=600s
+            - kubectl --kubeconfig awskubeconfig apply -f kubernetes/streamsapp/20streams_config.yml
+            - apply_tmp=$(mktemp)
+            - ./kubernetes/streamsapp/generate_manifest.sh kubernetes/streamsapp/friendsdrinks_api_service_service.yml $DOCKER_USERNAME/friendsdrinksbackend:$SEMAPHORE_WORKFLOW_ID $apply_tmp
+            - cat $apply_tmp
+            - kubectl --kubeconfig awskubeconfig apply -f $apply_tmp
+            - rm -f $apply_tmp
+      secrets:
+        - name: iam-user-secret
+        - name: docker-hub-secret
+      env_vars:
+        - name: AWS_DEFAULT_REGION
+          value: us-east-1
