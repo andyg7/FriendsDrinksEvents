@@ -156,6 +156,7 @@ blocks:
             - rm -f $apply_tmp
       secrets:
         - name: iam-user-secret
+        - name: docker-hub-secret
       env_vars:
         - name: AWS_DEFAULT_REGION
           value: us-east-1
