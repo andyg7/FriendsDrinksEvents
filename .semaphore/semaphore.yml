@@ -146,7 +146,7 @@ blocks:
             - aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
             - kubectl --kubeconfig awskubeconfig cluster-info
             - kubectl --kubeconfig awskubeconfig get nodes
-            - kubectl --kubeconfig awskubeconfig apply -f kubernetes/streamsapp/10create_kafka_topics_job.yaml
+            - kubectl --kubeconfig awskubeconfig apply -f kubernetes/streamsapp/10create_kafka_topics_job.yml
             - kubectl --kubeconfig awskubeconfig wait --for=condition=complete job/kafka-create-topics-job --timeout=600s
             - kubectl --kubeconfig awskubeconfig apply -f kubernetes/streamsapp/20streams_config.yml
             - ./kubernetes/streamsapp/apply.sh kubernetes/streamsapp/30streams_app.yml friendsdrinksbackend:$SEMAPHORE_WORKFLOW_ID
