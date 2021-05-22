@@ -31,7 +31,7 @@ public class Main {
     private static final Logger log = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args) throws IOException, InterruptedException {
-        if (args.length != 2) {
+        if (args.length != 1) {
             throw new IllegalArgumentException("Program requires path to config as first argument");
         }
 
