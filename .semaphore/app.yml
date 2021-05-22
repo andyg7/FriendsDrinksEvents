@@ -26,7 +26,7 @@ blocks:
           - cache list
           - cache restore awsclipath
       jobs:
-        - name: FriendsDrinks API service service deployment
+        - name: Config deployment and job to create topics
           commands:
             - aws --version
             - source semaphore/iamenvsetup 2>&1
