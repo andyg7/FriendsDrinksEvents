@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: friendsdrinks-request-service
-          image: andyg001/friendsdrinksbackend:latest
+          image: $img
           imagePullPolicy: Always
           volumeMounts:
             - name: config
@@ -50,7 +50,7 @@ spec:
     spec:
       containers:
         - name: friendsdrinks-memberhip-request-service
-          image: andyg001/friendsdrinksbackend:latest
+          image: $img
           imagePullPolicy: Always
           volumeMounts:
             - name: config
@@ -85,7 +85,7 @@ spec:
     spec:
       containers:
         - name: friendsdrinks-membership-writer-service
-          image: andyg001/friendsdrinksbackend:latest
+          image: $img
           imagePullPolicy: Always
           volumeMounts:
             - name: config
@@ -120,7 +120,7 @@ spec:
     spec:
       containers:
         - name: friendsdrinks-meetup-writer-service
-          image: andyg001/friendsdrinksbackend:latest
+          image: $img
           imagePullPolicy: Always
           volumeMounts:
             - name: config
@@ -155,7 +155,7 @@ spec:
     spec:
       containers:
         - name: friendsdrinks-invitation-writer-service
-          image: andyg001/friendsdrinksbackend:latest
+          image: $img
           imagePullPolicy: Always
           volumeMounts:
             - name: config
@@ -190,7 +190,7 @@ spec:
     spec:
       containers:
         - name: friendsdrinks-writer-service
-          image: andyg001/friendsdrinksbackend:latest
+          image: $img
           imagePullPolicy: Always
           volumeMounts:
             - name: config
@@ -225,7 +225,7 @@ spec:
     spec:
       containers:
         - name: user-service
-          image: andyg001/friendsdrinksbackend:latest
+          image: $img
           imagePullPolicy: Always
           volumeMounts:
             - name: config
@@ -260,7 +260,7 @@ spec:
     spec:
       containers:
         - name: friendsdrinks-api-service
-          image: andyg001/friendsdrinksbackend:latest
+          image: $img
           imagePullPolicy: Always
           volumeMounts:
             - name: config
