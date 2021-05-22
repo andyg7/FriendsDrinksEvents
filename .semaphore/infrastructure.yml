@@ -124,3 +124,5 @@ blocks:
 promotions:
   - name: Application deploy
     pipeline_file: app.yml
+    auto_promote:
+      when: "result = 'passed'"
