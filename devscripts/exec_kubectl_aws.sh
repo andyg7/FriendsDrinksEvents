@@ -5,7 +5,7 @@ set -eu
 export AWS_ACCESS_KEY_ID=$1
 export AWS_SECRET_ACCESS_KEY=$2
 export AWS_ROLE_ARN=$3
-kubectl_args=$4
+kubectl_args=$4 # eg "run -it srvlookup --image=tutum/dnsutils --rm --restart=Never -- dig SRV pzoo.kafka.svc.cluster.local"
 export AWS_DEFAULT_REGION=us-east-1
 
 if [ -z "$AWS_ACCESS_KEY_ID" ]

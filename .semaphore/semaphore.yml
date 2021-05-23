@@ -10,10 +10,12 @@ auto_cancel:
 blocks:
   - name: Build
     task:
+      prologue:
+        commands:
+          - checkout
       jobs:
         - name: Docker build
           commands:
-            - checkout
             - echo $DOCKER_PASSWORD | docker login --username "$DOCKER_USERNAME" --password-stdin
             - 'docker build -t $DOCKER_USERNAME/friendsdrinksbackend:$SEMAPHORE_WORKFLOW_ID .'
             - 'docker push $DOCKER_USERNAME/friendsdrinksbackend:$SEMAPHORE_WORKFLOW_ID'
