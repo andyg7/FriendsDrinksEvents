@@ -4,7 +4,8 @@ set -eu
 
 region=$1
 
-aws iam create-user --user-name KubernetesManifestDeployerUser
+user=KubernetesManifestDeployerUser
+aws iam create-user --user-name $user
 aws iam attach-user-policy --user-name KubernetesManifestDeployerUser --policy-arn arn:aws:iam::aws:policy/AWSCloudFormationReadOnlyAccess
 new_access_key=$(aws iam create-access-key --user-name $user | jq -r '.AccessKey')
 echo "New access key $new_access_key"
