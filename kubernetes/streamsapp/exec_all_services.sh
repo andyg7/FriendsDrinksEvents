@@ -17,7 +17,7 @@ apply_tmp=$(mktemp)
 kubectl $action -f apply_tmp
 
 apply_tmp=$(mktemp)
-./kubernetes/streamsapp/generate_manifest.sh kubernetes/streamsapp/friendsdrinks_meetup_writer_servier.yml andyg001/friendsdrinksbackend:latest apply_tmp
+./kubernetes/streamsapp/generate_manifest.sh kubernetes/streamsapp/friendsdrinks_meetup_writer_service.yml andyg001/friendsdrinksbackend:latest apply_tmp
 kubectl $action -f apply_tmp
 
 apply_tmp=$(mktemp)
