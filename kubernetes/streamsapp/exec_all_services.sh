@@ -37,3 +37,5 @@ apply_tmp=$(mktemp)
 kubectl $action -f apply_tmp
 
 rm -rf apply_tmp
+
+echo 'Success!'
