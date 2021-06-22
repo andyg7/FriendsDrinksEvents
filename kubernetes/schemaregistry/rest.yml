@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: cp
-        image: solsson/kafka-cp@sha256:5ccd53841f0fc6224539319d2dbd129369038db30cac6ba5ec3326740aab9395
+        image: confluentinc/cp-schema-registry:6.2.0
         env:
         - name: KAFKAREST_LOG4J_OPTS
           value: -Dlog4j.configuration=file:/etc/kafka-rest/log4j.properties
