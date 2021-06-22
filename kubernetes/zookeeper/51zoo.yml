@@ -86,6 +86,8 @@ spec:
           mountPath: /etc/kafka
         - name: data
           mountPath: /var/lib/zookeeper
+      securityContext:
+        runAsUser: 0
       volumes:
       - name: configmap
         configMap:
