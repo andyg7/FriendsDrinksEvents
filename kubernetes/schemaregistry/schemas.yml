@@ -26,7 +26,7 @@ spec:
           value: -Dlog4j.configuration=file:/etc/schema-registry/log4j.properties
         command:
         - schema-registry-start
-        - /etc/schema-registry/schema-registry.properties
+        - /etc/schema-registry-config/schema-registry.properties
         readinessProbe:
           httpGet:
             path: /
@@ -40,7 +40,7 @@ spec:
         - containerPort: 80
         volumeMounts:
         - name: config
-          mountPath: /etc/schema-registry
+          mountPath: /etc/schema-registry-config
       volumes:
       - name: config
         configMap:
