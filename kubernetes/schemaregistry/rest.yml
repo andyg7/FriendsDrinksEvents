@@ -40,6 +40,8 @@ spec:
         volumeMounts:
         - name: config
           mountPath: /etc/kafka-rest
+      securityContext:
+        runAsUser: 0
       volumes:
       - name: config
         configMap:

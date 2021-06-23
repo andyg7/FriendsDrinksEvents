@@ -41,6 +41,8 @@ spec:
         volumeMounts:
         - name: config
           mountPath: /etc/schema-registry-config
+      securityContext:
+        runAsUser: 0
       volumes:
       - name: config
         configMap:
