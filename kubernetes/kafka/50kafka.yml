@@ -95,6 +95,8 @@ spec:
           mountPath: /var/lib/kafka/data
         - name: extensions
           mountPath: /opt/kafka/libs/extensions
+      securityContext:
+        runAsUser: 0
       volumes:
       - name: configmap
         configMap:
