@@ -525,13 +525,18 @@ public class RequestService {
         Topology topology = service.buildTopology();
         Properties streamProps = service.buildStreamProperties(envProps);
         KafkaStreams streams = new KafkaStreams(topology, streamProps);
+        TopologyDescription description = topology.describe();
+        log.info("Topology description: {}", description.toString());
 
         Server healthCheckServer = andrewgrant.friendsdrinks.health.Server.buildServer(8080, streams);
+
+        log.info("Started streams and the health check server");
 
         final CountDownLatch latch = new CountDownLatch(1);
         Runtime.getRuntime().addShutdownHook(new Thread("streams-shutdown-hook") {
             @Override
             public void run() {
+                log.info("Running shutdown hook...");
                 andrewgrant.friendsdrinks.health.Server.stop(healthCheckServer);
                 streams.close();
                 latch.countDown();
