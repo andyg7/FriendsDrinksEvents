@@ -18,7 +18,7 @@ public class Server {
 
     private static final Logger log = LoggerFactory.getLogger(Server.class);
 
-    public static void start(int port, KafkaStreams kafkaStreams) {
+    public static HttpServer buildServer(int port, KafkaStreams kafkaStreams) {
         ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
         HttpServer server;
         try {
@@ -28,6 +28,10 @@ public class Server {
         }
         server.createContext("/test", new Handler(kafkaStreams));
         server.setExecutor(threadPoolExecutor);
+        return server;
+    }
+
+    public static void start(HttpServer server) {
         server.start();
         log.info(" Server started on port 8001");
     }

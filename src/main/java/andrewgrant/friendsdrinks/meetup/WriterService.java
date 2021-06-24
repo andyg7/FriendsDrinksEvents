@@ -7,7 +7,6 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.*;
-import org.eclipse.jetty.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,6 +15,8 @@ import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
 import andrewgrant.friendsdrinks.avro.*;
+
+import com.sun.net.httpserver.HttpServer;
 
 /**
  * Owns writing to meetup topics.
@@ -104,7 +105,7 @@ public class WriterService {
         KafkaStreams kafkaStreams = new KafkaStreams(topology, streamProps);
         log.info("Starting WriterService application...");
 
-        Server healthCheckServer = andrewgrant.friendsdrinks.health.Server.buildServer(8080, kafkaStreams);
+        HttpServer healthCheckServer = andrewgrant.friendsdrinks.health.Server.buildServer(8080, kafkaStreams);
 
         final CountDownLatch latch = new CountDownLatch(1);
         Runtime.getRuntime().addShutdownHook(new Thread("streams-shutdown-hook") {
@@ -117,7 +118,7 @@ public class WriterService {
         });
 
         kafkaStreams.start();
-        andrewgrant.friendsdrinks.health.Server.start(healthCheckServer, 8080);
+        andrewgrant.friendsdrinks.health.Server.start(healthCheckServer);
         try {
             latch.await();
         } catch (InterruptedException e) {

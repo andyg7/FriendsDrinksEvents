@@ -13,7 +13,6 @@ import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
-import org.eclipse.jetty.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,6 +24,7 @@ import java.util.concurrent.CountDownLatch;
 
 import andrewgrant.friendsdrinks.avro.*;
 
+import com.sun.net.httpserver.HttpServer;
 
 /**
  * Processes invitation requests.
@@ -528,7 +528,7 @@ public class RequestService {
         TopologyDescription description = topology.describe();
         log.info("Topology description: {}", description.toString());
 
-        Server healthCheckServer = andrewgrant.friendsdrinks.health.Server.buildServer(8080, streams);
+        HttpServer healthCheckServer = andrewgrant.friendsdrinks.health.Server.buildServer(8080, streams);
 
         log.info("Started streams and the health check server");
 
@@ -545,7 +545,7 @@ public class RequestService {
 
         try {
             streams.start();
-            andrewgrant.friendsdrinks.health.Server.start(healthCheckServer, 8080);
+            andrewgrant.friendsdrinks.health.Server.start(healthCheckServer);
             latch.await();
         } catch (Throwable e) {
             System.exit(1);

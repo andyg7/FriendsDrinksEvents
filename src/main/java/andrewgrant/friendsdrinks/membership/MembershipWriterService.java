@@ -6,7 +6,6 @@ import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.*;
 import org.apache.kafka.streams.state.KeyValueStore;
-import org.eclipse.jetty.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,6 +14,8 @@ import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
 import andrewgrant.friendsdrinks.avro.*;
+
+import com.sun.net.httpserver.HttpServer;
 
 /**
  * Owns writing to friendsdrinks-membership-event.
@@ -103,7 +104,7 @@ public class MembershipWriterService {
         KafkaStreams kafkaStreams = new KafkaStreams(topology, streamProps);
         log.info("Starting MembershipWriterService application...");
 
-        Server healthCheckServer = andrewgrant.friendsdrinks.health.Server.buildServer(8080, kafkaStreams);
+        HttpServer healthCheckServer = andrewgrant.friendsdrinks.health.Server.buildServer(8080, kafkaStreams);
 
         final CountDownLatch latch = new CountDownLatch(1);
         Runtime.getRuntime().addShutdownHook(new Thread("streams-shutdown-hook") {
@@ -116,7 +117,7 @@ public class MembershipWriterService {
         });
 
         kafkaStreams.start();
-        andrewgrant.friendsdrinks.health.Server.start(healthCheckServer, 8080);
+        andrewgrant.friendsdrinks.health.Server.start(healthCheckServer);
         try {
             latch.await();
         } catch (InterruptedException e) {
