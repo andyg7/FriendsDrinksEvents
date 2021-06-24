@@ -33,7 +33,7 @@ public class Server {
 
     public static void start(HttpServer server) {
         server.start();
-        log.info(" Server started on port 8001");
+        log.info("Server started on port 8001");
     }
 
     public static void stop(HttpServer server) {

@@ -2,8 +2,8 @@
 
 set -eu
 
-action=$1
-img=$2
+img=$1
+action=$2
 
 apply_tmp=$(mktemp)
 ./kubernetes/streamsapp/generate_manifest.sh kubernetes/streamsapp/friendsdrinks_api_service.yml $img $apply_tmp
