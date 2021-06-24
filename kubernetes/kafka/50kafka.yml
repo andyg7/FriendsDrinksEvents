@@ -19,30 +19,6 @@ spec:
       annotations:
     spec:
       terminationGracePeriodSeconds: 30
-      initContainers:
-      - name: init-config
-        image: solsson/kafka-initutils@sha256:f6d9850c6c3ad5ecc35e717308fddb47daffbde18eb93e98e031128fe8b899ef
-        env:
-        - name: NODE_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: spec.nodeName
-        - name: POD_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
-        - name: POD_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
-        command: ['/bin/bash', '/etc/kafka-configmap/init.sh']
-        volumeMounts:
-        - name: configmap
-          mountPath: /etc/kafka-configmap
-        - name: config
-          mountPath: /etc/kafka
-        - name: extensions
-          mountPath: /opt/kafka/libs/extensions
       containers:
       - name: broker
         image: confluentinc/cp-kafka:6.2.0
@@ -69,8 +45,13 @@ spec:
         - name: jmx
           containerPort: 5555
         command:
-        - kafka-server-start
-        - /etc/kafka/server.properties.$(POD_NAME)
+          - sh
+          - -exc
+          - |
+            export KAFKA_BROKER_ID=${HOSTNAME##*-} && \
+            export KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+            export KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://${POD_NAME}.${POD_NAMESPACE}:9092 && \
+            exec /etc/confluent/docker/run
         lifecycle:
           preStop:
             exec:
@@ -92,7 +73,7 @@ spec:
         - name: config
           mountPath: /etc/kafka
         - name: data
-          mountPath: /var/lib/kafka/data
+          mountPath: /var/lib/kafka
         - name: extensions
           mountPath: /opt/kafka/libs/extensions
       securityContext:
