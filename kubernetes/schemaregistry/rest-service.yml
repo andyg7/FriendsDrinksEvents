@@ -5,6 +5,6 @@ metadata:
   namespace: kafka
 spec:
   ports:
-  - port: 80
+  - port: 8082
   selector:
     app: rest-proxy

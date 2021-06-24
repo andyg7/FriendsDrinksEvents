@@ -5,9 +5,9 @@ metadata:
 apiVersion: v1
 data:
   schema-registry.properties: |-
-    port=80
-    listeners=http://0.0.0.0:80
-    kafkastore.bootstrap.servers=PLAINTEXT://bootstrap.kafka:9092
+    port=8081
+    listeners=http://0.0.0.0:8081
+    kafkastore.bootstrap.servers=bootstrap:9092
     kafkastore.topic=_schemas
     debug=false
 
@@ -17,9 +17,9 @@ data:
 
   kafka-rest.properties: |-
     #id=kafka-rest-test-server
-    listeners=http://0.0.0.0:80
+    listeners=http://0.0.0.0:8082
     bootstrap.servers=PLAINTEXT://bootstrap.kafka:9092
-    schema.registry.url=http://avro-schemas.kafka:80
+    schema.registry.url=http://avro-schemas.kafka:8081
 
     # https://github.com/Landoop/kafka-topics-ui#common-issues
     access.control.allow.methods=GET,POST,PUT,DELETE,OPTIONS
