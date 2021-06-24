@@ -26,7 +26,7 @@ public class Server {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        server.createContext("/test", new Handler(kafkaStreams));
+        server.createContext("/v1/health", new Handler(kafkaStreams));
         server.setExecutor(threadPoolExecutor);
         return server;
     }
