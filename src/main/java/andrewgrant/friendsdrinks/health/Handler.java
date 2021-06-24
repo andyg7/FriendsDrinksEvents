@@ -4,6 +4,7 @@ import org.apache.kafka.streams.KafkaStreams;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -29,7 +30,7 @@ public class Handler implements HttpHandler {
         String resp = "Success!";
         httpExchange.sendResponseHeaders(200, resp.length());
         OutputStream outputStream = httpExchange.getResponseBody();
-        outputStream.write(resp.getBytes());
+        outputStream.write(resp.getBytes(StandardCharsets.UTF_8));
         outputStream.flush();
         outputStream.close();;
     }
