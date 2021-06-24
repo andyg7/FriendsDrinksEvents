@@ -8,7 +8,7 @@ spec:
     matchLabels:
       app: kafka
   serviceName: "kafka"
-  replicas: 2
+  replicas: 3
   updateStrategy:
     type: RollingUpdate
   podManagementPolicy: Parallel
@@ -50,7 +50,7 @@ spec:
           - |
             export KAFKA_BROKER_ID=${HOSTNAME##*-} && \
             export KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
-            export KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://${POD_NAME}.${POD_NAMESPACE}:9092 && \
+            export KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://${POD_NAME}.kafka.${POD_NAMESPACE}.svc.cluster.local:9092 && \
             exec /etc/confluent/docker/run
         lifecycle:
           preStop:
