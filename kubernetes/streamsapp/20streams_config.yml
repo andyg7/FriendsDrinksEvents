@@ -6,6 +6,7 @@ data:
   dev-kubernetes.properties: |-
     bootstrap.servers=bootstrap.kafka.svc.cluster.local:9092
     schema.registry.url=http://avro-schemas.kafka.svc.cluster.local:80
+    streams.dir=/var/lib/kafka-streams
 
     friendsdrinks-api.topic.name=friendsdrinks-api
     friendsdrinks-event.topic.name=friendsdrinks-event

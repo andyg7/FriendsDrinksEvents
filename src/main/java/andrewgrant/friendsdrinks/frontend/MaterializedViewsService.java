@@ -568,6 +568,9 @@ public class MaterializedViewsService {
                 envProps.getProperty("schema.registry.url"));
         props.put(StreamsConfig.APPLICATION_SERVER_CONFIG, uri);
         props.put(StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG, 0);
+        if (envProps.getProperty("streams.dir") != null) {
+            props.put(StreamsConfig.STATE_DIR_CONFIG, envProps.getProperty("streams.dir"));
+        }
         return props;
     }
 
