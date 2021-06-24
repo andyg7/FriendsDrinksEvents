@@ -25,6 +25,8 @@ spec:
       - name: zookeeper
         image: confluentinc/cp-zookeeper:6.2.0
         env:
+        - name : KAFKA_OPTS
+          value: '-Dzookeeper.4lw.commands.whitelist=ruok'
         - name : ZOOKEEPER_TICK_TIME
           value: '2000'
         - name : ZOOKEEPER_SYNC_LIMIT
@@ -72,6 +74,14 @@ spec:
             memory: 100Mi
           limits:
             memory: 120Mi
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - '[ "imok" = "$(echo ruok | nc -w 1 127.0.0.1 2181)" ]'
+          timeoutSeconds: 2
+          periodSeconds: 30
         volumeMounts:
         - name: config
           mountPath: /etc/kafka
