@@ -4,9 +4,6 @@ set -eu
 
 action=$1
 
-kubectl $action -f kubernetes/streamsapp/10create_kafka_topics_job.yml
-kubectl $action -f kubernetes/streamsapp/20streams_config.yml
-
 apply_tmp=$(mktemp)
 ./kubernetes/streamsapp/generate_manifest.sh kubernetes/streamsapp/friendsdrinks_api_service.yml andyg001/friendsdrinksbackend:latest $apply_tmp
 kubectl $action -f $apply_tmp
