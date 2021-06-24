@@ -2,18 +2,17 @@ package andrewgrant.friendsdrinks.health;
 
 import org.apache.kafka.streams.KafkaStreams;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
+import java.io.IOException;
+import java.io.OutputStream;
 
-import andrewgrant.friendsdrinks.frontend.api.HealthCheckResponseBean;
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+
 
 /**
  * Handler for simple Kafka streams health check.
  */
-@Path("")
-public class Handler {
+public class Handler implements HttpHandler {
 
     private KafkaStreams kafkaStreams;
 
@@ -21,16 +20,17 @@ public class Handler {
         this.kafkaStreams = kafkaStreams;
     }
 
-    @GET
-    @Path("/health")
-    @Produces(MediaType.APPLICATION_JSON)
-    public HealthCheckResponseBean healthCheck() {
+    @Override
+    public void handle(HttpExchange httpExchange) throws IOException {
         KafkaStreams.State state = kafkaStreams.state();
         if (!state.isRunningOrRebalancing()) {
             throw new RuntimeException(String.format("State is %s", state.name()));
         }
-        HealthCheckResponseBean healthCheckResponseBean = new HealthCheckResponseBean();
-        healthCheckResponseBean.setStatus("HEALTHY");
-        return healthCheckResponseBean;
+        String resp = "Success!";
+        httpExchange.sendResponseHeaders(200, resp.length());
+        OutputStream outputStream = httpExchange.getResponseBody();
+        outputStream.write(resp.getBytes());
+        outputStream.flush();
+        outputStream.close();;
     }
 }
