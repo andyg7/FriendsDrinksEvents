@@ -32,15 +32,15 @@ spec:
         - name : ZOOKEEPER_TICK_TIME
           value: '2000'
         - name : ZOOKEEPER_SYNC_LIMIT
-          value: '2'
-        - name : ZOOKEEPER_INIT_LIMIT
           value: '5'
+        - name : ZOOKEEPER_INIT_LIMIT
+          value: '10'
         - name : ZOOKEEPER_MAX_CLIENT_CNXNS
           value: '60'
         - name: ZOOKEEPER_CLIENT_PORT
           value: '2181'
         - name : ZOOKEEPER_SERVERS
-          value: 'pzoo-0.pzoo.kafka:2888:3888;pzoo-1.pzoo.kafka:2888:3888;pzoo-2.pzoo.kafka:2888:3888'
+          value: 'pzoo-0.pzoo.kafka.svc.cluster.local:2888:3888;pzoo-1.pzoo.kafka.svc.cluster.local:2888:3888;pzoo-2.pzoo.kafka.svc.cluster.local:2888:3888'
         - name : ZOOKEEPER_AUTOPURGE_SNAP_RETAIN_COUNT
           value: '3'
         - name : ZOOKEEPER_AUTOPURGE_PURGE_INTERVAL

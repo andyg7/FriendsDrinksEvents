@@ -382,7 +382,9 @@ public class RequestService {
 
     public Properties buildStreamProperties(Properties envProps) {
         Properties streamProps = new Properties();
-        streamProps.put(StreamsConfig.APPLICATION_ID_CONFIG, envProps.getProperty("friendsdrinks-request.application.id"));
+        String appId = envProps.getProperty("friendsdrinks-request.application.id");
+        log.info("App ID is {}", appId);
+        streamProps.put(StreamsConfig.APPLICATION_ID_CONFIG, appId);
         streamProps.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, envProps.getProperty("bootstrap.servers"));
         streamProps.put(StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG, 0);
         if (envProps.getProperty("streams.dir") != null) {
