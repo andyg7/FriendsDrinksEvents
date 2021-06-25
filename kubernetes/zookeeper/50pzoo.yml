@@ -101,7 +101,7 @@ spec:
         - name: datalogdir
           mountPath: /var/lib/zookeeper/log
       securityContext:
-        runAsUser: 1000
+        runAsUser: 0
       volumes:
       - name: configmap
         configMap:
