@@ -10,7 +10,7 @@ spec:
     spec:
       containers:
         - name: kafka-create-topics-job
-          image: confluentinc/cp-kafka:5.2.2
+          image: confluentinc/cp-kafka:6.2.0
           command:
             - sh
             - -c
