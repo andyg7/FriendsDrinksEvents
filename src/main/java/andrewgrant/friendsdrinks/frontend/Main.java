@@ -59,7 +59,7 @@ public class Main {
         Topology topology = streamsService.buildTopology();
         Properties streamProps = streamsService.buildStreamsProperties(streamsUri);
         KafkaStreams streams = new KafkaStreams(topology, streamProps);
-        kafkaStreams.setUncaughtExceptionHandler((Thread thread, Throwable throwable) -> {
+        streams.setUncaughtExceptionHandler((Thread thread, Throwable throwable) -> {
             log.error("Uncaught exception {}", throwable.getMessage());
             throwable.printStackTrace();
         });
