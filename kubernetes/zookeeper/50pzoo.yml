@@ -80,7 +80,7 @@ spec:
             - '[ "imok" = "$(echo ruok | nc -w 1 127.0.0.1 2181)" ]'
           timeoutSeconds: 5
           periodSeconds: 30
-          initialDelay: 60
+          initialDelaySeconds: 60
         livenessProbe:
           exec:
             command:
