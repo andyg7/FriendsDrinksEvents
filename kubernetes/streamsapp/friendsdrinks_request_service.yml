@@ -25,6 +25,8 @@ spec:
               path: /v1/health
               port: 8080
             initialDelaySeconds: 240
+            timeoutSeconds: 2
+            periodSeconds: 30
           ports:
             - containerPort: 8080
           args: ["andrewgrant.friendsdrinks.RequestService", "/app/config/dev-kubernetes.properties"]

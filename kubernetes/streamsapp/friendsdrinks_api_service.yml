@@ -25,11 +25,15 @@ spec:
               path: /v1/health
               port: 8080
             initialDelaySeconds: 300
+            timeoutSeconds: 2
+            periodSeconds: 30
           readinessProbe:
             httpGet:
               path: /v1/health
               port: 8080
             initialDelaySeconds: 300
+            timeoutSeconds: 2
+            periodSeconds: 30
           ports:
             - containerPort: 8080
           args: ["andrewgrant.friendsdrinks.frontend.Main", "/app/config/dev-kubernetes.properties"]
