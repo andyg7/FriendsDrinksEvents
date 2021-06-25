@@ -6,6 +6,7 @@ import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
+import org.apache.kafka.streams.errors.StreamsUncaughtExceptionHandler;
 import org.apache.kafka.streams.kstream.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -97,9 +98,9 @@ public class Service {
         Topology topology = service.buildTopology();
         Properties streamProps = service.buildStreamProperties(envProps);
         KafkaStreams kafkaStreams = new KafkaStreams(topology, streamProps);
-        kafkaStreams.setUncaughtExceptionHandler((Thread thread, Throwable throwable) -> {
-            log.error("Uncaught exception {}", throwable.getMessage());
-            throwable.printStackTrace();
+        kafkaStreams.setUncaughtExceptionHandler(exception -> {
+            log.error("Uncaught exception {}", exception.getMessage());
+            return StreamsUncaughtExceptionHandler.StreamThreadExceptionResponse.REPLACE_THREAD;
         });
         log.info("Starting Service application...");
 

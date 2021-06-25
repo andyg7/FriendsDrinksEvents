@@ -5,6 +5,7 @@ import static andrewgrant.friendsdrinks.frontend.TopicNameConfigKey.FRIENDSDRINK
 
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.*;
+import org.apache.kafka.streams.errors.StreamsUncaughtExceptionHandler;
 import org.apache.kafka.streams.kstream.*;
 import org.apache.kafka.streams.processor.Processor;
 import org.apache.kafka.streams.processor.ProcessorContext;
@@ -401,9 +402,9 @@ public class RequestService {
         Topology topology = service.buildTopology();
         Properties streamProps = service.buildStreamProperties(envProps);
         KafkaStreams streams = new KafkaStreams(topology, streamProps);
-        streams.setUncaughtExceptionHandler((Thread thread, Throwable throwable) -> {
-            log.error("Uncaught exception {}", throwable.getMessage());
-            throwable.printStackTrace();
+        streams.setUncaughtExceptionHandler(exception -> {
+            log.error("Uncaught exception {}", exception.getMessage());
+            return StreamsUncaughtExceptionHandler.StreamThreadExceptionResponse.REPLACE_THREAD;
         });
         TopologyDescription description = topology.describe();
         log.info("Topology description: {}", description.toString());
