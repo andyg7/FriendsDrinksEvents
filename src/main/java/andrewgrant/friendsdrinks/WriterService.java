@@ -135,8 +135,8 @@ public class WriterService {
             }
         });
 
-        kafkaStreams.start();
         andrewgrant.friendsdrinks.health.Server.start(healthCheckServer);
+        kafkaStreams.start();
         try {
             latch.await();
         } catch (InterruptedException e) {

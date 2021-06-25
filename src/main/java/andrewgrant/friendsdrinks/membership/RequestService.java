@@ -550,8 +550,8 @@ public class RequestService {
             }
         });
 
-        streams.start();
         andrewgrant.friendsdrinks.health.Server.start(healthCheckServer);
+        streams.start();
         try {
             latch.await();
         } catch (InterruptedException e) {
