@@ -59,10 +59,6 @@ spec:
             ZOOKEEPER_SERVER_ID=$((${HOSTNAME##*-}+1)) \
             ZOOKEEPER_SERVERS=`echo $ZOOKEEPER_SERVERS | sed -e "$ZK_FIX_HOST_REGEX"` \
             /etc/confluent/docker/run
-        lifecycle:
-          preStop:
-            exec:
-             command: ["sh", "-ce", "kill -s TERM 1; while $(kill -0 1 2>/dev/null); do sleep 1; done"]
         ports:
         - containerPort: 2181
           name: client

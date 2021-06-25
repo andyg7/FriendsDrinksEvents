@@ -52,10 +52,6 @@ spec:
             export KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
             export KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://${POD_NAME}.kafka.${POD_NAMESPACE}.svc.cluster.local:9092 && \
             exec /etc/confluent/docker/run
-        lifecycle:
-          preStop:
-            exec:
-             command: ["sh", "-ce", "kill -s TERM 1; while $(kill -0 1 2>/dev/null); do sleep 1; done"]
         resources:
           requests:
             cpu: 100m
