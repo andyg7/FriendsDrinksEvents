@@ -69,6 +69,11 @@ spec:
           tcpSocket:
             port: 9092
           timeoutSeconds: 1
+        livenessProbe:
+          tcpSocket:
+            port: 9092
+          timeoutSeconds: 1
+          initialDelaySeconds: 60
         volumeMounts:
         - name: config
           mountPath: /etc/kafka
