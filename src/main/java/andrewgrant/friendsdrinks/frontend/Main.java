@@ -59,6 +59,10 @@ public class Main {
         Topology topology = streamsService.buildTopology();
         Properties streamProps = streamsService.buildStreamsProperties(streamsUri);
         KafkaStreams streams = new KafkaStreams(topology, streamProps);
+        kafkaStreams.setUncaughtExceptionHandler((Thread thread, Throwable throwable) -> {
+            log.error("Uncaught exception {}", throwable.getMessage());
+            throwable.printStackTrace();
+        });
 
         Server jettyServer = Main.buildServer(envProps, streams, userAvroBuilder, apiAvroBuilder, meetupAvroBuilder, port);
         // Attach shutdown handler to catch Control-C.

@@ -401,6 +401,10 @@ public class RequestService {
         Topology topology = service.buildTopology();
         Properties streamProps = service.buildStreamProperties(envProps);
         KafkaStreams streams = new KafkaStreams(topology, streamProps);
+        streams.setUncaughtExceptionHandler((Thread thread, Throwable throwable) -> {
+            log.error("Uncaught exception {}", throwable.getMessage());
+            throwable.printStackTrace();
+        });
         TopologyDescription description = topology.describe();
         log.info("Topology description: {}", description.toString());
 

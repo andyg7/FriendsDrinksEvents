@@ -102,6 +102,10 @@ public class MembershipWriterService {
         Topology topology = writerService.buildTopology();
         Properties streamProps = writerService.buildStreamsProperties(envProps);
         KafkaStreams kafkaStreams = new KafkaStreams(topology, streamProps);
+        kafkaStreams.setUncaughtExceptionHandler((Thread thread, Throwable throwable) -> {
+            log.error("Uncaught exception {}", throwable.getMessage());
+            throwable.printStackTrace();
+        });
         log.info("Starting MembershipWriterService application...");
 
         HttpServer healthCheckServer = andrewgrant.friendsdrinks.health.Server.buildServer(8080, kafkaStreams);
