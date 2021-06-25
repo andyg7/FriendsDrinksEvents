@@ -65,6 +65,7 @@ spec:
           tcpSocket:
             port: 9092
           timeoutSeconds: 2
+          initialDelaySeconds: 60
         livenessProbe:
           tcpSocket:
             port: 9092
