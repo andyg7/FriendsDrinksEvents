@@ -64,11 +64,11 @@ spec:
         readinessProbe:
           tcpSocket:
             port: 9092
-          timeoutSeconds: 1
+          timeoutSeconds: 2
         livenessProbe:
           tcpSocket:
             port: 9092
-          timeoutSeconds: 1
+          timeoutSeconds: 2
           initialDelaySeconds: 60
         volumeMounts:
         - name: config
