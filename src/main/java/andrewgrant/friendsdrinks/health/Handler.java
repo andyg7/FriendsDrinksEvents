@@ -25,11 +25,13 @@ public class Handler implements HttpHandler {
     private KafkaStreams kafkaStreams;
 
     public Handler(KafkaStreams kafkaStreams) {
+        log.debug("In Handler constructor");
         this.kafkaStreams = kafkaStreams;
     }
 
     @Override
     public void handle(HttpExchange httpExchange) throws IOException {
+        log.debug("In handle method");
         KafkaStreams.State state = kafkaStreams.state();
         logMetrics();
         if (!state.isRunningOrRebalancing()) {
