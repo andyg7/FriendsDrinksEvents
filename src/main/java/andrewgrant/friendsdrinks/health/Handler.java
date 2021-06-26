@@ -45,6 +45,7 @@ public class Handler implements HttpHandler {
         outputStream.write(resp.getBytes(StandardCharsets.UTF_8));
         outputStream.flush();
         outputStream.close();
+        log.debug("Flushed output stream");
     }
 
     private void logMetrics() {
