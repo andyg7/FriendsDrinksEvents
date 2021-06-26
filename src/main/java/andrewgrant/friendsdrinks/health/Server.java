@@ -34,6 +34,7 @@ public class Server {
     }
 
     public static void stop(HttpServer server) {
+        log.debug("Stopping server");
         try {
             server.stop(60);
         } catch (Exception e) {
