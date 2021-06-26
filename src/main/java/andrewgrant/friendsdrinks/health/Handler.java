@@ -32,8 +32,8 @@ public class Handler implements HttpHandler {
             log.warn("Kafka streams is not running or re-balancing {}", state.name());
             throw new RuntimeException(String.format("State is %s", state.name()));
         }
-        log.debug("Kafka streams is healthy");
-        String resp = "Success!";
+        log.debug("Kafka streams is healthy with state {}", state.name());
+        String resp = "Success! State is " + state.name();
         httpExchange.sendResponseHeaders(200, resp.length());
         OutputStream outputStream = httpExchange.getResponseBody();
         outputStream.write(resp.getBytes(StandardCharsets.UTF_8));
