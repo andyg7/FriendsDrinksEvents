@@ -6,8 +6,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 
 import com.sun.net.httpserver.HttpServer;
 
@@ -19,7 +17,6 @@ public class Server {
     private static final Logger log = LoggerFactory.getLogger(Server.class);
 
     public static HttpServer buildServer(int port, KafkaStreams kafkaStreams) {
-        ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
         HttpServer server;
         try {
             server = HttpServer.create(new InetSocketAddress("localhost", port), 0);
@@ -27,7 +24,7 @@ public class Server {
             throw new RuntimeException(e);
         }
         server.createContext("/v1/health", new Handler(kafkaStreams));
-        server.setExecutor(threadPoolExecutor);
+        server.setExecutor(null);
         return server;
     }
 
