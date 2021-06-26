@@ -70,6 +70,7 @@ public class Main {
         Runtime.getRuntime().addShutdownHook(new Thread("shutdown-hook") {
             @Override
             public void run() {
+                log.info("Running shutdown hook...");
                 streams.close();
                 try {
                     jettyServer.stop();

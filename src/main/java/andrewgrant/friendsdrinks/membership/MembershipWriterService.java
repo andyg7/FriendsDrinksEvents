@@ -115,6 +115,7 @@ public class MembershipWriterService {
         Runtime.getRuntime().addShutdownHook(new Thread("streams-shutdown-hook") {
             @Override
             public void run() {
+                log.info("Running shutdown hook...");
                 andrewgrant.friendsdrinks.health.Server.stop(healthCheckServer);
                 kafkaStreams.close();
                 latch.countDown();
