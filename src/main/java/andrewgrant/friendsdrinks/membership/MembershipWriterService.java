@@ -2,6 +2,7 @@ package andrewgrant.friendsdrinks.membership;
 
 import static andrewgrant.friendsdrinks.env.Properties.load;
 
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.*;
@@ -90,6 +91,8 @@ public class MembershipWriterService {
         if (envProps.getProperty("streams.dir") != null) {
             streamProps.put(StreamsConfig.STATE_DIR_CONFIG, envProps.getProperty("streams.dir"));
         }
+        streamProps.put(StreamsConfig.consumerPrefix(ConsumerConfig.GROUP_INSTANCE_ID_CONFIG),
+                envProps.get(andrewgrant.friendsdrinks.env.Properties.STREAMS_GROUP_INSTANCE_ID));
         return streamProps;
     }
 

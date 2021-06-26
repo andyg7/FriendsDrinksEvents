@@ -2,6 +2,7 @@ package andrewgrant.friendsdrinks.user;
 
 import static andrewgrant.friendsdrinks.env.Properties.load;
 
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
@@ -88,6 +89,8 @@ public class Service {
         if (envProps.getProperty("streams.dir") != null) {
             streamProps.put(StreamsConfig.STATE_DIR_CONFIG, envProps.getProperty("streams.dir"));
         }
+        streamProps.put(StreamsConfig.consumerPrefix(ConsumerConfig.GROUP_INSTANCE_ID_CONFIG),
+                envProps.get(andrewgrant.friendsdrinks.env.Properties.STREAMS_GROUP_INSTANCE_ID));
         return streamProps;
     }
 

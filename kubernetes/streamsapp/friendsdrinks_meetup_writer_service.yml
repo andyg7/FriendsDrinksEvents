@@ -1,9 +1,13 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: friendsdrinks-meetup-writer-service
 spec:
   replicas: 1
+  serviceName: "friendsdrinks-meetup-writer-service"
+  updateStrategy:
+    type: RollingUpdate
+  podManagementPolicy: OrderedReady
   selector:
     matchLabels:
       app: friendsdrinks-meetup-writer-service
@@ -15,6 +19,11 @@ spec:
       containers:
         - name: friendsdrinks-meetup-writer-service
           image: $img
+          env:
+            - name: STREAMS_GROUP_INSTANCE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
           imagePullPolicy: Always
           volumeMounts:
             - name: config
