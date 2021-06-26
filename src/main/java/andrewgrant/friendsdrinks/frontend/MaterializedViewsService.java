@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Properties;
 
 import andrewgrant.friendsdrinks.avro.*;
+import andrewgrant.friendsdrinks.streamsconfig.Config;
 
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
 
@@ -560,17 +561,18 @@ public class MaterializedViewsService {
     }
 
     public Properties buildStreamsProperties(String uri) {
-        Properties props = new Properties();
-        props.put(StreamsConfig.APPLICATION_ID_CONFIG, envProps.getProperty("frontend-api-application.id"));
-        props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG,
+        Properties streamProps = new Properties();
+        streamProps.put(StreamsConfig.APPLICATION_ID_CONFIG, envProps.getProperty("frontend-api-application.id"));
+        streamProps.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG,
                 envProps.getProperty("bootstrap.servers"));
-        props.put(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
+        streamProps.put(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
                 envProps.getProperty("schema.registry.url"));
-        props.put(StreamsConfig.APPLICATION_SERVER_CONFIG, uri);
+        streamProps.put(StreamsConfig.APPLICATION_SERVER_CONFIG, uri);
         if (envProps.getProperty("streams.dir") != null) {
-            props.put(StreamsConfig.STATE_DIR_CONFIG, envProps.getProperty("streams.dir"));
+            streamProps.put(StreamsConfig.STATE_DIR_CONFIG, envProps.getProperty("streams.dir"));
         }
-        return props;
+        streamProps = Config.addSharedConfig(streamProps);
+        return streamProps;
     }
 
 }

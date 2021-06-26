@@ -24,5 +24,6 @@ public class Properties {
         }
         return envProps;
     }
+
 }
 

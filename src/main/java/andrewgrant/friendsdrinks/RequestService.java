@@ -3,7 +3,6 @@ package andrewgrant.friendsdrinks;
 import static andrewgrant.friendsdrinks.env.Properties.load;
 import static andrewgrant.friendsdrinks.frontend.TopicNameConfigKey.FRIENDSDRINKS_API;
 
-import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.errors.StreamsUncaughtExceptionHandler;
@@ -22,6 +21,7 @@ import java.util.concurrent.CountDownLatch;
 
 import andrewgrant.friendsdrinks.avro.*;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksState;
+import andrewgrant.friendsdrinks.streamsconfig.Config;
 
 import com.sun.net.httpserver.HttpServer;
 
@@ -391,8 +391,7 @@ public class RequestService {
         if (envProps.getProperty("streams.dir") != null) {
             streamProps.put(StreamsConfig.STATE_DIR_CONFIG, envProps.getProperty("streams.dir"));
         }
-        streamProps.put(StreamsConfig.consumerPrefix(ConsumerConfig.GROUP_INSTANCE_ID_CONFIG),
-                envProps.get(andrewgrant.friendsdrinks.env.Properties.STREAMS_GROUP_INSTANCE_ID));
+        streamProps = Config.addSharedConfig(streamProps);
         return streamProps;
     }
 

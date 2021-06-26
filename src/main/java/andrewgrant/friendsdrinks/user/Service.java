@@ -2,7 +2,6 @@ package andrewgrant.friendsdrinks.user;
 
 import static andrewgrant.friendsdrinks.env.Properties.load;
 
-import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
@@ -17,6 +16,7 @@ import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
 import andrewgrant.friendsdrinks.avro.*;
+import andrewgrant.friendsdrinks.streamsconfig.Config;
 
 import com.sun.net.httpserver.HttpServer;
 
@@ -89,8 +89,6 @@ public class Service {
         if (envProps.getProperty("streams.dir") != null) {
             streamProps.put(StreamsConfig.STATE_DIR_CONFIG, envProps.getProperty("streams.dir"));
         }
-        streamProps.put(StreamsConfig.consumerPrefix(ConsumerConfig.GROUP_INSTANCE_ID_CONFIG),
-                envProps.get(andrewgrant.friendsdrinks.env.Properties.STREAMS_GROUP_INSTANCE_ID));
         return streamProps;
     }
 
@@ -100,6 +98,7 @@ public class Service {
         Service service = new Service(envProps, new AvroBuilder(schemaRegistryUrl));
         Topology topology = service.buildTopology();
         Properties streamProps = service.buildStreamProperties(envProps);
+        streamProps = Config.addSharedConfig(streamProps);
         KafkaStreams kafkaStreams = new KafkaStreams(topology, streamProps);
         kafkaStreams.setUncaughtExceptionHandler(exception -> {
             log.error("Uncaught exception {}", exception.getMessage());
