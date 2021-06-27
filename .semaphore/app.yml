@@ -44,29 +44,6 @@ blocks:
           - sudo ./aws/install
           - aws --version
       jobs:
-        - name: FriendsDrinks API service service deployment
-          commands:
-            - source semaphore/iamenvsetup 2>&1
-            - aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
-            - kubectl --kubeconfig awskubeconfig cluster-info
-            - kubectl --kubeconfig awskubeconfig get nodes
-            - apply_tmp=$(mktemp)
-            - ./kubernetes/streamsapp/generate_manifest.sh kubernetes/streamsapp/friendsdrinks_api_service_service.yml $DOCKER_USERNAME/friendsdrinksbackend:$SEMAPHORE_WORKFLOW_ID $apply_tmp
-            - cat $apply_tmp
-            - kubectl --kubeconfig awskubeconfig apply -f $apply_tmp
-            - rm -f $apply_tmp
-        - name: FriendsDrinks API service deployment
-          commands:
-            - source semaphore/iamenvsetup 2>&1
-            - aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
-            - kubectl --kubeconfig awskubeconfig cluster-info
-            - kubectl --kubeconfig awskubeconfig get nodes
-            - apply_tmp=$(mktemp)
-            - ./kubernetes/streamsapp/generate_manifest.sh kubernetes/streamsapp/friendsdrinks_api_service.yml $DOCKER_USERNAME/friendsdrinksbackend:$SEMAPHORE_WORKFLOW_ID $apply_tmp
-            - cat $apply_tmp
-            - kubectl --kubeconfig awskubeconfig apply -f $apply_tmp
-            - kubectl --kubeconfig awskubeconfig rollout status -f $apply_tmp
-            - rm -f $apply_tmp
         - name: FriendsDrinks invitation writer service deployment
           commands:
             - source semaphore/iamenvsetup 2>&1
@@ -147,6 +124,46 @@ blocks:
             - kubectl --kubeconfig awskubeconfig get nodes
             - apply_tmp=$(mktemp)
             - ./kubernetes/streamsapp/generate_manifest.sh kubernetes/streamsapp/user_service.yml $DOCKER_USERNAME/friendsdrinksbackend:$SEMAPHORE_WORKFLOW_ID $apply_tmp
+            - cat $apply_tmp
+            - kubectl --kubeconfig awskubeconfig apply -f $apply_tmp
+            - kubectl --kubeconfig awskubeconfig rollout status -f $apply_tmp
+            - rm -f $apply_tmp
+      secrets:
+        - name: iam-user-secret
+        - name: docker-hub-secret
+      env_vars:
+        - name: AWS_DEFAULT_REGION
+          value: us-east-1
+  - name: Deploy frontend app to Kubernetes
+    task:
+      prologue:
+        commands:
+          - checkout
+          - cache list
+          - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          - unzip awscliv2.zip
+          - sudo ./aws/install
+          - aws --version
+      jobs:
+        - name: FriendsDrinks API service service deployment
+          commands:
+            - source semaphore/iamenvsetup 2>&1
+            - aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
+            - kubectl --kubeconfig awskubeconfig cluster-info
+            - kubectl --kubeconfig awskubeconfig get nodes
+            - apply_tmp=$(mktemp)
+            - ./kubernetes/streamsapp/generate_manifest.sh kubernetes/streamsapp/friendsdrinks_api_service_service.yml $DOCKER_USERNAME/friendsdrinksbackend:$SEMAPHORE_WORKFLOW_ID $apply_tmp
+            - cat $apply_tmp
+            - kubectl --kubeconfig awskubeconfig apply -f $apply_tmp
+            - rm -f $apply_tmp
+        - name: FriendsDrinks API service deployment
+          commands:
+            - source semaphore/iamenvsetup 2>&1
+            - aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
+            - kubectl --kubeconfig awskubeconfig cluster-info
+            - kubectl --kubeconfig awskubeconfig get nodes
+            - apply_tmp=$(mktemp)
+            - ./kubernetes/streamsapp/generate_manifest.sh kubernetes/streamsapp/friendsdrinks_api_service.yml $DOCKER_USERNAME/friendsdrinksbackend:$SEMAPHORE_WORKFLOW_ID $apply_tmp
             - cat $apply_tmp
             - kubectl --kubeconfig awskubeconfig apply -f $apply_tmp
             - kubectl --kubeconfig awskubeconfig rollout status -f $apply_tmp
