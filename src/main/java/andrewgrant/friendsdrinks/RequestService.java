@@ -305,7 +305,7 @@ public class RequestService {
                         },
                         (aggKey, oldValue, aggValue) -> aggValue - 1,
                         Materialized.<String, Long, KeyValueStore<Bytes, byte[]>>
-                                as("aggregated-table-store")
+                                as("aggregated-friendsdrinks-count-table-store")
                                 .withKeySerde(Serdes.String())
                                 .withValueSerde(Serdes.Long()));
 
