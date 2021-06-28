@@ -303,7 +303,7 @@ public class RequestService {
                                 throw new RuntimeException(String.format("Unknown status %s", newValue.getStatus().name()));
                             }
                         },
-                        (aggKey, oldValue, aggValue) -> aggValue - 1,
+                        (aggKey, oldValue, aggValue) -> aggValue,
                         Materialized.<String, Long, KeyValueStore<Bytes, byte[]>>
                                 as("aggregated-friendsdrinks-count-table-store")
                                 .withKeySerde(Serdes.String())
