@@ -4,8 +4,8 @@
   "name": "FriendsDrinksDetailPage",
   "fields": [
       {"name": "status", "type": "FriendsDrinksStatus" },
-      {"name": "friendsDrinksId", "type": "FriendsDrinksId", "default": null},
-      {"name": "name", "type": "string", "default": null},
+      {"name": "friendsDrinksId", "type": ["null", "FriendsDrinksId"], "default": null},
+      {"name": "name", "type": ["null", "string"], "default": null},
       {"name": "adminUserId", "type": "string"},
       {"name": "members", "type": ["null", {"type": "array", "items": "UserState" }], "default": null },
       {"name": "meetups", "type": ["null", {"type": "array", "items": "FriendsDrinksMeetupState" }], "default": null }
