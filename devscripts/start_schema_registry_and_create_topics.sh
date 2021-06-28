@@ -2,4 +2,4 @@
 
 set -eu
 
-docker-compose -f docker-compose.schema-registry.yml up
+docker-compose -f docker-compose.schema-registry.yml --project-name schema-registry up
