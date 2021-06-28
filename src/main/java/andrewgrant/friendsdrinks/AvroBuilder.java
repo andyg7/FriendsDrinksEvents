@@ -6,7 +6,7 @@ import java.util.Map;
 import andrewgrant.friendsdrinks.avro.*;
 
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
-import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
+import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 
 /**
@@ -35,7 +35,7 @@ public class AvroBuilder {
             serde = new SpecificAvroSerde<>();
         }
         Map<String, String> config = new HashMap<>();
-        config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, registryUrl);
+        config.put(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, registryUrl);
         serde.configure(config, false);
         return serde;
     }
@@ -48,7 +48,7 @@ public class AvroBuilder {
             serde = new SpecificAvroSerde<>();
         }
         Map<String, String> config = new HashMap<>();
-        config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, registryUrl);
+        config.put(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, registryUrl);
         serde.configure(config, false);
         return serde;
     }
@@ -61,7 +61,7 @@ public class AvroBuilder {
             serde = new SpecificAvroSerde<>();
         }
         Map<String, String> config = new HashMap<>();
-        config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, registryUrl);
+        config.put(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, registryUrl);
         serde.configure(config, true);
         return serde;
     }
@@ -75,7 +75,7 @@ public class AvroBuilder {
             serde = new SpecificAvroSerde<>();
         }
         Map<String, String> config = new HashMap<>();
-        config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, registryUrl);
+        config.put(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, registryUrl);
         serde.configure(config, false);
         return serde;
     }
