@@ -13,11 +13,7 @@ services:
     environment:
       SCHEMA_REGISTRY_HOST_NAME: schema-registry
       SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'broker:9092'
-      SCHEMA_REGISTRY_LOG4J_ROOT_LOGLEVEL: WARN
-      SCHEMA_REGISTRY_KAFKASTORE_TOPIC: friendsdrinks-schemas
       SCHEMA_REGISTRY_LISTENERS: 'http://0.0.0.0:8081'
-      SCHEMA_REGISTRY_ENABLE_GZIP_COMPRESSION_DEFAULT: 'false'
-      SCHEMA_REGISTRY_MASTER_ELIGIBILITY: 'false'
 
 
   # This "container" is a workaround to pre-create topics
