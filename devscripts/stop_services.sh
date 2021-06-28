@@ -2,4 +2,4 @@
 
 set -eu
 
-docker-compose -f docker-compose.services.yml down --remove-orphans 
+docker-compose -f docker-compose.services.yml down
