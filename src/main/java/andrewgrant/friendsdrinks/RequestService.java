@@ -4,6 +4,7 @@ import static andrewgrant.friendsdrinks.env.Properties.load;
 import static andrewgrant.friendsdrinks.frontend.TopicNameConfigKey.FRIENDSDRINKS_API;
 
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.errors.StreamsUncaughtExceptionHandler;
 import org.apache.kafka.streams.kstream.*;
@@ -291,7 +292,22 @@ public class RequestService {
         KTable<String, Long> friendsDrinksCount = friendsDrinksStateKTable
                 .groupBy((key, value) -> KeyValue.pair(value.getAdminUserId(), value),
                         Grouped.with(Serdes.String(), avroBuilder.friendsDrinksStateSerde()))
-                .count();
+                .aggregate(
+                        () -> 0L, /* initializer */
+                        (aggKey, newValue, aggValue) -> {
+                            if (newValue.getStatus().equals(FriendsDrinksStatus.ACTIVE)) {
+                                return aggValue + 1;
+                            } else if (newValue.getStatus().equals(FriendsDrinksStatus.DELETED)) {
+                                return aggValue - 1;
+                            } else {
+                                throw new RuntimeException(String.format("Unknown status %s", newValue.getStatus().name()));
+                            }
+                        },
+                        (aggKey, oldValue, aggValue) -> aggValue - 1,
+                        Materialized.<String, Long, KeyValueStore<Bytes, byte[]>>
+                                as("aggregated-table-store")
+                                .withKeySerde(Serdes.String())
+                                .withValueSerde(Serdes.Long()));
 
         return createRequests.selectKey((key, value) -> value.getAdminUserId())
                 .leftJoin(friendsDrinksCount,
