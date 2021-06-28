@@ -2,4 +2,4 @@
 
 set -eu
 
-docker-compose -f docker-compose.kafka.yml --project-name friendsdrinks down
+docker-compose -f docker-compose.kafka.yml --project-name kafka down

@@ -2,4 +2,4 @@
 
 set -eu
 
-docker-compose -f docker-compose.services.yml down
+docker-compose -f docker-compose.services.yml --project-name app down
