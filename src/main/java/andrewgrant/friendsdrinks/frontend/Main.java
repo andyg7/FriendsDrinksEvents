@@ -79,6 +79,7 @@ public class Main {
                 }
             }
         });
+        streams.start();
         try {
             jettyServer.start();
             URI uri = jettyServer.getURI();
@@ -90,7 +91,6 @@ public class Main {
             throw new RuntimeException(e);
         }
         log.info("Listening on " + jettyServer.getURI());
-        streams.start();
         Thread.currentThread().join();
     }
 
