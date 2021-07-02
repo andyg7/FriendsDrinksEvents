@@ -21,7 +21,7 @@ blocks:
       jobs:
         - name: Config deployment and job to create topics
           commands:
-            - source semaphore/iamenvsetup 2>&1
+            - source .semaphore/iamenvsetup 2>&1
             - aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
             - kubectl --kubeconfig awskubeconfig cluster-info
             - kubectl --kubeconfig awskubeconfig get nodes
@@ -46,7 +46,7 @@ blocks:
       jobs:
         - name: FriendsDrinks invitation writer service deployment
           commands:
-            - source semaphore/iamenvsetup 2>&1
+            - source .semaphore/iamenvsetup 2>&1
             - aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
             - kubectl --kubeconfig awskubeconfig cluster-info
             - kubectl --kubeconfig awskubeconfig get nodes
@@ -58,7 +58,7 @@ blocks:
             - rm -f $apply_tmp
         - name: FriendsDrinks meetup writer service deployment
           commands:
-            - source semaphore/iamenvsetup 2>&1
+            - source .semaphore/iamenvsetup 2>&1
             - aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
             - kubectl --kubeconfig awskubeconfig cluster-info
             - kubectl --kubeconfig awskubeconfig get nodes
@@ -70,7 +70,7 @@ blocks:
             - rm -f $apply_tmp
         - name: FriendsDrinks membership request service deployment
           commands:
-            - source semaphore/iamenvsetup 2>&1
+            - source .semaphore/iamenvsetup 2>&1
             - aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
             - kubectl --kubeconfig awskubeconfig cluster-info
             - kubectl --kubeconfig awskubeconfig get nodes
@@ -82,7 +82,7 @@ blocks:
             - rm -f $apply_tmp
         - name: FriendsDrinks membershpi writer service deployment
           commands:
-            - source semaphore/iamenvsetup 2>&1
+            - source .semaphore/iamenvsetup 2>&1
             - aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
             - kubectl --kubeconfig awskubeconfig cluster-info
             - kubectl --kubeconfig awskubeconfig get nodes
@@ -94,7 +94,7 @@ blocks:
             - rm -f $apply_tmp
         - name: FriendsDrinks request service deployment
           commands:
-            - source semaphore/iamenvsetup 2>&1
+            - source .semaphore/iamenvsetup 2>&1
             - aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
             - kubectl --kubeconfig awskubeconfig cluster-info
             - kubectl --kubeconfig awskubeconfig get nodes
@@ -106,7 +106,7 @@ blocks:
             - rm -f $apply_tmp
         - name: FriendsDrinks writer service deployment
           commands:
-            - source semaphore/iamenvsetup 2>&1
+            - source .semaphore/iamenvsetup 2>&1
             - aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
             - kubectl --kubeconfig awskubeconfig cluster-info
             - kubectl --kubeconfig awskubeconfig get nodes
@@ -118,7 +118,7 @@ blocks:
             - rm -f $apply_tmp
         - name: User service deployment
           commands:
-            - source semaphore/iamenvsetup 2>&1
+            - source .semaphore/iamenvsetup 2>&1
             - aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
             - kubectl --kubeconfig awskubeconfig cluster-info
             - kubectl --kubeconfig awskubeconfig get nodes
@@ -147,7 +147,7 @@ blocks:
       jobs:
         - name: FriendsDrinks API service deployment
           commands:
-            - source semaphore/iamenvsetup 2>&1
+            - source .semaphore/iamenvsetup 2>&1
             - aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
             - kubectl --kubeconfig awskubeconfig cluster-info
             - kubectl --kubeconfig awskubeconfig get nodes
@@ -158,7 +158,7 @@ blocks:
             - rm -f $apply_tmp
         - name: FriendsDrinks API headless service deployment
           commands:
-            - source semaphore/iamenvsetup 2>&1
+            - source .semaphore/iamenvsetup 2>&1
             - aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
             - kubectl --kubeconfig awskubeconfig cluster-info
             - kubectl --kubeconfig awskubeconfig get nodes
@@ -169,7 +169,7 @@ blocks:
             - rm -f $apply_tmp
         - name: FriendsDrinks API deployment
           commands:
-            - source semaphore/iamenvsetup 2>&1
+            - source .semaphore/iamenvsetup 2>&1
             - aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
             - kubectl --kubeconfig awskubeconfig cluster-info
             - kubectl --kubeconfig awskubeconfig get nodes
