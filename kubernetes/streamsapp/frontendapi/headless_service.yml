@@ -3,7 +3,7 @@ kind: Service
 metadata:
   name: frontendapi-headless
 spec:
-  clusterIP: none
+  clusterIP: None
   ports:
     - port: 80
       targetPort: 8080
