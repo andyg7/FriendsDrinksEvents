@@ -7,7 +7,7 @@ services:
     networks:
       - kafka-network
     volumes:
-      - ./dev-dockercompose.properties:/app/config
+      - ${PWD}/dev-dockercompose.properties:/app/config/dev.properties
     command: "andrewgrant.friendsdrinks.RequestService /app/config/dev.properties"
 
   friendsdrinks-membership-request-service:
@@ -15,7 +15,7 @@ services:
     networks:
       - kafka-network
     volumes:
-      - ./dev-dockercompose.properties:/app/config
+      - ${PWD}/dev-dockercompose.properties:/app/config/dev.properties
     command: "andrewgrant.friendsdrinks.membership.RequestService /app/config/dev.properties"
 
   friendsdrinks-membership-writer-service:
@@ -23,7 +23,7 @@ services:
     networks:
       - kafka-network
     volumes:
-      - ./dev-dockercompose.properties:/app/config
+      - ${PWD}/dev-dockercompose.properties:/app/config/dev.properties
     command: "andrewgrant.friendsdrinks.membership.MembershipWriterService /app/config/dev.properties"
 
   friendsdrinks-meetup-writer-service:
@@ -31,7 +31,7 @@ services:
     networks:
       - kafka-network
     volumes:
-      - ./dev-dockercompose.properties:/app/config
+      - ${PWD}/dev-dockercompose.properties:/app/config/dev.properties
     command: "andrewgrant.friendsdrinks.meetup.WriterService /app/config/dev.properties"
 
   friendsdrinks-invitation-writer-service:
@@ -39,7 +39,7 @@ services:
     networks:
       - kafka-network
     volumes:
-      - ./dev-dockercompose.properties:/app/config
+      - ${PWD}/dev-dockercompose.properties:/app/config/dev.properties
     command: "andrewgrant.friendsdrinks.membership.InvitationWriterService /app/config/dev.properties"
 
   friendsdrinks-writer-service:
@@ -47,7 +47,7 @@ services:
     networks:
       - kafka-network
     volumes:
-      - ./dev-dockercompose.properties:/app/config
+      - ${PWD}/dev-dockercompose.properties:/app/config/dev.properties
     command: "andrewgrant.friendsdrinks.WriterService /app/config/dev.properties"
 
   frontend-api:
@@ -55,7 +55,7 @@ services:
     networks:
       - kafka-network
     volumes:
-      - ./dev-dockercompose.properties:/app/config
+      - ${PWD}/dev-dockercompose.properties:/app/config/dev.properties
     ports:
       - "32778:8080"
     command: "andrewgrant.friendsdrinks.frontend.Main /app/config/dev.properties"
@@ -65,7 +65,7 @@ services:
     networks:
       - kafka-network
     volumes:
-      - ./dev-dockercompose.properties:/app/config
+      - ${PWD}/dev-dockercompose.properties:/app/config/dev.properties
     command: "andrewgrant.friendsdrinks.user.Service /app/config/dev.properties"
 
 networks:
