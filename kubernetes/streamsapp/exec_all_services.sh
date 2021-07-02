@@ -6,12 +6,17 @@ img=$1
 action=$2
 
 apply_tmp=$(mktemp)
-./kubernetes/streamsapp/generate_manifest.sh kubernetes/streamsapp/friendsdrinks_api_service.yml $img $apply_tmp
+./kubernetes/streamsapp/generate_manifest.sh kubernetes/streamsapp/frontendapi/service.yml $img $apply_tmp
 kubectl $action -f $apply_tmp
 rm -rf $apply_tmp
 
 apply_tmp=$(mktemp)
-./kubernetes/streamsapp/generate_manifest.sh kubernetes/streamsapp/friendsdrinks_api_service_service.yml $img $apply_tmp
+./kubernetes/streamsapp/generate_manifest.sh kubernetes/streamsapp/frontendapi/headless_service.yml $img $apply_tmp
+kubectl $action -f $apply_tmp
+rm -rf $apply_tmp
+
+apply_tmp=$(mktemp)
+./kubernetes/streamsapp/generate_manifest.sh kubernetes/streamsapp/frontendapi/deployment.yml $img $apply_tmp
 kubectl $action -f $apply_tmp
 rm -rf $apply_tmp
 
