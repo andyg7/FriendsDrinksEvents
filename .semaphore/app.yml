@@ -145,17 +145,6 @@ blocks:
           - sudo ./aws/install
           - aws --version
       jobs:
-        - name: FriendsDrinks API service service deployment
-          commands:
-            - source semaphore/iamenvsetup 2>&1
-            - aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
-            - kubectl --kubeconfig awskubeconfig cluster-info
-            - kubectl --kubeconfig awskubeconfig get nodes
-            - apply_tmp=$(mktemp)
-            - ./kubernetes/streamsapp/generate_manifest.sh kubernetes/streamsapp/friendsdrinks_api_service_service.yml $DOCKER_USERNAME/friendsdrinksbackend:$SEMAPHORE_WORKFLOW_ID $apply_tmp
-            - cat $apply_tmp
-            - kubectl --kubeconfig awskubeconfig apply -f $apply_tmp
-            - rm -f $apply_tmp
         - name: FriendsDrinks API service deployment
           commands:
             - source semaphore/iamenvsetup 2>&1
@@ -163,7 +152,29 @@ blocks:
             - kubectl --kubeconfig awskubeconfig cluster-info
             - kubectl --kubeconfig awskubeconfig get nodes
             - apply_tmp=$(mktemp)
-            - ./kubernetes/streamsapp/generate_manifest.sh kubernetes/streamsapp/friendsdrinks_api_service.yml $DOCKER_USERNAME/friendsdrinksbackend:$SEMAPHORE_WORKFLOW_ID $apply_tmp
+            - ./kubernetes/streamsapp/generate_manifest.sh kubernetes/streamsapp/frontendapi/service.yml $DOCKER_USERNAME/friendsdrinksbackend:$SEMAPHORE_WORKFLOW_ID $apply_tmp
+            - cat $apply_tmp
+            - kubectl --kubeconfig awskubeconfig apply -f $apply_tmp
+            - rm -f $apply_tmp
+        - name: FriendsDrinks API headless service deployment
+          commands:
+            - source semaphore/iamenvsetup 2>&1
+            - aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
+            - kubectl --kubeconfig awskubeconfig cluster-info
+            - kubectl --kubeconfig awskubeconfig get nodes
+            - apply_tmp=$(mktemp)
+            - ./kubernetes/streamsapp/generate_manifest.sh kubernetes/streamsapp/frontendapi/headless_service.yml $DOCKER_USERNAME/friendsdrinksbackend:$SEMAPHORE_WORKFLOW_ID $apply_tmp
+            - cat $apply_tmp
+            - kubectl --kubeconfig awskubeconfig apply -f $apply_tmp
+            - rm -f $apply_tmp
+        - name: FriendsDrinks API deployment
+          commands:
+            - source semaphore/iamenvsetup 2>&1
+            - aws eks update-kubeconfig --name EKSCluster --kubeconfig awskubeconfig
+            - kubectl --kubeconfig awskubeconfig cluster-info
+            - kubectl --kubeconfig awskubeconfig get nodes
+            - apply_tmp=$(mktemp)
+            - ./kubernetes/streamsapp/generate_manifest.sh kubernetes/streamsapp/frontendapi/deployment.yml $DOCKER_USERNAME/friendsdrinksbackend:$SEMAPHORE_WORKFLOW_ID $apply_tmp
             - cat $apply_tmp
             - kubectl --kubeconfig awskubeconfig apply -f $apply_tmp
             - kubectl --kubeconfig awskubeconfig rollout status -f $apply_tmp
