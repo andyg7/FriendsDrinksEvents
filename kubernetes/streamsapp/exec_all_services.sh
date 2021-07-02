@@ -16,7 +16,7 @@ kubectl $action -f $apply_tmp
 rm -rf $apply_tmp
 
 apply_tmp=$(mktemp)
-./kubernetes/streamsapp/generate_manifest.sh kubernetes/streamsapp/frontendapi/deployment.yml $img $apply_tmp
+./kubernetes/streamsapp/generate_manifest.sh kubernetes/streamsapp/frontendapi/statefulset.yml $img $apply_tmp
 kubectl $action -f $apply_tmp
 rm -rf $apply_tmp
 

@@ -174,7 +174,7 @@ blocks:
             - kubectl --kubeconfig awskubeconfig cluster-info
             - kubectl --kubeconfig awskubeconfig get nodes
             - apply_tmp=$(mktemp)
-            - ./kubernetes/streamsapp/generate_manifest.sh kubernetes/streamsapp/frontendapi/deployment.yml $DOCKER_USERNAME/friendsdrinksbackend:$SEMAPHORE_WORKFLOW_ID $apply_tmp
+            - ./kubernetes/streamsapp/generate_manifest.sh kubernetes/streamsapp/frontendapi/statefulset.yml $DOCKER_USERNAME/friendsdrinksbackend:$SEMAPHORE_WORKFLOW_ID $apply_tmp
             - cat $apply_tmp
             - kubectl --kubeconfig awskubeconfig apply -f $apply_tmp
             - kubectl --kubeconfig awskubeconfig rollout status -f $apply_tmp
