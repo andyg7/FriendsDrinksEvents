@@ -30,6 +30,7 @@ import andrewgrant.friendsdrinks.frontend.api.meetup.MeetupBean;
 import andrewgrant.friendsdrinks.frontend.api.meetup.ScheduleFriendsDrinksMeetupRequestBean;
 import andrewgrant.friendsdrinks.frontend.api.meetup.ScheduleFriendsDrinksMeetupResponseBean;
 import andrewgrant.friendsdrinks.frontend.api.membership.*;
+import andrewgrant.friendsdrinks.frontend.api.state.FriendsDrinksStateBean;
 import andrewgrant.friendsdrinks.frontend.api.user.GetUsersResponseBean;
 import andrewgrant.friendsdrinks.frontend.api.user.PostUsersRequestBean;
 import andrewgrant.friendsdrinks.frontend.api.user.PostUsersResponseBean;
@@ -683,6 +684,24 @@ public class Handler {
         }
 
         return backendResponse;
+    }
+
+    // Internal APIs go below.
+    @GET
+    @Path("/internal/friendsdrinks-state-store/{friendsDrinksId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public FriendsDrinksStateBean getFriendsDrinksStateBean(@PathParam("friendsDrinksId") String friendsDrinksId) {
+        ReadOnlyKeyValueStore<FriendsDrinksId, FriendsDrinksState> kv =
+                kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_STATE_STORE, QueryableStoreTypes.keyValueStore()));
+        FriendsDrinksState friendsDrinksState = kv.get(FriendsDrinksId.newBuilder().setUuid(friendsDrinksId).build());
+        if (friendsDrinksState == null) {
+            throw new BadRequestException(String.format("%s does not exist", friendsDrinksId));
+        }
+        FriendsDrinksStateBean friendsDrinksStateBean = new FriendsDrinksStateBean();
+        friendsDrinksStateBean.setAdminUserId(friendsDrinksState.getAdminUserId());
+        friendsDrinksStateBean.setFriendsDrinksId(friendsDrinksState.getFriendsDrinksId().getUuid());
+        friendsDrinksStateBean.setName(friendsDrinksState.getName());
+        return friendsDrinksStateBean;
     }
 
 }

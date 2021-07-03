@@ -62,7 +62,7 @@ public class DistributedStateRetriever implements StateRetriever {
         log.info("Host info: {} {}", hostInfo.host(), hostInfo.port());
         return client.target(endpoint(hostInfo, FRIENDSDRINKS_STATE_STORE, uuid))
                 .request(MediaType.APPLICATION_JSON)
-                .get(new GenericType<FriendsDrinksStateBean> (){});
+                .get(new GenericType<FriendsDrinksStateBean>(){});
     }
 
     private String endpoint(HostInfo hostInfo, String stateStoreName, String key) {
