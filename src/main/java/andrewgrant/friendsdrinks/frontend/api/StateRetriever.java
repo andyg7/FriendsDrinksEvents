@@ -2,6 +2,7 @@ package andrewgrant.friendsdrinks.frontend.api;
 
 import andrewgrant.friendsdrinks.frontend.api.state.ApiResponseBean;
 import andrewgrant.friendsdrinks.frontend.api.state.FriendsDrinksStateBean;
+import andrewgrant.friendsdrinks.frontend.api.state.UserHomepageBean;
 import andrewgrant.friendsdrinks.frontend.api.state.UserStateBean;
 
 /**
@@ -13,4 +14,6 @@ public interface StateRetriever {
     UserStateBean getUserState(String userId);
 
     ApiResponseBean getApiResponse(String requestId);
+
+    UserHomepageBean getUserHomePage(String userId);
 }

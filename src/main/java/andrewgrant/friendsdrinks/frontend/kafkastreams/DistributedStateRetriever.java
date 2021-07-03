@@ -20,6 +20,7 @@ import andrewgrant.friendsdrinks.avro.FriendsDrinksId;
 import andrewgrant.friendsdrinks.frontend.api.StateRetriever;
 import andrewgrant.friendsdrinks.frontend.api.state.ApiResponseBean;
 import andrewgrant.friendsdrinks.frontend.api.state.FriendsDrinksStateBean;
+import andrewgrant.friendsdrinks.frontend.api.state.UserHomepageBean;
 import andrewgrant.friendsdrinks.frontend.api.state.UserStateBean;
 
 
@@ -93,6 +94,20 @@ public class DistributedStateRetriever implements StateRetriever {
         return client.target(endpoint(hostInfo, RESPONSES_STATE_STORE, requestId))
                 .request(MediaType.APPLICATION_JSON)
                 .get(new GenericType<ApiResponseBean>(){});
+    }
+
+    @Override
+    public UserHomepageBean getUserHomePage(String userId) {
+        KeyQueryMetadata keyQueryMetadata = kafkaStreams.queryMetadataForKey(USER_HOMEPAGES_STATE_STORE, userId,
+                Serdes.String().serializer());
+        if (keyQueryMetadata == null) {
+            return null;
+        }
+        HostInfo hostInfo = keyQueryMetadata.activeHost();
+        log.info("Host info: {} {}", hostInfo.host(), hostInfo.port());
+        return client.target(endpoint(hostInfo, USER_HOMEPAGES_STATE_STORE, userId))
+                .request(MediaType.APPLICATION_JSON)
+                .get(new GenericType<UserHomepageBean>(){});
     }
 
     private String endpoint(HostInfo hostInfo, String stateStoreName, String key) {

@@ -32,6 +32,7 @@ import andrewgrant.friendsdrinks.frontend.api.meetup.ScheduleFriendsDrinksMeetup
 import andrewgrant.friendsdrinks.frontend.api.membership.*;
 import andrewgrant.friendsdrinks.frontend.api.state.ApiResponseBean;
 import andrewgrant.friendsdrinks.frontend.api.state.FriendsDrinksStateBean;
+import andrewgrant.friendsdrinks.frontend.api.state.UserHomepageBean;
 import andrewgrant.friendsdrinks.frontend.api.state.UserStateBean;
 import andrewgrant.friendsdrinks.frontend.api.user.GetUsersResponseBean;
 import andrewgrant.friendsdrinks.frontend.api.user.PostUsersRequestBean;
@@ -698,6 +699,13 @@ public class Handler {
     @Produces(MediaType.APPLICATION_JSON)
     public ApiResponseBean getApiResponse(@PathParam("requestId") String requestId) {
         return localStateRetriever.getApiResponse(requestId);
+    }
+
+    @GET
+    @Path("/user-homepages-state-store/{requestId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public UserHomepageBean getUserHomepage(@PathParam("userId") String userId) {
+        return localStateRetriever.getUserHomePage(userId);
     }
 
 }

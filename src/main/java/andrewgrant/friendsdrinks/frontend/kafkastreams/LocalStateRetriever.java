@@ -7,12 +7,14 @@ import org.apache.kafka.streams.StoreQueryParameters;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 
+import java.util.stream.Collectors;
+
 import andrewgrant.friendsdrinks.avro.*;
 import andrewgrant.friendsdrinks.frontend.api.StateRetriever;
 import andrewgrant.friendsdrinks.frontend.api.state.ApiResponseBean;
 import andrewgrant.friendsdrinks.frontend.api.state.FriendsDrinksStateBean;
+import andrewgrant.friendsdrinks.frontend.api.state.UserHomepageBean;
 import andrewgrant.friendsdrinks.frontend.api.state.UserStateBean;
-
 
 /**
  * Gets state locally.
@@ -91,5 +93,41 @@ public class LocalStateRetriever implements StateRetriever {
             throw new RuntimeException(String.format("Unknown api event type %s", backendResponse.getEventType().name()));
         }
         return apiResponseBean;
+    }
+
+    @Override
+    public UserHomepageBean getUserHomePage(String userId) {
+        ReadOnlyKeyValueStore<String, UserHomepage> userHomepageStore =
+                kafkaStreams.store(StoreQueryParameters.fromNameAndType(USER_HOMEPAGES_STATE_STORE, QueryableStoreTypes.keyValueStore()));
+
+        UserHomepage userHomepage = userHomepageStore.get(userId);
+        if (userHomepage == null) {
+            return null;
+        }
+        UserHomepageBean userHomepageBean = new UserHomepageBean();
+        userHomepageBean.setUserId(userHomepage.getUserId());
+        if (userHomepage.getAdminFriendsDrinks() != null && userHomepage.getAdminFriendsDrinks().getFriendsDrinks() != null)  {
+            userHomepageBean.setAdminFriendsDrinksStateList(userHomepage.getAdminFriendsDrinks().getFriendsDrinks()
+                    .stream().map(x -> {
+                        FriendsDrinksStateBean friendsDrinksStateBean = new FriendsDrinksStateBean();
+                        friendsDrinksStateBean.setStatus(x.getStatus().name());
+                        friendsDrinksStateBean.setFriendsDrinksId(x.getFriendsDrinksId().getUuid());
+                        friendsDrinksStateBean.setName(x.getName());
+                        friendsDrinksStateBean.setAdminUserId(x.getAdminUserId());
+                        return friendsDrinksStateBean;
+                    }).collect(Collectors.toList()));
+        }
+        if (userHomepage.getMemberFriendsDrinks() != null && userHomepage.getMemberFriendsDrinks().getFriendsDrinks() != null)  {
+            userHomepageBean.setMemberFriendsDrinksStateList(userHomepage.getMemberFriendsDrinks().getFriendsDrinks()
+                    .stream().map(x -> {
+                        FriendsDrinksStateBean friendsDrinksStateBean = new FriendsDrinksStateBean();
+                        friendsDrinksStateBean.setStatus(x.getStatus().name());
+                        friendsDrinksStateBean.setFriendsDrinksId(x.getFriendsDrinksId().getUuid());
+                        friendsDrinksStateBean.setName(x.getName());
+                        friendsDrinksStateBean.setAdminUserId(x.getAdminUserId());
+                        return friendsDrinksStateBean;
+                    }).collect(Collectors.toList()));
+        }
+        return userHomepageBean;
     }
 }
