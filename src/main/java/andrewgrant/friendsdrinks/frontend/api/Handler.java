@@ -31,6 +31,7 @@ import andrewgrant.friendsdrinks.frontend.api.meetup.ScheduleFriendsDrinksMeetup
 import andrewgrant.friendsdrinks.frontend.api.meetup.ScheduleFriendsDrinksMeetupResponseBean;
 import andrewgrant.friendsdrinks.frontend.api.membership.*;
 import andrewgrant.friendsdrinks.frontend.api.state.FriendsDrinksStateBean;
+import andrewgrant.friendsdrinks.frontend.api.state.UserStateBean;
 import andrewgrant.friendsdrinks.frontend.api.user.GetUsersResponseBean;
 import andrewgrant.friendsdrinks.frontend.api.user.PostUsersRequestBean;
 import andrewgrant.friendsdrinks.frontend.api.user.PostUsersResponseBean;
@@ -108,14 +109,12 @@ public class Handler {
     @Path("/users/{userId}")
     @Produces(MediaType.APPLICATION_JSON)
     public UserBean getUser(@PathParam("userId") String userId) {
-        ReadOnlyKeyValueStore<String, UserState> kv =
-                kafkaStreams.store(StoreQueryParameters.fromNameAndType(USERS_STATE_STORE, QueryableStoreTypes.keyValueStore()));
-        UserState userState = kv.get(userId);
+        UserStateBean userStateBean = localStateRetriever.getUserState(userId);
         UserBean response = new UserBean();
-        response.setEmail(userState.getEmail());
-        response.setFirstName(userState.getFirstName());
-        response.setLastName(userState.getLastName());
-        response.setUserId(userState.getUserId().getUserId());
+        response.setEmail(userStateBean.getEmail());
+        response.setFirstName(userStateBean.getFirstName());
+        response.setLastName(userStateBean.getLastName());
+        response.setUserId(userStateBean.getUserId());
         return response;
     }
 
@@ -695,6 +694,13 @@ public class Handler {
     @Produces(MediaType.APPLICATION_JSON)
     public FriendsDrinksStateBean getFriendsDrinksStateBean(@PathParam("friendsDrinksId") String friendsDrinksId) {
         return localStateRetriever.getFriendsDrinksState(friendsDrinksId);
+    }
+
+    @GET
+    @Path("/users-state-store/{userId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public UserStateBean getUserStateBean(@PathParam("userId") String userId) {
+        return localStateRetriever.getUserState(userId);
     }
 
 }
