@@ -576,17 +576,23 @@ public class MaterializedViewsService {
         if (envProps.getProperty("streams.dir") != null) {
             streamProps.put(StreamsConfig.STATE_DIR_CONFIG, envProps.getProperty("streams.dir"));
         }
-        if (System.getenv("POD_NAME") != null &&
-                System.getenv("POD_NAMESPACE") != null &&
-                System.getenv("HEADLESS_SERVICE_NAME") != null) {
-            String host = String.format("%s.%s.%s.svc.cluster.local",
-                    System.getenv("POD_NAME"),
-                    System.getenv("HEADLESS_SERVICE_NAME"),
-                    System.getenv("POD_NAMESPACE"));
-            String port = portStr;
-            String endpoint = host + ":" + port;
-            log.info("Setting {} to {}", StreamsConfig.APPLICATION_SERVER_CONFIG, endpoint);
-            streamProps.put(StreamsConfig.APPLICATION_SERVER_CONFIG, endpoint);
+        if (envProps.getProperty("deployment-mode").equals("distributed")) {
+            String podName = System.getenv("POD_NAME");
+            String headlessServiceName = System.getenv("HEADLESS_SERVICE_NAME");
+            String podNamespace = System.getenv("POD_NAMESPACE");
+            if (podName != null && headlessServiceName != null && podNamespace != null) {
+                String host = String.format("%s.%s.%s.svc.cluster.local",
+                        System.getenv("POD_NAME"),
+                        System.getenv("HEADLESS_SERVICE_NAME"),
+                        System.getenv("POD_NAMESPACE"));
+                String port = portStr;
+                String endpoint = host + ":" + port;
+                log.info("Setting {} to {}", StreamsConfig.APPLICATION_SERVER_CONFIG, endpoint);
+                streamProps.put(StreamsConfig.APPLICATION_SERVER_CONFIG, endpoint);
+            } else {
+                throw new RuntimeException(String.format("Deployment mode is distributed but can't find required metadata. " +
+                        "Pod name: %s. Headless service name %s. Pod namespace %s.", podName, headlessServiceName, podNamespace));
+            }
         }
         streamProps = Config.addSharedConfig(streamProps);
         return streamProps;
