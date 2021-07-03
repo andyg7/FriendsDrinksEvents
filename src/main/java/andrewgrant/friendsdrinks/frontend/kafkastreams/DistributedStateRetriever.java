@@ -60,13 +60,13 @@ public class DistributedStateRetriever implements StateRetriever {
         }
         HostInfo hostInfo = keyQueryMetadata.activeHost();
         log.info("Host info: {} {}", hostInfo.host(), hostInfo.port());
-        return client.target(endpoint(hostInfo, FRIENDSDRINKS_STATE_STORE))
+        return client.target(endpoint(hostInfo, FRIENDSDRINKS_STATE_STORE, uuid))
                 .request(MediaType.APPLICATION_JSON)
                 .get(new GenericType<FriendsDrinksStateBean> (){});
     }
 
-    private String endpoint(HostInfo hostInfo, String stateStoreName) {
-        return String.format("http://%s:%d/%s/%s", hostInfo.host(), hostInfo.port(),
-                internalPath, stateStoreName);
+    private String endpoint(HostInfo hostInfo, String stateStoreName, String key) {
+        return String.format("http://%s:%d/%s/%s/%s", hostInfo.host(), hostInfo.port(),
+                internalPath, stateStoreName, key);
     }
 }
