@@ -35,6 +35,7 @@ import andrewgrant.friendsdrinks.frontend.api.user.GetUsersResponseBean;
 import andrewgrant.friendsdrinks.frontend.api.user.PostUsersRequestBean;
 import andrewgrant.friendsdrinks.frontend.api.user.PostUsersResponseBean;
 import andrewgrant.friendsdrinks.frontend.api.user.UserBean;
+import andrewgrant.friendsdrinks.frontend.kafkastreams.LocalStateRetriever;
 
 /**
  * Implements frontend REST API.
@@ -49,6 +50,7 @@ public class Handler {
     private KafkaProducer<FriendsDrinksMeetupId, FriendsDrinksMeetupEvent> friendsDrinksMeetupKafkaProducer;
     private KafkaProducer<UserId, UserEvent> userKafkaProducer;
     private Properties envProps;
+    private LocalStateRetriever localStateRetriever;
 
     public Handler(KafkaStreams kafkaStreams,
                    KafkaProducer<String, ApiEvent> friendsDrinksKafkaProducer,
@@ -60,6 +62,7 @@ public class Handler {
         this.userKafkaProducer = userKafkaProducer;
         this.friendsDrinksMeetupKafkaProducer = friendsDrinksMeetupKafkaProducer;
         this.envProps = envProps;
+        localStateRetriever = new LocalStateRetriever(kafkaStreams);
     }
 
     @GET
@@ -691,17 +694,7 @@ public class Handler {
     @Path("/internal/friendsdrinks-state-store/{friendsDrinksId}")
     @Produces(MediaType.APPLICATION_JSON)
     public FriendsDrinksStateBean getFriendsDrinksStateBean(@PathParam("friendsDrinksId") String friendsDrinksId) {
-        ReadOnlyKeyValueStore<FriendsDrinksId, FriendsDrinksState> kv =
-                kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_STATE_STORE, QueryableStoreTypes.keyValueStore()));
-        FriendsDrinksState friendsDrinksState = kv.get(FriendsDrinksId.newBuilder().setUuid(friendsDrinksId).build());
-        if (friendsDrinksState == null) {
-            throw new BadRequestException(String.format("%s does not exist", friendsDrinksId));
-        }
-        FriendsDrinksStateBean friendsDrinksStateBean = new FriendsDrinksStateBean();
-        friendsDrinksStateBean.setAdminUserId(friendsDrinksState.getAdminUserId());
-        friendsDrinksStateBean.setFriendsDrinksId(friendsDrinksState.getFriendsDrinksId().getUuid());
-        friendsDrinksStateBean.setName(friendsDrinksState.getName());
-        return friendsDrinksStateBean;
+        return localStateRetriever.getFriendsDrinksState(friendsDrinksId);
     }
 
 }

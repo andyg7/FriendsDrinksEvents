@@ -17,11 +17,11 @@ import andrewgrant.friendsdrinks.frontend.api.state.FriendsDrinksStateBean;
 /**
  * Gets state locally.
  */
-public class SingleNodeStateRetriever implements StateRetriever {
+public class LocalStateRetriever implements StateRetriever {
 
     private KafkaStreams kafkaStreams;
 
-    public SingleNodeStateRetriever(KafkaStreams kafkaStreams) {
+    public LocalStateRetriever(KafkaStreams kafkaStreams) {
         this.kafkaStreams = kafkaStreams;
     }
 
