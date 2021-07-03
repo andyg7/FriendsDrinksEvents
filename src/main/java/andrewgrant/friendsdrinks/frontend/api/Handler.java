@@ -156,6 +156,9 @@ public class Handler {
     @Produces(MediaType.APPLICATION_JSON)
     public GetFriendsDrinksResponseBean getFriendsDrinks(@PathParam("friendsDrinksId") String friendsDrinksId) {
         FriendsDrinksStateBean friendsDrinksStateBean = stateRetriever.getFriendsDrinksState(friendsDrinksId);
+        if (friendsDrinksStateBean == null) {
+            throw new BadRequestException(String.format("%s does not exist", friendsDrinksId));
+        }
         FriendsDrinksBean friendsDrinksBean = new FriendsDrinksBean();
         friendsDrinksBean.setAdminUserId(friendsDrinksStateBean.getAdminUserId());
         friendsDrinksBean.setFriendsDrinksId(friendsDrinksStateBean.getFriendsDrinksId());
