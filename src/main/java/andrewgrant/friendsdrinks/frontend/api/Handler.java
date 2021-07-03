@@ -50,19 +50,21 @@ public class Handler {
     private KafkaProducer<FriendsDrinksMeetupId, FriendsDrinksMeetupEvent> friendsDrinksMeetupKafkaProducer;
     private KafkaProducer<UserId, UserEvent> userKafkaProducer;
     private Properties envProps;
+    private StateRetriever stateRetriever;
     private LocalStateRetriever localStateRetriever;
 
     public Handler(KafkaStreams kafkaStreams,
                    KafkaProducer<String, ApiEvent> friendsDrinksKafkaProducer,
                    KafkaProducer<UserId, UserEvent> userKafkaProducer,
                    KafkaProducer<FriendsDrinksMeetupId, FriendsDrinksMeetupEvent> friendsDrinksMeetupKafkaProducer,
-                   Properties envProps) {
+                   Properties envProps, StateRetriever stateRetriever) {
         this.kafkaStreams = kafkaStreams;
         this.friendsDrinksKafkaProducer = friendsDrinksKafkaProducer;
         this.userKafkaProducer = userKafkaProducer;
         this.friendsDrinksMeetupKafkaProducer = friendsDrinksMeetupKafkaProducer;
         this.envProps = envProps;
         localStateRetriever = new LocalStateRetriever(kafkaStreams);
+        this.stateRetriever = stateRetriever;
     }
 
     @GET
@@ -153,16 +155,11 @@ public class Handler {
     @Path("/friendsdrinkses/{friendsDrinksId}")
     @Produces(MediaType.APPLICATION_JSON)
     public GetFriendsDrinksResponseBean getFriendsDrinks(@PathParam("friendsDrinksId") String friendsDrinksId) {
-        ReadOnlyKeyValueStore<FriendsDrinksId, FriendsDrinksState> kv =
-                kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_STATE_STORE, QueryableStoreTypes.keyValueStore()));
-        FriendsDrinksState friendsDrinksState = kv.get(FriendsDrinksId.newBuilder().setUuid(friendsDrinksId).build());
-        if (friendsDrinksState == null) {
-            throw new BadRequestException(String.format("%s does not exist", friendsDrinksId));
-        }
+        FriendsDrinksStateBean friendsDrinksStateBean = stateRetriever.getFriendsDrinksState(friendsDrinksId);
         FriendsDrinksBean friendsDrinksBean = new FriendsDrinksBean();
-        friendsDrinksBean.setAdminUserId(friendsDrinksState.getAdminUserId());
-        friendsDrinksBean.setFriendsDrinksId(friendsDrinksState.getFriendsDrinksId().getUuid());
-        friendsDrinksBean.setName(friendsDrinksState.getName());
+        friendsDrinksBean.setAdminUserId(friendsDrinksStateBean.getAdminUserId());
+        friendsDrinksBean.setFriendsDrinksId(friendsDrinksStateBean.getFriendsDrinksId());
+        friendsDrinksBean.setName(friendsDrinksStateBean.getName());
 
         GetFriendsDrinksResponseBean response = new GetFriendsDrinksResponseBean();
         response.setFriendsDrinks(friendsDrinksBean);

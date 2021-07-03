@@ -23,6 +23,9 @@ import java.net.URI;
 import java.util.Properties;
 
 import andrewgrant.friendsdrinks.avro.*;
+import andrewgrant.friendsdrinks.frontend.api.StateRetriever;
+import andrewgrant.friendsdrinks.frontend.kafkastreams.DistributedStateRetriever;
+import andrewgrant.friendsdrinks.frontend.kafkastreams.LocalStateRetriever;
 import andrewgrant.friendsdrinks.frontend.kafkastreams.MaterializedViewsService;
 
 /**
@@ -58,6 +61,7 @@ public class Main {
                 new andrewgrant.friendsdrinks.user.AvroBuilder(schemaRegistryUrl),
                 new andrewgrant.friendsdrinks.meetup.AvroBuilder(schemaRegistryUrl));
 
+
         Topology topology = streamsService.buildTopology();
         Properties streamProps = streamsService.buildStreamsProperties(portStr);
         KafkaStreams streams = new KafkaStreams(topology, streamProps);
@@ -66,7 +70,22 @@ public class Main {
             return StreamsUncaughtExceptionHandler.StreamThreadExceptionResponse.REPLACE_THREAD;
         });
 
-        Server jettyServer = Main.buildServer(envProps, streams, userAvroBuilder, apiAvroBuilder, meetupAvroBuilder, port);
+        StateRetriever stateRetriever;
+        if (envProps.getProperty("deployment-mode").equals("distributed")) {
+            stateRetriever = new DistributedStateRetriever(
+                    streams, avroBuilder, apiAvroBuilder,
+                    new andrewgrant.friendsdrinks.membership.AvroBuilder(schemaRegistryUrl),
+                    new andrewgrant.friendsdrinks.user.AvroBuilder(schemaRegistryUrl),
+                    new andrewgrant.friendsdrinks.meetup.AvroBuilder(schemaRegistryUrl)
+            );
+        } else if (envProps.getProperty("deployment-mode").equals("single-node")) {
+            stateRetriever = new LocalStateRetriever(streams);
+        } else {
+            throw new RuntimeException("Unknown deployment mode");
+        }
+
+        Server jettyServer = Main.
+                buildServer(envProps, streams, userAvroBuilder, apiAvroBuilder, meetupAvroBuilder, port, stateRetriever);
         // Attach shutdown handler to catch Control-C.
         Runtime.getRuntime().addShutdownHook(new Thread("shutdown-hook") {
             @Override
@@ -129,7 +148,7 @@ public class Main {
                                       andrewgrant.friendsdrinks.user.AvroBuilder userAvroBuilder,
                                       andrewgrant.friendsdrinks.frontend.AvroBuilder apiAvroBuilder,
                                       andrewgrant.friendsdrinks.meetup.AvroBuilder meetupAvroBuilder,
-                                      int port) {
+                                      int port, StateRetriever stateRetriever) {
         // Jetty server context handler.
         final ServletContextHandler context = new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
         context.setContextPath("/v1");
@@ -141,7 +160,7 @@ public class Main {
         jettyServer.setHandler(context);
 
         context.addServlet(buildFriendsDrinksHolder(streams, userAvroBuilder,
-                apiAvroBuilder, meetupAvroBuilder, envProps), "/*");
+                apiAvroBuilder, meetupAvroBuilder, envProps, stateRetriever), "/*");
 
         return jettyServer;
     }
@@ -150,7 +169,7 @@ public class Main {
                                                           andrewgrant.friendsdrinks.user.AvroBuilder userAvroBuilder,
                                                           andrewgrant.friendsdrinks.frontend.AvroBuilder apiAvroBuilder,
                                                           andrewgrant.friendsdrinks.meetup.AvroBuilder meetupAvroBuilder,
-                                                          Properties envProps) {
+                                                          Properties envProps, StateRetriever stateRetriever) {
         KafkaProducer<String, ApiEvent> friendsDrinksProducer =
                 buildFriendsDrinksProducer(envProps, apiAvroBuilder);
         KafkaProducer<UserId, UserEvent> userProducer =
@@ -159,7 +178,8 @@ public class Main {
                 buildFriendsDrinksMeetupProducer(envProps, meetupAvroBuilder);
         andrewgrant.friendsdrinks.frontend.api.Handler handler =
                 new andrewgrant.friendsdrinks.frontend.api.Handler(
-                        streams, friendsDrinksProducer, userProducer, friendsDrinksMeetupEventKafkaProducer, envProps);
+                        streams, friendsDrinksProducer, userProducer,
+                        friendsDrinksMeetupEventKafkaProducer, envProps, stateRetriever);
         final ResourceConfig rc = new ResourceConfig();
         rc.register(handler);
         rc.register(JacksonFeature.class);
