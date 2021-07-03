@@ -108,7 +108,7 @@ public class Handler {
     @Path("/users/{userId}")
     @Produces(MediaType.APPLICATION_JSON)
     public UserBean getUser(@PathParam("userId") String userId) {
-        UserStateBean userStateBean = localStateRetriever.getUserState(userId);
+        UserStateBean userStateBean = stateRetriever.getUserState(userId);
         UserBean response = new UserBean();
         response.setEmail(userStateBean.getEmail());
         response.setFirstName(userStateBean.getFirstName());
