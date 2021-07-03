@@ -24,6 +24,10 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
           imagePullPolicy: Always
           volumeMounts:
             - name: config

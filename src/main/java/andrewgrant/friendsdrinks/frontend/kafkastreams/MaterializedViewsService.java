@@ -13,6 +13,8 @@ import org.apache.kafka.streams.kstream.*;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +31,8 @@ import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
  * Responsible for building state stores needed by frontend.
  */
 public class MaterializedViewsService {
+
+    private static final Logger log = LoggerFactory.getLogger(MaterializedViewsService.class);
 
     public static final String RESPONSES_STATE_STORE = "api-response-state-store";
     public static final String FRIENDSDRINKS_STATE_STORE = "friendsdrinks-state-store";
@@ -562,7 +566,7 @@ public class MaterializedViewsService {
         );
     }
 
-    public Properties buildStreamsProperties(String uri) {
+    public Properties buildStreamsProperties(String portStr) {
         Properties streamProps = new Properties();
         streamProps.put(StreamsConfig.APPLICATION_ID_CONFIG, envProps.getProperty("frontend-api-application.id"));
         streamProps.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG,
@@ -570,9 +574,15 @@ public class MaterializedViewsService {
         streamProps.put(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
                 envProps.getProperty("schema.registry.url"));
         streamProps.put(StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG, 0);
-        streamProps.put(StreamsConfig.APPLICATION_SERVER_CONFIG, uri);
         if (envProps.getProperty("streams.dir") != null) {
             streamProps.put(StreamsConfig.STATE_DIR_CONFIG, envProps.getProperty("streams.dir"));
+        }
+        if (System.getenv("POD_NAME") != null) {
+            String host = System.getenv("POD_NAME");
+            String port = portStr;
+            String endpoint = host + ":" + port;
+            log.info("Setting {} to {}", StreamsConfig.APPLICATION_SERVER_CONFIG, endpoint);
+            streamProps.put(StreamsConfig.APPLICATION_SERVER_CONFIG, endpoint);
         }
         streamProps = Config.addSharedConfig(streamProps);
         return streamProps;

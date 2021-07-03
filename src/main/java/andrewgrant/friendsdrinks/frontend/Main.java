@@ -51,7 +51,6 @@ public class Main {
 
         int port = 8080;
         String portStr = String.valueOf(port);
-        String streamsUri = "localhost:" + portStr;
 
         MaterializedViewsService streamsService = new MaterializedViewsService(
                 envProps, avroBuilder, apiAvroBuilder,
@@ -59,7 +58,7 @@ public class Main {
                 new andrewgrant.friendsdrinks.user.AvroBuilder(schemaRegistryUrl),
                 new andrewgrant.friendsdrinks.meetup.AvroBuilder(schemaRegistryUrl));
         Topology topology = streamsService.buildTopology();
-        Properties streamProps = streamsService.buildStreamsProperties(streamsUri);
+        Properties streamProps = streamsService.buildStreamsProperties(portStr);
         KafkaStreams streams = new KafkaStreams(topology, streamProps);
         streams.setUncaughtExceptionHandler(exception -> {
             log.error("Uncaught exception {}", exception.getMessage());
