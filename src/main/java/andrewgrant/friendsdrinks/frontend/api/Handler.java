@@ -689,9 +689,9 @@ public class Handler {
         return backendResponse;
     }
 
-    // Internal APIs go below.
+    // APIs that interact with local state.
     @GET
-    @Path("/internal/friendsdrinks-state-store/{friendsDrinksId}")
+    @Path("/friendsdrinks-state-store/{friendsDrinksId}")
     @Produces(MediaType.APPLICATION_JSON)
     public FriendsDrinksStateBean getFriendsDrinksStateBean(@PathParam("friendsDrinksId") String friendsDrinksId) {
         return localStateRetriever.getFriendsDrinksState(friendsDrinksId);

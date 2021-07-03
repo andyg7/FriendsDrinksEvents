@@ -26,8 +26,6 @@ public class DistributedStateRetriever implements StateRetriever {
 
     private static final Logger log = LoggerFactory.getLogger(DistributedStateRetriever.class);
 
-    private static String internalPath = "internal";
-
     private KafkaStreams kafkaStreams;
     private andrewgrant.friendsdrinks.AvroBuilder avroBuilder;
     private andrewgrant.friendsdrinks.frontend.AvroBuilder apiAvroBuilder;
@@ -66,7 +64,6 @@ public class DistributedStateRetriever implements StateRetriever {
     }
 
     private String endpoint(HostInfo hostInfo, String stateStoreName, String key) {
-        return String.format("http://%s:%d/%s/%s/%s", hostInfo.host(), hostInfo.port(),
-                internalPath, stateStoreName, key);
+        return String.format("http://%s:%d/%s/%s", hostInfo.host(), hostInfo.port(), stateStoreName, key);
     }
 }
