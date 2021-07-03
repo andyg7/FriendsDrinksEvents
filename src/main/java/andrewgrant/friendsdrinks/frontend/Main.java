@@ -57,6 +57,7 @@ public class Main {
                 new andrewgrant.friendsdrinks.membership.AvroBuilder(schemaRegistryUrl),
                 new andrewgrant.friendsdrinks.user.AvroBuilder(schemaRegistryUrl),
                 new andrewgrant.friendsdrinks.meetup.AvroBuilder(schemaRegistryUrl));
+
         Topology topology = streamsService.buildTopology();
         Properties streamProps = streamsService.buildStreamsProperties(portStr);
         KafkaStreams streams = new KafkaStreams(topology, streamProps);

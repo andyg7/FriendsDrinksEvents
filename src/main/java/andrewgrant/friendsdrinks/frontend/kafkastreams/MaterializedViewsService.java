@@ -577,8 +577,13 @@ public class MaterializedViewsService {
         if (envProps.getProperty("streams.dir") != null) {
             streamProps.put(StreamsConfig.STATE_DIR_CONFIG, envProps.getProperty("streams.dir"));
         }
-        if (System.getenv("POD_NAME") != null) {
-            String host = System.getenv("POD_NAME");
+        if (System.getenv("POD_NAME") != null &&
+                System.getenv("POD_NAMESPACE") != null &&
+                System.getenv("HEADLESS_SERVICE_NAME") != null) {
+            String host = String.format("%s.%s.%s.svc.cluster.local",
+                    System.getenv("POD_NAME"),
+                    System.getenv("HEADLESS_SERVICE_NAME"),
+                    System.getenv("POD_NAMESPACE"));
             String port = portStr;
             String endpoint = host + ":" + port;
             log.info("Setting {} to {}", StreamsConfig.APPLICATION_SERVER_CONFIG, endpoint);
