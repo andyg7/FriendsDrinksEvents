@@ -5,8 +5,7 @@ package andrewgrant.friendsdrinks.frontend.api.state;
  */
 public class InvitationBean {
     private String message;
-    private String friendsDrinksId;
-    private String friendsDrinksName;
+    private FriendsDrinksStateBean friendsDrinksStateBean;
 
     public String getMessage() {
         return message;
@@ -16,19 +15,11 @@ public class InvitationBean {
         this.message = message;
     }
 
-    public String getFriendsDrinksId() {
-        return friendsDrinksId;
+    public FriendsDrinksStateBean getFriendsDrinksStateBean() {
+        return friendsDrinksStateBean;
     }
 
-    public void setFriendsDrinksId(String friendsDrinksId) {
-        this.friendsDrinksId = friendsDrinksId;
-    }
-
-    public String getFriendsDrinksName() {
-        return friendsDrinksName;
-    }
-
-    public void setFriendsDrinksName(String friendsDrinksName) {
-        this.friendsDrinksName = friendsDrinksName;
+    public void setFriendsDrinksStateBean(FriendsDrinksStateBean friendsDrinksStateBean) {
+        this.friendsDrinksStateBean = friendsDrinksStateBean;
     }
 }

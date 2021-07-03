@@ -11,10 +11,7 @@ import java.util.stream.Collectors;
 
 import andrewgrant.friendsdrinks.avro.*;
 import andrewgrant.friendsdrinks.frontend.api.StateRetriever;
-import andrewgrant.friendsdrinks.frontend.api.state.ApiResponseBean;
-import andrewgrant.friendsdrinks.frontend.api.state.FriendsDrinksStateBean;
-import andrewgrant.friendsdrinks.frontend.api.state.UserHomepageBean;
-import andrewgrant.friendsdrinks.frontend.api.state.UserStateBean;
+import andrewgrant.friendsdrinks.frontend.api.state.*;
 
 /**
  * Gets state locally.
@@ -126,6 +123,22 @@ public class LocalStateRetriever implements StateRetriever {
                         friendsDrinksStateBean.setName(x.getName());
                         friendsDrinksStateBean.setAdminUserId(x.getAdminUserId());
                         return friendsDrinksStateBean;
+                    }).collect(Collectors.toList()));
+        }
+        if (userHomepage.getInvitations() != null &&
+                userHomepage.getInvitations().getInvitations() != null) {
+            userHomepageBean.setInvitationBeanList(userHomepage.getInvitations().getInvitations()
+                    .stream().map(x -> {
+                        InvitationBean invitationBean = new InvitationBean();
+                        invitationBean.setMessage(x.getMessage());
+                        FriendsDrinksState friendsDrinksState = x.getFriendsDrinksState();
+                        FriendsDrinksStateBean friendsDrinksStateBean = new FriendsDrinksStateBean();
+                        friendsDrinksStateBean.setAdminUserId(friendsDrinksState.getAdminUserId());
+                        friendsDrinksStateBean.setFriendsDrinksId(friendsDrinksState.getFriendsDrinksId().getUuid());
+                        friendsDrinksStateBean.setStatus(friendsDrinksState.getStatus().name());
+                        friendsDrinksStateBean.setName(friendsDrinksState.getName());
+                        invitationBean.setFriendsDrinksStateBean(friendsDrinksStateBean);
+                        return invitationBean;
                     }).collect(Collectors.toList()));
         }
         return userHomepageBean;

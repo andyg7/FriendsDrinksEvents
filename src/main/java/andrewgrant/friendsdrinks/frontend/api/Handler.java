@@ -30,10 +30,7 @@ import andrewgrant.friendsdrinks.frontend.api.meetup.MeetupBean;
 import andrewgrant.friendsdrinks.frontend.api.meetup.ScheduleFriendsDrinksMeetupRequestBean;
 import andrewgrant.friendsdrinks.frontend.api.meetup.ScheduleFriendsDrinksMeetupResponseBean;
 import andrewgrant.friendsdrinks.frontend.api.membership.*;
-import andrewgrant.friendsdrinks.frontend.api.state.ApiResponseBean;
-import andrewgrant.friendsdrinks.frontend.api.state.FriendsDrinksStateBean;
-import andrewgrant.friendsdrinks.frontend.api.state.UserHomepageBean;
-import andrewgrant.friendsdrinks.frontend.api.state.UserStateBean;
+import andrewgrant.friendsdrinks.frontend.api.state.*;
 import andrewgrant.friendsdrinks.frontend.api.user.GetUsersResponseBean;
 import andrewgrant.friendsdrinks.frontend.api.user.PostUsersRequestBean;
 import andrewgrant.friendsdrinks.frontend.api.user.PostUsersResponseBean;
@@ -233,49 +230,43 @@ public class Handler {
     public GetUserHomepageResponseBean getUserFriendsDrinksHomepage(@PathParam("userId") String userId) {
         GetUserHomepageResponseBean getUserHomepageResponseBean = new GetUserHomepageResponseBean();
 
-        ReadOnlyKeyValueStore<String, UserHomepage> userHomepageStore =
-                kafkaStreams.store(StoreQueryParameters.fromNameAndType(USER_HOMEPAGES_STATE_STORE, QueryableStoreTypes.keyValueStore()));
-
-        UserHomepage userHomepage = userHomepageStore.get(userId);
+        UserHomepageBean userHomepage = stateRetriever.getUserHomePage(userId);
         if (userHomepage == null) {
             throw new BadRequestException(String.format("User ID %s could not be found", userId));
         }
 
-        if (userHomepage.getAdminFriendsDrinks() != null &&
-                userHomepage.getAdminFriendsDrinks().getFriendsDrinks() != null &&
-                userHomepage.getAdminFriendsDrinks().getFriendsDrinks().size() > 0) {
-            List<FriendsDrinksState> friendsDrinksStates = userHomepage.getAdminFriendsDrinks().getFriendsDrinks();
+        if (userHomepage.getAdminFriendsDrinksStateList() != null &&
+                userHomepage.getAdminFriendsDrinksStateList().size() > 0) {
+            List<FriendsDrinksStateBean> friendsDrinksStates = userHomepage.getAdminFriendsDrinksStateList();
             getUserHomepageResponseBean.setAdminFriendsDrinksList(friendsDrinksStates.stream().map(x -> {
                 FriendsDrinksBean friendsDrinksBean = new FriendsDrinksBean();
-                friendsDrinksBean.setFriendsDrinksId(x.getFriendsDrinksId().getUuid());
+                friendsDrinksBean.setFriendsDrinksId(x.getFriendsDrinksId());
                 friendsDrinksBean.setAdminUserId(x.getAdminUserId());
                 friendsDrinksBean.setName(x.getName());
                 return friendsDrinksBean;
             }).collect(Collectors.toList()));
         }
 
-        if (userHomepage.getMemberFriendsDrinks() != null &&
-                userHomepage.getMemberFriendsDrinks().getFriendsDrinks() != null &&
-                userHomepage.getMemberFriendsDrinks().getFriendsDrinks().size() > 0) {
-            List<FriendsDrinksState> friendsDrinksStates = userHomepage.getMemberFriendsDrinks().getFriendsDrinks();
+        if (userHomepage.getMemberFriendsDrinksStateList() != null &&
+                userHomepage.getMemberFriendsDrinksStateList().size() > 0) {
+            List<FriendsDrinksStateBean> friendsDrinksStates = userHomepage.getMemberFriendsDrinksStateList();
             getUserHomepageResponseBean.setMemberFriendsDrinksList(friendsDrinksStates.stream().map(x -> {
                 FriendsDrinksBean friendsDrinksBean = new FriendsDrinksBean();
-                friendsDrinksBean.setFriendsDrinksId(x.getFriendsDrinksId().getUuid());
+                friendsDrinksBean.setFriendsDrinksId(x.getFriendsDrinksId());
                 friendsDrinksBean.setAdminUserId(x.getAdminUserId());
                 friendsDrinksBean.setName(x.getName());
                 return friendsDrinksBean;
             }).collect(Collectors.toList()));
         }
 
-        if (userHomepage.getInvitations() != null &&
-                userHomepage.getInvitations().getInvitations() != null &&
-                userHomepage.getInvitations().getInvitations().size() > 0) {
-            List<InvitationStateFriendsDrinksEnriched> invitations = userHomepage.getInvitations().getInvitations();
+        if (userHomepage.getInvitationBeanList() != null &&
+                userHomepage.getInvitationBeanList().size() > 0) {
+            List<InvitationBean> invitations = userHomepage.getInvitationBeanList();
             getUserHomepageResponseBean.setInvitations(invitations.stream().map(x -> {
                 FriendsDrinksInvitationBean friendsDrinksInvitationBean = new FriendsDrinksInvitationBean();
-                friendsDrinksInvitationBean.setFriendsDrinksId(x.getMembershipId().getFriendsDrinksId().getUuid());
+                friendsDrinksInvitationBean.setFriendsDrinksId(x.getFriendsDrinksStateBean().getFriendsDrinksId());
                 friendsDrinksInvitationBean.setMessage(x.getMessage());
-                friendsDrinksInvitationBean.setFriendsDrinksName(x.getFriendsDrinksState().getName());
+                friendsDrinksInvitationBean.setFriendsDrinksName(x.getFriendsDrinksStateBean().getName());
                 return friendsDrinksInvitationBean;
             }).collect(Collectors.toList()));
         }
