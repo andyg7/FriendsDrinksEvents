@@ -1,4 +1,4 @@
-package andrewgrant.friendsdrinks.frontend;
+package andrewgrant.friendsdrinks.frontend.kafkastreams;
 
 import static andrewgrant.friendsdrinks.TopicNameConfigKey.FRIENDSDRINKS_STATE;
 import static andrewgrant.friendsdrinks.frontend.TopicNameConfigKey.FRIENDSDRINKS_API;
@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Properties;
 
 import andrewgrant.friendsdrinks.avro.*;
+import andrewgrant.friendsdrinks.frontend.RequestsPurger;
+import andrewgrant.friendsdrinks.frontend.TopicNameConfigKey;
 import andrewgrant.friendsdrinks.streamsconfig.Config;
 
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;

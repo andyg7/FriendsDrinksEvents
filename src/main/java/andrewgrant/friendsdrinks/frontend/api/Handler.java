@@ -1,8 +1,8 @@
 package andrewgrant.friendsdrinks.frontend.api;
 
-import static andrewgrant.friendsdrinks.frontend.MaterializedViewsService.*;
 import static andrewgrant.friendsdrinks.frontend.api.membership.PostFriendsDrinksMembershipRequestBean.*;
 import static andrewgrant.friendsdrinks.frontend.api.user.PostUsersRequestBean.*;
+import static andrewgrant.friendsdrinks.frontend.kafkastreams.MaterializedViewsService.*;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;

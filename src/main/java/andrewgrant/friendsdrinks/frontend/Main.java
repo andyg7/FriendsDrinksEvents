@@ -23,6 +23,7 @@ import java.net.URI;
 import java.util.Properties;
 
 import andrewgrant.friendsdrinks.avro.*;
+import andrewgrant.friendsdrinks.frontend.kafkastreams.MaterializedViewsService;
 
 /**
  * Hooks up dependencies for the Frontend REST API.
