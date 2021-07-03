@@ -30,6 +30,7 @@ import andrewgrant.friendsdrinks.frontend.api.meetup.MeetupBean;
 import andrewgrant.friendsdrinks.frontend.api.meetup.ScheduleFriendsDrinksMeetupRequestBean;
 import andrewgrant.friendsdrinks.frontend.api.meetup.ScheduleFriendsDrinksMeetupResponseBean;
 import andrewgrant.friendsdrinks.frontend.api.membership.*;
+import andrewgrant.friendsdrinks.frontend.api.state.ApiResponseBean;
 import andrewgrant.friendsdrinks.frontend.api.state.FriendsDrinksStateBean;
 import andrewgrant.friendsdrinks.frontend.api.state.UserStateBean;
 import andrewgrant.friendsdrinks.frontend.api.user.GetUsersResponseBean;
@@ -350,10 +351,8 @@ public class Handler {
         ProducerRecord<String, ApiEvent> record = new ProducerRecord<>(topicName, requestId, friendsDrinksEvent);
         friendsDrinksKafkaProducer.send(record).get();
 
-        ApiEvent backendResponse = getApiResponse(requestId);
         CreateFriendsDrinksResponseBean responseBean = new CreateFriendsDrinksResponseBean();
-        Result result = backendResponse.getFriendsDrinksEvent().getCreateFriendsDrinksResponse().getResult();
-        responseBean.setResult(result.name());
+        responseBean.setResult(waitAndGetApiResponse(requestId).getResult());
         responseBean.setFriendsDrinksId(friendsDrinksId);
         return responseBean;
     }
@@ -441,9 +440,8 @@ public class Handler {
         ProducerRecord<String, ApiEvent> record = new ProducerRecord<>(topicName, requestId, friendsDrinksEvent);
         friendsDrinksKafkaProducer.send(record).get();
 
-        ApiEvent backendResponse = getApiResponse(requestId);
         UpdateFriendsDrinksResponseBean responseBean = new UpdateFriendsDrinksResponseBean();
-        responseBean.setResult(backendResponse.getFriendsDrinksEvent().getUpdateFriendsDrinksResponse().getResult().name());
+        responseBean.setResult(waitAndGetApiResponse(requestId).getResult());
         return responseBean;
     }
 
@@ -480,10 +478,8 @@ public class Handler {
         ProducerRecord<String, ApiEvent> producerRecord = new ProducerRecord<>(topicName, requestId, friendsDrinksEvent);
         friendsDrinksKafkaProducer.send(producerRecord);
 
-        ApiEvent backendResponse = getApiResponse(requestId);
         DeleteFriendsDrinksResponseBean responseBean = new DeleteFriendsDrinksResponseBean();
-        Result result = backendResponse.getFriendsDrinksEvent().getDeleteFriendsDrinksResponse().getResult();
-        responseBean.setResult(result.name());
+        responseBean.setResult(waitAndGetApiResponse(requestId).getResult());
         return responseBean;
     }
 
@@ -554,10 +550,8 @@ public class Handler {
         ProducerRecord<String, ApiEvent> record = new ProducerRecord<>(topicName, requestId, friendsDrinksEvent);
         friendsDrinksKafkaProducer.send(record).get();
 
-        ApiEvent backendResponse = getApiResponse(requestId);
         PostFriendsDrinksMembershipResponseBean responseBean = new PostFriendsDrinksMembershipResponseBean();
-        Result result = backendResponse.getFriendsDrinksMembershipEvent().getFriendsDrinksInvitationReplyResponse().getResult();
-        responseBean.setResult(result.name());
+        responseBean.setResult(waitAndGetApiResponse(requestId).getResult());
         return responseBean;
     }
 
@@ -608,10 +602,8 @@ public class Handler {
         ProducerRecord<String, ApiEvent> record = new ProducerRecord<>(topicName, requestId, friendsDrinksEvent);
         friendsDrinksKafkaProducer.send(record).get();
 
-        ApiEvent backendResponse = getApiResponse(requestId);
         PostFriendsDrinksMembershipResponseBean responseBean = new PostFriendsDrinksMembershipResponseBean();
-        Result result = backendResponse.getFriendsDrinksMembershipEvent().getFriendsDrinksInvitationResponse().getResult();
-        responseBean.setResult(result.name());
+        responseBean.setResult(waitAndGetApiResponse(requestId).getResult());
         return responseBean;
     }
 
@@ -666,18 +658,16 @@ public class Handler {
         return postUsersResponseBean;
     }
 
-    private ApiEvent getApiResponse(String requestId) throws InterruptedException {
-        ReadOnlyKeyValueStore<String, ApiEvent> kv =
-                kafkaStreams.store(StoreQueryParameters.fromNameAndType(RESPONSES_STATE_STORE, QueryableStoreTypes.keyValueStore()));
-        ApiEvent backendResponse = kv.get(requestId);
+    private ApiResponseBean waitAndGetApiResponse(String requestId) throws InterruptedException {
+        ApiResponseBean backendResponse = stateRetriever.getApiResponse(requestId);
         if (backendResponse == null) {
             for (int i = 0; i < 50; i++) {
                 if (backendResponse != null) {
                     break;
                 }
-                // Give the backend some more time.
+                // Give the backend some time and try again.
                 Thread.sleep(100);
-                backendResponse = kv.get(requestId);
+                backendResponse = stateRetriever.getApiResponse(requestId);
             }
         }
         if (backendResponse == null) {
@@ -701,6 +691,13 @@ public class Handler {
     @Produces(MediaType.APPLICATION_JSON)
     public UserStateBean getUserStateBean(@PathParam("userId") String userId) {
         return localStateRetriever.getUserState(userId);
+    }
+
+    @GET
+    @Path("/api-response-state-store/{requestId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public ApiResponseBean getApiResponse(@PathParam("requestId") String requestId) {
+        return localStateRetriever.getApiResponse(requestId);
     }
 
 }

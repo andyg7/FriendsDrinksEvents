@@ -1,7 +1,6 @@
 package andrewgrant.friendsdrinks.frontend.kafkastreams;
 
-import static andrewgrant.friendsdrinks.frontend.kafkastreams.MaterializedViewsService.FRIENDSDRINKS_STATE_STORE;
-import static andrewgrant.friendsdrinks.frontend.kafkastreams.MaterializedViewsService.USERS_STATE_STORE;
+import static andrewgrant.friendsdrinks.frontend.kafkastreams.MaterializedViewsService.*;
 
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
@@ -19,8 +18,10 @@ import javax.ws.rs.core.MediaType;
 import andrewgrant.friendsdrinks.AvroBuilder;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksId;
 import andrewgrant.friendsdrinks.frontend.api.StateRetriever;
+import andrewgrant.friendsdrinks.frontend.api.state.ApiResponseBean;
 import andrewgrant.friendsdrinks.frontend.api.state.FriendsDrinksStateBean;
 import andrewgrant.friendsdrinks.frontend.api.state.UserStateBean;
+
 
 /**
  * Retrieves state from across Kafka Streams application.
@@ -78,6 +79,20 @@ public class DistributedStateRetriever implements StateRetriever {
         return client.target(endpoint(hostInfo, USERS_STATE_STORE, userId))
                 .request(MediaType.APPLICATION_JSON)
                 .get(new GenericType<UserStateBean>(){});
+    }
+
+    @Override
+    public ApiResponseBean getApiResponse(String requestId) {
+        KeyQueryMetadata keyQueryMetadata = kafkaStreams.queryMetadataForKey(RESPONSES_STATE_STORE, requestId,
+                Serdes.String().serializer());
+        if (keyQueryMetadata == null) {
+            return null;
+        }
+        HostInfo hostInfo = keyQueryMetadata.activeHost();
+        log.info("Host info: {} {}", hostInfo.host(), hostInfo.port());
+        return client.target(endpoint(hostInfo, RESPONSES_STATE_STORE, requestId))
+                .request(MediaType.APPLICATION_JSON)
+                .get(new GenericType<ApiResponseBean>(){});
     }
 
     private String endpoint(HostInfo hostInfo, String stateStoreName, String key) {
