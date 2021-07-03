@@ -484,7 +484,7 @@ public class Handler {
         String userId = requestBean.getUserId();
         String friendsDrinksId = requestBean.getFriendsDrinksId();
         if (requestBean.getRequestType().equals(INVITE_USER)) {
-            return handleInviteUser(userId, friendsDrinksId, requestBean.getInviteUserRequest());
+            return handleInviteUser(friendsDrinksId, requestBean.getInviteUserRequest());
         } else if (requestBean.getRequestType().equals(REPLY_TO_INVITATION)) {
             return handleReplyToInvitation(userId, friendsDrinksId, requestBean.getReplyToInvitationRequest());
         } else {
@@ -547,7 +547,7 @@ public class Handler {
         return responseBean;
     }
 
-    public PostFriendsDrinksMembershipResponseBean handleInviteUser(String userId, String friendsDrinksId,
+    public PostFriendsDrinksMembershipResponseBean handleInviteUser(String friendsDrinksId,
                                                                     InviteUserRequestBean requestBean)
             throws InterruptedException, ExecutionException {
         final String topicName = envProps.getProperty("friendsdrinks-api.topic.name");
