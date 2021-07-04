@@ -1,7 +1,7 @@
 package andrewgrant.friendsdrinks;
 
-import static andrewgrant.friendsdrinks.streamsconfig.Properties.load;
 import static andrewgrant.friendsdrinks.frontend.TopicNameConfigKey.FRIENDSDRINKS_API;
+import static andrewgrant.friendsdrinks.streamsconfig.Properties.load;
 
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;

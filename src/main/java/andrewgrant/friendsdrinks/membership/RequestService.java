@@ -1,8 +1,8 @@
 package andrewgrant.friendsdrinks.membership;
 
 import static andrewgrant.friendsdrinks.TopicNameConfigKey.FRIENDSDRINKS_STATE;
-import static andrewgrant.friendsdrinks.streamsconfig.Properties.load;
 import static andrewgrant.friendsdrinks.frontend.TopicNameConfigKey.FRIENDSDRINKS_API;
+import static andrewgrant.friendsdrinks.streamsconfig.Properties.load;
 import static andrewgrant.friendsdrinks.user.TopicNameConfigKey.USER_STATE;
 
 import org.apache.kafka.common.serialization.Serdes;
