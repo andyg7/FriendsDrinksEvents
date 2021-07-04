@@ -185,10 +185,10 @@ public class DistributedStateRetriever implements StateRetriever {
     }
 
     private String endpointWithKey(HostInfo hostInfo, String stateStoreName, String key) {
-        return String.format("http://%s:%d/%s/%s", hostInfo.host(), hostInfo.port(), stateStoreName, key);
+        return String.format("http://%s:%d/v1/%s/%s", hostInfo.host(), hostInfo.port(), stateStoreName, key);
     }
 
     private String endpoint(HostInfo hostInfo, String stateStoreName) {
-        return String.format("http://%s:%d/%s", hostInfo.host(), hostInfo.port(), stateStoreName);
+        return String.format("http://%s:%d/v1/%s", hostInfo.host(), hostInfo.port(), stateStoreName);
     }
 }
