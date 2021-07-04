@@ -53,6 +53,7 @@ public class DistributedStateRetriever implements StateRetriever {
         KeyQueryMetadata keyQueryMetadata = kafkaStreams.queryMetadataForKey(FRIENDSDRINKS_STATE_STORE, key,
                 avroBuilder.friendsDrinksIdSerde().serializer());
         if (keyQueryMetadata == null) {
+            log.warn("Found no metadata for state store {}", FRIENDSDRINKS_STATE_STORE);
             return null;
         }
         HostInfo hostInfo = keyQueryMetadata.activeHost();
@@ -80,6 +81,7 @@ public class DistributedStateRetriever implements StateRetriever {
         KeyQueryMetadata keyQueryMetadata = kafkaStreams.queryMetadataForKey(USERS_STATE_STORE, userId,
                 Serdes.String().serializer());
         if (keyQueryMetadata == null) {
+            log.warn("Found no metadata for state store {}", USERS_STATE_STORE);
             return null;
         }
         HostInfo hostInfo = keyQueryMetadata.activeHost();
@@ -107,6 +109,7 @@ public class DistributedStateRetriever implements StateRetriever {
         KeyQueryMetadata keyQueryMetadata = kafkaStreams.queryMetadataForKey(RESPONSES_STATE_STORE, requestId,
                 Serdes.String().serializer());
         if (keyQueryMetadata == null) {
+            log.warn("Found no metadata for state store {}", RESPONSES_STATE_STORE);
             return null;
         }
         HostInfo hostInfo = keyQueryMetadata.activeHost();
@@ -121,6 +124,7 @@ public class DistributedStateRetriever implements StateRetriever {
         KeyQueryMetadata keyQueryMetadata = kafkaStreams.queryMetadataForKey(USER_HOMEPAGES_STATE_STORE, userId,
                 Serdes.String().serializer());
         if (keyQueryMetadata == null) {
+            log.warn("Found no metadata for state store {}", USER_HOMEPAGES_STATE_STORE);
             return null;
         }
         HostInfo hostInfo = keyQueryMetadata.activeHost();
@@ -136,6 +140,7 @@ public class DistributedStateRetriever implements StateRetriever {
         KeyQueryMetadata keyQueryMetadata = kafkaStreams.queryMetadataForKey(FRIENDSDRINKS_DETAIL_PAGE_STATE_STORE, key,
                 avroBuilder.friendsDrinksIdSerde().serializer());
         if (keyQueryMetadata == null) {
+            log.warn("Found no metadata for state store {}", FRIENDSDRINKS_DETAIL_PAGE_STATE_STORE);
             return null;
         }
         HostInfo hostInfo = keyQueryMetadata.activeHost();
@@ -160,6 +165,7 @@ public class DistributedStateRetriever implements StateRetriever {
         KeyQueryMetadata keyQueryMetadata = kafkaStreams.queryMetadataForKey(INVITATIONS_STORE, membershipId,
                 membershipAvroBuilder.friendsDrinksMembershipIdSerdes().serializer());
         if (keyQueryMetadata == null) {
+            log.warn("Found no metadata for state store {}", INVITATIONS_STORE);
             return null;
         }
         HostInfo hostInfo = keyQueryMetadata.activeHost();
@@ -175,6 +181,7 @@ public class DistributedStateRetriever implements StateRetriever {
         KeyQueryMetadata keyQueryMetadata = kafkaStreams.queryMetadataForKey(MEMBERSHIP_FRIENDSDRINKS_ID_STORE, key,
                 avroBuilder.friendsDrinksIdSerde().serializer());
         if (keyQueryMetadata == null) {
+            log.warn("Found no metadata for state store {}", MEMBERSHIP_FRIENDSDRINKS_ID_STORE);
             return null;
         }
         HostInfo hostInfo = keyQueryMetadata.activeHost();
