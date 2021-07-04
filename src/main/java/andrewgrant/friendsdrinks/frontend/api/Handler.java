@@ -15,13 +15,11 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
 import andrewgrant.friendsdrinks.avro.*;
 import andrewgrant.friendsdrinks.frontend.api.friendsdrinks.*;
-import andrewgrant.friendsdrinks.frontend.api.meetup.MeetupBean;
 import andrewgrant.friendsdrinks.frontend.api.meetup.ScheduleFriendsDrinksMeetupRequestBean;
 import andrewgrant.friendsdrinks.frontend.api.meetup.ScheduleFriendsDrinksMeetupResponseBean;
 import andrewgrant.friendsdrinks.frontend.api.membership.*;
@@ -159,108 +157,24 @@ public class Handler {
     @GET
     @Path("/friendsdrinksdetailpages/{friendsDrinksId}")
     @Produces(MediaType.APPLICATION_JSON)
-    public GetFriendsDrinksDetailPageResponseBean getFriendsDrinksDetailPage(@PathParam("friendsDrinksId") String friendsDrinksId) {
-        ReadOnlyKeyValueStore<FriendsDrinksId, FriendsDrinksDetailPage> kv =
-                kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_DETAIL_PAGE_STATE_STORE, QueryableStoreTypes.keyValueStore()));
-        FriendsDrinksDetailPage friendsDrinkDetailPage = kv.get(FriendsDrinksId.newBuilder().setUuid(friendsDrinksId).build());
-        if (friendsDrinkDetailPage == null || friendsDrinkDetailPage.getStatus().equals(FriendsDrinksStatus.DELETED)) {
-            throw new BadRequestException(String.format("%s does not exist", friendsDrinksId));
+    public FriendsDrinksDetailPageBean getFriendsDrinksDetailPage(@PathParam("friendsDrinksId") String friendsDrinksId) {
+        FriendsDrinksDetailPageBean friendsDrinksDetailPageBean = stateRetriever.getFriendsDrinksDetailPage(friendsDrinksId);
+        if (friendsDrinksDetailPageBean == null) {
+            throw new BadRequestException(String.format("Friends drinks %s could not be found", friendsDrinksId));
         }
-
-        GetFriendsDrinksDetailPageResponseBean response = new GetFriendsDrinksDetailPageResponseBean();
-        response.setAdminUserId(friendsDrinkDetailPage.getAdminUserId());
-        response.setFriendsDrinksId(friendsDrinkDetailPage.getFriendsDrinksId().getUuid());
-        if (friendsDrinkDetailPage.getMembers() != null) {
-            response.setMembers(friendsDrinkDetailPage.getMembers().stream().map(x -> {
-                UserBean userBean = new UserBean();
-                userBean.setUserId(x.getUserId().getUserId());
-                userBean.setFirstName(x.getFirstName());
-                userBean.setLastName(x.getLastName());
-                userBean.setEmail(x.getEmail());
-                return userBean;
-            }).collect(Collectors.toList()));
-        } else {
-            response.setMembers(new ArrayList<>());
-        }
-
-        ReadOnlyKeyValueStore<String, UserState> usersKv =
-                kafkaStreams.store(StoreQueryParameters.fromNameAndType(USERS_STATE_STORE, QueryableStoreTypes.keyValueStore()));
-        if (friendsDrinkDetailPage.getMeetups() != null) {
-            response.setMeetups(friendsDrinkDetailPage.getMeetups().stream().map(x -> {
-                MeetupBean meetupBean = new MeetupBean();
-                meetupBean.setDate(x.getDate());
-                meetupBean.setUsers(x.getUserIds().stream().map(z-> {
-                    UserBean userBean = new UserBean();
-                    userBean.setUserId(z.getUserId());
-                    UserState userState = usersKv.get(z.getUserId());
-                    if (userState == null) {
-                        log.error(String.format("Failed to get user state for %s", z.getUserId()));
-                    } else {
-                        userBean.setEmail(userState.getEmail());
-                        userBean.setFirstName(userState.getFirstName());
-                        userBean.setLastName(userState.getLastName());
-                    }
-                    return userBean;
-                }).collect(Collectors.toList()));
-                return meetupBean;
-            }).collect(Collectors.toList()));
-        } else {
-            response.setMeetups(new ArrayList<>());
-        }
-        response.setName(friendsDrinkDetailPage.getName());
-
-        return response;
+        return friendsDrinksDetailPageBean;
     }
-
 
     @GET
     @Path("/userhomepages/{userId}")
     @Produces(MediaType.APPLICATION_JSON)
-    public GetUserHomepageResponseBean getUserFriendsDrinksHomepage(@PathParam("userId") String userId) {
-        GetUserHomepageResponseBean getUserHomepageResponseBean = new GetUserHomepageResponseBean();
-
+    public UserHomepageBean getUserFriendsDrinksHomepage(@PathParam("userId") String userId) {
         UserHomepageBean userHomepage = stateRetriever.getUserHomePage(userId);
         if (userHomepage == null) {
             throw new BadRequestException(String.format("User ID %s could not be found", userId));
         }
 
-        if (userHomepage.getAdminFriendsDrinksStateList() != null &&
-                userHomepage.getAdminFriendsDrinksStateList().size() > 0) {
-            List<FriendsDrinksStateBean> friendsDrinksStates = userHomepage.getAdminFriendsDrinksStateList();
-            getUserHomepageResponseBean.setAdminFriendsDrinksList(friendsDrinksStates.stream().map(x -> {
-                FriendsDrinksBean friendsDrinksBean = new FriendsDrinksBean();
-                friendsDrinksBean.setFriendsDrinksId(x.getFriendsDrinksId());
-                friendsDrinksBean.setAdminUserId(x.getAdminUserId());
-                friendsDrinksBean.setName(x.getName());
-                return friendsDrinksBean;
-            }).collect(Collectors.toList()));
-        }
-
-        if (userHomepage.getMemberFriendsDrinksStateList() != null &&
-                userHomepage.getMemberFriendsDrinksStateList().size() > 0) {
-            List<FriendsDrinksStateBean> friendsDrinksStates = userHomepage.getMemberFriendsDrinksStateList();
-            getUserHomepageResponseBean.setMemberFriendsDrinksList(friendsDrinksStates.stream().map(x -> {
-                FriendsDrinksBean friendsDrinksBean = new FriendsDrinksBean();
-                friendsDrinksBean.setFriendsDrinksId(x.getFriendsDrinksId());
-                friendsDrinksBean.setAdminUserId(x.getAdminUserId());
-                friendsDrinksBean.setName(x.getName());
-                return friendsDrinksBean;
-            }).collect(Collectors.toList()));
-        }
-
-        if (userHomepage.getInvitationBeanList() != null &&
-                userHomepage.getInvitationBeanList().size() > 0) {
-            List<InvitationBean> invitations = userHomepage.getInvitationBeanList();
-            getUserHomepageResponseBean.setInvitations(invitations.stream().map(x -> {
-                FriendsDrinksInvitationBean friendsDrinksInvitationBean = new FriendsDrinksInvitationBean();
-                friendsDrinksInvitationBean.setFriendsDrinksId(x.getFriendsDrinksStateBean().getFriendsDrinksId());
-                friendsDrinksInvitationBean.setMessage(x.getMessage());
-                friendsDrinksInvitationBean.setFriendsDrinksName(x.getFriendsDrinksStateBean().getName());
-                return friendsDrinksInvitationBean;
-            }).collect(Collectors.toList()));
-        }
-
-        return getUserHomepageResponseBean;
+        return userHomepage;
     }
 
     @GET
