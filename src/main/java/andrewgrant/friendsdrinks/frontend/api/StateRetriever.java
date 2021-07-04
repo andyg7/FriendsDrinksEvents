@@ -23,4 +23,6 @@ public interface StateRetriever {
     FriendsDrinksDetailPageBean getFriendsDrinksDetailPage(String friendsDrinksId);
 
     FriendsDrinksInvitationBean getInvitation(String friendsDrinksId, String userId);
+
+    List<MembershipIdBean> getMembershipIds(String friendsDrinksId);
 }

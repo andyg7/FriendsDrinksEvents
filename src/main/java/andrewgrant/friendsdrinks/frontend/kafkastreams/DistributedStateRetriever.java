@@ -178,6 +178,21 @@ public class DistributedStateRetriever implements StateRetriever {
                 .get(new GenericType<FriendsDrinksInvitationBean>(){});
     }
 
+    @Override
+    public List<MembershipIdBean> getMembershipIds(String friendsDrinksId) {
+        FriendsDrinksId key = FriendsDrinksId.newBuilder().setUuid(friendsDrinksId).build();
+        KeyQueryMetadata keyQueryMetadata = kafkaStreams.queryMetadataForKey(MEMBERSHIP_FRIENDSDRINKS_ID_STORE, key,
+                avroBuilder.friendsDrinksIdSerde().serializer());
+        if (keyQueryMetadata == null) {
+            return null;
+        }
+        HostInfo hostInfo = keyQueryMetadata.activeHost();
+        log.info("Host info: {} {}", hostInfo.host(), hostInfo.port());
+        return client.target(endpointWithKey(hostInfo, MEMBERSHIP_FRIENDSDRINKS_ID_STORE, friendsDrinksId))
+                .request(MediaType.APPLICATION_JSON)
+                .get(new GenericType<List<MembershipIdBean>>(){});
+    }
+
     private String endpointWithKey(HostInfo hostInfo, String stateStoreName, String key) {
         return String.format("http://%s:%d/%s/%s", hostInfo.host(), hostInfo.port(), stateStoreName, key);
     }

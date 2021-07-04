@@ -2,14 +2,10 @@ package andrewgrant.friendsdrinks.frontend.api;
 
 import static andrewgrant.friendsdrinks.frontend.api.membership.PostFriendsDrinksMembershipRequestBean.*;
 import static andrewgrant.friendsdrinks.frontend.api.user.PostUsersRequestBean.*;
-import static andrewgrant.friendsdrinks.frontend.kafkastreams.MaterializedViewsService.*;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.streams.KafkaStreams;
-import org.apache.kafka.streams.StoreQueryParameters;
-import org.apache.kafka.streams.state.QueryableStoreTypes;
-import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,8 +62,11 @@ public class Handler {
     public HealthCheckResponseBean healthCheck() {
         KafkaStreams.State state = kafkaStreams.state();
         if (!state.isRunningOrRebalancing()) {
+            log.error("Kafka streams is {}", state.name());
             throw new RuntimeException(String.format("State is %s", state.name()));
         }
+        log.info("Kafka streams is {}", state.name());
+        throw new RuntimeException(String.format("State is %s", state.name()));
         HealthCheckResponseBean healthCheckResponseBean = new HealthCheckResponseBean();
         healthCheckResponseBean.setStatus("HEALTHY");
         return healthCheckResponseBean;
@@ -215,24 +214,20 @@ public class Handler {
     public ScheduleFriendsDrinksMeetupResponseBean scheduleFriendsDrinksMeetup(@PathParam("friendsDrinksId") String friendsDrinksId,
                                                                                ScheduleFriendsDrinksMeetupRequestBean requestBean)
             throws ExecutionException, InterruptedException {
-        ReadOnlyKeyValueStore<FriendsDrinksId, FriendsDrinksState> kv =
-                kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_STATE_STORE, QueryableStoreTypes.keyValueStore()));
-        FriendsDrinksId avroFriendsDrinksId = FriendsDrinksId.newBuilder().setUuid(friendsDrinksId).build();
-        FriendsDrinksState friendsDrinksState = kv.get(avroFriendsDrinksId);
-        if (friendsDrinksState == null) {
-            throw new BadRequestException(String.format("%s does not exist", avroFriendsDrinksId.getUuid()));
+        FriendsDrinksStateBean friendsDrinksStateBean = stateRetriever.getFriendsDrinksState(friendsDrinksId);
+        if (friendsDrinksStateBean == null) {
+            throw new BadRequestException(String.format("%s does not exist", friendsDrinksId));
         }
-        ReadOnlyKeyValueStore<FriendsDrinksId, FriendsDrinksMembershipIdList> memberships =
-                kafkaStreams.store(StoreQueryParameters.fromNameAndType(MEMBERSHIP_FRIENDSDRINKS_ID_STORE, QueryableStoreTypes.keyValueStore()));
+        List<MembershipIdBean> membershipIdBeanList = stateRetriever.getMembershipIds(friendsDrinksId);
         List<UserId> userIds = new ArrayList<>();
-        FriendsDrinksMembershipIdList membershipIdList = memberships.get(avroFriendsDrinksId);
-        if (membershipIdList != null) {
-            for (FriendsDrinksMembershipId membershipId : membershipIdList.getIds()) {
-                userIds.add(UserId.newBuilder().setUserId(membershipId.getUserId().getUserId()).build());
+        if (membershipIdBeanList != null) {
+            for (MembershipIdBean membershipId : membershipIdBeanList) {
+                userIds.add(UserId.newBuilder().setUserId(membershipId.getUserId()).build());
             }
         }
-        userIds.add(UserId.newBuilder().setUserId(friendsDrinksState.getAdminUserId()).build());
+        userIds.add(UserId.newBuilder().setUserId(friendsDrinksStateBean.getAdminUserId()).build());
         String meetupId = UUID.randomUUID().toString();
+        FriendsDrinksId avroFriendsDrinksId = FriendsDrinksId.newBuilder().setUuid(friendsDrinksId).build();
         FriendsDrinksMeetupScheduled friendsDrinksMeetupScheduled = FriendsDrinksMeetupScheduled
                 .newBuilder()
                 .setMeetupId(FriendsDrinksMeetupId.newBuilder().setUuid(meetupId).build())
@@ -587,6 +582,13 @@ public class Handler {
         String friendsDrinksId = id.split(":")[0];
         String userId = id.split(":")[1];
         return localStateRetriever.getInvitation(friendsDrinksId, userId);
+    }
+
+    @GET
+    @Path("/membership-friendsdrinks-id-state-store/{friendsDrinksId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<MembershipIdBean> getMemberIds(@PathParam("friendsDrinksId") String friendsDrinksId) {
+        return localStateRetriever.getMembershipIds(friendsDrinksId);
     }
 
 }

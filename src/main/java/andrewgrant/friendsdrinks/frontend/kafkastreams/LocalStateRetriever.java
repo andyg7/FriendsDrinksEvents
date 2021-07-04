@@ -258,4 +258,23 @@ public class LocalStateRetriever implements StateRetriever {
 
         return friendsDrinksInvitationBean;
     }
+
+    @Override
+    public List<MembershipIdBean> getMembershipIds(String friendsDrinksId) {
+        ReadOnlyKeyValueStore<FriendsDrinksId, FriendsDrinksMembershipIdList> memberships =
+                kafkaStreams.store(StoreQueryParameters.fromNameAndType(MEMBERSHIP_FRIENDSDRINKS_ID_STORE, QueryableStoreTypes.keyValueStore()));
+        FriendsDrinksId avroFriendsDrinksId = FriendsDrinksId.newBuilder().setUuid(friendsDrinksId).build();
+        FriendsDrinksMembershipIdList membershipIdList = memberships.get(avroFriendsDrinksId);
+        List<MembershipIdBean> membershipIdBeanList = new ArrayList<>();
+        if (membershipIdList != null) {
+            for (FriendsDrinksMembershipId membershipId : membershipIdList.getIds()) {
+                MembershipIdBean membershipIdBean = new MembershipIdBean();
+                membershipIdBean.setUserId(membershipId.getUserId().getUserId());
+                membershipIdBean.setFriendsDrinksId(membershipId.getFriendsDrinksId().getUuid());
+                membershipIdBeanList.add(membershipIdBean);
+                membershipIdBeanList.add(membershipIdBean);
+            }
+        }
+        return membershipIdBeanList;
+    }
 }
