@@ -1,6 +1,6 @@
 package andrewgrant.friendsdrinks.meetup;
 
-import static andrewgrant.friendsdrinks.env.Properties.load;
+import static andrewgrant.friendsdrinks.streamsconfig.Properties.load;
 
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;

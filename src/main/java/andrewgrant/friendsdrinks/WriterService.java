@@ -1,6 +1,6 @@
 package andrewgrant.friendsdrinks;
 
-import static andrewgrant.friendsdrinks.env.Properties.load;
+import static andrewgrant.friendsdrinks.streamsconfig.Properties.load;
 import static andrewgrant.friendsdrinks.frontend.TopicNameConfigKey.FRIENDSDRINKS_API;
 
 import org.apache.kafka.common.serialization.Serdes;

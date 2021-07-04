@@ -1,4 +1,4 @@
-package andrewgrant.friendsdrinks.env;
+package andrewgrant.friendsdrinks.streamsconfig;
 
 import java.io.FileInputStream;
 import java.io.IOException;
