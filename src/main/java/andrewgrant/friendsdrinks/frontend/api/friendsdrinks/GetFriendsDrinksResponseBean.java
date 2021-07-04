@@ -1,17 +1,18 @@
 package andrewgrant.friendsdrinks.frontend.api.friendsdrinks;
 
+import andrewgrant.friendsdrinks.frontend.api.statestorebeans.FriendsDrinksStateBean;
+
 /**
  * DTO for GetFriendsDrinksResponse.
  */
 public class GetFriendsDrinksResponseBean {
-    private FriendsDrinksBean friendsDrinks;
+    private FriendsDrinksStateBean friendsDrinksStateBean;
 
-    public FriendsDrinksBean getFriendsDrinks() {
-        return friendsDrinks;
+    public FriendsDrinksStateBean getFriendsDrinksStateBean() {
+        return friendsDrinksStateBean;
     }
 
-    public void setFriendsDrinks(FriendsDrinksBean friendsDrinks) {
-        this.friendsDrinks = friendsDrinks;
+    public void setFriendsDrinksStateBean(FriendsDrinksStateBean friendsDrinksStateBean) {
+        this.friendsDrinksStateBean = friendsDrinksStateBean;
     }
-
 }

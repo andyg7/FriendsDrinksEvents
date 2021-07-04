@@ -22,6 +22,8 @@ import javax.ws.rs.core.MediaType;
 
 import andrewgrant.friendsdrinks.AvroBuilder;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksId;
+import andrewgrant.friendsdrinks.avro.FriendsDrinksMembershipId;
+import andrewgrant.friendsdrinks.avro.UserId;
 import andrewgrant.friendsdrinks.frontend.api.StateRetriever;
 import andrewgrant.friendsdrinks.frontend.api.statestorebeans.*;
 
@@ -150,6 +152,30 @@ public class DistributedStateRetriever implements StateRetriever {
         return client.target(endpointWithKey(hostInfo, FRIENDSDRINKS_DETAIL_PAGE_STATE_STORE, uuid))
                 .request(MediaType.APPLICATION_JSON)
                 .get(new GenericType<FriendsDrinksDetailPageBean>(){});
+    }
+
+    @Override
+    public FriendsDrinksInvitationBean getInvitation(String friendsDrinksId, String userId) {
+        FriendsDrinksMembershipId membershipId =
+                FriendsDrinksMembershipId
+                        .newBuilder()
+                        .setFriendsDrinksId(FriendsDrinksId
+                                .newBuilder()
+                                .setUuid(friendsDrinksId)
+                                .build())
+                        .setUserId(UserId.newBuilder().setUserId(userId).build())
+                        .build();
+
+        KeyQueryMetadata keyQueryMetadata = kafkaStreams.queryMetadataForKey(INVITATIONS_STORE, membershipId,
+                membershipAvroBuilder.friendsDrinksMembershipIdSerdes().serializer());
+        if (keyQueryMetadata == null) {
+            return null;
+        }
+        HostInfo hostInfo = keyQueryMetadata.activeHost();
+        log.info("Host info: {} {}", hostInfo.host(), hostInfo.port());
+        return client.target(endpointWithKey(hostInfo, INVITATIONS_STORE, friendsDrinksId + ":" + userId))
+                .request(MediaType.APPLICATION_JSON)
+                .get(new GenericType<FriendsDrinksInvitationBean>(){});
     }
 
     private String endpointWithKey(HostInfo hostInfo, String stateStoreName, String key) {

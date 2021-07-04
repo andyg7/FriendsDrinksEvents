@@ -123,13 +123,8 @@ public class Handler {
         if (friendsDrinksStateBean == null) {
             throw new BadRequestException(String.format("%s does not exist", friendsDrinksId));
         }
-        FriendsDrinksBean friendsDrinksBean = new FriendsDrinksBean();
-        friendsDrinksBean.setAdminUserId(friendsDrinksStateBean.getAdminUserId());
-        friendsDrinksBean.setFriendsDrinksId(friendsDrinksStateBean.getFriendsDrinksId());
-        friendsDrinksBean.setName(friendsDrinksStateBean.getName());
-
         GetFriendsDrinksResponseBean response = new GetFriendsDrinksResponseBean();
-        response.setFriendsDrinks(friendsDrinksBean);
+        response.setFriendsDrinksStateBean(friendsDrinksStateBean);
         return response;
     }
 
@@ -162,30 +157,12 @@ public class Handler {
     public FriendsDrinksInvitationBean getInvitation(@PathParam("userId") String userId,
                                                      @PathParam("friendsDrinksId") String friendsDrinksId) {
 
-        ReadOnlyKeyValueStore<FriendsDrinksMembershipId, InvitationStateFriendsDrinksEnriched> kv =
-                kafkaStreams.store(StoreQueryParameters.fromNameAndType(INVITATIONS_STORE, QueryableStoreTypes.keyValueStore()));
-        FriendsDrinksMembershipId invitationId =
-                FriendsDrinksMembershipId
-                .newBuilder()
-                .setFriendsDrinksId(FriendsDrinksId
-                        .newBuilder()
-                        .setUuid(friendsDrinksId)
-                        .build())
-                .setUserId(UserId.newBuilder().setUserId(userId).build())
-                .build();
-
-        InvitationStateFriendsDrinksEnriched invitation = kv.get(invitationId);
-        if (invitation == null) {
+        FriendsDrinksInvitationBean friendsDrinksInvitationBean = stateRetriever.getInvitation(friendsDrinksId, userId);
+        if (friendsDrinksInvitationBean == null) {
             throw new BadRequestException(String.format("Invitation for userId %s and friendsDrinksId %s could not be found",
                     userId, friendsDrinksId));
         }
-
-        FriendsDrinksInvitationBean response = new FriendsDrinksInvitationBean();
-        response.setFriendsDrinksId(invitation.getMembershipId().getFriendsDrinksId().getUuid());
-        response.setFriendsDrinksName(invitation.getFriendsDrinksState().getName());
-        response.setMessage(invitation.getMessage());
-
-        return response;
+        return friendsDrinksInvitationBean;
     }
 
     @POST
@@ -601,6 +578,15 @@ public class Handler {
     @Produces(MediaType.APPLICATION_JSON)
     public FriendsDrinksDetailPageBean getLocalFriendsDrinksDetailPage(@PathParam("friendsDrinksId") String uuid) {
         return localStateRetriever.getFriendsDrinksDetailPage(uuid);
+    }
+
+    @GET
+    @Path("/invitations-state-store/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public FriendsDrinksInvitationBean getLocalInvitation(@PathParam("id") String id) {
+        String friendsDrinksId = id.split(":")[0];
+        String userId = id.split(":")[1];
+        return localStateRetriever.getInvitation(friendsDrinksId, userId);
     }
 
 }

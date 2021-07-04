@@ -13,9 +13,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import javax.ws.rs.BadRequestException;
+
 import andrewgrant.friendsdrinks.avro.*;
 import andrewgrant.friendsdrinks.frontend.api.StateRetriever;
 import andrewgrant.friendsdrinks.frontend.api.statestorebeans.*;
+
 
 /**
  * Gets state locally.
@@ -170,15 +173,11 @@ public class LocalStateRetriever implements StateRetriever {
                 userHomepage.getInvitations().getInvitations() != null) {
             userHomepageBean.setInvitationBeanList(userHomepage.getInvitations().getInvitations()
                     .stream().map(x -> {
-                        InvitationBean invitationBean = new InvitationBean();
+                        FriendsDrinksInvitationBean invitationBean = new FriendsDrinksInvitationBean();
                         invitationBean.setMessage(x.getMessage());
                         FriendsDrinksState friendsDrinksState = x.getFriendsDrinksState();
-                        FriendsDrinksStateBean friendsDrinksStateBean = new FriendsDrinksStateBean();
-                        friendsDrinksStateBean.setAdminUserId(friendsDrinksState.getAdminUserId());
-                        friendsDrinksStateBean.setFriendsDrinksId(friendsDrinksState.getFriendsDrinksId().getUuid());
-                        friendsDrinksStateBean.setStatus(friendsDrinksState.getStatus().name());
-                        friendsDrinksStateBean.setName(friendsDrinksState.getName());
-                        invitationBean.setFriendsDrinksStateBean(friendsDrinksStateBean);
+                        invitationBean.setFriendsDrinksName(friendsDrinksState.getName());
+                        invitationBean.setFriendsDrinksId(friendsDrinksState.getFriendsDrinksId().getUuid());
                         return invitationBean;
                     }).collect(Collectors.toList()));
         }
@@ -230,5 +229,33 @@ public class LocalStateRetriever implements StateRetriever {
                     }).collect(Collectors.toList()));
         }
         return friendsDrinksDetailPageBean;
+    }
+
+    @Override
+    public FriendsDrinksInvitationBean getInvitation(String friendsDrinksId, String userId) {
+        ReadOnlyKeyValueStore<FriendsDrinksMembershipId, InvitationStateFriendsDrinksEnriched> kv =
+                kafkaStreams.store(StoreQueryParameters.fromNameAndType(INVITATIONS_STORE, QueryableStoreTypes.keyValueStore()));
+        FriendsDrinksMembershipId membershipId =
+                FriendsDrinksMembershipId
+                        .newBuilder()
+                        .setFriendsDrinksId(FriendsDrinksId
+                                .newBuilder()
+                                .setUuid(friendsDrinksId)
+                                .build())
+                        .setUserId(UserId.newBuilder().setUserId(userId).build())
+                        .build();
+
+        InvitationStateFriendsDrinksEnriched invitation = kv.get(membershipId);
+        if (invitation == null) {
+            throw new BadRequestException(String.format("Invitation for userId %s and friendsDrinksId %s could not be found",
+                    userId, friendsDrinksId));
+        }
+
+        FriendsDrinksInvitationBean friendsDrinksInvitationBean = new FriendsDrinksInvitationBean();
+        friendsDrinksInvitationBean.setFriendsDrinksId(invitation.getMembershipId().getFriendsDrinksId().getUuid());
+        friendsDrinksInvitationBean.setFriendsDrinksName(invitation.getFriendsDrinksState().getName());
+        friendsDrinksInvitationBean.setMessage(invitation.getMessage());
+
+        return friendsDrinksInvitationBean;
     }
 }
