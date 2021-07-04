@@ -3,6 +3,7 @@ kind: Service
 metadata:
   name: friendsdrinks-api-service
 spec:
+  publishNotReadyAddresses: true
   clusterIP: None
   ports:
     - port: 80
