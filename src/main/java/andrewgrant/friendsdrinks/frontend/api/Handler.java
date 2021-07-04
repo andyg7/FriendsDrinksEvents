@@ -7,9 +7,7 @@ import static andrewgrant.friendsdrinks.frontend.kafkastreams.MaterializedViewsS
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.streams.KafkaStreams;
-import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StoreQueryParameters;
-import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.slf4j.Logger;
@@ -124,20 +122,17 @@ public class Handler {
     @Path("/friendsdrinkses")
     @Produces(MediaType.APPLICATION_JSON)
     public GetAllFriendsDrinksResponseBean getAllFriendsDrinks() {
-        ReadOnlyKeyValueStore<FriendsDrinksId, FriendsDrinksState> kv =
-                kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_STATE_STORE, QueryableStoreTypes.keyValueStore()));
-        KeyValueIterator<FriendsDrinksId, FriendsDrinksState> allKvs = kv.all();
+        List<FriendsDrinksStateBean> friendsDrinksStateBeanList = stateRetriever.getAllFriendsDrinksStates();
         List<FriendsDrinksBean> friendsDrinksList = new ArrayList<>();
-        while (allKvs.hasNext()) {
-            KeyValue<FriendsDrinksId, FriendsDrinksState> keyValue = allKvs.next();
-            FriendsDrinksState friendsDrinksState = keyValue.value;
+        Iterator<FriendsDrinksStateBean> iterator = friendsDrinksStateBeanList.iterator();
+        while (iterator.hasNext()) {
+            FriendsDrinksStateBean friendsDrinksStateBean = iterator.next();
             FriendsDrinksBean friendsDrinksBean = new FriendsDrinksBean();
-            friendsDrinksBean.setName(friendsDrinksState.getName());
-            friendsDrinksBean.setFriendsDrinksId(friendsDrinksState.getFriendsDrinksId().getUuid());
-            friendsDrinksBean.setAdminUserId(friendsDrinksState.getAdminUserId());
+            friendsDrinksBean.setName(friendsDrinksStateBean.getName());
+            friendsDrinksBean.setFriendsDrinksId(friendsDrinksStateBean.getFriendsDrinksId());
+            friendsDrinksBean.setAdminUserId(friendsDrinksStateBean.getAdminUserId());
             friendsDrinksList.add(friendsDrinksBean);
         }
-        allKvs.close();
         GetAllFriendsDrinksResponseBean response = new GetAllFriendsDrinksResponseBean();
         response.setFriendsDrinkList(friendsDrinksList);
         return response;
@@ -665,11 +660,19 @@ public class Handler {
     }
 
     // APIs that interact with local state.
+
     @GET
     @Path("/friendsdrinks-state-store/{friendsDrinksId}")
     @Produces(MediaType.APPLICATION_JSON)
     public FriendsDrinksStateBean getFriendsDrinksStateBean(@PathParam("friendsDrinksId") String friendsDrinksId) {
         return localStateRetriever.getFriendsDrinksState(friendsDrinksId);
+    }
+
+    @GET
+    @Path("/friendsdrinks-state-store")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<FriendsDrinksStateBean> getAllFriendsDrinksStateBeans() {
+        return localStateRetriever.getAllFriendsDrinksStates();
     }
 
     @GET

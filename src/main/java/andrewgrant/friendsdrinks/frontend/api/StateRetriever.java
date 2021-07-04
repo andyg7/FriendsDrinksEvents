@@ -13,6 +13,8 @@ import andrewgrant.friendsdrinks.frontend.api.state.UserStateBean;
 public interface StateRetriever {
     FriendsDrinksStateBean getFriendsDrinksState(String uuid);
 
+    List<FriendsDrinksStateBean> getAllFriendsDrinksStates();
+
     UserStateBean getUserState(String userId);
 
     List<UserStateBean> getAllUserStates();

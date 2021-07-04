@@ -73,6 +73,19 @@ public class DistributedStateRetriever implements StateRetriever {
     }
 
     @Override
+    public List<FriendsDrinksStateBean> getAllFriendsDrinksStates() {
+        Collection<StreamsMetadata> streamsMetadataCollection = kafkaStreams.allMetadataForStore(FRIENDSDRINKS_STATE_STORE);
+        List<FriendsDrinksStateBean> friendsDrinksStateBeanList = new ArrayList<>();
+        for (StreamsMetadata streamsMetadata : streamsMetadataCollection) {
+            FriendsDrinksStateBean friendsDrinksStateBean = client.target(endpoint(streamsMetadata.hostInfo(), FRIENDSDRINKS_STATE_STORE))
+                    .request(MediaType.APPLICATION_JSON)
+                    .get(new GenericType<FriendsDrinksStateBean>(){});
+            friendsDrinksStateBeanList.add(friendsDrinksStateBean);
+        }
+        return friendsDrinksStateBeanList;
+    }
+
+    @Override
     public UserStateBean getUserState(String userId) {
         KeyQueryMetadata keyQueryMetadata = kafkaStreams.queryMetadataForKey(USERS_STATE_STORE, userId,
                 Serdes.String().serializer());

@@ -45,6 +45,25 @@ public class LocalStateRetriever implements StateRetriever {
     }
 
     @Override
+    public List<FriendsDrinksStateBean> getAllFriendsDrinksStates() {
+        ReadOnlyKeyValueStore<FriendsDrinksId, FriendsDrinksState> kv =
+                kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_STATE_STORE, QueryableStoreTypes.keyValueStore()));
+        KeyValueIterator<FriendsDrinksId, FriendsDrinksState> allKvs = kv.all();
+        List<FriendsDrinksStateBean> friendsDrinksStateBeanList = new ArrayList<>();
+        while (allKvs.hasNext()) {
+            KeyValue<FriendsDrinksId, FriendsDrinksState> keyValue = allKvs.next();
+            FriendsDrinksStateBean friendsDrinksStateBean = new FriendsDrinksStateBean();
+            FriendsDrinksState friendsDrinksState = keyValue.value;
+            friendsDrinksStateBean.setFriendsDrinksId(friendsDrinksState.getFriendsDrinksId().getUuid());
+            friendsDrinksStateBean.setAdminUserId(friendsDrinksState.getAdminUserId());
+            friendsDrinksStateBean.setStatus(friendsDrinksState.getStatus().name());
+            friendsDrinksStateBean.setName(friendsDrinksState.getName());
+            friendsDrinksStateBeanList.add(friendsDrinksStateBean);
+        }
+        return friendsDrinksStateBeanList;
+    }
+
+    @Override
     public UserStateBean getUserState(String userId) {
         ReadOnlyKeyValueStore<String, UserState> kv =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(USERS_STATE_STORE, QueryableStoreTypes.keyValueStore()));
