@@ -110,6 +110,9 @@ public class LocalStateRetriever implements StateRetriever {
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(RESPONSES_STATE_STORE, QueryableStoreTypes.keyValueStore()));
         ApiResponseBean apiResponseBean = new ApiResponseBean();
         ApiEvent backendResponse = kv.get(requestId);
+        if (backendResponse == null) {
+            return null;
+        }
         if (backendResponse.getEventType().equals(ApiEventType.FRIENDSDRINKS_MEMBERSHIP_EVENT)) {
             if (backendResponse.getFriendsDrinksMembershipEvent().getEventType()
                     .equals(FriendsDrinksMembershipApiEventType.FRIENDSDRINKS_INVITATION_REPLY_RESPONSE)) {
