@@ -7,7 +7,7 @@ import java.util.List;
  */
 public class FriendsDrinksDetailPageMeetupBean {
     private String date;
-    List<UserStateBean> userStateBeanList;
+    List<UserStateBean> userStateList;
 
     public String getDate() {
         return date;
@@ -17,11 +17,11 @@ public class FriendsDrinksDetailPageMeetupBean {
         this.date = date;
     }
 
-    public List<UserStateBean> getUserStateBeanList() {
-        return userStateBeanList;
+    public List<UserStateBean> getUserStateList() {
+        return userStateList;
     }
 
-    public void setUserStateBeanList(List<UserStateBean> userStateBeanList) {
-        this.userStateBeanList = userStateBeanList;
+    public void setUserStateList(List<UserStateBean> userStateList) {
+        this.userStateList = userStateList;
     }
 }

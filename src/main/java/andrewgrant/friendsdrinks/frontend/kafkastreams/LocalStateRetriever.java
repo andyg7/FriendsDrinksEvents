@@ -178,7 +178,7 @@ public class LocalStateRetriever implements StateRetriever {
         }
         if (userHomepage.getInvitations() != null &&
                 userHomepage.getInvitations().getInvitations() != null) {
-            userHomepageBean.setInvitationBeanList(userHomepage.getInvitations().getInvitations()
+            userHomepageBean.setInvitationList(userHomepage.getInvitations().getInvitations()
                     .stream().map(x -> {
                         FriendsDrinksInvitationBean invitationBean = new FriendsDrinksInvitationBean();
                         invitationBean.setMessage(x.getMessage());
@@ -204,7 +204,7 @@ public class LocalStateRetriever implements StateRetriever {
         friendsDrinksDetailPageBean.setAdminUserId(friendsDrinkDetailPage.getAdminUserId());
         friendsDrinksDetailPageBean.setFriendsDrinksId(friendsDrinkDetailPage.getFriendsDrinksId().getUuid());
         if (friendsDrinkDetailPage.getMembers() != null) {
-            friendsDrinksDetailPageBean.setMembers(friendsDrinkDetailPage.getMembers().stream()
+            friendsDrinksDetailPageBean.setMemberList(friendsDrinkDetailPage.getMembers().stream()
                     .map(x -> {
                         UserStateBean userStateBean = new UserStateBean();
                         userStateBean.setUserId(x.getUserId().getUserId());
@@ -217,12 +217,12 @@ public class LocalStateRetriever implements StateRetriever {
         ReadOnlyKeyValueStore<String, UserState> usersKv =
                 kafkaStreams.store(StoreQueryParameters.fromNameAndType(USERS_STATE_STORE, QueryableStoreTypes.keyValueStore()));
         if (friendsDrinkDetailPage.getMeetups() != null) {
-            friendsDrinksDetailPageBean.setFriendsDrinksDetailPageMeetupBeanList(friendsDrinkDetailPage.getMeetups()
+            friendsDrinksDetailPageBean.setFriendsDrinksDetailPageMeetupList(friendsDrinkDetailPage.getMeetups()
                     .stream().map(x -> {
                         FriendsDrinksDetailPageMeetupBean meetupBean = new FriendsDrinksDetailPageMeetupBean();
                         meetupBean.setDate(x.getDate());
                         if (x.getUserIds() != null) {
-                            meetupBean.setUserStateBeanList(x.getUserIds().stream().map(x1 -> {
+                            meetupBean.setUserStateList(x.getUserIds().stream().map(x1 -> {
                                 UserStateBean userStateBean = new UserStateBean();
                                 userStateBean.setUserId(x1.getUserId());
                                 UserState userState = usersKv.get(x1.getUserId());

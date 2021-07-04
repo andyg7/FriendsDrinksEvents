@@ -9,7 +9,7 @@ public class UserHomepageBean {
     private String userId;
     private List<FriendsDrinksStateBean> adminFriendsDrinksStateList;
     private List<FriendsDrinksStateBean> memberFriendsDrinksStateList;
-    private List<FriendsDrinksInvitationBean> invitationBeanList;
+    private List<FriendsDrinksInvitationBean> invitationList;
 
     public String getUserId() {
         return userId;
@@ -35,11 +35,11 @@ public class UserHomepageBean {
         this.memberFriendsDrinksStateList = memberFriendsDrinksStateList;
     }
 
-    public List<FriendsDrinksInvitationBean> getInvitationBeanList() {
-        return invitationBeanList;
+    public List<FriendsDrinksInvitationBean> getInvitationList() {
+        return invitationList;
     }
 
-    public void setInvitationBeanList(List<FriendsDrinksInvitationBean> invitationBeanList) {
-        this.invitationBeanList = invitationBeanList;
+    public void setInvitationList(List<FriendsDrinksInvitationBean> invitationList) {
+        this.invitationList = invitationList;
     }
 }

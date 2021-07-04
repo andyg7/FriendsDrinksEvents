@@ -9,8 +9,8 @@ public class FriendsDrinksDetailPageBean {
     private String adminUserId;
     private String friendsDrinksId;
     private String name;
-    List<UserStateBean> members;
-    List<FriendsDrinksDetailPageMeetupBean> friendsDrinksDetailPageMeetupBeanList;
+    List<UserStateBean> memberList;
+    List<FriendsDrinksDetailPageMeetupBean> friendsDrinksDetailPageMeetupList;
 
     public String getAdminUserId() {
         return adminUserId;
@@ -36,19 +36,19 @@ public class FriendsDrinksDetailPageBean {
         this.name = name;
     }
 
-    public List<UserStateBean> getMembers() {
-        return members;
+    public List<UserStateBean> getMemberList() {
+        return memberList;
     }
 
-    public void setMembers(List<UserStateBean> members) {
-        this.members = members;
+    public void setMemberList(List<UserStateBean> memberList) {
+        this.memberList = memberList;
     }
 
-    public List<FriendsDrinksDetailPageMeetupBean> getFriendsDrinksDetailPageMeetupBeanList() {
-        return friendsDrinksDetailPageMeetupBeanList;
+    public List<FriendsDrinksDetailPageMeetupBean> getFriendsDrinksDetailPageMeetupList() {
+        return friendsDrinksDetailPageMeetupList;
     }
 
-    public void setFriendsDrinksDetailPageMeetupBeanList(List<FriendsDrinksDetailPageMeetupBean> friendsDrinksDetailPageMeetupBeanList) {
-        this.friendsDrinksDetailPageMeetupBeanList = friendsDrinksDetailPageMeetupBeanList;
+    public void setFriendsDrinksDetailPageMeetupList(List<FriendsDrinksDetailPageMeetupBean> friendsDrinksDetailPageMeetupList) {
+        this.friendsDrinksDetailPageMeetupList = friendsDrinksDetailPageMeetupList;
     }
 }
