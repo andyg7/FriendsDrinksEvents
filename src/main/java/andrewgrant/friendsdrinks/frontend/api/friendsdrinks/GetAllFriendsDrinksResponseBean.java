@@ -2,19 +2,20 @@ package andrewgrant.friendsdrinks.frontend.api.friendsdrinks;
 
 import java.util.List;
 
+import andrewgrant.friendsdrinks.frontend.api.state.FriendsDrinksStateBean;
+
 /**
  * DTO for GetAllFriendsDrinksResponseBean.
  */
 public class GetAllFriendsDrinksResponseBean {
-    private List<FriendsDrinksBean> friendsDrinkList;
+    private List<FriendsDrinksStateBean> friendsDrinkList;
 
-    public List<FriendsDrinksBean> getFriendsDrinkList() {
+    public List<FriendsDrinksStateBean> getFriendsDrinkList() {
         return friendsDrinkList;
     }
 
-    public void setFriendsDrinkList(List<FriendsDrinksBean> friendsDrinkList) {
+    public void setFriendsDrinkList(List<FriendsDrinksStateBean> friendsDrinkList) {
         this.friendsDrinkList = friendsDrinkList;
     }
-
 }
 

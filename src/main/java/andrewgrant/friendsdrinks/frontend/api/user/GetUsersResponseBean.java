@@ -2,19 +2,19 @@ package andrewgrant.friendsdrinks.frontend.api.user;
 
 import java.util.List;
 
+import andrewgrant.friendsdrinks.frontend.api.state.UserStateBean;
+
 /**
  * DTO for GetUsersResponse.
  */
 public class GetUsersResponseBean {
-    private List<UserBean> users;
+    private List<UserStateBean> users;
 
-    public List<UserBean> getUsers() {
+    public List<UserStateBean> getUsers() {
         return users;
     }
 
-    public void setUsers(List<UserBean> users) {
+    public void setUsers(List<UserStateBean> users) {
         this.users = users;
     }
-
-
 }

@@ -78,19 +78,8 @@ public class Handler {
     @Produces(MediaType.APPLICATION_JSON)
     public GetUsersResponseBean getAllUsers() {
         List<UserStateBean> userStateBeanList = stateRetriever.getAllUserStates();
-        List<UserBean> users = new ArrayList<>();
-        Iterator<UserStateBean> iterator = userStateBeanList.iterator();
-        while (iterator.hasNext()) {
-            UserStateBean userStateBean = iterator.next();
-            UserBean userBean = new UserBean();
-            userBean.setEmail(userStateBean.getEmail());
-            userBean.setUserId(userStateBean.getUserId());
-            userBean.setFirstName(userStateBean.getFirstName());
-            userBean.setLastName(userStateBean.getLastName());
-            users.add(userBean);
-        }
         GetUsersResponseBean response = new GetUsersResponseBean();
-        response.setUsers(users);
+        response.setUsers(userStateBeanList);
         return response;
     }
 
@@ -121,18 +110,8 @@ public class Handler {
     @Produces(MediaType.APPLICATION_JSON)
     public GetAllFriendsDrinksResponseBean getAllFriendsDrinks() {
         List<FriendsDrinksStateBean> friendsDrinksStateBeanList = stateRetriever.getAllFriendsDrinksStates();
-        List<FriendsDrinksBean> friendsDrinksList = new ArrayList<>();
-        Iterator<FriendsDrinksStateBean> iterator = friendsDrinksStateBeanList.iterator();
-        while (iterator.hasNext()) {
-            FriendsDrinksStateBean friendsDrinksStateBean = iterator.next();
-            FriendsDrinksBean friendsDrinksBean = new FriendsDrinksBean();
-            friendsDrinksBean.setName(friendsDrinksStateBean.getName());
-            friendsDrinksBean.setFriendsDrinksId(friendsDrinksStateBean.getFriendsDrinksId());
-            friendsDrinksBean.setAdminUserId(friendsDrinksStateBean.getAdminUserId());
-            friendsDrinksList.add(friendsDrinksBean);
-        }
         GetAllFriendsDrinksResponseBean response = new GetAllFriendsDrinksResponseBean();
-        response.setFriendsDrinkList(friendsDrinksList);
+        response.setFriendsDrinkList(friendsDrinksStateBeanList);
         return response;
     }
 
