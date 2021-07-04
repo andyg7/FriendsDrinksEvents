@@ -1,4 +1,4 @@
-package andrewgrant.friendsdrinks.frontend.api.state;
+package andrewgrant.friendsdrinks.frontend.api.statestorebeans;
 
 import java.util.List;
 

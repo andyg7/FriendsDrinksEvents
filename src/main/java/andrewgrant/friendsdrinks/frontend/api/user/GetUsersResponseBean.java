@@ -2,7 +2,7 @@ package andrewgrant.friendsdrinks.frontend.api.user;
 
 import java.util.List;
 
-import andrewgrant.friendsdrinks.frontend.api.state.UserStateBean;
+import andrewgrant.friendsdrinks.frontend.api.statestorebeans.UserStateBean;
 
 /**
  * DTO for GetUsersResponse.

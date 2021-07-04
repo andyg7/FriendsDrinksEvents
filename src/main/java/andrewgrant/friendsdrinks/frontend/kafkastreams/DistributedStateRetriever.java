@@ -23,7 +23,7 @@ import javax.ws.rs.core.MediaType;
 import andrewgrant.friendsdrinks.AvroBuilder;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksId;
 import andrewgrant.friendsdrinks.frontend.api.StateRetriever;
-import andrewgrant.friendsdrinks.frontend.api.state.*;
+import andrewgrant.friendsdrinks.frontend.api.statestorebeans.*;
 
 /**
  * Retrieves state from across Kafka Streams application.

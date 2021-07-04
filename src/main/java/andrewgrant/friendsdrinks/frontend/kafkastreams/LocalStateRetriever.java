@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 
 import andrewgrant.friendsdrinks.avro.*;
 import andrewgrant.friendsdrinks.frontend.api.StateRetriever;
-import andrewgrant.friendsdrinks.frontend.api.state.*;
+import andrewgrant.friendsdrinks.frontend.api.statestorebeans.*;
 
 /**
  * Gets state locally.

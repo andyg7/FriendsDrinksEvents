@@ -2,7 +2,7 @@ package andrewgrant.friendsdrinks.frontend.api.friendsdrinks;
 
 import java.util.List;
 
-import andrewgrant.friendsdrinks.frontend.api.state.FriendsDrinksStateBean;
+import andrewgrant.friendsdrinks.frontend.api.statestorebeans.FriendsDrinksStateBean;
 
 /**
  * DTO for GetAllFriendsDrinksResponseBean.
