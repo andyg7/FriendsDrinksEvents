@@ -36,23 +36,14 @@ public class DistributedStateRetriever implements StateRetriever {
 
     private KafkaStreams kafkaStreams;
     private andrewgrant.friendsdrinks.AvroBuilder avroBuilder;
-    private andrewgrant.friendsdrinks.frontend.AvroBuilder apiAvroBuilder;
     private andrewgrant.friendsdrinks.membership.AvroBuilder membershipAvroBuilder;
-    private andrewgrant.friendsdrinks.user.AvroBuilder userAvroBuilder;
-    private andrewgrant.friendsdrinks.meetup.AvroBuilder meetupAvroBuilder;
     private Client client;
 
     public DistributedStateRetriever(KafkaStreams kafkaStreams, AvroBuilder avroBuilder,
-                                     andrewgrant.friendsdrinks.frontend.AvroBuilder apiAvroBuilder,
-                                     andrewgrant.friendsdrinks.membership.AvroBuilder membershipAvroBuilder,
-                                     andrewgrant.friendsdrinks.user.AvroBuilder userAvroBuilder,
-                                     andrewgrant.friendsdrinks.meetup.AvroBuilder meetupAvroBuilder) {
+                                     andrewgrant.friendsdrinks.membership.AvroBuilder membershipAvroBuilder) {
         this.kafkaStreams = kafkaStreams;
         this.avroBuilder = avroBuilder;
-        this.apiAvroBuilder = apiAvroBuilder;
         this.membershipAvroBuilder = membershipAvroBuilder;
-        this.userAvroBuilder = userAvroBuilder;
-        this.meetupAvroBuilder = meetupAvroBuilder;
         client = ClientBuilder.newBuilder().register(JacksonFeature.class).build();
     }
 

@@ -73,11 +73,8 @@ public class Main {
         StateRetriever stateRetriever;
         if (envProps.getProperty("deployment-mode").equals("distributed")) {
             stateRetriever = new DistributedStateRetriever(
-                    streams, avroBuilder, apiAvroBuilder,
-                    new andrewgrant.friendsdrinks.membership.AvroBuilder(schemaRegistryUrl),
-                    new andrewgrant.friendsdrinks.user.AvroBuilder(schemaRegistryUrl),
-                    new andrewgrant.friendsdrinks.meetup.AvroBuilder(schemaRegistryUrl)
-            );
+                    streams, avroBuilder,
+                    new andrewgrant.friendsdrinks.membership.AvroBuilder(schemaRegistryUrl));
         } else if (envProps.getProperty("deployment-mode").equals("single-node")) {
             stateRetriever = new LocalStateRetriever(streams);
         } else {
