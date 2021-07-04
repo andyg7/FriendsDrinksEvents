@@ -507,6 +507,7 @@ public class Handler {
             throw new RuntimeException(String.format(
                     "Failed to get API response for request id %s", requestId));
         }
+        log.info("Got API response for request {} and result was {}", requestId, backendResponse.getResult());
 
         return backendResponse;
     }
