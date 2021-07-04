@@ -5,7 +5,6 @@ import static andrewgrant.friendsdrinks.frontend.api.user.PostUsersRequestBean.*
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.streams.KafkaStreams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +32,6 @@ public class Handler {
 
     private static final Logger log = LoggerFactory.getLogger(Handler.class);
 
-    private KafkaStreams kafkaStreams;
     private KafkaProducer<String, ApiEvent> friendsDrinksKafkaProducer;
     private KafkaProducer<FriendsDrinksMeetupId, FriendsDrinksMeetupEvent> friendsDrinksMeetupKafkaProducer;
     private KafkaProducer<UserId, UserEvent> userKafkaProducer;
@@ -41,17 +39,15 @@ public class Handler {
     private StateRetriever stateRetriever;
     private LocalStateRetriever localStateRetriever;
 
-    public Handler(KafkaStreams kafkaStreams,
-                   KafkaProducer<String, ApiEvent> friendsDrinksKafkaProducer,
+    public Handler(KafkaProducer<String, ApiEvent> friendsDrinksKafkaProducer,
                    KafkaProducer<UserId, UserEvent> userKafkaProducer,
                    KafkaProducer<FriendsDrinksMeetupId, FriendsDrinksMeetupEvent> friendsDrinksMeetupKafkaProducer,
-                   Properties envProps, StateRetriever stateRetriever) {
-        this.kafkaStreams = kafkaStreams;
+                   Properties envProps, LocalStateRetriever localStateRetriever, StateRetriever stateRetriever) {
         this.friendsDrinksKafkaProducer = friendsDrinksKafkaProducer;
         this.userKafkaProducer = userKafkaProducer;
         this.friendsDrinksMeetupKafkaProducer = friendsDrinksMeetupKafkaProducer;
         this.envProps = envProps;
-        localStateRetriever = new LocalStateRetriever(kafkaStreams);
+        this.localStateRetriever = localStateRetriever;
         this.stateRetriever = stateRetriever;
     }
 
@@ -59,12 +55,10 @@ public class Handler {
     @Path("/health")
     @Produces(MediaType.APPLICATION_JSON)
     public HealthCheckResponseBean healthCheck() {
-        KafkaStreams.State state = kafkaStreams.state();
-        if (!state.isRunningOrRebalancing()) {
-            log.error("Kafka streams is {}", state.name());
-            throw new RuntimeException(String.format("State is %s", state.name()));
+        if (!localStateRetriever.isHealthy()) {
+            log.error("I'm unhealthy!");
+            throw new RuntimeException("Unhealthy!");
         }
-        log.info("Kafka streams is {}", state.name());
         HealthCheckResponseBean healthCheckResponseBean = new HealthCheckResponseBean();
         healthCheckResponseBean.setStatus("HEALTHY");
         return healthCheckResponseBean;

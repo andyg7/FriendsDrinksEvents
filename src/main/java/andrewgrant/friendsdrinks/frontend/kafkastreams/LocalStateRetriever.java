@@ -8,6 +8,8 @@ import org.apache.kafka.streams.StoreQueryParameters;
 import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +26,8 @@ import andrewgrant.friendsdrinks.frontend.api.statestorebeans.*;
  * Gets state locally.
  */
 public class LocalStateRetriever implements StateRetriever {
+
+    private static final Logger log = LoggerFactory.getLogger(LocalStateRetriever.class);
 
     private KafkaStreams kafkaStreams;
 
@@ -276,5 +280,16 @@ public class LocalStateRetriever implements StateRetriever {
             }
         }
         return membershipIdBeanList;
+    }
+
+    public boolean isHealthy() {
+        KafkaStreams.State state = kafkaStreams.state();
+        if (!state.isRunningOrRebalancing()) {
+            log.error("Kafka streams state is {}", state.name());
+            return false;
+        } else {
+            log.info("Kafka streams state is {}", state.name());
+            return true;
+        }
     }
 }

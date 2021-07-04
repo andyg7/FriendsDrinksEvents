@@ -83,9 +83,10 @@ public class Main {
         } else {
             throw new RuntimeException("Unknown deployment mode");
         }
+        LocalStateRetriever localStateRetriever = new LocalStateRetriever(streams);
 
-        Server jettyServer = Main.
-                buildServer(envProps, streams, userAvroBuilder, apiAvroBuilder, meetupAvroBuilder, port, stateRetriever);
+        Server jettyServer = Main.buildServer(envProps, userAvroBuilder, apiAvroBuilder,
+                meetupAvroBuilder, port, localStateRetriever, stateRetriever);
         // Attach shutdown handler to catch Control-C.
         Runtime.getRuntime().addShutdownHook(new Thread("shutdown-hook") {
             @Override
@@ -144,11 +145,11 @@ public class Main {
         return new KafkaProducer<>(producerProps, avro.userIdSerializer(), avro.userEventSerializer());
     }
 
-    private static Server buildServer(Properties envProps, KafkaStreams streams,
+    private static Server buildServer(Properties envProps,
                                       andrewgrant.friendsdrinks.user.AvroBuilder userAvroBuilder,
                                       andrewgrant.friendsdrinks.frontend.AvroBuilder apiAvroBuilder,
                                       andrewgrant.friendsdrinks.meetup.AvroBuilder meetupAvroBuilder,
-                                      int port, StateRetriever stateRetriever) {
+                                      int port, LocalStateRetriever localStateRetriever, StateRetriever stateRetriever) {
         // Jetty server context handler.
         final ServletContextHandler context = new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
         context.setContextPath("/v1");
@@ -159,17 +160,17 @@ public class Main {
         jettyServer.addConnector(serverConnector);
         jettyServer.setHandler(context);
 
-        context.addServlet(buildFriendsDrinksHolder(streams, userAvroBuilder,
-                apiAvroBuilder, meetupAvroBuilder, envProps, stateRetriever), "/*");
+        context.addServlet(buildFriendsDrinksHolder(userAvroBuilder,
+                apiAvroBuilder, meetupAvroBuilder, envProps, localStateRetriever, stateRetriever), "/*");
 
         return jettyServer;
     }
 
-    private static ServletHolder buildFriendsDrinksHolder(KafkaStreams streams,
-                                                          andrewgrant.friendsdrinks.user.AvroBuilder userAvroBuilder,
+    private static ServletHolder buildFriendsDrinksHolder(andrewgrant.friendsdrinks.user.AvroBuilder userAvroBuilder,
                                                           andrewgrant.friendsdrinks.frontend.AvroBuilder apiAvroBuilder,
                                                           andrewgrant.friendsdrinks.meetup.AvroBuilder meetupAvroBuilder,
-                                                          Properties envProps, StateRetriever stateRetriever) {
+                                                          Properties envProps, LocalStateRetriever localStateRetriever,
+                                                          StateRetriever stateRetriever) {
         KafkaProducer<String, ApiEvent> friendsDrinksProducer =
                 buildFriendsDrinksProducer(envProps, apiAvroBuilder);
         KafkaProducer<UserId, UserEvent> userProducer =
@@ -177,9 +178,8 @@ public class Main {
         KafkaProducer<FriendsDrinksMeetupId, FriendsDrinksMeetupEvent> friendsDrinksMeetupEventKafkaProducer =
                 buildFriendsDrinksMeetupProducer(envProps, meetupAvroBuilder);
         andrewgrant.friendsdrinks.frontend.api.Handler handler =
-                new andrewgrant.friendsdrinks.frontend.api.Handler(
-                        streams, friendsDrinksProducer, userProducer,
-                        friendsDrinksMeetupEventKafkaProducer, envProps, stateRetriever);
+                new andrewgrant.friendsdrinks.frontend.api.Handler(friendsDrinksProducer, userProducer,
+                        friendsDrinksMeetupEventKafkaProducer, envProps, localStateRetriever, stateRetriever);
         final ResourceConfig rc = new ResourceConfig();
         rc.register(handler);
         rc.register(JacksonFeature.class);
