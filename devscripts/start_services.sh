@@ -2,4 +2,4 @@
 
 set -eu
 
-docker-compose -f docker-compose.services.yml --project-name app up
+docker-compose -f dockercompose/docker-compose.services.yml --project-name app up
