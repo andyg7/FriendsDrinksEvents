@@ -1,4 +1,4 @@
-package andrewgrant.friendsdrinks.frontend.api.membership;
+package andrewgrant.friendsdrinks.frontend.api.statestorebeans;
 
 /**
  * DTO for FriendsDrinksInvitation.
