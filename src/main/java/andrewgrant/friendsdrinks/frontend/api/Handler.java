@@ -23,7 +23,6 @@ import andrewgrant.friendsdrinks.frontend.api.statestorebeans.*;
 import andrewgrant.friendsdrinks.frontend.api.user.GetUsersResponseBean;
 import andrewgrant.friendsdrinks.frontend.api.user.PostUsersRequestBean;
 import andrewgrant.friendsdrinks.frontend.api.user.PostUsersResponseBean;
-import andrewgrant.friendsdrinks.frontend.api.user.UserBean;
 import andrewgrant.friendsdrinks.frontend.kafkastreams.LocalStateRetriever;
 
 /**
@@ -84,14 +83,8 @@ public class Handler {
     @GET
     @Path("/users/{userId}")
     @Produces(MediaType.APPLICATION_JSON)
-    public UserBean getUser(@PathParam("userId") String userId) {
-        UserStateBean userStateBean = stateRetriever.getUserState(userId);
-        UserBean response = new UserBean();
-        response.setEmail(userStateBean.getEmail());
-        response.setFirstName(userStateBean.getFirstName());
-        response.setLastName(userStateBean.getLastName());
-        response.setUserId(userStateBean.getUserId());
-        return response;
+    public UserStateBean getUser(@PathParam("userId") String userId) {
+        return stateRetriever.getUserState(userId);
     }
 
     @POST
