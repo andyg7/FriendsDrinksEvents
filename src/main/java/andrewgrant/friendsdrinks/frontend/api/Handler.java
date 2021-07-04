@@ -66,7 +66,6 @@ public class Handler {
             throw new RuntimeException(String.format("State is %s", state.name()));
         }
         log.info("Kafka streams is {}", state.name());
-        throw new RuntimeException(String.format("State is %s", state.name()));
         HealthCheckResponseBean healthCheckResponseBean = new HealthCheckResponseBean();
         healthCheckResponseBean.setStatus("HEALTHY");
         return healthCheckResponseBean;
