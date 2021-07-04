@@ -3,10 +3,14 @@ package andrewgrant.friendsdrinks.frontend.kafkastreams;
 import static andrewgrant.friendsdrinks.frontend.kafkastreams.MaterializedViewsService.*;
 
 import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StoreQueryParameters;
+import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import andrewgrant.friendsdrinks.avro.*;
@@ -54,6 +58,24 @@ public class LocalStateRetriever implements StateRetriever {
         userStateBean.setLastName(userState.getLastName());
         userStateBean.setEmail(userState.getEmail());
         return userStateBean;
+    }
+
+    @Override
+    public List<UserStateBean> getAllUserStates() {
+        ReadOnlyKeyValueStore<String, UserState> kv =
+                kafkaStreams.store(StoreQueryParameters.fromNameAndType(USERS_STATE_STORE, QueryableStoreTypes.keyValueStore()));
+        KeyValueIterator<String, UserState> allKvs = kv.all();
+        List<UserStateBean> userStateBeanList = new ArrayList<>();
+        while (allKvs.hasNext()) {
+            KeyValue<String, UserState> keyValue = allKvs.next();
+            UserStateBean userStateBean = new UserStateBean();
+            userStateBean.setUserId(keyValue.value.getUserId().getUserId());
+            userStateBean.setFirstName(keyValue.value.getFirstName());
+            userStateBean.setLastName(keyValue.value.getLastName());
+            userStateBean.setEmail(keyValue.value.getEmail());
+            userStateBeanList.add(userStateBean);
+        }
+        return userStateBeanList;
     }
 
     @Override

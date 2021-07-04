@@ -6,9 +6,14 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyQueryMetadata;
 import org.apache.kafka.streams.state.HostInfo;
+import org.apache.kafka.streams.state.StreamsMetadata;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -22,7 +27,6 @@ import andrewgrant.friendsdrinks.frontend.api.state.ApiResponseBean;
 import andrewgrant.friendsdrinks.frontend.api.state.FriendsDrinksStateBean;
 import andrewgrant.friendsdrinks.frontend.api.state.UserHomepageBean;
 import andrewgrant.friendsdrinks.frontend.api.state.UserStateBean;
-
 
 /**
  * Retrieves state from across Kafka Streams application.
@@ -63,7 +67,7 @@ public class DistributedStateRetriever implements StateRetriever {
         }
         HostInfo hostInfo = keyQueryMetadata.activeHost();
         log.info("Host info: {} {}", hostInfo.host(), hostInfo.port());
-        return client.target(endpoint(hostInfo, FRIENDSDRINKS_STATE_STORE, uuid))
+        return client.target(endpointWithKey(hostInfo, FRIENDSDRINKS_STATE_STORE, uuid))
                 .request(MediaType.APPLICATION_JSON)
                 .get(new GenericType<FriendsDrinksStateBean>(){});
     }
@@ -77,9 +81,22 @@ public class DistributedStateRetriever implements StateRetriever {
         }
         HostInfo hostInfo = keyQueryMetadata.activeHost();
         log.info("Host info: {} {}", hostInfo.host(), hostInfo.port());
-        return client.target(endpoint(hostInfo, USERS_STATE_STORE, userId))
+        return client.target(endpointWithKey(hostInfo, USERS_STATE_STORE, userId))
                 .request(MediaType.APPLICATION_JSON)
                 .get(new GenericType<UserStateBean>(){});
+    }
+
+    @Override
+    public List<UserStateBean> getAllUserStates() {
+        Collection<StreamsMetadata> streamsMetadataCollection = kafkaStreams.allMetadataForStore(USERS_STATE_STORE);
+        List<UserStateBean> userStateBeanList = new ArrayList<>();
+        for (StreamsMetadata streamsMetadata : streamsMetadataCollection) {
+            UserStateBean userStateBean = client.target(endpoint(streamsMetadata.hostInfo(), USERS_STATE_STORE))
+                    .request(MediaType.APPLICATION_JSON)
+                    .get(new GenericType<UserStateBean>(){});
+            userStateBeanList.add(userStateBean);
+        }
+        return userStateBeanList;
     }
 
     @Override
@@ -91,7 +108,7 @@ public class DistributedStateRetriever implements StateRetriever {
         }
         HostInfo hostInfo = keyQueryMetadata.activeHost();
         log.info("Host info: {} {}", hostInfo.host(), hostInfo.port());
-        return client.target(endpoint(hostInfo, RESPONSES_STATE_STORE, requestId))
+        return client.target(endpointWithKey(hostInfo, RESPONSES_STATE_STORE, requestId))
                 .request(MediaType.APPLICATION_JSON)
                 .get(new GenericType<ApiResponseBean>(){});
     }
@@ -105,12 +122,16 @@ public class DistributedStateRetriever implements StateRetriever {
         }
         HostInfo hostInfo = keyQueryMetadata.activeHost();
         log.info("Host info: {} {}", hostInfo.host(), hostInfo.port());
-        return client.target(endpoint(hostInfo, USER_HOMEPAGES_STATE_STORE, userId))
+        return client.target(endpointWithKey(hostInfo, USER_HOMEPAGES_STATE_STORE, userId))
                 .request(MediaType.APPLICATION_JSON)
                 .get(new GenericType<UserHomepageBean>(){});
     }
 
-    private String endpoint(HostInfo hostInfo, String stateStoreName, String key) {
+    private String endpointWithKey(HostInfo hostInfo, String stateStoreName, String key) {
         return String.format("http://%s:%d/%s/%s", hostInfo.host(), hostInfo.port(), stateStoreName, key);
+    }
+
+    private String endpoint(HostInfo hostInfo, String stateStoreName) {
+        return String.format("http://%s:%d/%s", hostInfo.host(), hostInfo.port(), stateStoreName);
     }
 }

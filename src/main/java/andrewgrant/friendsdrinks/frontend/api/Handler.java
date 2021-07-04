@@ -15,10 +15,7 @@ import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import javax.ws.rs.*;
@@ -84,21 +81,18 @@ public class Handler {
     @Path("/users")
     @Produces(MediaType.APPLICATION_JSON)
     public GetUsersResponseBean getAllUsers() {
-        ReadOnlyKeyValueStore<String, UserState> kv =
-                kafkaStreams.store(StoreQueryParameters.fromNameAndType(USERS_STATE_STORE, QueryableStoreTypes.keyValueStore()));
-        KeyValueIterator<String, UserState> allKvs = kv.all();
+        List<UserStateBean> userStateBeanList = stateRetriever.getAllUserStates();
         List<UserBean> users = new ArrayList<>();
-        while (allKvs.hasNext()) {
-            KeyValue<String, UserState> keyValue = allKvs.next();
+        Iterator<UserStateBean> iterator = userStateBeanList.iterator();
+        while (iterator.hasNext()) {
+            UserStateBean userStateBean = iterator.next();
             UserBean userBean = new UserBean();
-            UserState userState = keyValue.value;
-            userBean.setEmail(userState.getEmail());
-            userBean.setUserId(userState.getUserId().getUserId());
-            userBean.setFirstName(userState.getFirstName());
-            userBean.setLastName(userState.getLastName());
+            userBean.setEmail(userStateBean.getEmail());
+            userBean.setUserId(userStateBean.getUserId());
+            userBean.setFirstName(userStateBean.getFirstName());
+            userBean.setLastName(userStateBean.getLastName());
             users.add(userBean);
         }
-        allKvs.close();
         GetUsersResponseBean response = new GetUsersResponseBean();
         response.setUsers(users);
         return response;
@@ -683,6 +677,13 @@ public class Handler {
     @Produces(MediaType.APPLICATION_JSON)
     public UserStateBean getUserStateBean(@PathParam("userId") String userId) {
         return localStateRetriever.getUserState(userId);
+    }
+
+    @GET
+    @Path("/users-state-store")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<UserStateBean> getAllUserStateBeans() {
+        return localStateRetriever.getAllUserStates();
     }
 
     @GET
