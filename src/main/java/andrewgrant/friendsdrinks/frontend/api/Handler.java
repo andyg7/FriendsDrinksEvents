@@ -697,10 +697,17 @@ public class Handler {
     }
 
     @GET
-    @Path("/user-homepages-state-store/{requestId}")
+    @Path("/user-homepages-state-store/{userId}")
     @Produces(MediaType.APPLICATION_JSON)
     public UserHomepageBean getUserHomepage(@PathParam("userId") String userId) {
         return localStateRetriever.getUserHomePage(userId);
+    }
+
+    @GET
+    @Path("/friendsdrinks-detail-page-state-store/{friendsDrinksId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public FriendsDrinksDetailPageBean getLocalFriendsDrinksDetailPage(@PathParam("friendsDrinksId") String uuid) {
+        return localStateRetriever.getFriendsDrinksDetailPage(uuid);
     }
 
 }

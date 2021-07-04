@@ -184,4 +184,51 @@ public class LocalStateRetriever implements StateRetriever {
         }
         return userHomepageBean;
     }
+
+    @Override
+    public FriendsDrinksDetailPageBean getFriendsDrinksDetailPage(String friendsDrinksId) {
+        ReadOnlyKeyValueStore<FriendsDrinksId, FriendsDrinksDetailPage> kv =
+                kafkaStreams.store(StoreQueryParameters.fromNameAndType(FRIENDSDRINKS_DETAIL_PAGE_STATE_STORE, QueryableStoreTypes.keyValueStore()));
+        FriendsDrinksDetailPage friendsDrinkDetailPage = kv.get(FriendsDrinksId.newBuilder().setUuid(friendsDrinksId).build());
+        if (friendsDrinkDetailPage == null || friendsDrinkDetailPage.getStatus().equals(FriendsDrinksStatus.DELETED)) {
+            return null;
+        }
+        FriendsDrinksDetailPageBean friendsDrinksDetailPageBean = new FriendsDrinksDetailPageBean();
+        friendsDrinksDetailPageBean.setName(friendsDrinkDetailPage.getName());
+        friendsDrinksDetailPageBean.setAdminUserId(friendsDrinkDetailPage.getAdminUserId());
+        friendsDrinksDetailPageBean.setFriendsDrinksId(friendsDrinkDetailPage.getFriendsDrinksId().getUuid());
+        if (friendsDrinkDetailPage.getMembers() != null) {
+            friendsDrinksDetailPageBean.setMembers(friendsDrinkDetailPage.getMembers().stream()
+                    .map(x -> {
+                        UserStateBean userStateBean = new UserStateBean();
+                        userStateBean.setUserId(x.getUserId().getUserId());
+                        userStateBean.setEmail(x.getEmail());
+                        userStateBean.setFirstName(x.getFirstName());
+                        userStateBean.setLastName(x.getLastName());
+                        return userStateBean;
+                    }).collect(Collectors.toList()));
+        }
+        ReadOnlyKeyValueStore<String, UserState> usersKv =
+                kafkaStreams.store(StoreQueryParameters.fromNameAndType(USERS_STATE_STORE, QueryableStoreTypes.keyValueStore()));
+        if (friendsDrinkDetailPage.getMeetups() != null) {
+            friendsDrinksDetailPageBean.setFriendsDrinksDetailPageMeetupBeanList(friendsDrinkDetailPage.getMeetups()
+                    .stream().map(x -> {
+                        FriendsDrinksDetailPageMeetupBean meetupBean = new FriendsDrinksDetailPageMeetupBean();
+                        meetupBean.setDate(x.getDate());
+                        if (x.getUserIds() != null) {
+                            meetupBean.setUserStateBeanList(x.getUserIds().stream().map(x1 -> {
+                                UserStateBean userStateBean = new UserStateBean();
+                                userStateBean.setUserId(x1.getUserId());
+                                UserState userState = usersKv.get(x1.getUserId());
+                                userStateBean.setEmail(userState.getEmail());
+                                userStateBean.setFirstName(userState.getFirstName());
+                                userStateBean.setLastName(userState.getLastName());
+                                return userStateBean;
+                            }).collect(Collectors.toList()));
+                        }
+                        return meetupBean;
+                    }).collect(Collectors.toList()));
+        }
+        return friendsDrinksDetailPageBean;
+    }
 }
