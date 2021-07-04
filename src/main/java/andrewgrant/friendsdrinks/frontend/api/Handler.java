@@ -498,6 +498,7 @@ public class Handler {
                     break;
                 }
                 // Give the backend some time and try again.
+                log.warn("Giving the backend some time to provide the API response for request {}", requestId);
                 Thread.sleep(100);
                 backendResponse = stateRetriever.getApiResponse(requestId);
             }
