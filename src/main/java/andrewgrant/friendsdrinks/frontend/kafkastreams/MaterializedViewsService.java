@@ -23,7 +23,7 @@ import java.util.Properties;
 import andrewgrant.friendsdrinks.avro.*;
 import andrewgrant.friendsdrinks.frontend.RequestsPurger;
 import andrewgrant.friendsdrinks.frontend.TopicNameConfigKey;
-import andrewgrant.friendsdrinks.streamsconfig.Config;
+import andrewgrant.friendsdrinks.streamsconfig.SharedConfigSetter;
 
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
 
@@ -595,7 +595,7 @@ public class MaterializedViewsService {
                         "Pod name: %s. Headless service name %s. Pod namespace %s.", podName, headlessServiceName, podNamespace));
             }
         }
-        streamProps = Config.addSharedConfig(streamProps);
+        streamProps = SharedConfigSetter.addSharedConfig(streamProps);
         return streamProps;
     }
 

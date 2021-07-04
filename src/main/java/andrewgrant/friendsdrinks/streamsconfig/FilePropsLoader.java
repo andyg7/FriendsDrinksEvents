@@ -6,7 +6,7 @@ import java.io.IOException;
 /**
  * Helper class for retrieving properties.
  */
-public class Properties {
+public class FilePropsLoader {
 
     public static java.util.Properties load(String fileName) throws IOException {
         java.util.Properties envProps = new java.util.Properties();

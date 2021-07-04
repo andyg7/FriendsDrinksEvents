@@ -6,7 +6,7 @@ import org.apache.kafka.streams.StreamsConfig;
 /**
  *
  */
-public class Config {
+public class SharedConfigSetter {
 
     private static final String STREAMS_GROUP_INSTANCE_ID_ENV_VAR = "STREAMS_GROUP_INSTANCE_ID";
 

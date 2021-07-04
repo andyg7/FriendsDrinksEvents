@@ -1,7 +1,7 @@
 package andrewgrant.friendsdrinks;
 
 import static andrewgrant.friendsdrinks.frontend.TopicNameConfigKey.FRIENDSDRINKS_API;
-import static andrewgrant.friendsdrinks.streamsconfig.Properties.load;
+import static andrewgrant.friendsdrinks.streamsconfig.FilePropsLoader.load;
 
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.*;
@@ -16,7 +16,7 @@ import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
 import andrewgrant.friendsdrinks.avro.*;
-import andrewgrant.friendsdrinks.streamsconfig.Config;
+import andrewgrant.friendsdrinks.streamsconfig.SharedConfigSetter;
 
 import com.sun.net.httpserver.HttpServer;
 
@@ -105,7 +105,7 @@ public class WriterService {
         if (envProps.getProperty("streams.dir") != null) {
             streamProps.put(StreamsConfig.STATE_DIR_CONFIG, envProps.getProperty("streams.dir"));
         }
-        streamProps = Config.addSharedConfig(streamProps);
+        streamProps = SharedConfigSetter.addSharedConfig(streamProps);
         return streamProps;
     }
 

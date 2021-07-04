@@ -1,6 +1,6 @@
 package andrewgrant.friendsdrinks.frontend;
 
-import static andrewgrant.friendsdrinks.streamsconfig.Properties.load;
+import static andrewgrant.friendsdrinks.streamsconfig.FilePropsLoader.load;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
