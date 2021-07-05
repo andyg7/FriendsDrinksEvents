@@ -50,7 +50,7 @@ spec:
             httpGet:
               path: /v1/health
               port: 8080
-            initialDelaySeconds: 300
+            initialDelaySeconds: 120
             timeoutSeconds: 2
             periodSeconds: 30
           ports:
