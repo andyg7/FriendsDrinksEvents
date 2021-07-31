@@ -85,16 +85,22 @@ public class Main {
         Server jettyServer = Main.buildServer(envProps, userAvroBuilder, apiAvroBuilder,
                 meetupAvroBuilder, port, localStateRetriever, stateRetriever);
         // Attach shutdown handler to catch Control-C.
-        Runtime.getRuntime().addShutdownHook(new Thread("shutdown-hook") {
+        Runtime.getRuntime().addShutdownHook(new Thread("Server shutdown-hook") {
             @Override
             public void run() {
-                log.info("Running shutdown hook...");
-                streams.close();
+                log.info("Shutting down server...");
                 try {
                     jettyServer.stop();
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
+            }
+        });
+        Runtime.getRuntime().addShutdownHook(new Thread("Streams shutdown-hook") {
+            @Override
+            public void run() {
+                log.info("Closing streams...");
+                streams.close();
             }
         });
         streams.start();

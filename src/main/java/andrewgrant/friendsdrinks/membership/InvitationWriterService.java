@@ -271,13 +271,18 @@ public class InvitationWriterService {
 
         HttpServer healthCheckServer = andrewgrant.friendsdrinks.health.Server.buildServer(8080, kafkaStreams);
 
-        final CountDownLatch latch = new CountDownLatch(1);
+        final CountDownLatch latch = new CountDownLatch(2);
         Runtime.getRuntime().addShutdownHook(new Thread("streams-shutdown-hook") {
             @Override
             public void run() {
-                log.info("Running shutdown hook...");
-                andrewgrant.friendsdrinks.health.Server.stop(healthCheckServer);
                 kafkaStreams.close();
+                latch.countDown();
+            }
+        });
+        Runtime.getRuntime().addShutdownHook(new Thread("health-check-shutdown-hook") {
+            @Override
+            public void run() {
+                andrewgrant.friendsdrinks.health.Server.stop(healthCheckServer);
                 latch.countDown();
             }
         });

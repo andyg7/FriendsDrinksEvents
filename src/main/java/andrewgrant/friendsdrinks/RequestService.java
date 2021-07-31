@@ -419,30 +419,35 @@ public class RequestService {
                 new andrewgrant.friendsdrinks.frontend.AvroBuilder(registryUrl));
         Topology topology = service.buildTopology();
         Properties streamProps = service.buildStreamProperties(envProps);
-        KafkaStreams streams = new KafkaStreams(topology, streamProps);
-        streams.setUncaughtExceptionHandler(exception -> {
+        KafkaStreams kafkaStreams = new KafkaStreams(topology, streamProps);
+        kafkaStreams.setUncaughtExceptionHandler(exception -> {
             log.error("Uncaught exception {}", exception.getMessage());
             return StreamsUncaughtExceptionHandler.StreamThreadExceptionResponse.REPLACE_THREAD;
         });
         TopologyDescription description = topology.describe();
         log.info("Topology description: {}", description.toString());
 
-        HttpServer healthCheckServer = andrewgrant.friendsdrinks.health.Server.buildServer(8080, streams);
+        HttpServer healthCheckServer = andrewgrant.friendsdrinks.health.Server.buildServer(8080, kafkaStreams);
 
         log.info("Started streams and the health check server");
 
-        final CountDownLatch latch = new CountDownLatch(1);
+        final CountDownLatch latch = new CountDownLatch(2);
         Runtime.getRuntime().addShutdownHook(new Thread("streams-shutdown-hook") {
             @Override
             public void run() {
-                log.info("Running shutdown hook...");
+                kafkaStreams.close();
+                latch.countDown();
+            }
+        });
+        Runtime.getRuntime().addShutdownHook(new Thread("health-check-shutdown-hook") {
+            @Override
+            public void run() {
                 andrewgrant.friendsdrinks.health.Server.stop(healthCheckServer);
-                streams.close();
                 latch.countDown();
             }
         });
 
-        streams.start();
+        kafkaStreams.start();
         andrewgrant.friendsdrinks.health.Server.start(healthCheckServer);
         try {
             latch.await();
