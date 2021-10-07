@@ -5,7 +5,7 @@
 Used to build the application JAR.
 
 ### Kafka and Kafka Streams
-Kafka Streams is used to build multiple asynchronous "micro-services". See code in https://github.com/andyg7/FriendsDrinksEvents/tree/master/src/main/java/andrewgrant/friendsdrinks - basically any class that ends in Service contains a main method that starts a Kafka Streams application. A REST API fronts interacting with the backend stream services - see https://github.com/andyg7/FriendsDrinksEvents/tree/master/src/main/java/andrewgrant/friendsdrinks/frontend. This is consumed by https://github.com/andyg7/FriendsDrinksUI.
+Kafka Streams is used to build multiple asynchronous "micro-services". See code in https://github.com/andyg7/FriendsDrinksEvents/tree/master/src/main/java/andrewgrant/friendsdrinks - basically any class that ends in Service contains a main method that starts a Kafka Streams application. A REST API fronts interacting with the backend stream services - see https://github.com/andyg7/FriendsDrinksEvents/tree/master/src/main/java/andrewgrant/friendsdrinks/frontend. Basically, the REST API uses the Producer and Consumer clients to interact with the Kafka Streams app(s). The REST API also runs it's own Kafka Streams application for creating some materialized views. The API endpoints are consumed by https://github.com/andyg7/FriendsDrinksUI which ultimately is how the end user uses this app.
 #### Resources
 - https://kafka.apache.org/20/documentation/streams/developer-guide/dsl-api.html
 - https://docs.confluent.io/current/streams/architecture.html
