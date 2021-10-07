@@ -15,4 +15,4 @@ Used to build the application's Docker image. The same image is used to run the 
 Used for running the various containers that make up the application. There are various Kubernetes resources (e.g. StatefulSet, Service, ConfigMap etc.) for running ZooKeeper, a schema registry, a Kafka cluster and then the actual streaming application. See https://github.com/andyg7/FriendsDrinksEvents/tree/master/kubernetes.
 
 ### Semaphore
-CI/CD solution. There's a pipeline that builds the code and then deploys the app to AWS EKS (managed Kubernetes). https://github.com/andyg7/FriendsDrinksInfrastructure contains yet another pipeline that sets up all the AWS infrastruture. This includes creating a VPC, EC2 instances, security groups, IAM roles, the actual Kubernetes cluster etc.
+CI/CD solution. There's a pipeline that builds the code and then deploys the app to AWS EKS (managed Kubernetes). https://github.com/andyg7/FriendsDrinksInfrastructure contains yet another pipeline that sets all of this AWS infrastruture up. This includes creating a VPC, EC2 instances, security groups, IAM roles, the actual Kubernetes cluster etc.
