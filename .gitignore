@@ -1,5 +1,14 @@
+# Java build artifacts class files
 *.class
 
-build/*
-var/*
+build/
+var/
+gen/
+bin/
 
+# Eclipse project files
+.classpath
+.project
+
+# OSX files
+.DS_Store
