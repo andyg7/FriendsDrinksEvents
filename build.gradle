@@ -22,7 +22,7 @@ java {
 }
 
 version = '0.0.1'
-group = 'org.andrewgrant'
+group = 'com.friendsdrinksv2'
 
 repositories {
     mavenCentral()
