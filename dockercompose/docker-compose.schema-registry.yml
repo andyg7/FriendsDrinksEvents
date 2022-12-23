@@ -3,7 +3,7 @@ version: '2'
 
 services:
   schema-registry:
-    image: confluentinc/cp-schema-registry:6.2.0
+    image: confluentinc/cp-schema-registry:7.3.1
     networks:
       - kafka-network
     hostname: schema-registry
@@ -18,7 +18,7 @@ services:
 
   # This "container" is a workaround to pre-create topics
   kafka-setup:
-    image: confluentinc/cp-kafka:6.2.0
+    image: confluentinc/cp-kafka:7.3.1
     networks:
       - kafka-network
     hostname: kafka-setup
@@ -29,21 +29,21 @@ services:
                        sleep 90 && \
                        cub kafka-ready -b broker:9092 1 20 && \
                        echo About to create topics... && \
-                       kafka-topics --create --if-not-exists --zookeeper zookeeper:2181 --partitions 2 --replication-factor 1 --topic frontend-responses && \
-                       kafka-topics --create --if-not-exists --zookeeper zookeeper:2181 --partitions 2 --replication-factor 1 --topic friendsdrinks-meetup-event && \
-                       kafka-topics --create --if-not-exists --zookeeper zookeeper:2181 --partitions 2 --replication-factor 1 --topic friendsdrinks-meetup-state && \
-                       kafka-topics --create --if-not-exists --zookeeper zookeeper:2181 --partitions 2 --replication-factor 1 --topic friendsdrinks-event && \
-                       kafka-topics --create --if-not-exists --zookeeper zookeeper:2181 --partitions 2 --replication-factor 1 --topic friendsdrinks-state && \
-                       kafka-topics --create --if-not-exists --zookeeper zookeeper:2181 --partitions 2 --replication-factor 1 --topic friendsdrinks-keyed-by-admin-user-id-state && \
-                       kafka-topics --create --if-not-exists --zookeeper zookeeper:2181 --partitions 2 --replication-factor 1 --topic friendsdrinks-membership-event && \
-                       kafka-topics --create --if-not-exists --zookeeper zookeeper:2181 --partitions 2 --replication-factor 1 --topic friendsdrinks-membership-state && \
-                       kafka-topics --create --if-not-exists --zookeeper zookeeper:2181 --partitions 2 --replication-factor 1 --topic friendsdrinks-membership-keyed-by-friendsdrinks-id-state && \
-                       kafka-topics --create --if-not-exists --zookeeper zookeeper:2181 --partitions 2 --replication-factor 1 --topic friendsdrinks-membership-keyed-by-user-id-state && \
-                       kafka-topics --create --if-not-exists --zookeeper zookeeper:2181 --partitions 2 --replication-factor 1 --topic friendsdrinks-api && \
-                       kafka-topics --create --if-not-exists --zookeeper zookeeper:2181 --partitions 2 --replication-factor 1 --topic friendsdrinks-invitation-event && \
-                       kafka-topics --create --if-not-exists --zookeeper zookeeper:2181 --partitions 2 --replication-factor 1 --topic friendsdrinks-invitation-state && \
-                       kafka-topics --create --if-not-exists --zookeeper zookeeper:2181 --partitions 2 --replication-factor 1 --topic user-event && \
-                       kafka-topics --create --if-not-exists --zookeeper zookeeper:2181 --partitions 2 --replication-factor 1 --topic user-state && \
+                       kafka-topics --create --if-not-exists --bootstrap-server broker:9092 --partitions 2 --replication-factor 1 --topic frontend-responses && \
+                       kafka-topics --create --if-not-exists --bootstrap-server broker:9092 --partitions 2 --replication-factor 1 --topic friendsdrinks-meetup-event && \
+                       kafka-topics --create --if-not-exists --bootstrap-server broker:9092 --partitions 2 --replication-factor 1 --topic friendsdrinks-meetup-state && \
+                       kafka-topics --create --if-not-exists --bootstrap-server broker:9092 --partitions 2 --replication-factor 1 --topic friendsdrinks-event && \
+                       kafka-topics --create --if-not-exists --bootstrap-server broker:9092 --partitions 2 --replication-factor 1 --topic friendsdrinks-state && \
+                       kafka-topics --create --if-not-exists --bootstrap-server broker:9092 --partitions 2 --replication-factor 1 --topic friendsdrinks-keyed-by-admin-user-id-state && \
+                       kafka-topics --create --if-not-exists --bootstrap-server broker:9092 --partitions 2 --replication-factor 1 --topic friendsdrinks-membership-event && \
+                       kafka-topics --create --if-not-exists --bootstrap-server broker:9092 --partitions 2 --replication-factor 1 --topic friendsdrinks-membership-state && \
+                       kafka-topics --create --if-not-exists --bootstrap-server broker:9092 --partitions 2 --replication-factor 1 --topic friendsdrinks-membership-keyed-by-friendsdrinks-id-state && \
+                       kafka-topics --create --if-not-exists --bootstrap-server broker:9092 --partitions 2 --replication-factor 1 --topic friendsdrinks-membership-keyed-by-user-id-state && \
+                       kafka-topics --create --if-not-exists --bootstrap-server broker:9092 --partitions 2 --replication-factor 1 --topic friendsdrinks-api && \
+                       kafka-topics --create --if-not-exists --bootstrap-server broker:9092 --partitions 2 --replication-factor 1 --topic friendsdrinks-invitation-event && \
+                       kafka-topics --create --if-not-exists --bootstrap-server broker:9092 --partitions 2 --replication-factor 1 --topic friendsdrinks-invitation-state && \
+                       kafka-topics --create --if-not-exists --bootstrap-server broker:9092 --partitions 2 --replication-factor 1 --topic user-event && \
+                       kafka-topics --create --if-not-exists --bootstrap-server broker:9092 --partitions 2 --replication-factor 1 --topic user-state && \
                        echo Done creating topics...  \
                        '"
     environment:
