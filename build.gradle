@@ -40,7 +40,7 @@ repositories {
 apply plugin: 'com.gradleup.shadow'
 
 checkstyle {
-    toolVersion '7.8.1'
+    toolVersion '10.12.4'
     configFile file("checkstyle/checkstyle.xml")
 }
 checkstyleMain {
