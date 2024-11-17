@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: cp
-        image: confluentinc/cp-kafka-rest:6.2.0
+        image: confluentinc/cp-kafka-rest:7.7.1
         env:
         - name: KAFKAREST_LOG4J_OPTS
           value: -Dlog4j.configuration=file:/etc/kafka-rest/log4j.properties

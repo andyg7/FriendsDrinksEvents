@@ -9,8 +9,9 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.errors.StreamsUncaughtExceptionHandler;
 import org.apache.kafka.streams.kstream.*;
-import org.apache.kafka.streams.processor.Processor;
 import org.apache.kafka.streams.processor.ProcessorContext;
+import org.apache.kafka.streams.processor.api.Processor;
+import org.apache.kafka.streams.processor.api.Record;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
@@ -98,38 +99,42 @@ public class RequestService {
 
         KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipEventConcurrencyCheck>
                 friendsDrinksMembershipEventConcurrencyCheckKStream = checkForConcurrentRequests(friendsDrinksMembershipEventKStream);
-
-        KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipEventConcurrencyCheck>[] branchedConcurrencyCheck =
-                friendsDrinksMembershipEventConcurrencyCheckKStream.branch(
+        friendsDrinksMembershipEventConcurrencyCheckKStream.split()
+                .branch(
                         (key, value) -> value.isConcurrentRequest,
-                        (key, value) -> true
+                        Branched.withConsumer(ks -> {
+                            toRejectedResponse(ks.mapValues(v -> v.friendsDrinksMembershipEvent))
+                                    .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.apiEventSerde()));
+                        })
+                )
+                .branch(
+                        (key, value) -> true,
+                        Branched.withConsumer(ks -> {
+
+                            InvitationRequestResult invitationRequestResult =
+                                    handleInvitationRequests(ks
+                                            .mapValues(v -> v.friendsDrinksMembershipEvent)
+                                            .filter((key, value) ->
+                                                    value.getEventType().equals(FriendsDrinksMembershipApiEventType.FRIENDSDRINKS_INVITATION_REQUEST))
+                                            .mapValues(v -> v.getFriendsDrinksInvitationRequest()), friendsDrinksStateKTable, userState);
+
+                            toApiResponse(invitationRequestResult.getSuccessfulResponseKStream())
+                                    .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.apiEventSerde()));
+
+                            for (KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipApiEvent> friendsDrinksEventKStream :
+                                    invitationRequestResult.getFailedResponseKStreams()) {
+                                toApiResponse(friendsDrinksEventKStream)
+                                        .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.apiEventSerde()));
+                            }
+
+                            toApiResponse(handleInvitationReplies(ks
+                                    .mapValues(v -> v.friendsDrinksMembershipEvent)
+                                    .filter((key, value) ->
+                                            value.getEventType().equals(FriendsDrinksMembershipApiEventType.FRIENDSDRINKS_INVITATION_REPLY_REQUEST))
+                                    .mapValues(v -> v.getFriendsDrinksInvitationReplyRequest()),  friendsDrinksInvitations))
+                                    .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.apiEventSerde()));
+                        })
                 );
-
-        toRejectedResponse(branchedConcurrencyCheck[0].mapValues(v -> v.friendsDrinksMembershipEvent))
-                .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.apiEventSerde()));
-
-        InvitationRequestResult invitationRequestResult =
-                handleInvitationRequests(branchedConcurrencyCheck[1]
-                        .mapValues(v -> v.friendsDrinksMembershipEvent)
-                        .filter((key, value) ->
-                                value.getEventType().equals(FriendsDrinksMembershipApiEventType.FRIENDSDRINKS_INVITATION_REQUEST))
-                        .mapValues(v -> v.getFriendsDrinksInvitationRequest()), friendsDrinksStateKTable, userState);
-
-        toApiResponse(invitationRequestResult.getSuccessfulResponseKStream())
-                .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.apiEventSerde()));
-
-        for (KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipApiEvent> friendsDrinksEventKStream :
-                invitationRequestResult.getFailedResponseKStreams()) {
-            toApiResponse(friendsDrinksEventKStream)
-                    .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.apiEventSerde()));
-        }
-
-        toApiResponse(handleInvitationReplies(branchedConcurrencyCheck[1]
-                .mapValues(v -> v.friendsDrinksMembershipEvent)
-                .filter((key, value) ->
-                        value.getEventType().equals(FriendsDrinksMembershipApiEventType.FRIENDSDRINKS_INVITATION_REPLY_REQUEST))
-                .mapValues(v -> v.getFriendsDrinksInvitationReplyRequest()),  friendsDrinksInvitations))
-                .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.apiEventSerde()));
 
         return builder.build();
     }
@@ -143,18 +148,19 @@ public class RequestService {
                         membershipAvroBuilder.friendsDrinksMembershipIdSerdes(),
                         membershipAvroBuilder.friendsDrinksInvitationEventSerde()))
                 .process(() ->
-                        new Processor<FriendsDrinksMembershipId, FriendsDrinksInvitationEvent>() {
+                        new Processor<FriendsDrinksMembershipId, FriendsDrinksInvitationEvent, Void, Void>() {
 
                             private KeyValueStore<FriendsDrinksMembershipId, String> stateStore;
 
                             @Override
-                            public void init(ProcessorContext processorContext) {
-                                stateStore = (KeyValueStore) processorContext.getStateStore(PENDING_FRIENDSDRINKS_MEMBERSHIP_REQUESTS_STATE_STORE);
+                            public void init(org.apache.kafka.streams.processor.api.ProcessorContext<Void, Void> context) {
+                                stateStore = (KeyValueStore) context.getStateStore(PENDING_FRIENDSDRINKS_MEMBERSHIP_REQUESTS_STATE_STORE);
                             }
 
                             @Override
-                            public void process(FriendsDrinksMembershipId friendsDrinksMembershipId,
-                                                FriendsDrinksInvitationEvent friendsDrinksInvitation) {
+                            public void process(Record<FriendsDrinksMembershipId, FriendsDrinksInvitationEvent> record) {
+                                FriendsDrinksMembershipId friendsDrinksMembershipId = record.key();
+                                FriendsDrinksInvitationEvent friendsDrinksInvitation = record.value();
                                 String requestId = stateStore.get(friendsDrinksMembershipId);
                                 if (requestId != null && requestId.equals(friendsDrinksInvitation.getRequestId())) {
                                     stateStore.delete(friendsDrinksMembershipId);
@@ -510,7 +516,6 @@ public class RequestService {
         log.info("App ID is {}", appId);
         streamProps.put(StreamsConfig.APPLICATION_ID_CONFIG, appId);
         streamProps.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, envProps.getProperty("bootstrap.servers"));
-        streamProps.put(StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG, 0);
         if (envProps.getProperty("streams.dir") != null) {
             streamProps.put(StreamsConfig.STATE_DIR_CONFIG, envProps.getProperty("streams.dir"));
         }

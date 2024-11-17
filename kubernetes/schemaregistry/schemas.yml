@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: cp
-        image: confluentinc/cp-schema-registry:6.2.0
+        image: confluentinc/cp-schema-registry:7.7.1
         env:
         - name: SCHEMA_REGISTRY_LOG4J_OPTS
           value: -Dlog4j.configuration=file:/etc/schema-registry/log4j.properties

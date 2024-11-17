@@ -405,7 +405,7 @@ public class MaterializedViewsService {
                 Serdes.String(),
                 apiAvroBuilder.apiEventSerde());
         builder.addStateStore(storeBuilder);
-        responsesStream.transform(() -> new RequestsPurger(), RequestsPurger.RESPONSES_PENDING_DELETION)
+        responsesStream.process(() -> new RequestsPurger(), RequestsPurger.RESPONSES_PENDING_DELETION)
                 .filter((key, value) -> value != null && !value.isEmpty()).flatMapValues(value -> value)
                 .selectKey((key, value) -> value).mapValues(value -> (ApiEvent) null)
                 .to(responsesTopicName, Produced.with(Serdes.String(), apiAvroBuilder.apiEventSerde()));

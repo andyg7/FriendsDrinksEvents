@@ -2,4 +2,4 @@
 
 set -eu
 
-docker-compose -f dockercompose/docker-compose.schema-registry.yml --project-name schema-registry down
+docker-compose -f docker-compose/docker-compose.schema-registry.yml --project-name schema-registry down

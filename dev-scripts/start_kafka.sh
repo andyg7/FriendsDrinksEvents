@@ -2,4 +2,4 @@
 
 set -eu
 
-docker-compose -f dockercompose/docker-compose.kafka.yml --project-name kafka up
+docker-compose -f docker-compose/docker-compose.kafka.yml --project-name kafka up

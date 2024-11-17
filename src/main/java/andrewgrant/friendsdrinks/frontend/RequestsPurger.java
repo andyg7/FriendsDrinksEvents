@@ -1,8 +1,8 @@
 package andrewgrant.friendsdrinks.frontend;
 
 import org.apache.kafka.streams.KeyValue;
-import org.apache.kafka.streams.kstream.Transformer;
-import org.apache.kafka.streams.processor.ProcessorContext;
+import org.apache.kafka.streams.processor.api.Processor;
+import org.apache.kafka.streams.processor.api.Record;
 import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.slf4j.Logger;
@@ -16,7 +16,7 @@ import andrewgrant.friendsdrinks.avro.ApiEvent;
 /**
  * Purges old requests.
  */
-public class RequestsPurger implements Transformer<String, ApiEvent, KeyValue<String, List<String>>> {
+public class RequestsPurger implements Processor<String, ApiEvent, String, List<String>> {
 
     public static final String RESPONSES_PENDING_DELETION = "responses-pending-deletion";
 
@@ -24,14 +24,19 @@ public class RequestsPurger implements Transformer<String, ApiEvent, KeyValue<St
 
     private KeyValueStore<String, ApiEvent> stateStore;
 
+    private org.apache.kafka.streams.processor.api.ProcessorContext<String, List<String>> context;
+
     @Override
-    public void init(ProcessorContext context) {
+    public void init(org.apache.kafka.streams.processor.api.ProcessorContext<String, List<String>> context) {
         stateStore = (KeyValueStore) context.getStateStore(RESPONSES_PENDING_DELETION);
         log.info("Set up {}", this.getClass());
+        context = context;
     }
 
     @Override
-    public KeyValue<String, List<String>> transform(String key, ApiEvent value) {
+    public void process(Record<String, ApiEvent> record) {
+        String key = record.key();
+        ApiEvent value = record.value();
         log.info("Received request {}", key);
         if (value == null) {
             log.info("Deleting {}", key);
@@ -46,8 +51,8 @@ public class RequestsPurger implements Transformer<String, ApiEvent, KeyValue<St
             final KeyValueIterator<String, ApiEvent> iterator = stateStore.all();
             List<String> requestsToPurge = new ArrayList<>();
             while (iterator.hasNext()) {
-                final KeyValue<String, ApiEvent> record = iterator.next();
-                requestsToPurge.add(record.key);
+                final KeyValue<String, ApiEvent> next = iterator.next();
+                requestsToPurge.add(next.key);
             }
             iterator.close();
             StringBuilder sb = new StringBuilder();
@@ -56,9 +61,9 @@ public class RequestsPurger implements Transformer<String, ApiEvent, KeyValue<St
                 sb.append(" ");
             }
             log.info("Purging: {}", sb.toString());
-            return new KeyValue<>(key, requestsToPurge);
+            context.forward(new Record<String, List<String>>(key, requestsToPurge, System.currentTimeMillis()));
         } else {
-            return null;
+            context.forward(null);
         }
     }
 
