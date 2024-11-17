@@ -13,7 +13,7 @@ buildscript {
 
 plugins {
     id 'java'
-    id 'com.github.spotbugs' version '6.0.26'
+    id("com.github.spotbugs") version "6.0.26"
     id 'checkstyle'
     id 'maven-publish'
     id "com.gradleup.shadow" version "8.3.5"
@@ -94,4 +94,13 @@ publishing {
 
 tasks.withType(JavaCompile) {
     options.deprecation = true
+}
+
+// require Gradle 8.2+
+tasks.spotbugsMain {
+    reports.create("html") {
+        required = true
+        outputLocation = file("$buildDir/reports/spotbugs.html")
+        setStylesheet("fancy-hist.xsl")
+    }
 }
