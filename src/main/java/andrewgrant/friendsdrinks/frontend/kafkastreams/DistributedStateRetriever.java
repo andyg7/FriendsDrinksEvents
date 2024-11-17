@@ -5,7 +5,7 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyQueryMetadata;
 import org.apache.kafka.streams.state.HostInfo;
-import org.apache.kafka.streams.state.StreamsMetadata;
+import org.apache.kafka.streams.StreamsMetadata;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,7 +61,7 @@ public class DistributedStateRetriever implements StateRetriever {
 
     @Override
     public List<FriendsDrinksStateBean> getAllFriendsDrinksStates() {
-        Collection<StreamsMetadata> streamsMetadataCollection = kafkaStreams.allMetadataForStore(FRIENDSDRINKS_STATE_STORE);
+        Collection<StreamsMetadata> streamsMetadataCollection = kafkaStreams.streamsMetadataForStore(FRIENDSDRINKS_STATE_STORE);
         List<FriendsDrinksStateBean> friendsDrinksStateBeanList = new ArrayList<>();
         for (StreamsMetadata streamsMetadata : streamsMetadataCollection) {
             FriendsDrinksStateBean friendsDrinksStateBean = client.target(endpoint(streamsMetadata.hostInfo(), FRIENDSDRINKS_STATE_STORE))
@@ -89,7 +89,7 @@ public class DistributedStateRetriever implements StateRetriever {
 
     @Override
     public List<UserStateBean> getAllUserStates() {
-        Collection<StreamsMetadata> streamsMetadataCollection = kafkaStreams.allMetadataForStore(USERS_STATE_STORE);
+        Collection<StreamsMetadata> streamsMetadataCollection = kafkaStreams.streamsMetadataForStore(USERS_STATE_STORE);
         List<UserStateBean> userStateBeanList = new ArrayList<>();
         for (StreamsMetadata streamsMetadata : streamsMetadataCollection) {
             UserStateBean userStateBean = client.target(endpoint(streamsMetadata.hostInfo(), USERS_STATE_STORE))

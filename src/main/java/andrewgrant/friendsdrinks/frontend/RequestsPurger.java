@@ -28,7 +28,7 @@ public class RequestsPurger implements Processor<String, ApiEvent, String, List<
     public void init(org.apache.kafka.streams.processor.api.ProcessorContext<String, List<String>> context) {
         stateStore = (KeyValueStore) context.getStateStore(RESPONSES_PENDING_DELETION);
         log.info("Set up {}", this.getClass());
-        context = context;
+        this.context = context;
     }
 
     @Override

@@ -102,7 +102,7 @@ public class InvitationWriterService {
 
         return invitationReplyResponses.leftJoin(invitationReplyRequests,
                 (l, r) -> r,
-                JoinWindows.of(Duration.ofSeconds(30)),
+                JoinWindows.ofTimeDifferenceWithNoGrace(Duration.ofSeconds(30)),
                 StreamJoined.with(Serdes.String(),
                         frontendAvroBuilder.friendsDrinksInvitationReplyResponseSerde(),
                         frontendAvroBuilder.friendsDrinksInvitationReplyRequestSerde()))
@@ -147,7 +147,7 @@ public class InvitationWriterService {
 
         return invitationResponses.join(invitationRequests,
                 (l, r) -> r,
-                JoinWindows.of(Duration.ofSeconds(30)),
+                JoinWindows.ofTimeDifferenceWithNoGrace(Duration.ofSeconds(30)),
                 StreamJoined.with(Serdes.String(),
                         frontendAvroBuilder.friendsDrinksInvitationResponseSerde(),
                         frontendAvroBuilder.friendsDrinksInvitationRequestSerde()))
@@ -238,7 +238,7 @@ public class InvitationWriterService {
         streamProps.put(StreamsConfig.APPLICATION_ID_CONFIG,
                 envProps.getProperty("friendsdrinks-invitation-writer.application.id"));
         streamProps.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, envProps.getProperty("bootstrap.servers"));
-        streamProps.put(StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG, 0);
+        streamProps.put(StreamsConfig.STATESTORE_CACHE_MAX_BYTES_CONFIG, 0);
         if (envProps.getProperty("streams.dir") != null) {
             streamProps.put(StreamsConfig.STATE_DIR_CONFIG, envProps.getProperty("streams.dir"));
         }

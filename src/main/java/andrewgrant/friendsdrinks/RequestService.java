@@ -7,8 +7,9 @@ import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.errors.StreamsUncaughtExceptionHandler;
 import org.apache.kafka.streams.kstream.*;
-import org.apache.kafka.streams.processor.Processor;
 import org.apache.kafka.streams.processor.ProcessorContext;
+import org.apache.kafka.streams.processor.api.Processor;
+import org.apache.kafka.streams.processor.api.Record;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
@@ -77,61 +78,68 @@ public class RequestService {
         KStream<FriendsDrinksId, FriendsDrinksEventConcurrencyCheck> friendsDrinksApiEventsWithConcurrencyCheck =
                 checkForConcurrentRequest(friendsDrinksApiRequests);
 
-        KStream<FriendsDrinksId, FriendsDrinksEventConcurrencyCheck>[] friendsDrinksApiEventsBranchedOnConcurrencyCheck =
-                friendsDrinksApiEventsWithConcurrencyCheck.branch(
-                        (key, value) -> value.isConcurrentRequest,
-                        (key, value) -> true
-                );
+        friendsDrinksApiEventsWithConcurrencyCheck.split()
+            .branch(
+                (key, value) -> value.isConcurrentRequest,
+                Branched.withConsumer(ks -> {
+                    toRejectedApiEventResponses(ks.mapValues(x -> x.friendsDrinksEvent))
+                        .to(apiTopicName, Produced.with(Serdes.String(), frontendAvroBuilder.apiEventSerde()));
+                })
+            ).defaultBranch(
+                Branched.withConsumer(
+                    ks -> {
+                        KStream<FriendsDrinksId, FriendsDrinksApiEvent> nonConflictingFriendsDrinksApiEvents =
+                            ks.mapValues(x -> x.friendsDrinksEvent);
+                        // Creates.
+                        KStream<FriendsDrinksId, CreateFriendsDrinksRequest> createRequests = nonConflictingFriendsDrinksApiEvents.filter(((s, friendsDrinksEvent) ->
+                                friendsDrinksEvent.getEventType().equals(FriendsDrinksApiEventType.CREATE_FRIENDSDRINKS_REQUEST)))
+                            .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getCreateFriendsDrinksRequest());
+                        KStream<FriendsDrinksId, FriendsDrinksApiEvent> createResponses = toCreateResponses(createRequests, friendsDrinksStateKTable);
+                        toApiEventResponse(createResponses).to(apiTopicName, Produced.with(Serdes.String(), frontendAvroBuilder.apiEventSerde()));
 
-        toRejectedApiEventResponses(friendsDrinksApiEventsBranchedOnConcurrencyCheck[0].mapValues(x -> x.friendsDrinksEvent))
-                .to(apiTopicName, Produced.with(Serdes.String(), frontendAvroBuilder.apiEventSerde()));
-        KStream<FriendsDrinksId, FriendsDrinksApiEvent> nonConflictingFriendsDrinksApiEvents =
-                friendsDrinksApiEventsBranchedOnConcurrencyCheck[1].mapValues(x -> x.friendsDrinksEvent);
+                        // Updates.
+                        KStream<FriendsDrinksId, UpdateFriendsDrinksRequest> updateRequests = nonConflictingFriendsDrinksApiEvents.filter(((s, friendsDrinksEvent) ->
+                                friendsDrinksEvent.getEventType().equals(FriendsDrinksApiEventType.UPDATE_FRIENDSDRINKS_REQUEST)))
+                            .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getUpdateFriendsDrinksRequest());
+                        KStream<FriendsDrinksId, FriendsDrinksApiEvent> updateResponses = toUpdateResponses(updateRequests, friendsDrinksStateKTable);
+                        toApiEventResponse(updateResponses).to(apiTopicName, Produced.with(Serdes.String(), frontendAvroBuilder.apiEventSerde()));
 
-        // Creates.
-        KStream<FriendsDrinksId, CreateFriendsDrinksRequest> createRequests = nonConflictingFriendsDrinksApiEvents.filter(((s, friendsDrinksEvent) ->
-                friendsDrinksEvent.getEventType().equals(FriendsDrinksApiEventType.CREATE_FRIENDSDRINKS_REQUEST)))
-                .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getCreateFriendsDrinksRequest());
-        KStream<FriendsDrinksId, FriendsDrinksApiEvent> createResponses = toCreateResponses(createRequests, friendsDrinksStateKTable);
-        toApiEventResponse(createResponses).to(apiTopicName, Produced.with(Serdes.String(), frontendAvroBuilder.apiEventSerde()));
+                        // Deletes.
+                        KStream<FriendsDrinksId, DeleteFriendsDrinksRequest> deleteRequests = nonConflictingFriendsDrinksApiEvents.filter(((s, friendsDrinksEvent) ->
+                                friendsDrinksEvent.getEventType().equals(FriendsDrinksApiEventType.DELETE_FRIENDSDRINKS_REQUEST)))
+                            .mapValues((friendsDrinksEvent) -> friendsDrinksEvent.getDeleteFriendsDrinksRequest());
+                        KStream<FriendsDrinksId, FriendsDrinksApiEvent> deleteResponses = toDeleteResponses(deleteRequests, friendsDrinksStateKTable);
+                        toApiEventResponse(deleteResponses).to(apiTopicName, Produced.with(Serdes.String(), frontendAvroBuilder.apiEventSerde()));
 
-        // Updates.
-        KStream<FriendsDrinksId, UpdateFriendsDrinksRequest> updateRequests = nonConflictingFriendsDrinksApiEvents.filter(((s, friendsDrinksEvent) ->
-                friendsDrinksEvent.getEventType().equals(FriendsDrinksApiEventType.UPDATE_FRIENDSDRINKS_REQUEST)))
-                .mapValues(friendsDrinksEvent -> friendsDrinksEvent.getUpdateFriendsDrinksRequest());
-        KStream<FriendsDrinksId, FriendsDrinksApiEvent> updateResponses = toUpdateResponses(updateRequests, friendsDrinksStateKTable);
-        toApiEventResponse(updateResponses).to(apiTopicName, Produced.with(Serdes.String(), frontendAvroBuilder.apiEventSerde()));
-
-        // Deletes.
-        KStream<FriendsDrinksId, DeleteFriendsDrinksRequest> deleteRequests = nonConflictingFriendsDrinksApiEvents.filter(((s, friendsDrinksEvent) ->
-                friendsDrinksEvent.getEventType().equals(FriendsDrinksApiEventType.DELETE_FRIENDSDRINKS_REQUEST)))
-                .mapValues((friendsDrinksEvent) -> friendsDrinksEvent.getDeleteFriendsDrinksRequest());
-        KStream<FriendsDrinksId, FriendsDrinksApiEvent> deleteResponses = toDeleteResponses(deleteRequests, friendsDrinksStateKTable);
-        toApiEventResponse(deleteResponses).to(apiTopicName, Produced.with(Serdes.String(), frontendAvroBuilder.apiEventSerde()));
+                    }
+                )
+            );
 
         return builder.build();
     }
 
     private void processFriendsDrinksEvents(KStream<FriendsDrinksId, FriendsDrinksEvent> friendsDrinksEventKStream) {
         friendsDrinksEventKStream.process(() ->
-                new Processor<FriendsDrinksId, FriendsDrinksEvent>() {
+                new Processor<FriendsDrinksId, FriendsDrinksEvent, Void, Void>() {
 
                     private KeyValueStore<FriendsDrinksId, String> stateStore;
 
                     @Override
-                    public void init(ProcessorContext processorContext) {
-                        stateStore = (KeyValueStore) processorContext.getStateStore(PENDING_FRIENDSDRINKS_REQUESTS_STATE_STORE);
+                    public void init(org.apache.kafka.streams.processor.api.ProcessorContext<Void, Void> context) {
+                        this.stateStore = (KeyValueStore) context.getStateStore(PENDING_FRIENDSDRINKS_REQUESTS_STATE_STORE);
                     }
 
                     @Override
-                    public void process(FriendsDrinksId friendsDrinksId, FriendsDrinksEvent friendsDrinksEvent) {
+                    public void process(Record<FriendsDrinksId, FriendsDrinksEvent> record) {
+                        FriendsDrinksId friendsDrinksId = record.key();
+                        FriendsDrinksEvent friendsDrinksEvent = record.value();
                         String requestId = stateStore.get(friendsDrinksId);
                         if (requestId != null && requestId.equals(friendsDrinksEvent.getRequestId())) {
                             log.info("Deleting request {} from state store UUID {}", requestId, friendsDrinksId.getUuid());
                             stateStore.delete(friendsDrinksId);
                         } else {
                             log.error("Failed to get request {} for FriendsDrinks UUID {}",
-                                    requestId, friendsDrinksId.getUuid());
+                                requestId, friendsDrinksId.getUuid());
                         }
                     }
 
@@ -400,7 +408,7 @@ public class RequestService {
         log.info("App ID is {}", appId);
         streamProps.put(StreamsConfig.APPLICATION_ID_CONFIG, appId);
         streamProps.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, envProps.getProperty("bootstrap.servers"));
-        streamProps.put(StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG, 0);
+        streamProps.put(StreamsConfig.STATESTORE_CACHE_MAX_BYTES_CONFIG, 0);
         if (envProps.getProperty("streams.dir") != null) {
             streamProps.put(StreamsConfig.STATE_DIR_CONFIG, envProps.getProperty("streams.dir"));
         }

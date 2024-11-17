@@ -14,11 +14,13 @@ import org.apache.kafka.streams.processor.api.Record;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
+import org.checkerframework.checker.units.qual.K;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import andrewgrant.friendsdrinks.avro.*;
@@ -94,56 +96,54 @@ public class RequestService {
                                 .build());
 
         KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipEventConcurrencyCheck>
-                friendsDrinksMembershipEventConcurrencyCheckKStream = checkForConcurrentRequests(friendsDrinksMembershipEventKStream);
+            friendsDrinksMembershipEventConcurrencyCheckKStream = checkForConcurrentRequests(friendsDrinksMembershipEventKStream);
         friendsDrinksMembershipEventConcurrencyCheckKStream.split()
-                .branch(
-                        (key, value) -> value.isConcurrentRequest,
-                        Branched.withConsumer(ks -> {
-                            toRejectedResponse(ks.mapValues(v -> v.friendsDrinksMembershipEvent))
-                                    .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.apiEventSerde()));
-                        })
-                )
-                .branch(
-                        (key, value) -> true,
-                        Branched.withConsumer(ks -> {
+            .branch(
+                (key, value) -> value.isConcurrentRequest,
+                Branched.withConsumer(ks -> {
+                    toRejectedResponse(ks.mapValues(v -> v.friendsDrinksMembershipEvent))
+                        .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.apiEventSerde()));
+                })
+            )
+            .defaultBranch(
+                Branched.withConsumer(ks -> {
+                    InvitationRequestResult invitationRequestResult =
+                        handleInvitationRequests(ks
+                            .mapValues(v -> v.friendsDrinksMembershipEvent)
+                            .filter((key, value) ->
+                                value.getEventType().equals(FriendsDrinksMembershipApiEventType.FRIENDSDRINKS_INVITATION_REQUEST))
+                            .mapValues(v -> v.getFriendsDrinksInvitationRequest()), friendsDrinksStateKTable, userState);
 
-                            InvitationRequestResult invitationRequestResult =
-                                    handleInvitationRequests(ks
-                                            .mapValues(v -> v.friendsDrinksMembershipEvent)
-                                            .filter((key, value) ->
-                                                    value.getEventType().equals(FriendsDrinksMembershipApiEventType.FRIENDSDRINKS_INVITATION_REQUEST))
-                                            .mapValues(v -> v.getFriendsDrinksInvitationRequest()), friendsDrinksStateKTable, userState);
+                    toApiResponse(invitationRequestResult.getSuccessfulResponseKStream())
+                        .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.apiEventSerde()));
 
-                            toApiResponse(invitationRequestResult.getSuccessfulResponseKStream())
-                                    .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.apiEventSerde()));
+                    for (KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipApiEvent> friendsDrinksEventKStream :
+                        invitationRequestResult.getFailedResponseKStreams()) {
+                        toApiResponse(friendsDrinksEventKStream)
+                            .to(
+                                envProps.getProperty(FRIENDSDRINKS_API),
+                                Produced.with(Serdes.String(), frontendAvroBuilder.apiEventSerde())
+                            );
+                    }
 
-                            for (KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipApiEvent> friendsDrinksEventKStream :
-                                    invitationRequestResult.getFailedResponseKStreams()) {
-                                toApiResponse(friendsDrinksEventKStream)
-                                        .to(
-                                                envProps.getProperty(FRIENDSDRINKS_API),
-                                                Produced.with(Serdes.String(), frontendAvroBuilder.apiEventSerde())
-                                        );
-                            }
-
-                            toApiResponse(handleInvitationReplies(ks
-                                    .mapValues(v -> v.friendsDrinksMembershipEvent)
-                                    .filter((key, value) ->
-                                            value.getEventType().equals(FriendsDrinksMembershipApiEventType.FRIENDSDRINKS_INVITATION_REPLY_REQUEST))
-                                    .mapValues(v -> v.getFriendsDrinksInvitationReplyRequest()),  friendsDrinksInvitations))
-                                    .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.apiEventSerde()));
-                        })
-                );
+                    toApiResponse(handleInvitationReplies(ks
+                        .mapValues(v -> v.friendsDrinksMembershipEvent)
+                        .filter((key, value) ->
+                            value.getEventType().equals(FriendsDrinksMembershipApiEventType.FRIENDSDRINKS_INVITATION_REPLY_REQUEST))
+                        .mapValues(v -> v.getFriendsDrinksInvitationReplyRequest()),  friendsDrinksInvitations))
+                        .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.apiEventSerde()));
+                })
+            );
 
         return builder.build();
     }
 
     private void purgePendingRequestsStore(
-            KStream<FriendsDrinksMembershipId, FriendsDrinksInvitationEvent>
-                    friendsDrinksInvitationKStream) {
+        KStream<FriendsDrinksMembershipId, FriendsDrinksInvitationEvent>
+            friendsDrinksInvitationKStream) {
 
         friendsDrinksInvitationKStream.selectKey((key, value) -> key)
-                .repartition(Repartitioned.with(
+            .repartition(Repartitioned.with(
                         membershipAvroBuilder.friendsDrinksMembershipIdSerdes(),
                         membershipAvroBuilder.friendsDrinksInvitationEventSerde()))
                 .process(() ->
@@ -352,18 +352,28 @@ public class RequestService {
                         )
                         .selectKey((key, value) -> value.invitationRequest.getMembershipId());
 
-        KStream<FriendsDrinksMembershipId, InvitationResult>[] branchedResultsAfterValidatingFriendsDrinksState =
-                resultsAfterValidatingFriendsDrinksState.branch(
-                        ((key, value) -> value.failed),
-                        ((key, value) -> true)
+
+        Map<String, KStream<FriendsDrinksMembershipId, InvitationResult>> branchedResultsAfterValidatingFriendsDrinksState =
+            resultsAfterValidatingFriendsDrinksState.split().branch(
+                    ((key, value) -> value.failed),
+                    Branched.withFunction(ks -> {
+                            return ks;
+                        }
+                    ))
+                .defaultBranch(
+                    Branched.withFunction(
+                        ks -> {
+                            return ks;
+                        }
+                    )
                 );
 
 
         InvitationRequestResult result = new InvitationRequestResult();
         result.addFailedResponse(
-                convertToFailedInvitationResponse(branchedResultsAfterValidatingFriendsDrinksState[0].mapValues(value -> value.invitationRequest)));
+            convertToFailedInvitationResponse(branchedResultsAfterValidatingFriendsDrinksState.get("1").mapValues(value -> value.invitationRequest)));
 
-        KStream<FriendsDrinksMembershipId, InvitationResult> resultsAfterValidatingUserState = branchedResultsAfterValidatingFriendsDrinksState[1]
+        KStream<FriendsDrinksMembershipId, InvitationResult> resultsAfterValidatingUserState = branchedResultsAfterValidatingFriendsDrinksState.get("0")
                 .selectKey((key, value) -> UserId
                         .newBuilder()
                         .setUserId(value.invitationRequest.getMembershipId().getUserId().getUserId())
@@ -386,16 +396,18 @@ public class RequestService {
                                 userAvroBuilder.userStateSerde()))
                 .selectKey((key, value) -> value.invitationRequest.getMembershipId());
 
-        KStream<FriendsDrinksMembershipId, InvitationResult>[] branchedResultsAfterValidatingUserState =
-                resultsAfterValidatingUserState.branch(
-                        ((key, value) -> value.failed),
-                        ((key, value) -> true)
-                );
+        Map<String, KStream<FriendsDrinksMembershipId, InvitationResult>> branchedResultsAfterValidatingUserState =
+            resultsAfterValidatingUserState.split().branch(
+                (key, value) -> value.failed,
+                Branched.withFunction(ks -> ks)
+            ).defaultBranch(
+                Branched.withFunction(ks -> ks)
+            );
 
         result.addFailedResponse(
-                convertToFailedInvitationResponse(branchedResultsAfterValidatingUserState[0].mapValues(value -> value.invitationRequest)));
+                convertToFailedInvitationResponse(branchedResultsAfterValidatingUserState.get("1").mapValues(value -> value.invitationRequest)));
 
-        KStream<FriendsDrinksMembershipId, FriendsDrinksInvitationRequest> acceptedInvitationRequests = branchedResultsAfterValidatingUserState[1]
+        KStream<FriendsDrinksMembershipId, FriendsDrinksInvitationRequest> acceptedInvitationRequests = branchedResultsAfterValidatingUserState.get("0")
                 .mapValues(value -> value.invitationRequest);
 
         result.setSuccessfulResponseKStream(acceptedInvitationRequests.map((key, value) -> {
@@ -515,6 +527,7 @@ public class RequestService {
         log.info("App ID is {}", appId);
         streamProps.put(StreamsConfig.APPLICATION_ID_CONFIG, appId);
         streamProps.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, envProps.getProperty("bootstrap.servers"));
+        streamProps.put(StreamsConfig.STATESTORE_CACHE_MAX_BYTES_CONFIG, 0);
         if (envProps.getProperty("streams.dir") != null) {
             streamProps.put(StreamsConfig.STATE_DIR_CONFIG, envProps.getProperty("streams.dir"));
         }
