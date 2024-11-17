@@ -5,7 +5,6 @@ import static andrewgrant.friendsdrinks.frontend.TopicNameConfigKey.FRIENDSDRINK
 import static andrewgrant.friendsdrinks.meetup.TopicNameConfigKey.FRIENDSDRINKS_MEETUP_STATE;
 import static andrewgrant.friendsdrinks.membership.TopicNameConfigKey.*;
 import static andrewgrant.friendsdrinks.user.TopicNameConfigKey.USER_STATE;
-
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.*;
@@ -15,16 +14,13 @@ import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-
 import andrewgrant.friendsdrinks.avro.*;
 import andrewgrant.friendsdrinks.frontend.RequestsPurger;
 import andrewgrant.friendsdrinks.frontend.TopicNameConfigKey;
 import andrewgrant.friendsdrinks.streamsconfig.SharedConfigSetter;
-
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
 
 /**

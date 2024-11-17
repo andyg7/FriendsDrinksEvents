@@ -1,7 +1,6 @@
 package andrewgrant.friendsdrinks.user;
 
 import static andrewgrant.friendsdrinks.streamsconfig.FilePropsLoader.load;
-
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
@@ -10,14 +9,11 @@ import org.apache.kafka.streams.errors.StreamsUncaughtExceptionHandler;
 import org.apache.kafka.streams.kstream.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
-
 import andrewgrant.friendsdrinks.avro.*;
 import andrewgrant.friendsdrinks.streamsconfig.SharedConfigSetter;
-
 import com.sun.net.httpserver.HttpServer;
 
 /**

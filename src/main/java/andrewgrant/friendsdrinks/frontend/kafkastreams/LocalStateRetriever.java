@@ -1,7 +1,6 @@
 package andrewgrant.friendsdrinks.frontend.kafkastreams;
 
 import static andrewgrant.friendsdrinks.frontend.kafkastreams.MaterializedViewsService.*;
-
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StoreQueryParameters;
@@ -10,13 +9,10 @@ import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-
 import javax.ws.rs.BadRequestException;
-
 import andrewgrant.friendsdrinks.avro.*;
 import andrewgrant.friendsdrinks.frontend.api.StateRetriever;
 import andrewgrant.friendsdrinks.frontend.api.statestorebeans.*;

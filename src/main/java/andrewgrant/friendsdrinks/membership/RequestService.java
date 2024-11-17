@@ -4,7 +4,6 @@ import static andrewgrant.friendsdrinks.TopicNameConfigKey.FRIENDSDRINKS_STATE;
 import static andrewgrant.friendsdrinks.frontend.TopicNameConfigKey.FRIENDSDRINKS_API;
 import static andrewgrant.friendsdrinks.streamsconfig.FilePropsLoader.load;
 import static andrewgrant.friendsdrinks.user.TopicNameConfigKey.USER_STATE;
-
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.errors.StreamsUncaughtExceptionHandler;
@@ -17,16 +16,13 @@ import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
-
 import andrewgrant.friendsdrinks.avro.*;
 import andrewgrant.friendsdrinks.streamsconfig.SharedConfigSetter;
-
 import com.sun.net.httpserver.HttpServer;
 
 /**
@@ -124,7 +120,10 @@ public class RequestService {
                             for (KStream<FriendsDrinksMembershipId, FriendsDrinksMembershipApiEvent> friendsDrinksEventKStream :
                                     invitationRequestResult.getFailedResponseKStreams()) {
                                 toApiResponse(friendsDrinksEventKStream)
-                                        .to(envProps.getProperty(FRIENDSDRINKS_API), Produced.with(Serdes.String(), frontendAvroBuilder.apiEventSerde()));
+                                        .to(
+                                                envProps.getProperty(FRIENDSDRINKS_API),
+                                                Produced.with(Serdes.String(), frontendAvroBuilder.apiEventSerde())
+                                        );
                             }
 
                             toApiResponse(handleInvitationReplies(ks

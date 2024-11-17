@@ -1,12 +1,9 @@
 package andrewgrant.friendsdrinks.frontend;
 
 import org.apache.kafka.common.serialization.Serializer;
-
 import java.util.HashMap;
 import java.util.Map;
-
 import andrewgrant.friendsdrinks.avro.*;
-
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;

@@ -1,7 +1,6 @@
 package andrewgrant.friendsdrinks.frontend.api;
 
 import java.util.List;
-
 import andrewgrant.friendsdrinks.frontend.api.statestorebeans.*;
 
 /**

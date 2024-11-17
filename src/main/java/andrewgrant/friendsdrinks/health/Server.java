@@ -3,10 +3,8 @@ package andrewgrant.friendsdrinks.health;
 import org.apache.kafka.streams.KafkaStreams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.net.InetSocketAddress;
-
 import com.sun.net.httpserver.HttpServer;
 
 /**

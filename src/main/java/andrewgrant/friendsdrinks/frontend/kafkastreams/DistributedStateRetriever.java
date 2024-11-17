@@ -1,7 +1,6 @@
 package andrewgrant.friendsdrinks.frontend.kafkastreams;
 
 import static andrewgrant.friendsdrinks.frontend.kafkastreams.MaterializedViewsService.*;
-
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyQueryMetadata;
@@ -10,16 +9,13 @@ import org.apache.kafka.streams.state.StreamsMetadata;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
-
 import andrewgrant.friendsdrinks.AvroBuilder;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksId;
 import andrewgrant.friendsdrinks.avro.FriendsDrinksMembershipId;

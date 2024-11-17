@@ -1,4 +1,4 @@
 /**
- * Package for membership related fucntionality.
+ * Package for membership related functionality.
  */
 package andrewgrant.friendsdrinks.membership;
